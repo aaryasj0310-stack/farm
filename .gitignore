@@ -1,0 +1,28 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Model and Data storage
+data/
+.cache/
+*.log
+
+# Node & Frontend build
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS specific
+Thumbs.db
+.DS_Store

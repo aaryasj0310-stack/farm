@@ -1,0 +1,101 @@
+{
+  "experiment_id": "goose_care_validation",
+  "title": "Goose Daily CARE (+1 Bonus) vs No-CARE",
+  "hypothesis": "Caring for geese daily yields exactly 2x egg production under v1.32.7 engine rules, increasing net profit.",
+  "agent_a": "goose_wheat_engine",
+  "agent_b": "goose_no_care",
+  "n_episodes": 6,
+  "mean_score_a": 1287.17,
+  "std_score_a": 295.93,
+  "mean_score_b": 1174.5,
+  "std_score_b": 79.96,
+  "delta": 112.67,
+  "percent_lift": 9.59,
+  "win_rate_a": 0.1667,
+  "win_rate_b": 0.3333,
+  "tie_rate": 0.5,
+  "verdict": "INCONCLUSIVE",
+  "full_stats": {
+    "agent_a": "goose_wheat_engine",
+    "agent_b": "goose_no_care",
+    "n_episodes": 6,
+    "valid_episodes": 6,
+    "elapsed_seconds": 13.07,
+    "games_per_sec": 0.46,
+    "wins_a": 1,
+    "wins_b": 2,
+    "ties": 3,
+    "errors": 0,
+    "win_rate_a": 0.1667,
+    "win_rate_b": 0.3333,
+    "tie_rate": 0.5,
+    "mean_score_a": 1287.17,
+    "std_score_a": 295.93,
+    "mean_score_b": 1174.5,
+    "std_score_b": 79.96,
+    "min_score_a": 1090.0,
+    "max_score_a": 1939.0,
+    "matches": [
+      {
+        "seed": 42,
+        "agent_a": "goose_wheat_engine",
+        "agent_b": "goose_no_care",
+        "score_a": 1939.0,
+        "score_b": 1085.0,
+        "winner": "A",
+        "steps": 720,
+        "error": null
+      },
+      {
+        "seed": 43,
+        "agent_a": "goose_wheat_engine",
+        "agent_b": "goose_no_care",
+        "score_a": 1228.0,
+        "score_b": 1228.0,
+        "winner": "TIE",
+        "steps": 720,
+        "error": null
+      },
+      {
+        "seed": 44,
+        "agent_a": "goose_wheat_engine",
+        "agent_b": "goose_no_care",
+        "score_a": 1092.0,
+        "score_b": 1092.0,
+        "winner": "TIE",
+        "steps": 720,
+        "error": null
+      },
+      {
+        "seed": 45,
+        "agent_a": "goose_wheat_engine",
+        "agent_b": "goose_no_care",
+        "score_a": 1190.0,
+        "score_b": 1190.0,
+        "winner": "TIE",
+        "steps": 720,
+        "error": null
+      },
+      {
+        "seed": 46,
+        "agent_a": "goose_wheat_engine",
+        "agent_b": "goose_no_care",
+        "score_a": 1090.0,
+        "score_b": 1139.0,
+        "winner": "B",
+        "steps": 720,
+        "error": null
+      },
+      {
+        "seed": 47,
+        "agent_a": "goose_wheat_engine",
+        "agent_b": "goose_no_care",
+        "score_a": 1184.0,
+        "score_b": 1313.0,
+        "winner": "B",
+        "steps": 720,
+        "error": null
+      }
+    ]
+  }
+}

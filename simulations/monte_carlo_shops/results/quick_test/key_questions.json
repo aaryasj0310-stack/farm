@@ -1,0 +1,64 @@
+{
+  "Q1_carrot_over_100_by_day15": {
+    "p_anytime_through_day_15": 0.0,
+    "p_on_day_15": 0.0
+  },
+  "Q2_pet_cafe_day3_response": null,
+  "Q3_goose_20day_net_income": {
+    "median": 285.0,
+    "p5": 186.0,
+    "p95": 410.0,
+    "assumptions": "1 egg/day from day 4; feed $25/day; goose $300 amortized"
+  },
+  "Q4_optimal_portfolio": {
+    "low_risk": {
+      "crops": {
+        "WHEAT": 9,
+        "CARROT": 8,
+        "MELON": 8
+      },
+      "animals": {
+        "goose": 2
+      },
+      "expected_revenue": 32986.0,
+      "std_dev": 1173.0
+    },
+    "high_risk_high_reward": {
+      "crops": {
+        "CARROT": 9,
+        "STRAWBERRY": 8,
+        "MELON": 8
+      },
+      "animals": {
+        "goose": 3,
+        "cow": 2,
+        "sheep": 2
+      },
+      "expected_revenue": 39517.0,
+      "std_dev": 1570.0
+    }
+  },
+  "Q5_wheat_unprofitable_level": "not reached within 0-200% baseline",
+  "Q6_timing_premium_goods": {
+    "STRAWBERRY": {
+      "early_slope_pct_per_day": 0.04926,
+      "late_slope_pct_per_day": 0.02368,
+      "advice": "HOLD early \u2014 prices rise fast while shops ramp up; sell into the peak."
+    },
+    "MELON": {
+      "early_slope_pct_per_day": -0.00059,
+      "late_slope_pct_per_day": -0.0018,
+      "advice": "Prices near-flat early; sell steadily, watch shop unlocks for pivots."
+    },
+    "MILK": {
+      "early_slope_pct_per_day": 0.03234,
+      "late_slope_pct_per_day": 0.02187,
+      "advice": "HOLD early \u2014 prices rise fast while shops ramp up; sell into the peak."
+    },
+    "WOOL": {
+      "early_slope_pct_per_day": -0.00409,
+      "late_slope_pct_per_day": 0.0099,
+      "advice": "Prices near-flat early; sell steadily, watch shop unlocks for pivots."
+    }
+  }
+}

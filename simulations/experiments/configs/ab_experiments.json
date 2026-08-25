@@ -1,0 +1,36 @@
+{
+  "experiments": [
+    {
+      "id": "goose_care_validation",
+      "title": "Goose Daily CARE (+1 Bonus) vs No-CARE",
+      "agent_a": "goose_wheat_engine",
+      "agent_b": "goose_no_care",
+      "episodes": 50,
+      "hypothesis": "Caring for geese daily yields exactly 2x egg production under v1.32.7 engine rules."
+    },
+    {
+      "id": "melon_fertilizer_optimization",
+      "title": "Melon Day-5 Fertilizer Application vs Unfertilized",
+      "agent_a": "melon_sniper",
+      "agent_b": "melon_unfertilized",
+      "episodes": 50,
+      "hypothesis": "Fertilizing melons on Day 5 accelerates max yield to Day 8 and saves watering actions."
+    },
+    {
+      "id": "production_vs_wheat_rush",
+      "title": "Full Production Agent vs Pure Wheat Rush",
+      "agent_a": "full_production_agent",
+      "agent_b": "pure_wheat_rush",
+      "episodes": 50,
+      "hypothesis": "Multi-tier decoupled production architecture outperforms pure wheat monoculture."
+    },
+    {
+      "id": "production_vs_starter",
+      "title": "Full Production Agent vs Kaggle Starter Baseline",
+      "agent_a": "full_production_agent",
+      "agent_b": "starter",
+      "episodes": 50,
+      "hypothesis": "Full production agent achieves 100% win rate against starter baseline."
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "tier_list": {
+    "S": [
+      "STRAWBERRY",
+      "WHEAT"
+    ],
+    "A": [
+      "MILK",
+      "CARROT"
+    ],
+    "B": [
+      "TOMATO",
+      "EGG"
+    ],
+    "C": [
+      "WOOL",
+      "MELON"
+    ]
+  },
+  "ranking_metrics": {
+    "WHEAT": {
+      "expected_sale_price_window_d10_29": 29.67,
+      "season_profit_per_tile": 651.97,
+      "revenue_per_tile_per_day": 21.732,
+      "risk_std_revenue_per_tile_per_day": 4.246,
+      "sharpe": 5.119
+    },
+    "CARROT": {
+      "expected_sale_price_window_d10_29": 42.97,
+      "season_profit_per_tile": 742.32,
+      "revenue_per_tile_per_day": 24.744,
+      "risk_std_revenue_per_tile_per_day": 6.862,
+      "sharpe": 3.606
+    },
+    "TOMATO": {
+      "expected_sale_price_window_d10_29": 72.73,
+      "season_profit_per_tile": 481.87,
+      "revenue_per_tile_per_day": 16.062,
+      "risk_std_revenue_per_tile_per_day": 6.588,
+      "sharpe": 2.438
+    },
+    "STRAWBERRY": {
+      "expected_sale_price_window_d10_29": 221.47,
+      "season_profit_per_tile": 1128.79,
+      "revenue_per_tile_per_day": 37.626,
+      "risk_std_revenue_per_tile_per_day": 6.496,
+      "sharpe": 5.792
+    },
+    "MELON": {
+      "expected_sale_price_window_d10_29": 245.5,
+      "season_profit_per_tile": 2706.0,
+      "revenue_per_tile_per_day": 90.2,
+      "risk_std_revenue_per_tile_per_day": 0.0,
+      "sharpe": 0.0
+    },
+    "EGG": {
+      "expected_sale_price_window_d10_29": 51.74,
+      "season_profit_per_tile": 295.23,
+      "revenue_per_tile_per_day": 9.841,
+      "risk_std_revenue_per_tile_per_day": 4.742,
+      "sharpe": 2.075
+    },
+    "MILK": {
+      "expected_sale_price_window_d10_29": 244.63,
+      "season_profit_per_tile": 1540.95,
+      "revenue_per_tile_per_day": 51.365,
+      "risk_std_revenue_per_tile_per_day": 14.034,
+      "sharpe": 3.66
+    },
+    "WOOL": {
+      "expected_sale_price_window_d10_29": 212.28,
+      "season_profit_per_tile": 448.25,
+      "revenue_per_tile_per_day": 14.942,
+      "risk_std_revenue_per_tile_per_day": 8.036,
+      "sharpe": 1.859
+    }
+  },
+  "day3_shop_responses": {},
+  "hinge_alerts": {
+    "CARROT": {
+      "trigger_probability": 0.22,
+      "expected_price_if_triggered": 52.0,
+      "best_shop_combo": "PET_CAFE >= 3",
+      "p_by_day_15": 0.0
+    },
+    "TOMATO": {
+      "trigger_probability": 0.53,
+      "expected_price_if_triggered": 71.0,
+      "best_shop_combo": "PIZZA_SHOP >= 2",
+      "p_by_day_15": 0.0
+    },
+    "EGG": {
+      "trigger_probability": 0.2,
+      "expected_price_if_triggered": 57.0,
+      "best_shop_combo": "BAKERY+BRUNCH_SPOT total >= 4",
+      "p_by_day_15": 0.0
+    }
+  },
+  "optimal_portfolio": {
+    "low_risk": {
+      "crops": {
+        "WHEAT": 9,
+        "CARROT": 8,
+        "MELON": 8
+      },
+      "animals": {
+        "goose": 2
+      },
+      "expected_revenue": 32986.0,
+      "std_dev": 1173.0
+    },
+    "high_risk_high_reward": {
+      "crops": {
+        "CARROT": 9,
+        "STRAWBERRY": 8,
+        "MELON": 8
+      },
+      "animals": {
+        "goose": 3,
+        "cow": 2,
+        "sheep": 2
+      },
+      "expected_revenue": 39517.0,
+      "std_dev": 1570.0
+    },
+    "animal_economics_per_animal": {
+      "EGG": {
+        "mean_net_per_animal": 254.24,
+        "std_net_per_animal": 103.9,
+        "sharpe": 2.447
+      },
+      "MILK": {
+        "mean_net_per_animal": 1253.92,
+        "std_net_per_animal": 325.49,
+        "sharpe": 3.852
+      },
+      "WOOL": {
+        "mean_net_per_animal": 420.71,
+        "std_net_per_animal": 174.21,
+        "sharpe": 2.415
+      }
+    },
+    "assumptions": {
+      "farm": "1 starting quadrant = 25 tiles",
+      "costs": "seed x plantings; animals: purchase + 1 wheat/day feed at $25",
+      "fertilizer": "not used; free animal fertilizer unmodeled"
+    }
+  },
+  "timing_guidance": {
+    "WHEAT": {
+      "early_slope_pct_per_day": -0.00263,
+      "late_slope_pct_per_day": 0.03844,
+      "advice": "Prices near-flat early; sell steadily, watch shop unlocks for pivots."
+    },
+    "CARROT": {
+      "early_slope_pct_per_day": 0.00699,
+      "late_slope_pct_per_day": 0.02542,
+      "advice": "HOLD early \u2014 prices rise fast while shops ramp up; sell into the peak."
+    },
+    "TOMATO": {
+      "early_slope_pct_per_day": 0.00578,
+      "late_slope_pct_per_day": 0.01367,
+      "advice": "HOLD early \u2014 prices rise fast while shops ramp up; sell into the peak."
+    },
+    "STRAWBERRY": {
+      "early_slope_pct_per_day": 0.04926,
+      "late_slope_pct_per_day": 0.02368,
+      "advice": "HOLD early \u2014 prices rise fast while shops ramp up; sell into the peak."
+    },
+    "MELON": {
+      "early_slope_pct_per_day": -0.00059,
+      "late_slope_pct_per_day": -0.0018,
+      "advice": "Prices near-flat early; sell steadily, watch shop unlocks for pivots."
+    },
+    "EGG": {
+      "early_slope_pct_per_day": -0.00114,
+      "late_slope_pct_per_day": 0.00846,
+      "advice": "Prices near-flat early; sell steadily, watch shop unlocks for pivots."
+    },
+    "MILK": {
+      "early_slope_pct_per_day": 0.03234,
+      "late_slope_pct_per_day": 0.02187,
+      "advice": "HOLD early \u2014 prices rise fast while shops ramp up; sell into the peak."
+    },
+    "WOOL": {
+      "early_slope_pct_per_day": -0.00409,
+      "late_slope_pct_per_day": 0.0099,
+      "advice": "Prices near-flat early; sell steadily, watch shop unlocks for pivots."
+    }
+  }
+}
