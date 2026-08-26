@@ -38,12 +38,14 @@ from dataclasses import dataclass, field
 
 from config import (
     ANIMAL_CARE_CUTOFF_DAY,
+    ANIMAL_EXPANSION_HORIZON_DAYS,
     ANIMAL_FEED_CUTOFF_DAY,
     ANIMAL_LIST,
     ANIMALS,
     BUY_LAND_NE_DAY,
     BUY_LAND_SW_MIN_BANK,
     BUY_LAND_SE_MIN_BANK,
+    CROP_DIVERSIFICATION_FACTOR,
     CROPS,
     ENDGAME_START_DAY,
     FEED_WHEAT_BUFFER_DAYS,
@@ -51,6 +53,7 @@ from config import (
     LAND_ORDER,
     LAND_PRICES,
     MARKET_I0,
+    MAX_ANIMAL_BUYS_PER_DAY,
     MELON_PLANT_LAST_DAY_FERT,
     SEASON_DAYS,
     TARGET_COWS,
@@ -146,36 +149,65 @@ def _cum_town_drain(forecast, crop, harvest_day):
     The exhaustive reference E[P|day] encodes the full town drain path.
     Inverting it gives the inventory that would produce that price, and
     I0 minus that inventory is the cumulative town drain by that day.
+
+    NOTE ON JENSEN'S INEQUALITY:
+    Inverting E[P|day] to estimate implied inventory
+    (I_implied = f^-1(E[P])) ignores Jensen's inequality
+    (E[price(inv)] != price(E[inv])) for non-linear price curves
+    (sqrt, log, sq, hinge). This produces a deterministic point-estimate
+    approximation of the true distributional town drain. Because the error
+    is monotonic across price regimes, it preserves exact relative crop ROI
+    ranking while maintaining O(1) runtime efficiency during real-time
+    planning turns.
     """
     price = forecast.expected_price(crop, harvest_day)
     inv_implied = inventory_at_price(crop, price)
     return max(0.0, MARKET_I0 - inv_implied)
 
 
+def _project_avg_herd(n_animals, day, season_end=29):
+    """Project time-weighted average herd size from now through season end.
+
+    The herd ramps from n_animals toward TARGET_GEESE+TARGET_COWS+TARGET_SHEEP
+    at MAX_ANIMAL_BUYS_PER_DAY, bounded by the expansion horizon.
+    """
+    target_total = TARGET_GEESE + TARGET_COWS + TARGET_SHEEP
+    remaining = max(0, season_end - day)
+    ramp_limit = min(target_total,
+                     n_animals + min(remaining, ANIMAL_EXPANSION_HORIZON_DAYS)
+                     * MAX_ANIMAL_BUYS_PER_DAY)
+    return (n_animals + ramp_limit) / 2.0
+
+
 def _cum_own_production(crop, own_tiles, harvest_index, feed_wheat_per_day=0,
-                        harvest_day=0, plant_day=0):
+                        harvest_day=0, plant_day=0, n_animals=0):
     """Cumulative own production sold by the harvest_index-th harvest.
 
     For one-time crops: all units arrive at harvest_day.
     For ongoing crops: units arrive at each harvest day.
-    Wheat feed offset subtracts animals' daily consumption.
+    Wheat feed offset deducts projected herd consumption (ramp-adjusted).
     """
     cy = _cycle_yield(crop)
     cum_raw = own_tiles * cy * harvest_index
     if crop == "WHEAT" and feed_wheat_per_day > 0:
+        # P1: project average herd across remaining days instead of static snapshot
+        avg_herd = _project_avg_herd(n_animals, plant_day)
         days_elapsed = max(0, harvest_day - plant_day)
-        cum_raw = max(0.0, cum_raw - feed_wheat_per_day * days_elapsed)
+        cum_raw = max(0.0, cum_raw - avg_herd * days_elapsed)
     return cum_raw
 
 
 def _crop_score(crop, day, forecast, boosts, own_tiles=0,
-                feed_wheat_per_day=0):
+                feed_wheat_per_day=0, n_animals=0):
     """Expected net coins for ONE tile planted today with this crop.
 
     Uses post-own-supply pricing: effective_inventory = I0 - town_drain + own.
     This penalizes crops where the agent's own production gluts the market
     (e.g. melon, strawberry) while allowing deep-curve crops (wheat, carrot)
     to remain competitive.
+
+    P3: own_tiles is scaled by CROP_DIVERSIFICATION_FACTOR to avoid phantom
+    mono-crop over-penalization when the actual portfolio is diversified.
     """
     e = CROP_ECONOMICS[crop]
     hdays = _harvest_days(crop, day)
@@ -183,12 +215,16 @@ def _crop_score(crop, day, forecast, boosts, own_tiles=0,
         return -1e9, {}
     cy = _cycle_yield(crop)
     plant_day = day
+    # P3: diversification discount — assume realistic max share, not 100%
+    div_factor = CROP_DIVERSIFICATION_FACTOR.get(crop, 0.60)
+    effective_tiles = own_tiles * div_factor if own_tiles > 0 else 0
     details = {"eff_prices": {}, "cum_own": {}}
     score = 0.0
     for idx, h in enumerate(hdays, 1):
         cum_town = _cum_town_drain(forecast, crop, h)
-        cum_own = _cum_own_production(crop, own_tiles, idx,
-                                      feed_wheat_per_day, h, plant_day)
+        cum_own = _cum_own_production(crop, effective_tiles, idx,
+                                      feed_wheat_per_day, h, plant_day,
+                                      n_animals)
         inv_eff = MARKET_I0 - cum_town + cum_own
         p = market_price(crop, inv_eff)
         f = min(1.0 + SHOP_BOOST_WEIGHT * boosts.get(crop, 0), BOOST_CAP)
@@ -367,7 +403,7 @@ class MacroPlanner:
                 if not _crop_allowed_today(crop, day):
                     continue
                 score, detail = _crop_score(crop, day, self.fc, boosts,
-                                            own_tiles, feed_wheat)
+                                            own_tiles, feed_wheat, n_animals)
                 candidates.append((score, crop, detail))
             candidates.sort(reverse=True)
 

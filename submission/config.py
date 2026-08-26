@@ -113,6 +113,15 @@ FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
 TARGET_GEESE = 18
 TARGET_COWS = 3
 TARGET_SHEEP = 3
+ANIMAL_EXPANSION_HORIZON_DAYS = 14   # ramp projection window
+MAX_ANIMAL_BUYS_PER_DAY = 1          # max new animals placed per day
+
+# Diversification discount: fraction of empty tiles assumed for a single crop
+# in own-supply glut scoring. Prevents phantom mono-crop over-penalization.
+CROP_DIVERSIFICATION_FACTOR = {
+    "WHEAT": 0.50, "CARROT": 0.55, "TOMATO": 0.45,
+    "STRAWBERRY": 0.35, "MELON": 0.40,
+}
 
 # --- market layer (order_builder / market_brain / endgame_liquidator) ------
 MIN_CARRY_GAIN = 0.02          # hold only if E[P|+H] exceeds spot by >2%

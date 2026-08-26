@@ -84,8 +84,20 @@ def build_tasks(ctx, macro):
             dying_tomorrow = t.consecutive_unwatered >= 1
             prio = PRIORITY_URGENT_SURVIVAL if dying_tomorrow else (
                 PRIORITY_BONUS_WATER if in_bonus_window(t, day) else 30)
+            # P4: Day 28 — allow bonus watering for late-planted crops
+            # that are in their bonus window and will harvest by Day 29
             if not macro.watering_enabled:
-                continue
+                if day == 28 and in_bonus_window(t, day):
+                    age = crop_age(t, day)
+                    cd = CROPS.get(t.crop, {})
+                    harvestable_by_29 = (t.planted_day is not None
+                                         and t.planted_day + cd.get("max_yield_day", 99) <= 29)
+                    if harvestable_by_29:
+                        pass  # allow watering — will be queued below
+                    else:
+                        continue
+                else:
+                    continue
             if not dying_tomorrow and macro.water_budget_exceeded:
                 water_starved = True   # skip-day fallback: alternate batches
                 if (t.x + t.y + day) % 2 != 0:
