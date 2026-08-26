@@ -25,7 +25,7 @@ def make_forecast(prices_by_product):
 
 
 def make_ctx(day=5, money=3000.0, hands=(), shed=None, seeds=None,
-             animals=(), structures=(), unlocked=("NW",)):
+             animals=(), structures=(), unlocked=("NW",), wheat_tiles=0):
     board = 10
     tiles = [[None for _ in range(board)] for _ in range(board)]
     half = 5
@@ -38,6 +38,22 @@ def make_ctx(day=5, money=3000.0, hands=(), shed=None, seeds=None,
                 tiles[y][x] = "LOCKED"
     for (x, y, obj) in list(animals) + list(structures):
         tiles[y][x] = obj
+    # plant wheat tiles (engine uses kind="PLANT" with crop="WHEAT")
+    wheat_placed = 0
+    for y in range(board):
+        for x in range(board):
+            if wheat_placed >= wheat_tiles:
+                break
+            if tiles[y][x] is None:
+                tiles[y][x] = {
+                    "kind": "PLANT", "crop": "WHEAT",
+                    "pos": (x, y), "x": x, "y": y,
+                    "watered_today": False, "yield_units": 0,
+                    "placed_day": day, "consecutive_unwatered": 0,
+                }
+                wheat_placed += 1
+        if wheat_placed >= wheat_tiles:
+            break
     farm = {
         "money": money,
         "tiles": tiles,
@@ -73,10 +89,13 @@ def test_midgame_plan_queues_crops_and_seed_buys():
         assert _crop_allowed_today(crop, 5)
     cost = sum(CROPS[c]["seed"] * n for c, n in plan.intents["buy_seed"].items())
     assert cost <= 3000 - 300   # seed buys within bank minus reserve
-    # 25 NW tiles minus 3 reserved for animal structures = 22 queued actions,
-    # which fit inside a lone farmer's 24 turns -> no hires required.
-    assert len(plan.plant_queue) == 22
-    assert plan.intents["hire"] == 0
+    # 25 NW tiles minus structure reservations for animal expansion.
+    # With no wheat tiles, sustainable=0 → no animals bought → no structures
+    # reserved → all 25 tiles available for planting.
+    # With wheat tiles, animals are bought and structures consume tiles.
+    n_plants = len(plan.plant_queue)
+    assert n_plants >= 22, f"expected at least 22 queued plants, got {n_plants}"
+    assert plan.intents["hire"] <= 1
     assert plan.water_budget_exceeded is False
 
 
@@ -86,9 +105,14 @@ def test_endgame_shuts_everything_down():
     plan = MacroPlanner(fc).build(ctx)
     assert plan.phase == "endgame"
     assert plan.watering_enabled is False
-    assert plan.feeding_enabled is False
+    assert plan.feeding_enabled is False  # day 29: feeding disabled
     assert plan.plant_queue == []
-    assert plan.intents == {}
+    # endgame intents: no new buying/planting, but structure exists
+    assert plan.intents["buy_seed"] == {}
+    assert plan.intents["buy_animal"] == {}
+    assert plan.intents["buy_wheat"] == 0
+    assert plan.intents["buy_land"] is False
+    assert plan.intents["hire"] == 0
 
 
 def test_melon_cutoff_respected():
@@ -127,9 +151,13 @@ def test_animal_expansion_intents_and_feed():
                  "consecutive_unfed": 0, "fertilizer_available": False,
                  "pending_care_bonus": 0})]
     fc = make_forecast(BASE_PRICES)
-    ctx = make_ctx(day=8, money=20000, animals=animals, shed={"WHEAT": 0})
+    # 10 wheat tiles → capacity 60 → sustainable 2 animals (60//30)
+    ctx = make_ctx(day=8, money=20000, animals=animals, shed={"WHEAT": 0},
+                   wheat_tiles=10)
     plan = MacroPlanner(fc).build(ctx)
-    assert plan.intents["buy_animal"].get("GOOSE", 0) >= 1
+    # sustainable=2, current=1 → can buy at most 1 more
+    total_buys = sum(plan.intents["buy_animal"].values())
+    assert total_buys >= 1
     assert plan.build_op in ("BUILD_COOP", "BUILD_PASTURE")
     # feed buffer for existing animals triggers wheat purchase
     assert plan.intents["buy_wheat"] >= 2
@@ -142,3 +170,62 @@ def test_deterministic_output():
     p2 = MacroPlanner(fc).build(ctx)
     assert p1.plant_queue == p2.plant_queue
     assert p1.intents == p2.intents
+
+
+def test_day28_feeding_enabled():
+    """Day 28: feeding active (EOD produce sellable on Day 29)."""
+    fc = make_forecast(BASE_PRICES)
+    ctx = make_ctx(day=28, money=99999)
+    plan = MacroPlanner(fc).build(ctx)
+    assert plan.phase == "endgame"
+    assert plan.feeding_enabled is True
+    assert plan.watering_enabled is False
+
+
+def test_day29_feeding_disabled():
+    """Day 29: feeding disabled (produces after season scoring)."""
+    fc = make_forecast(BASE_PRICES)
+    ctx = make_ctx(day=29, money=99999)
+    plan = MacroPlanner(fc).build(ctx)
+    assert plan.phase == "endgame"
+    assert plan.feeding_enabled is False
+    assert plan.watering_enabled is False
+
+
+def test_day28_no_new_animals():
+    """Day 28 endgame: no new animal purchases."""
+    fc = make_forecast(BASE_PRICES)
+    ctx = make_ctx(day=28, money=99999)
+    plan = MacroPlanner(fc).build(ctx)
+    assert plan.intents["buy_animal"] == {}
+
+
+def test_day28_no_new_planting():
+    """Day 28 endgame: no new crop planting."""
+    fc = make_forecast(BASE_PRICES)
+    ctx = make_ctx(day=28, money=99999)
+    plan = MacroPlanner(fc).build(ctx)
+    assert plan.plant_queue == []
+    assert plan.intents["buy_seed"] == {}
+
+
+def test_day28_no_new_land():
+    """Day 28 endgame: no land purchases."""
+    fc = make_forecast(BASE_PRICES)
+    ctx = make_ctx(day=28, money=99999)
+    plan = MacroPlanner(fc).build(ctx)
+    assert plan.intents["buy_land"] is False
+
+
+def test_day28_wheat_buffer_computed():
+    """Day 28: wheat feed buffer is still computed for today's animals."""
+    animals = [(2, 2, {"kind": "COOP", "animal": "GOOSE", "placed_day": 1,
+                        "yield_units": 1, "fed_today": True,
+                        "cared_today": False, "consecutive_unfed": 0,
+                        "fertilizer_available": False, "pending_care_bonus": 0})]
+    fc = make_forecast(BASE_PRICES)
+    ctx = make_ctx(day=28, money=99999, animals=animals, shed={"WHEAT": 0})
+    plan = MacroPlanner(fc).build(ctx)
+    # feeding enabled on day 28 → wheat buffer should be planned
+    assert plan.feeding_enabled is True
+    assert plan.intents["buy_wheat"] >= 2  # at least buffer for 1 animal

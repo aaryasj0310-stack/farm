@@ -80,6 +80,26 @@ def inventory_for_price_at_least(item, min_price):
     return MARKET_I0 + _solve_shape(p["af"], y, p["T"])
 
 
+def inventory_at_price(item, target_price):
+    """Exact continuous inverse of market_price (both branches).
+
+    Scarcity targets (< base) return inventory BELOW I0; glut targets
+    (> base) return inventory ABOVE I0; base returns I0. Targets below the
+    $1 floor are clamped to the floor crossing. Used to convert a forecast
+    price path into the implied underlying inventory path.
+    """
+    p = MARKET_PARAMS[item]
+    base = p["base"]
+    target = max(float(target_price), PRICE_FLOOR)
+    if abs(target - base) < 1e-12:
+        return float(MARKET_I0)
+    if target > base:
+        y = (target - base) / amplitude(item, "below")
+        return float(MARKET_I0 - _solve_shape(p["bf"], y, p["T"]))
+    y = (base - target) / amplitude(item, "above")
+    return float(MARKET_I0 + _solve_shape(p["af"], y, p["T"]))
+
+
 def drip_batch_size(item, current_inventory, keep_frac):
     """Largest Q whose LAST unit still quotes >= keep_frac * spot.
 
