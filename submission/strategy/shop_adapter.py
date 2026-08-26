@@ -1,41 +1,35 @@
-"""Shop-unlock adaptive demand scoring and planting pivots.
-
-v5.8 strategy: Primary crops are MELON (early) and STRAWBERRY (mid-game),
-with WHEAT as feed + filler. Shops modulate which crop to prioritize buying.
-"""
+"""Shop-unlock adaptive demand scoring and planting pivots."""
 from config import SHOPS
 
 
 def demand_boosts(known_shops):
+    """Product -> multiplier reflecting current town shop pressure."""
     boost = {}
     for shop in known_shops:
-        for product in SHOPS.get(shop, []):
+        for product in SHOPS[shop]:
             boost[product] = boost.get(product, 0) + 1
     return boost
 
 
-def preferred_crop(boosts, day, seeds):
-    """Best crop to plant given shop unlocks, calendar, and seed stock."""
-    # v5.8 pattern: melon early, strawberry mid, wheat late/filler
-    if day <= 13:
-        if seeds.get("MELON", 0) > 0:
-            return "MELON"
-        if seeds.get("STRAWBERRY", 0) > 0:
-            return "STRAWBERRY"
-    elif day <= 20:
-        straw_demand = boosts.get("STRAWBERRY", 0)
-        if straw_demand > 0 and seeds.get("STRAWBERRY", 0) > 0:
-            return "STRAWBERRY"
-        if seeds.get("MELON", 0) > 0:
-            return "MELON"
-        if seeds.get("STRAWBERRY", 0) > 0:
-            return "STRAWBERRY"
-    # Fallback: wheat is always useful as feed + sellable
-    return "WHEAT"
+def preferred_filler_crop(boosts, day):
+    """Best crop to drop into spare tiles given shop unlocks and calendar.
+
+    - PET_CAFE (carrot): carrots are cheap, fast (3d) -> always viable filler.
+    - FARMERS_MARKET: carrots again (4 demanded products, carrot cheapest slot).
+    - Ice cream / smoothie / brunch strawberry demand only pays if planted
+      early enough for two harvest windows; otherwise fall back to carrots.
+    """
+    carrot_score = boosts.get("CARROT", 0)
+    straw_score = boosts.get("STRAWBERRY", 0) * 2   # higher base price upside
+    if straw_score > carrot_score and day <= 8:
+        return "STRAWBERRY"
+    if carrot_score > 0 or day >= 20:
+        return "CARROT"
+    return "CARROT"                                  # default cash filler
 
 
 def react_to_new_shops(ctx, mem, macro):
-    """Called each turn: update crop preference from shop unlocks."""
+    """Called daily: update macro.filler_crop from newly unlocked shops."""
     known = mem.get("known_shops", [])
     boosts = demand_boosts(known)
     new_count = len(known)
@@ -43,7 +37,9 @@ def react_to_new_shops(ctx, mem, macro):
     macro["shops_seen"] = new_count
     macro["demand_boosts"] = boosts
     if new_count > prev:
-        macro["shop_event"] = True
+        macro["filler_crop"] = preferred_filler_crop(boosts, ctx["day"])
+        macro["shop_event"] = True     # triggers a small carrot seed buy burst
     else:
+        macro.setdefault("filler_crop", "CARROT")
         macro["shop_event"] = False
     return macro

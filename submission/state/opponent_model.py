@@ -1,12 +1,14 @@
 """Opponent model: public farm scan + market-ledger inference."""
+from observation_parser import crop_age
 from config import CROPS
-from .observation_parser import crop_age
 
 
 def opponent_snapshot(ctx, mem):
-    opp = ctx.get("opponent_farm")
+    """Summarize the opponent's public state each turn."""
+    opp = ctx["opponent_farm"]
     if opp is None:
         return {}
+    ripe_melons = 0
     ripe_crops = {}
     for t in opp.iter_tiles():
         if t.is_plant:
@@ -27,6 +29,11 @@ def opponent_snapshot(ctx, mem):
 
 
 def opponent_primary_product(mem, default="MELON"):
+    """Product the opponent most likely holds for sale (from ledger inference).
+
+    Positive `opp_sales_inferred` means they have been NET ADDING inventory,
+    i.e. dumping that product. Spoiler against their biggest dump channel.
+    """
     inferred = mem.get("opp_sales_inferred", {})
     if not inferred:
         return default

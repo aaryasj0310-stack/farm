@@ -1,28 +1,37 @@
-"""Persistent cross-turn memory and drain ledger tracking."""
-from config import PRODUCTS, SHOPS, TURNS_PER_DAY
-from .observation_parser import parse_observation
+"""Persistent cross-turn memory: episode detection, drain ledger, deadlines."""
+from config import PRODUCTS, SHOPS, TURNS_PER_DAY, log
+from observation_parser import parse_observation
 
+# Module-level (survives across turns within one process/episode).
 _STATE = {
     "episode": None,
     "prev_inventory": None,
     "prev_shed": None,
     "known_shops": [],
-    "town_drain_seen": {},
-    "opp_sales_inferred": {},
-    "our_units_sold": {},
+    "town_drain_seen": {},       # product -> units inferred drained by town
+    "opp_sales_inferred": {},    # product -> units inferred sold by opponent
+    "our_units_sold": {},        # product -> units we sold (from our orders)
+    "noop_attempts": 0,
+    "invalid_guard": 0,
     "days_seen": set(),
 }
 
 
 def get_state(obs):
+    """Parse + update persistent state. Returns (ctx, memory)."""
     mem = _STATE
     ctx = parse_observation(obs)
     if ctx is None:
         return None, mem
 
+    marker = (ctx["day"], id(ctx))
+    # New-episode detection: day went backwards or we saw a future day reset.
     if mem["episode"] is not None and ctx["day"] < mem["episode"].get("last_day", 0):
+        log("new episode detected; resetting memory")
         reset_memory(mem)
 
+    if mem["episode"] is None or ctx["day"] == 0 and not mem["days_seen"]:
+        pass
     mem.setdefault("days_seen", set()).add(ctx["day"])
     mem["episode"] = {"last_day": ctx["day"]}
 
@@ -38,39 +47,76 @@ def reset_memory(mem):
     mem["town_drain_seen"] = {}
     mem["opp_sales_inferred"] = {}
     mem["our_units_sold"] = {}
+    mem["noop_attempts"] = 0
+    mem["invalid_guard"] = 0
     mem["days_seen"] = set()
 
 
 def _update_drain_ledger(ctx, mem):
-    cur_inv = ctx["inventory"]
-    prev_inv = mem.get("prev_inventory")
-    if prev_inv is not None:
-        expected_drain = dict.fromkeys(PRODUCTS, 0)
-        step = ctx["step"]
-        if (step - 1) % 4 == 0:
-            for shop in mem.get("known_shops", []):
-                for p in SHOPS.get(shop, []):
-                    mult = 2 if len(SHOPS[shop]) == 1 else 1
-                    expected_drain[p] += mult
-        if (step - 1) % 24 == 0:
-            for p in PRODUCTS:
-                if p != "FERTILIZER":
-                    expected_drain[p] += 1
+    """market_net_drain = diff(market_inventory) - expected_town_consumption.
 
-        for p in PRODUCTS:
-            c = cur_inv.get(p, 10000)
-            pv = prev_inv.get(p, 10000)
-            actual_diff = c - pv
-            exp_loss = expected_drain[p]
-            unexplained_add = actual_diff + exp_loss
-            our_sold = mem.get("our_units_sold", {}).get(p, 0)
-            opp_sold = max(0, unexplained_add - our_sold)
-            if opp_sold > 0:
-                mem["opp_sales_inferred"][p] = mem.get("opp_sales_inferred", {}).get(p, 0) + opp_sold
+    Everything that is not explained by town consumption must be player
+    activity (ours or opponent's) -> attribute to opponent after subtracting
+    our own recorded sells/buys.
+    """
+    inv_now = ctx["market"].inventory
+    prev = mem["prev_inventory"]
+    if prev is not None:
+        shops = mem.get("known_shops", [])
+        for item in PRODUCTS:
+            delta = inv_now.get(item, 0) - prev.get(item, 0)
+            expected_town = _expected_town_consumption(item, shops, ctx["step"])
+            net_player = -delta - expected_town   # positive => players net added
+            ours = mem["our_units_sold"].get(item, 0)
+            opp_added = net_player - ours
+            if abs(opp_added) >= 1:
+                mem["opp_sales_inferred"][item] = \
+                    mem["opp_sales_inferred"].get(item, 0) + opp_added
+    mem["prev_inventory"] = dict(inv_now)
 
-    mem["prev_inventory"] = dict(cur_inv)
-    mem["our_units_sold"] = {}
+
+def _expected_town_consumption(item, shops, step):
+    """Town consumption that occurred at the PREVIOUS step boundary.
+
+    Consumption happens during interpreter processing of the previous action;
+    between two consecutive agent observations exactly one step elapsed.
+    """
+    prev_step = step - 1
+    if prev_step < 0:
+        return 0.0
+    total = 0.0
+    if prev_step % 4 == 0:
+        for shop in shops:
+            products = SHOPS[shop]
+            mult = 2 if len(products) == 1 else 1
+            if item in products:
+                total += mult
+    if prev_step % TURNS_PER_DAY == 0 and item != "FERTILIZER":
+        total += 1
+    return total
 
 
 def _update_shop_tracker(ctx, mem):
-    mem["known_shops"] = list(ctx.get("unlocked_shops", []))
+    current = list(ctx["town"].unlocked_shops)
+    if len(current) > len(mem.get("known_shops", [])):
+        mem["known_shops"] = current
+        log(f"shops now: {current}")
+
+
+def record_our_sale(product, units):
+    mem = _STATE
+    mem["our_units_sold"][product] = mem["our_units_sold"].get(product, 0) + units
+
+
+def noop_penalty():
+    _STATE["noop_attempts"] += 1
+
+
+def diagnostics():
+    m = _STATE
+    return {
+        "noop_attempts": m["noop_attempts"],
+        "our_units_sold": dict(m["our_units_sold"]),
+        "opp_sales_inferred": {k: round(v, 1) for k, v in m["opp_sales_inferred"].items()},
+        "shops_known": list(m.get("known_shops", [])),
+    }
