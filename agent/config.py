@@ -60,6 +60,7 @@ LAND_PRICES = [1000, 2000, 4000]
 # ------------------------------------------------------------- priorities ---
 PRIORITY_URGENT_SURVIVAL = 100
 PRIORITY_DECAY_HARVEST = 90
+PRIORITY_FEED_STAGING = 86       # PICKUP wheat so upcoming FEEDs can execute
 PRIORITY_PROD_DAY_FEED = 85
 PRIORITY_FERT_COLLECT = 80
 PRIORITY_BONUS_WATER = 70
@@ -110,6 +111,17 @@ FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
 TARGET_GEESE = 18
 TARGET_COWS = 3
 TARGET_SHEEP = 3
+
+# --- market layer (order_builder / market_brain / endgame_liquidator) ------
+MIN_CARRY_GAIN = 0.02          # hold only if E[P|+H] exceeds spot by >2%
+CARRY_HORIZON_DAYS = 3         # recovery look-ahead for hold decisions
+SHED_SOFT_CAP = 80             # start liquidating when shed nears 100 cap
+ENDGAME_RISK_DAYS = 3          # days_left below this => aggressive dumping
+FLOOR_HOLD_MIN_DAYS_LEFT = 5   # hold $1-floored stock only if recovery time
+MIN_SLICE_QTY = 1              # smallest sell slice per product per window
+SELL_SLOT_SHARE = 0.6          # fraction of the 10-order cap for sells
+WHEAT_BUY_PRICE_BUFFER = 1.10  # BUY_PRODUCT quote drifts up as we buy
+MONEY_RESERVE_DEFAULT = 300
 
 DEBUG = False
 

@@ -27,6 +27,18 @@ def parse_args():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--output", type=str, default="results")
     ap.add_argument("--no-plots", action="store_true")
+    # --- exhaustive / convergence extensions (defaults keep legacy MC mode) ---
+    ap.add_argument("--mode", type=str, default="mc",
+                    choices=["mc", "exhaustive", "compare"],
+                    help="mc: legacy Monte Carlo pipeline; exhaustive: full 8^8 "
+                         "enumeration; compare: MC-at-N vs exhaustive reference")
+    ap.add_argument("--exhaustive-scenarios", type=str, default="town_only",
+                    help="csv for --mode exhaustive: town_only,single_player,two_players")
+    ap.add_argument("--batch-size", type=int, default=65536)
+    ap.add_argument("--max-batches", type=int, default=None)
+    ap.add_argument("--ns", type=str, default=None,
+                    help="csv of N values for --mode compare (default 1k..50k)")
+    ap.add_argument("--reps", type=int, default=5)
     return ap.parse_args()
 
 
@@ -97,6 +109,27 @@ def answer_key_questions(town_res, single_res, summary, recs, sweep_levels):
 def main():
     args = parse_args()
     t_start = time.perf_counter()
+
+    if args.mode in ("exhaustive", "compare"):
+        ok, _ = validate_known_points(verbose=False)
+        if not ok:
+            print("PRICE VALIDATION FAILED - aborting.")
+            raise SystemExit(1)
+        if args.mode == "exhaustive":
+            from exhaustive_enumerator import run_exhaustive
+            out = os.path.join(args.output, "exhaustive")
+            run_exhaustive(args.exhaustive_scenarios, args.batch_size,
+                           args.max_batches, out)
+        else:
+            from convergence_study import run_convergence
+            ns = ([int(x) for x in args.ns.split(",")] if args.ns else None)
+            run_convergence(
+                reference=os.path.join(args.output, "exhaustive",
+                                       "town_only_reference.npz"),
+                ns=ns, reps=args.reps, seed_base=args.seed,
+                output_dir=os.path.join(args.output, "convergence"))
+        print(f"done in {time.perf_counter() - t_start:.1f}s")
+        return
 
     print("Step 1: validating price function against known points...")
     ok, _ = validate_known_points(verbose=False)

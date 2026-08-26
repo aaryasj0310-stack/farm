@@ -33,6 +33,17 @@ def cmd_crop_roi(args):
     rows = [data[c] for c in crops if c in data]
     print(f"== CROP ROI ({regime}) ==")
     _print_rows(rows)
+    if args.reference:
+        from distributional_roi import build_distributional_matrices
+        dist = build_distributional_matrices(
+            args.reference, fertilizer_sale_for_animals=False)
+        print(f"== CROP ROI (distributional | {dist['price_model']}) ==")
+        drows = [dist["assets"][c] for c in crops if c in dist["assets"]]
+        keys = ["asset", "strategy", "net_profit", "pptd", "roci_pct",
+                "floor_risk_pct", "price_p10", "price_p90"]
+        print(" | ".join(keys))
+        for r in drows:
+            print(" | ".join(str(r.get(k, "")) for k in keys))
 
 
 def cmd_animal_roi(args):
@@ -54,12 +65,25 @@ def cmd_endgame_cutoffs(args):
         print(f"{asset:12s} {cuts}")
 
 
-def generate_report(path, fertilizer_sale=False):
+def generate_report(path, fertilizer_sale=False, reference=None):
     matrices = build_roi_matrices(fertilizer_sale_for_animals=fertilizer_sale)
     table = build_cutoff_table()
     out_dir = os.path.dirname(path) or "."
     os.makedirs(out_dir, exist_ok=True)
     save_rankings(matrices, os.path.join(out_dir, "profitability_rankings.json"))
+
+    dist = None
+    if reference:
+        from distributional_roi import build_distributional_matrices
+        dist = build_distributional_matrices(
+            reference, fertilizer_sale_for_animals=fertilizer_sale)
+        # keep both regimes in one rankings artifact for old-vs-new comparison
+        with open(os.path.join(out_dir, "profitability_rankings.json"),
+                  "r", encoding="utf-8") as f:
+            combined = json.load(f)
+        combined["distributional"] = dist
+        save_rankings(combined,
+                      os.path.join(out_dir, "profitability_rankings.json"))
 
     lines = [
         "# Kaggriculture Profitability Report",
@@ -90,8 +114,32 @@ def generate_report(path, fertilizer_sale=False):
     for asset, v in table.items():
         hard = v.get("hard_cutoff_fertilized", v.get("hard_cutoff"))
         fy = v.get("first_yield_cutoff", "-")
-        eco = v.get("economic_cutoff_best_variant", v.get("economic_cutoff_base_prices"))
+        eco = v.get("economic_cutoff_best_variant",
+                    v.get("economic_cutoff_base_prices"))
         lines.append(f"| {asset} | {hard} | {fy} | {eco} |")
+
+    if dist is not None:
+        lines += [
+            "",
+            "## Distributional ROI (exhaustive E[P|day]) vs legacy spot_base",
+            "",
+            f"Reference scenario: **{dist['scenario']}** "
+            f"(complete enumeration: {dist['complete_enumeration']}).",
+            "",
+            "| asset | strategy | legacy PPTD | dist PPTD | delta | net (dist) "
+            "| floor risk % | price P10/P90 |",
+            "|---|---|---|---|---|---|---|---|",
+        ]
+        base_assets = matrices["spot_base"]["assets"]
+        for asset in dist["ranking_by_pptd"]:
+            m = dist["assets"][asset]
+            legacy_pptd = base_assets[asset]["pptd"]
+            lines.append(
+                f"| {asset} | {m['strategy']} | ${legacy_pptd:,.2f} | "
+                f"${m['pptd']:,.2f} | ${m['pptd'] - legacy_pptd:+,.2f} | "
+                f"${m['net_profit']:,.0f} | {m.get('floor_risk_pct', 0):.2f} | "
+                f"${m.get('price_p10', 0)}/"
+                f"${m.get('price_p90', 0)} |")
 
     lines += [
         "",
@@ -136,6 +184,9 @@ def main():
     ap.add_argument("--generate-all-plots", metavar="DIR", nargs="?", const="results/plots")
     ap.add_argument("--regime", type=str, default="spot_base",
                     choices=["spot_base", "town_scarcity", "competitive_glut"])
+    ap.add_argument("--reference", type=str, default=None,
+                    help="path to exhaustive reference npz; enables the "
+                         "distributional ROI regime (W4) alongside legacy")
     args = ap.parse_args()
 
     did = False
@@ -151,7 +202,8 @@ def main():
         print(f"plots written to {args.generate_all_plots}: {files}"); did = True
     if args.generate_report:
         generate_report(args.output,
-                        fertilizer_sale=args.include_fertilizer_sale)
+                        fertilizer_sale=args.include_fertilizer_sale,
+                        reference=args.reference)
         did = True
     if not did:
         ap.print_help()

@@ -1,0 +1,113 @@
+{
+  "total_sequences": 16777216,
+  "batch_size": 65536,
+  "workers": 8,
+  "scenarios": {
+    "town_only": {
+      "meta": {
+        "scenario": "town_only",
+        "production_per_day": {},
+        "completed_sequences": 16777216,
+        "complete_enumeration": true,
+        "batch_size": 65536,
+        "workers": 8,
+        "elapsed_seconds": 324.19,
+        "hist_max": 20000,
+        "fused_kernel": true,
+        "fused_mismatch_rate": 6.658011252039016e-05,
+        "products": [
+          "WHEAT",
+          "CARROT",
+          "TOMATO",
+          "STRAWBERRY",
+          "MELON",
+          "EGG",
+          "MILK",
+          "WOOL",
+          "FERTILIZER"
+        ],
+        "analytic_check": {
+          "complete": true,
+          "mean_instances": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "expected_mean": 1.0,
+          "expected_var": 0.875,
+          "ok": true
+        }
+      },
+      "day29_stats": {
+        "WHEAT": {
+          "mean": 47.625,
+          "std": 3.43,
+          "min": 30.0,
+          "max": 54.0,
+          "p_floor": 0.0
+        },
+        "CARROT": {
+          "mean": 75.993,
+          "std": 67.413,
+          "min": 37.0,
+          "max": 2034.0,
+          "p_floor": 0.0
+        },
+        "TOMATO": {
+          "mean": 150.625,
+          "std": 146.938,
+          "min": 64.0,
+          "max": 2016.0,
+          "p_floor": 0.0
+        },
+        "STRAWBERRY": {
+          "mean": 290.227,
+          "std": 33.014,
+          "min": 166.0,
+          "max": 361.0,
+          "p_floor": 0.0
+        },
+        "MELON": {
+          "mean": 280.0,
+          "std": 0.0,
+          "min": 280.0,
+          "max": 280.0,
+          "p_floor": 0.0
+        },
+        "EGG": {
+          "mean": 67.732,
+          "std": 21.364,
+          "min": 52.0,
+          "max": 448.0,
+          "p_floor": 0.0
+        },
+        "MILK": {
+          "mean": 312.534,
+          "std": 38.011,
+          "min": 208.0,
+          "max": 409.0,
+          "p_floor": 0.0
+        },
+        "WOOL": {
+          "mean": 241.774,
+          "std": 9.947,
+          "min": 229.0,
+          "max": 263.0,
+          "p_floor": 0.0
+        },
+        "FERTILIZER": {
+          "mean": 100.0,
+          "std": 0.0,
+          "min": 100.0,
+          "max": 100.0,
+          "p_floor": 0.0
+        }
+      }
+    }
+  }
+}

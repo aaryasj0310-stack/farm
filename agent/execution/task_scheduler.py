@@ -26,15 +26,22 @@ from config import (
     PRIORITY_BUILD_STRUCTURE,
     PRIORITY_CARE_ANIMAL,
     PRIORITY_DECAY_HARVEST,
+    PRIORITY_FEED_STAGING,
     PRIORITY_FERT_COLLECT,
+    PRIORITY_PLACE_ANIMAL,
     PRIORITY_PLANT_AND_WATER,
     PRIORITY_PROD_DAY_FEED,
     PRIORITY_STANDARD_HARVEST,
     PRIORITY_URGENT_SURVIVAL,
     PRIORITY_WEED_DIG,
+    SHED_ACCESS_TILES,
     log,
 )
 from observation_parser import crop_age, in_bonus_window
+
+
+def farm_pos_of(ctx):
+    return ctx["farm"].farmer
 
 
 def produces_today(tile, day):
@@ -88,23 +95,44 @@ def build_tasks(ctx, macro):
         add(prio, "WATER", t.pos, kind="water")
 
     # ---------------- animals ----------------
+    feeds_due = 0
     for t in ctx["farm"].iter_tiles():
         if not t.is_animal:
             continue
+        feed_now = False
         if t.consecutive_unfed >= 1 and not t.fed_today and hour < 23:
             add(PRIORITY_URGENT_SURVIVAL - 1, "FEED", t.pos,
                 kind="feed_rescue", meta={"wheat": 1})
+            feed_now = True
         elif produces_today(t, day) and not t.fed_today:
             add(PRIORITY_PROD_DAY_FEED, "FEED", t.pos,
                 kind="feed_prod", meta={"wheat": 1})
+            feed_now = True
         elif not t.fed_today and hour < 20 and macro.feeding_enabled:
             add(PRIORITY_CARE_ANIMAL - 5, "FEED", t.pos, kind="feed_off",
                 meta={"wheat": 1})
+            feed_now = True
+        feeds_due += 1 if feed_now else 0
         if t.fertilizer_available:
             add(PRIORITY_FERT_COLLECT, "COLLECT_FERTILIZER", t.pos, kind="fert")
         want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
         if want_care and not t.cared_today and hour < 21:
             add(PRIORITY_CARE_ANIMAL, "CARE", t.pos, kind="care")
+
+    # WHEAT STAGING: engine FEED consumes the UNIT's inventory (never the
+    # shed), so staged PICKUP tasks must run before any FEED can succeed.
+    if feeds_due > 0:
+        held = sum(int(inv.get("WHEAT", 0))
+                   for inv in ctx["private"].inventories)
+        shed_wheat = int(ctx["private"].shed.get("WHEAT", 0))
+        grab = min(shed_wheat, max(feeds_due - held, 0))
+        if grab > 0:
+            farmer_pos = tuple(farm_pos_of(ctx))
+            target = min(SHED_ACCESS_TILES,
+                         key=lambda tp: abs(tp[0] - farmer_pos[0])
+                         + abs(tp[1] - farmer_pos[1]))
+            add(PRIORITY_FEED_STAGING, "PICKUP", tuple(target),
+                args=["WHEAT", int(grab)], kind="pickup_wheat")
 
     # ---------------- planting queue (seed-conflict-safe) ----------------
     seeds = ctx["private"].seeds
@@ -122,9 +150,10 @@ def build_tasks(ctx, macro):
     # ---------------- structures & animals ----------------
     for pos in macro.build_queue[:2]:
         add(PRIORITY_BUILD_STRUCTURE, macro.build_op, pos, kind="build")
-    for task in macro.place_queue[:2]:
-        add(PRIORITY_PLACE_ANIMAL, task["op"], task.get("target"),
-            args=task.get("args", []), kind=task["kind"])
+        for task in macro.place_queue[:2]:
+            add(PRIORITY_PLACE_ANIMAL, task["op"], task.get("target"),
+                args=task.get("args", []),
+                kind=task.get("kind", "place_animal"))
 
     # ---------------- weeds ----------------
     blocked = {tuple(p) for p, _ in macro.plant_queue}
@@ -145,13 +174,38 @@ def assign_tasks(tasks, ctx, extra_units=()):
         units.append((idx, tuple(pos)))
     pos_by_idx = dict(units)
 
+    # Holder map for PLACE tasks: engine PLACE requires the ACTING unit to
+    # hold the animal, so dispatch must prefer/require holding units.
+    holders = {}
+    private = ctx.get("private")
+    if private is not None:
+        for u_idx, inv in enumerate(private.inventories):
+            for item, cnt in (inv or {}).items():
+                if cnt > 0:
+                    holders.setdefault(item, []).append(u_idx)
+
+    def _eligible(task):
+        """Units that could execute this task this turn without a no-op."""
+        if task["op"] == "PLACE" and task.get("args"):
+            item = task["args"][0]
+            if item in ANIMALS:
+                return set(holders.get(item, []))   # empty => defer, don't no-op
+        return None                                  # no restriction
+
     busy = set()
     assignment = {}          # unit_idx -> task
+    deferred_place = []
     for task in sorted(tasks, key=lambda t: -t["priority"]):
+        eligible = _eligible(task)
+        if eligible is not None and not eligible:
+            deferred_place.append(task)               # nobody holds it yet
+            continue
         target = task.get("target") or tuple(farm.farmer)
         best, best_d = None, 10 ** 9
         for idx, pos in units:
             if idx in busy:
+                continue
+            if eligible is not None and idx not in eligible:
                 continue
             d = abs(pos[0] - target[0]) + abs(pos[1] - target[1])
             if d < best_d:
@@ -193,6 +247,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         "watered_now": watered_now,
         "harvested": harvested,
         "fed": fed_animals,
+        "deferred_place": [t.get("args", [None])[0] for t in deferred_place],
     }
 
 

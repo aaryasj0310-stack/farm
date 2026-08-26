@@ -1,0 +1,219 @@
+{
+  "reference": "results/exhaustive/town_only_reference.npz",
+  "ns": [
+    1000,
+    5000,
+    10000,
+    25000,
+    50000,
+    100000,
+    200000
+  ],
+  "reps_per_n": 5,
+  "seed_base": 42,
+  "tolerances": {
+    "mean_usd": 0.5,
+    "mean_rel": 0.01,
+    "thresh_pp": 0.5,
+    "tv": 0.05
+  },
+  "rows": [
+    {
+      "N": 1000,
+      "reps": 5,
+      "elapsed_s": 1.23,
+      "worst_rep": {
+        "mean_err_max_usd": 9.3148,
+        "worst_mean_cell": {
+          "day": 29,
+          "product": "TOMATO",
+          "err_usd": 9.315,
+          "exact_mean": 150.63
+        },
+        "mean_err_median_usd": 0.0567,
+        "day29_all_products_ok": false,
+        "std_rel_err_max": 0.19849,
+        "thresh_err_max_pp": 3.8578,
+        "worst_thresh_cell": {
+          "product": "MILK",
+          "threshold": 240,
+          "by_day": 15,
+          "err_pp": 3.858,
+          "exact_p": 0.5384
+        },
+        "tv_max": 0.10447,
+        "rep": 0
+      },
+      "sufficient": false
+    },
+    {
+      "N": 5000,
+      "reps": 5,
+      "elapsed_s": 1.89,
+      "worst_rep": {
+        "mean_err_max_usd": 1.8856,
+        "worst_mean_cell": {
+          "day": 29,
+          "product": "CARROT",
+          "err_usd": 1.886,
+          "exact_mean": 75.99
+        },
+        "mean_err_median_usd": 0.0159,
+        "day29_all_products_ok": false,
+        "std_rel_err_max": 0.12674,
+        "thresh_err_max_pp": 1.2501,
+        "worst_thresh_cell": {
+          "product": "EGG",
+          "threshold": 62,
+          "by_day": 29,
+          "err_pp": 1.25,
+          "exact_p": 0.5291
+        },
+        "tv_max": 0.05279,
+        "rep": 0
+      },
+      "sufficient": false
+    },
+    {
+      "N": 10000,
+      "reps": 5,
+      "elapsed_s": 3.12,
+      "worst_rep": {
+        "mean_err_max_usd": 2.2313,
+        "worst_mean_cell": {
+          "day": 29,
+          "product": "TOMATO",
+          "err_usd": 2.231,
+          "exact_mean": 150.63
+        },
+        "mean_err_median_usd": 0.0213,
+        "day29_all_products_ok": false,
+        "std_rel_err_max": 0.03126,
+        "thresh_err_max_pp": 0.8966,
+        "worst_thresh_cell": {
+          "product": "CARROT",
+          "threshold": 50,
+          "by_day": 25,
+          "err_pp": 0.897,
+          "exact_p": 0.5595
+        },
+        "tv_max": 0.03456,
+        "rep": 1
+      },
+      "sufficient": false
+    },
+    {
+      "N": 25000,
+      "reps": 5,
+      "elapsed_s": 5.73,
+      "worst_rep": {
+        "mean_err_max_usd": 2.5278,
+        "worst_mean_cell": {
+          "day": 29,
+          "product": "TOMATO",
+          "err_usd": 2.528,
+          "exact_mean": 150.63
+        },
+        "mean_err_median_usd": 0.0079,
+        "day29_all_products_ok": false,
+        "std_rel_err_max": 0.02711,
+        "thresh_err_max_pp": 0.7947,
+        "worst_thresh_cell": {
+          "product": "CARROT",
+          "threshold": 44,
+          "by_day": 20,
+          "err_pp": 0.795,
+          "exact_p": 0.5798
+        },
+        "tv_max": 0.02469,
+        "rep": 3
+      },
+      "sufficient": false
+    },
+    {
+      "N": 50000,
+      "reps": 5,
+      "elapsed_s": 9.78,
+      "worst_rep": {
+        "mean_err_max_usd": 1.0547,
+        "worst_mean_cell": {
+          "day": 29,
+          "product": "CARROT",
+          "err_usd": 1.055,
+          "exact_mean": 75.99
+        },
+        "mean_err_median_usd": 0.0093,
+        "day29_all_products_ok": false,
+        "std_rel_err_max": 0.05939,
+        "thresh_err_max_pp": 0.4792,
+        "worst_thresh_cell": {
+          "product": "STRAWBERRY",
+          "threshold": 250,
+          "by_day": 25,
+          "err_pp": 0.479,
+          "exact_p": 0.7578
+        },
+        "tv_max": 0.0174,
+        "rep": 4
+      },
+      "sufficient": false
+    },
+    {
+      "N": 100000,
+      "reps": 5,
+      "elapsed_s": 17.28,
+      "worst_rep": {
+        "mean_err_max_usd": 1.1784,
+        "worst_mean_cell": {
+          "day": 29,
+          "product": "TOMATO",
+          "err_usd": 1.178,
+          "exact_mean": 150.63
+        },
+        "mean_err_median_usd": 0.0103,
+        "day29_all_products_ok": true,
+        "std_rel_err_max": 0.01631,
+        "thresh_err_max_pp": 0.4508,
+        "worst_thresh_cell": {
+          "product": "TOMATO",
+          "threshold": 120,
+          "by_day": 29,
+          "err_pp": 0.451,
+          "exact_p": 0.3474
+        },
+        "tv_max": 0.01167,
+        "rep": 4
+      },
+      "sufficient": true
+    },
+    {
+      "N": 200000,
+      "reps": 5,
+      "elapsed_s": 35.99,
+      "worst_rep": {
+        "mean_err_max_usd": 0.3262,
+        "worst_mean_cell": {
+          "day": 29,
+          "product": "TOMATO",
+          "err_usd": 0.326,
+          "exact_mean": 150.63
+        },
+        "mean_err_median_usd": 0.0028,
+        "day29_all_products_ok": true,
+        "std_rel_err_max": 0.01305,
+        "thresh_err_max_pp": 0.1663,
+        "worst_thresh_cell": {
+          "product": "EGG",
+          "threshold": 62,
+          "by_day": 25,
+          "err_pp": 0.166,
+          "exact_p": 0.3598
+        },
+        "tv_max": 0.00726,
+        "rep": 4
+      },
+      "sufficient": true
+    }
+  ],
+  "smallest_sufficient_N": 100000
+}

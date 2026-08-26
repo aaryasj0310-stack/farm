@@ -97,9 +97,15 @@ class MonteCarloRunner:
                 prod[k] = float(v)
         return np.array([prod[p] for p in PRODUCTS], dtype=np.float64)
 
-    def run(self, player_production=None, name="scenario", rng=None, draws=None):
+    def run(self, player_production=None, name="scenario", rng=None, draws=None,
+            compute_prices=True):
         """Run n_simulations seasons. `draws` may be passed to reuse the same
-        unlock sequences across runs (common random numbers)."""
+        unlock sequences across runs (common random numbers).
+
+        compute_prices=False skips the per-product price evaluation and
+        returns prices=None (used by the exhaustive enumerator, which prices
+        batches with its own validated fused kernel).
+        """
         rng = rng if rng is not None else np.random.default_rng(self.seed)
         n = self.n_simulations
         if draws is None:
@@ -119,7 +125,14 @@ class MonteCarloRunner:
         cum_prod = prod_vec[None, None, :] * np.arange(1, N_DAYS + 1, dtype=np.float32)[:, None]
         inventory = (I0 - cum_demand + cum_prod).astype(np.float32)
 
-        prices = np.empty((n, N_DAYS, N_PRODUCTS), dtype=np.int32)
+        if not compute_prices:
+            return ScenarioResult(
+                name=name, n_simulations=int(draws.shape[0]),
+                production_per_day=dict(zip(PRODUCTS, prod_vec.tolist())),
+                draws=draws, daily_demand=daily_demand,
+                inventory=inventory, prices=None)
+
+        prices = np.empty(draws.shape[:1] + (N_DAYS, N_PRODUCTS), dtype=np.int32)
         for i, product in enumerate(PRODUCTS):
             prices[:, :, i] = compute_price_vectorized(product, inventory[:, :, i])
 
