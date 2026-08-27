@@ -42,6 +42,7 @@ PRODUCTS = ["WHEAT", "CARROT", "TOMATO", "STRAWBERRY", "MELON",
 ANIMAL_LIST = list(ANIMALS)
 
 MARKET_I0 = 10000
+STARTING_MONEY = 1000
 PRICE_FLOOR = 1
 MARKET_PARAMS = {
     "WHEAT":      {"base": 25,  "T": 400, "bf": "sqrt",  "bt": 0.80, "af": "log",    "at": 0.20},
@@ -9649,13 +9650,33 @@ class MacroPlanner:
                             int(max(0, remaining_money) // 25))
             remaining_money -= buy_wheat * 25
 
-        # ---------------- land expansion (Fix 5) ----------------------
+        # ---- Adaptive land expansion ----
         buy_land = False
         if not is_endgame:
             n_extra_unlocked = len(farm.unlocked) - 1
-            if n_extra_unlocked < len(LAND_ORDER):
+            if n_extra_unlocked < len(LAND_ORDER):  # ["NE", "SW"] — no SE
                 price = LAND_PRICES[n_extra_unlocked]
-                if ctx["farm"].money >= price + self.reserve + 200:
+                current_load = estimate_daily_load(ctx) + len(plant_queue)
+                effective_capacity = (1 + len(farm.hands) + hires) * EFFECTIVE_ACTIONS_PER_UNIT
+                spare_capacity = max(0, effective_capacity - current_load)
+                tiles_added = 25  # each quadrant adds 25 tiles
+
+                # Condition 1: enough spare action capacity to service the new tiles
+                # (prevents weed cascade on existing tiles)
+                can_service = spare_capacity >= tiles_added
+
+                # Condition 2: first harvest income available (not just starting capital)
+                # Wheat planted day 1 → harvest day 5. Geese produce from day 4+.
+                has_income = day >= 5 or ctx["farm"].money > STARTING_MONEY
+
+                # Condition 3: geese partially stocked (animals are higher ROI than land)
+                geese_started = n_animals >= min(3, TARGET_GEESE)
+
+                # Condition 4: affordable after reserving feed buffer
+                feed_buffer = n_animals * FEED_WHEAT_BUFFER_DAYS * 25  # wheat at ~$25
+                affordable = ctx["farm"].money >= price + MONEY_RESERVE + feed_buffer
+
+                if can_service and has_income and geese_started and affordable:
                     buy_land = True
                     remaining_money -= price
 

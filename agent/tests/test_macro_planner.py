@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from observation_parser import parse_observation
-from config import CROPS
+from config import CROPS, TARGET_GEESE
 from strategy.macro_planner import MacroPlanner, _crop_allowed_today
 
 
@@ -379,11 +379,17 @@ def test_budget_hire_land_animal_deducted_before_seeds():
 # ─── Land Expansion Without Day Gate (Fix 5) ─────────────────────────────────
 
 def test_land_expansion_early_if_affordable():
-    """Land should be bought on day 8 if affordable (no day gate blocks it)."""
+    """Land bought adaptively: day 8, 3+ geese, spare capacity, income."""
+    geese_pos = [(0, 0), (1, 0), (2, 0)]
+    animals = [(x, y, {"kind": "COOP", "animal": "GOOSE", "placed_day": 1,
+                "yield_units": 1, "fed_today": True, "cared_today": False,
+                "consecutive_unfed": 0, "fertilizer_available": False,
+                "pending_care_bonus": 0}) for x, y in geese_pos]
     fc = make_forecast(BASE_PRICES)
-    ctx = make_ctx(day=8, money=5000, unlocked=("NW",))
+    ctx = make_ctx(day=8, money=5000, unlocked=("NW",), animals=animals,
+                   shed={"WHEAT": 0}, wheat_tiles=6)
     plan = MacroPlanner(fc).build(ctx)
-    assert plan.intents["buy_land"] is True, "land should be bought early if affordable"
+    assert plan.intents["buy_land"] is True, "adaptive: day 8, geese stocked, capacity ok → buy land"
 
 
 def test_land_expansion_skipped_when_broke():

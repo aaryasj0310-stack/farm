@@ -32,6 +32,7 @@ PRODUCTS = ["WHEAT", "CARROT", "TOMATO", "STRAWBERRY", "MELON",
 ANIMAL_LIST = list(ANIMALS)
 
 MARKET_I0 = 10000
+STARTING_MONEY = 1000
 PRICE_FLOOR = 1
 MARKET_PARAMS = {
     "WHEAT":      {"base": 25,  "T": 400, "bf": "sqrt",  "bt": 0.80, "af": "log",    "at": 0.20},
