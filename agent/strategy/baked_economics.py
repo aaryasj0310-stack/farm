@@ -1,4 +1,4 @@
-﻿"""Baked asset economics artifact.
+"""Baked asset economics artifact.
 
 Authoritative source of season-long yield, cost, and lifecycle metrics
 derived from simulations/profitability_calculator. Consumed by MacroPlanner

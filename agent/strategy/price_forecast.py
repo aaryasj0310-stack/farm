@@ -22,8 +22,8 @@ import json
 import os
 
 # Repo layout: <root>/agent/strategy/price_forecast.py
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_REPO_ROOT = os.path.dirname(os.path.dirname(_HERE))
+_HERE = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
+_REPO_ROOT = os.path.dirname(os.path.dirname(_HERE)) if "_HERE" in globals() else os.getcwd()
 DEFAULT_REFERENCE = os.path.join(
     _REPO_ROOT, "simulations", "monte_carlo_shops", "results", "exhaustive",
     "town_only_reference.npz")
@@ -142,6 +142,8 @@ class PriceForecast:
     @staticmethod
     def load(reference_path=None):
         """Baked module first, then npz reference. Raises if neither exists."""
+        if "PRICE_TABLE" in globals():
+            return PriceForecast.from_table(globals()["PRICE_TABLE"])
         try:
             from baked_price_table import PRICE_TABLE      # bundled flat layout
             return PriceForecast.from_table(PRICE_TABLE)
