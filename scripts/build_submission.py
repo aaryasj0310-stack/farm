@@ -118,9 +118,7 @@ def build_single_file_submission(sub_dir: str, dist_dir: str) -> str:
         content = pattern_std_imports.sub("", content)
 
         if mod == "main.py":
-            content = re.sub(r'_DIR_CANDIDATES\s*=\s*\[.*?\]', '', content, flags=re.DOTALL)
-            content = re.sub(r'_PKG_DIR\s*=.*', '', content)
-            content = re.sub(r'if _PKG_DIR not in sys\.path:.*?(?=PASS_ACTION)', '', content, flags=re.DOTALL)
+            content = re.sub(r'# Safe path injection.*?(?=PASS_ACTION)', '', content, flags=re.DOTALL)
 
         lines_out.append(content.strip())
         lines_out.append("\n# " + "="*75 + f"\n# END MODULE: {mod}\n# " + "="*75 + "\n")

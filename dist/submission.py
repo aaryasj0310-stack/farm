@@ -10189,11 +10189,6 @@ Submission Rule Compliance:
 
 
 
-# Safe path injection for Kaggle execution environment (where __file__ is undefined)
-_CWD = os.getcwd()
-
-
-
 PASS_ACTION = {"farmer": ["PASS"], "hands": [], "market": []}
 
 # Singleton / lazy-loaded instances

@@ -23,36 +23,59 @@ from typing import Any, Dict, Optional
 # Safe path injection for Kaggle execution environment (where __file__ is undefined)
 _CWD = os.getcwd()
 _DIR_CANDIDATES = [
-    os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else None,
+    "/kaggle_simulations/agent",
     os.path.join(_CWD, "agent"),
     os.path.join(_CWD, "submission"),
     _CWD,
+    os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else None,
 ]
-_PKG_DIR = next((p for p in _DIR_CANDIDATES if p and os.path.exists(os.path.join(p, "config.py"))), _CWD)
 
-if _PKG_DIR not in sys.path:
-    sys.path.insert(0, _PKG_DIR)
-for _sub in ("state", "strategy", "execution", "market"):
-    _sub_path = os.path.join(_PKG_DIR, _sub)
-    if os.path.exists(_sub_path) and _sub_path not in sys.path:
-        sys.path.insert(0, _sub_path)
+for _base in _DIR_CANDIDATES:
+    if _base and os.path.exists(_base):
+        if _base not in sys.path:
+            sys.path.insert(0, _base)
+        for _sub in ("state", "strategy", "execution", "market"):
+            _sub_path = os.path.join(_base, _sub)
+            if os.path.exists(_sub_path) and _sub_path not in sys.path:
+                sys.path.insert(0, _sub_path)
 
-from observation_parser import parse_observation
-from strategy.price_forecast import PriceForecast
-from strategy.macro_planner import MacroPlanner
-from strategy.endgame_liquidator import EndgameLiquidator
-from strategy.shop_adapter import demand_boosts
-from strategy.opponent_advisor import build_opponent_advice
-from execution.task_scheduler import assign_tasks, build_tasks
-from market.order_builder import OrderBuilder
-from market.market_brain import MarketBrain
-from state.state_tracker import get_state, record_our_sale
-from state.opponent_model import (
-    snapshot_opponent_farm, detect_tile_deltas, infer_turn_transactions,
-    forecast_opponent_production, get_imminent_harvests,
-    summarize_opponent_commitments, update_opponent_shed_estimate,
-    compute_opponent_sell_probabilities,
-)
+try:
+    from observation_parser import parse_observation
+except ImportError:
+    from state.observation_parser import parse_observation
+
+try:
+    from strategy.price_forecast import PriceForecast
+    from strategy.macro_planner import MacroPlanner
+    from strategy.endgame_liquidator import EndgameLiquidator
+    from strategy.shop_adapter import demand_boosts
+    from strategy.opponent_advisor import build_opponent_advice
+    from execution.task_scheduler import assign_tasks, build_tasks
+    from market.order_builder import OrderBuilder
+    from market.market_brain import MarketBrain
+    from state.state_tracker import get_state, record_our_sale
+    from state.opponent_model import (
+        snapshot_opponent_farm, detect_tile_deltas, infer_turn_transactions,
+        forecast_opponent_production, get_imminent_harvests,
+        summarize_opponent_commitments, update_opponent_shed_estimate,
+        compute_opponent_sell_probabilities,
+    )
+except ImportError:
+    from price_forecast import PriceForecast
+    from macro_planner import MacroPlanner
+    from endgame_liquidator import EndgameLiquidator
+    from shop_adapter import demand_boosts
+    from opponent_advisor import build_opponent_advice
+    from task_scheduler import assign_tasks, build_tasks
+    from order_builder import OrderBuilder
+    from market_brain import MarketBrain
+    from state_tracker import get_state, record_our_sale
+    from opponent_model import (
+        snapshot_opponent_farm, detect_tile_deltas, infer_turn_transactions,
+        forecast_opponent_production, get_imminent_harvests,
+        summarize_opponent_commitments, update_opponent_shed_estimate,
+        compute_opponent_sell_probabilities,
+    )
 
 PASS_ACTION = {"farmer": ["PASS"], "hands": [], "market": []}
 
