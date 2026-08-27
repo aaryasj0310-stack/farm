@@ -114,6 +114,8 @@ BUY_LAND_SE_MIN_BANK = 5200
 MELON_PLANT_LAST_DAY_FERT = 17    # last planting that still harvests by 29
 MELON_PLANT_LAST_DAY = 19
 
+EFFECTIVE_ACTIONS_PER_UNIT = 12
+MIN_HANDS_BASE = 4
 HIRE_BUDGET_MAX_HANDS = 7
 ENDGAME_START_DAY = 28
 ANIMAL_FEED_CUTOFF_DAY = 29     # feeding active Days 0–28; disabled Day 29
@@ -9494,6 +9496,8 @@ class MacroPlanner:
         wheat_cap = compute_wheat_capacity(wheat_tile_days, day)
         wheat_have = int(private.shed.get("WHEAT", 0))
         sustainable = compute_sustainable_animals(wheat_cap, days_left)
+        if day <= 2:
+            sustainable = max(sustainable, PHASE1_GEESE_DAY0_2)
 
         # --- wheat deficit detection ---
         deficit, trigger = detect_wheat_deficit(
@@ -9845,7 +9849,19 @@ class OrderBuilder:
                 spent += est
                 continue
             # partial trim for count-based kinds
-            if kind == "seed":
+            if kind == "hire":
+                n_max = 0
+                while n_max < payload["count"] and hire_total_cost(n_max + 1) <= remaining + 1e-9:
+                    n_max += 1
+                if n_max > 0:
+                    c = float(hire_total_cost(n_max))
+                    kept.append((tier, "hire", {"count": n_max}, c))
+                    spent += c
+                    ledger["dropped"].append(
+                        {"kind": "hire", "trimmed_from": payload["count"], "to": n_max})
+                else:
+                    ledger["dropped"].append({"kind": "hire", "reason": "budget"})
+            elif kind == "seed":
                 unit = CROPS[payload["crop"]]["seed"]
                 n_max = int(remaining // unit)
                 if n_max > 0:

@@ -56,6 +56,7 @@ from config import (
     MARKET_I0,
     MAX_ANIMAL_BUYS_PER_DAY,
     MELON_PLANT_LAST_DAY_FERT,
+    PHASE1_GEESE_DAY0_2,
     SEASON_DAYS,
     STARTING_MONEY,
     TARGET_COWS,
@@ -342,6 +343,8 @@ class MacroPlanner:
         wheat_cap = compute_wheat_capacity(wheat_tile_days, day)
         wheat_have = int(private.shed.get("WHEAT", 0))
         sustainable = compute_sustainable_animals(wheat_cap, days_left)
+        if day <= 2:
+            sustainable = max(sustainable, PHASE1_GEESE_DAY0_2)
 
         # --- wheat deficit detection ---
         deficit, trigger = detect_wheat_deficit(

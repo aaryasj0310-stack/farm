@@ -119,7 +119,19 @@ class OrderBuilder:
                 spent += est
                 continue
             # partial trim for count-based kinds
-            if kind == "seed":
+            if kind == "hire":
+                n_max = 0
+                while n_max < payload["count"] and hire_total_cost(n_max + 1) <= remaining + 1e-9:
+                    n_max += 1
+                if n_max > 0:
+                    c = float(hire_total_cost(n_max))
+                    kept.append((tier, "hire", {"count": n_max}, c))
+                    spent += c
+                    ledger["dropped"].append(
+                        {"kind": "hire", "trimmed_from": payload["count"], "to": n_max})
+                else:
+                    ledger["dropped"].append({"kind": "hire", "reason": "budget"})
+            elif kind == "seed":
                 unit = CROPS[payload["crop"]]["seed"]
                 n_max = int(remaining // unit)
                 if n_max > 0:
