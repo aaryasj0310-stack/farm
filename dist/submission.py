@@ -8711,7 +8711,8 @@ def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx):
                 expected = forecast[product][best_day]
 
         # Get current spot price from market inventory
-        inv = ctx.get("market", {}).get("inventory", {}) if ctx else {}
+        market_obj = ctx.get("market") if ctx else None
+        inv = getattr(market_obj, "inventory", {}) if market_obj else {}
         current_inv = inv.get(product, 10000)
 
         # Import market_price at function scope to avoid circular import issues
