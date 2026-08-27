@@ -121,6 +121,10 @@ ENDGAME_START_DAY = 28
 ANIMAL_FEED_CUTOFF_DAY = 29     # feeding active Days 0–28; disabled Day 29
 ANIMAL_CARE_CUTOFF_DAY = 29     # care active Days 0–28; disabled Day 29
 
+# ROI-based land expansion
+LAND_ROI_THRESHOLD = 1.5       # minimum lifetime_profit / price ratio
+LAND_BUY_LAST_DAY = 20         # hard cutoff — land bought after Day 20 can't pay back
+
 # Static crop caps — safety net to prevent monoculture if scoring has bugs.
 # Portfolio-aware scoring (Fix 3) is the primary diversification mechanism.
 CROP_TILE_CAPS = {
@@ -9654,35 +9658,60 @@ class MacroPlanner:
                             int(max(0, remaining_money) // 25))
             remaining_money -= buy_wheat * 25
 
-        # ---- Adaptive land expansion ----
+        # ---- ROI-based land expansion ----
         buy_land = False
-        if not is_endgame:
+        if not is_endgame and day <= LAND_BUY_LAST_DAY:
             n_extra_unlocked = len(farm.unlocked) - 1
-            if n_extra_unlocked < len(LAND_ORDER):  # ["NE", "SW"] — no SE
+            if n_extra_unlocked < len(LAND_ORDER):
                 price = LAND_PRICES[n_extra_unlocked]
-                current_load = estimate_daily_load(ctx) + len(plant_queue)
-                effective_capacity = (1 + len(farm.hands) + hires) * EFFECTIVE_ACTIONS_PER_UNIT
-                spare_capacity = max(0, effective_capacity - current_load)
-                tiles_added = 25  # each quadrant adds 25 tiles
+                tiles_added = 25
+                days_remaining = max(0, 29 - day)
 
-                # Condition 1: enough spare action capacity to service the new tiles
-                # (prevents weed cascade on existing tiles)
-                can_service = spare_capacity >= tiles_added
+                # Safety: cash reserve
+                if ctx["farm"].money < price + MONEY_RESERVE:
+                    pass  # can't afford
+                # Safety: feed secured for existing animals
+                elif n_animals > 0 and wheat_have < n_animals * FEED_WHEAT_BUFFER_DAYS:
+                    pass  # feed not secured — don't expand
+                else:
+                    # Score the top 4 crops, allocate tiles proportionally to caps,
+                    # and sum expected lifetime profit.
+                    crop_scores = []
+                    for crop in CROPS:
+                        if not _crop_allowed_today(crop, day):
+                            continue
+                        score, _ = _crop_score(crop, day, self.fc, boosts,
+                                               own_tiles=0,
+                                               feed_wheat_per_day=n_animals,
+                                               n_animals=n_animals,
+                                               opp_advice=opp_advice)
+                        if score > 0:
+                            crop_scores.append((score, crop))
+                    crop_scores.sort(reverse=True)
 
-                # Condition 2: first harvest income available (not just starting capital)
-                # Wheat planted day 1 → harvest day 5. Geese produce from day 4+.
-                has_income = day >= 5 or ctx["farm"].money > STARTING_MONEY
+                    # Allocate tiles: top crop gets up to its cap, then next, etc.
+                    total_daily_profit = 0.0
+                    tiles_used = 0
+                    # Count current planned tiles per crop from plant_queue
+                    planned = {}
+                    for _, cq in plant_queue:
+                        planned[cq] = planned.get(cq, 0) + 1
+                    for score, crop in crop_scores:
+                        if tiles_used >= tiles_added:
+                            break
+                        cap = CROP_TILE_CAPS.get(crop, 99)
+                        remaining_cap = max(0, cap - planned.get(crop, 0))
+                        alloc = min(remaining_cap, tiles_added - tiles_used)
+                        if alloc <= 0:
+                            continue
+                        total_daily_profit += score * alloc
+                        planned[crop] = planned.get(crop, 0) + alloc
+                        tiles_used += alloc
 
-                # Condition 3: geese partially stocked (animals are higher ROI than land)
-                geese_started = n_animals >= min(3, TARGET_GEESE)
-
-                # Condition 4: affordable after reserving feed buffer
-                feed_buffer = n_animals * FEED_WHEAT_BUFFER_DAYS * 25  # wheat at ~$25
-                affordable = ctx["farm"].money >= price + MONEY_RESERVE + feed_buffer
-
-                if can_service and has_income and geese_started and affordable:
-                    buy_land = True
-                    remaining_money -= price
+                    lifetime_profit = total_daily_profit * days_remaining
+                    if lifetime_profit > price * LAND_ROI_THRESHOLD:
+                        buy_land = True
+                        remaining_money -= price
 
         # ---------------- hiring (computed above) ----------------------
         load = estimate_daily_load(ctx) + len(plant_queue)

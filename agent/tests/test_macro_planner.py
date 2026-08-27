@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from observation_parser import parse_observation
-from config import CROPS, TARGET_GEESE
+from config import CROPS
 from strategy.macro_planner import MacroPlanner, _crop_allowed_today
 
 
@@ -376,10 +376,11 @@ def test_budget_hire_land_animal_deducted_before_seeds():
     assert seed_cost <= 2000 - 300, f"seed cost {seed_cost} should fit within budget"
 
 
-# ─── Land Expansion Without Day Gate (Fix 5) ─────────────────────────────────
+# ─── ROI-Based Land Expansion ────────────────────────────────────────────────
 
-def test_land_expansion_early_if_affordable():
-    """Land bought adaptively: day 8, 3+ geese, spare capacity, income."""
+def test_land_expansion_roi_positive_when_profitable():
+    """Land bought when expected lifetime profit exceeds price * ROI_THRESHOLD.
+    Day 8, 3 geese, $5000 — high crop scores → ROI > 1.5 → buy."""
     geese_pos = [(0, 0), (1, 0), (2, 0)]
     animals = [(x, y, {"kind": "COOP", "animal": "GOOSE", "placed_day": 1,
                 "yield_units": 1, "fed_today": True, "cared_today": False,
@@ -387,14 +388,46 @@ def test_land_expansion_early_if_affordable():
                 "pending_care_bonus": 0}) for x, y in geese_pos]
     fc = make_forecast(BASE_PRICES)
     ctx = make_ctx(day=8, money=5000, unlocked=("NW",), animals=animals,
-                   shed={"WHEAT": 0}, wheat_tiles=6)
+                   shed={"WHEAT": 10}, wheat_tiles=6)
     plan = MacroPlanner(fc).build(ctx)
-    assert plan.intents["buy_land"] is True, "adaptive: day 8, geese stocked, capacity ok → buy land"
+    assert plan.intents["buy_land"] is True, \
+        "ROI: profitable crops + sufficient days remaining → buy land"
 
 
-def test_land_expansion_skipped_when_broke():
-    """Land should not be bought if money < price + reserve."""
+def test_land_expansion_roi_skipped_when_broke():
+    """Land not bought if money < price + MONEY_RESERVE."""
     fc = make_forecast(BASE_PRICES)
     ctx = make_ctx(day=8, money=800, unlocked=("NW",))
     plan = MacroPlanner(fc).build(ctx)
-    assert plan.intents["buy_land"] is False
+    assert plan.intents["buy_land"] is False, \
+        "ROI: insufficient cash → no land"
+
+
+def test_land_expansion_roi_skipped_after_day20():
+    """Hard cutoff: no land after day 20 regardless of ROI."""
+    geese_pos = [(0, 0), (1, 0), (2, 0)]
+    animals = [(x, y, {"kind": "COOP", "animal": "GOOSE", "placed_day": 1,
+                "yield_units": 1, "fed_today": True, "cared_today": False,
+                "consecutive_unfed": 0, "fertilizer_available": False,
+                "pending_care_bonus": 0}) for x, y in geese_pos]
+    fc = make_forecast({**BASE_PRICES, "MELON": 500})
+    ctx = make_ctx(day=21, money=99999, unlocked=("NW",), animals=animals,
+                   shed={"WHEAT": 10}, wheat_tiles=6)
+    plan = MacroPlanner(fc).build(ctx)
+    assert plan.intents["buy_land"] is False, \
+        "ROI: day > 20 → hard cutoff, no land"
+
+
+def test_land_expansion_roi_skipped_without_feed():
+    """Land not bought if animals exist but wheat feed is insufficient."""
+    geese_pos = [(0, 0), (1, 0), (2, 0)]
+    animals = [(x, y, {"kind": "COOP", "animal": "GOOSE", "placed_day": 1,
+                "yield_units": 1, "fed_today": True, "cared_today": False,
+                "consecutive_unfed": 0, "fertilizer_available": False,
+                "pending_care_bonus": 0}) for x, y in geese_pos]
+    fc = make_forecast({**BASE_PRICES, "MELON": 500})
+    ctx = make_ctx(day=8, money=99999, unlocked=("NW",), animals=animals,
+                   shed={"WHEAT": 0}, wheat_tiles=0)
+    plan = MacroPlanner(fc).build(ctx)
+    assert plan.intents["buy_land"] is False, \
+        "ROI: animals need feed but wheat buffer empty → no land"

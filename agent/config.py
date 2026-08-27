@@ -111,6 +111,10 @@ ENDGAME_START_DAY = 28
 ANIMAL_FEED_CUTOFF_DAY = 29     # feeding active Days 0–28; disabled Day 29
 ANIMAL_CARE_CUTOFF_DAY = 29     # care active Days 0–28; disabled Day 29
 
+# ROI-based land expansion
+LAND_ROI_THRESHOLD = 1.5       # minimum lifetime_profit / price ratio
+LAND_BUY_LAST_DAY = 20         # hard cutoff — land bought after Day 20 can't pay back
+
 # Static crop caps — safety net to prevent monoculture if scoring has bugs.
 # Portfolio-aware scoring (Fix 3) is the primary diversification mechanism.
 CROP_TILE_CAPS = {
