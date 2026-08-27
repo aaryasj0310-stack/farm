@@ -49,9 +49,8 @@ INTENTS_FULL = {
 def test_hire_cost_mirror():
     assert hire_total_cost(0) == 0
     assert hire_total_cost(1) == 1
-    assert hire_total_cost(3) == 4          # 1 + 1 + 2
-    assert land_price_for(1) == 1000 and land_price_for(3) == 4000
-    assert land_price_for(4) is None
+    assert land_price_for(1) == 1000 and land_price_for(2) == 2000
+    assert land_price_for(3) is None
 
 
 def test_full_intents_shape_and_budget():

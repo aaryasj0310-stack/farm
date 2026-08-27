@@ -111,9 +111,72 @@ The following components were intentionally deferred during this iteration and r
 
 - **Automated Tests**: **377/377 passing** (`pytest --basetemp=.pytest_tmp`) in ~38s.
 - **Gameplay Verification**:
-  - Full quadrant expansion verified: Day 1 unlocks NE (50 tiles), Day 20 unlocks all 4 quadrants (100 tiles).
+  - Land policy: Hard cap at 3 quadrants (NW + NE + SW = 75 tiles). Stops at $2,000 SW unlock, preserving $4,000 from SE for 5× ROI geese expansion and risk-free cash score.
   - Multi-commodity production verified (Wheat feed base + Melon + Carrot + diversified assets).
   - Head-to-head 720-step matches consistently beat baseline with 100% win-rate.
 - **Standalone Submission Packages**:
   - **`dist/submission.py`** (Standalone single-file bundle, 720-step validated at **\$30,512.00–\$37,075.00**).
   - **`dist/submission.zip`** (Multi-file archive with `/kaggle_simulations/agent` path injection).
+
+---
+
+## 6. Future Enhancements
+
+### Solution B: Adaptive Cost-Benefit Gate for SE Quadrant Expansion
+Currently, the agent uses **Solution A (Hard Cap at 3 Quadrants)**: `LAND_ORDER = ["NE", "SW"]`, `LAND_PRICES = [1000, 2000]`, which prevents spending $4,000 on the 4th quadrant (SE) where marginal labor and shed overflow yield poor ROI.
+
+In future iterations, we can replace the static 3-quad cap with an **Adaptive Cost-Benefit Gate** (`_should_buy_se`) that dynamically compares SE's expected net contribution against the opportunity cost of investing the $4,000 in geese:
+
+```python
+def _should_buy_se(ctx, day, forecast, opp_advice):
+    """Adaptive SE gate: buy only if SE net > geese opportunity cost."""
+    days_left = 29 - day
+    if days_left < 12:
+        return False  # too late — tiles can't complete a harvest cycle
+
+    # --- SE expected net (assume wheat — cheapest, fastest, resilient) ---
+    wheat_cycles = days_left // CROP_CYCLE_LEN["WHEAT"]
+    se_production = 25 * wheat_cycles * 4  # 4 wheat/tile/cycle unfertilized
+    se_price = market_price("WHEAT", MARKET_I0 + se_production)  # own-supply glut
+    se_revenue = se_production * se_price
+    se_cost = LAND_PRICES[2] + 25 * CROPS["WHEAT"]["seed"]  # $4000 land + $250 seeds
+
+    # Action deficit: can hands service 25 more tiles without weeds?
+    current_load = estimate_daily_load(ctx)
+    current_capacity = (1 + len(ctx["farm"].hands)) * EFFECTIVE_ACTIONS_PER_UNIT
+    if current_load + 25 > current_capacity:
+        weed_loss_units = max(0, current_load + 25 - current_capacity)
+        se_revenue -= weed_loss_units * se_price * 0.5  # ~50% of affected tiles lost
+
+    # Shed throughput: can the sell pipeline absorb 25 more units/day?
+    sell_throughput = 6 * 5  # 6 sell windows × ~5 units/window
+    daily_production = current_load  # rough proxy
+    if daily_production + 25 > sell_throughput:
+        overflow_loss = max(0, daily_production + 25 - sell_throughput)
+        se_revenue -= overflow_loss * se_price  # discarded at end-of-day
+
+    se_net = se_revenue - se_cost
+
+    # --- Opportunity cost: same $4,000 on geese ---
+    geese_affordable = LAND_PRICES[2] // ANIMALS["GOOSE"]["cost"]  # ~13 geese
+    egg_price = forecast.expected_price("EGG", min(day + 10, 29))
+    fert_price = market_price("FERTILIZER", MARKET_I0 + geese_affordable * days_left)
+    geese_revenue = geese_affordable * days_left * (egg_price + fert_price)
+    geese_net = geese_revenue - geese_affordable * ANIMALS["GOOSE"]["cost"]
+
+    # Buy SE only if it beats the geese alternative
+    return se_net > geese_net and se_net > 0
+```
+
+#### Integration Hook:
+```python
+if n_extra_unlocked >= 2:
+    # Adaptive SE gate — skip unless SE genuinely out-earns geese
+    if not _should_buy_se(ctx, day, self.fc, opp_advice):
+        buy_land = False  # keep $4,000 for animals / bank
+```
+
+#### Economic Rationale:
+- With ~13+ geese generating ~$150/day each, the geese opportunity cost (~$32k over 20 days) dwarfs SE's net ($0–$5k after weed loss, shed overflow, and glut depression).
+- The function will return `False` ~95%+ of the time, naturally matching the hard cap while retaining the flexibility to expand if market configurations change.
+

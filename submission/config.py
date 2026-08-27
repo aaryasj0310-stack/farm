@@ -54,8 +54,8 @@ SHOPS = {
     "SMOOTHIE_SHOP":  ["STRAWBERRY", "MILK"],
     "FARMERS_MARKET": ["WHEAT", "CARROT", "TOMATO", "STRAWBERRY"],
 }
-LAND_ORDER = ["NE", "SW", "SE"]
-LAND_PRICES = [1000, 2000, 4000]
+LAND_ORDER = ["NE", "SW"]        # drop SE (hard cap at 3 quadrants: NW + NE + SW = 75 tiles)
+LAND_PRICES = [1000, 2000]       # drop $4,000 SE price
 
 # ------------------------------------------------------------- priorities ---
 PRIORITY_URGENT_SURVIVAL = 100
