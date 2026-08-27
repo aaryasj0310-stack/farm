@@ -478,10 +478,14 @@ class MacroPlanner:
         # ---------------- hiring ---------------------------------------
         load = estimate_daily_load(ctx) + len(plant_queue)
         units_now = 1 + len(farm.hands)
-        needed_units = -(-load // TURNS_PER_DAY)          # ceil division
+        # Effective actions per worker per day is ~6-8 due to pathfinding travel between tiles
+        effective_capacity = 6
+        needed_units = max(1, -(-load // effective_capacity))
+        if day <= 27 and ctx["farm"].money >= 50:
+            needed_units = max(needed_units, 3)
         hires = max(0, min(HIRE_BUDGET_MAX_HANDS,
                            needed_units - units_now))
-        water_budget_exceeded = load > (units_now + hires) * TURNS_PER_DAY
+        water_budget_exceeded = load > (units_now + hires) * effective_capacity
 
         # ---------------- place queue (pickup -> place two-step) -------
         place_queue = []
