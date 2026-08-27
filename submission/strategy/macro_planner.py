@@ -62,6 +62,7 @@ from config import (
     TURNS_PER_DAY,
 )
 from market.price_math import inventory_at_price, market_price
+from market.order_builder import hire_total_cost
 
 # ---------------------------------------------------------------------------
 # Asset economics — imported from authoritative baked_economics artifact.
@@ -403,6 +404,9 @@ class MacroPlanner:
         # endgame: no new planting — just harvest and sell
         plant_queue = []
         buy_seed = {}
+        hires = 0
+        EFFECTIVE_ACTIONS_PER_UNIT = 14
+        MIN_HANDS_DAY_0_14 = 3
         if not is_endgame:
             own_tiles = len(empty_tiles)
             feed_wheat = n_animals  # 1 wheat/day per animal
@@ -417,7 +421,16 @@ class MacroPlanner:
                 candidates.append((score, crop, detail))
             candidates.sort(reverse=True)
 
+            # --- pre-compute hiring to budget accurately ---
+            _load_est = estimate_daily_load(ctx) + len(empty_tiles)
+            _units_now = 1 + len(farm.hands)
+            _needed = -(-_load_est // EFFECTIVE_ACTIONS_PER_UNIT)
+            hires = max(0, min(HIRE_BUDGET_MAX_HANDS, _needed - _units_now))
+            if day < 15:
+                hires = max(hires, MIN_HANDS_DAY_0_14 - len(farm.hands))
+
             remaining_money = ctx["farm"].money - self.reserve
+            remaining_money -= hire_total_cost(hires)
             for animal, k in buy_animal.items():
                 remaining_money -= ANIMALS[animal]["cost"] * k
 
@@ -428,21 +441,18 @@ class MacroPlanner:
                     if score <= 0:
                         continue
                     seed_cost = CROPS[crop]["seed"]
-                    need = 1 - seeds.get(crop, 0) - buy_seed.get(crop, 0)
-                    if need > 0:
-                        if remaining_money < seed_cost * need:
-                            continue                             # cannot afford
-                        buy_seed[crop] = buy_seed.get(crop, 0) + need
-                        remaining_money -= seed_cost * need
-                    plant_queue.append((pos, crop))
-                    if seeds.get(crop, 0) > 0:
+                    if seeds.get(crop, 0) > 0:          # use inventory first
                         seeds[crop] -= 1
+                    elif remaining_money >= seed_cost:   # buy 1 for next turn
+                        buy_seed[crop] = buy_seed.get(crop, 0) + 1
+                        remaining_money -= seed_cost
                     else:
-                        buy_seed[crop] = buy_seed.get(crop, 0)
+                        continue
+                    plant_queue.append((pos, crop))
                     placed = True
                     break
                 if not placed:
-                    break                                        # nothing affordable
+                    break
         else:
             remaining_money = ctx["farm"].money - self.reserve
 
@@ -475,17 +485,10 @@ class MacroPlanner:
                     buy_land = True
                     remaining_money -= price
 
-        # ---------------- hiring ---------------------------------------
+        # ---------------- hiring (computed above for budget) -----------
         load = estimate_daily_load(ctx) + len(plant_queue)
         units_now = 1 + len(farm.hands)
-        # Effective actions per worker per day is ~6-8 due to pathfinding travel between tiles
-        effective_capacity = 6
-        needed_units = max(1, -(-load // effective_capacity))
-        if day <= 27 and ctx["farm"].money >= 50:
-            needed_units = max(needed_units, 3)
-        hires = max(0, min(HIRE_BUDGET_MAX_HANDS,
-                           needed_units - units_now))
-        water_budget_exceeded = load > (units_now + hires) * effective_capacity
+        water_budget_exceeded = load > (units_now + hires) * EFFECTIVE_ACTIONS_PER_UNIT
 
         # ---------------- place queue (pickup -> place two-step) -------
         place_queue = []

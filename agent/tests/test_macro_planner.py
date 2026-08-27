@@ -95,7 +95,7 @@ def test_midgame_plan_queues_crops_and_seed_buys():
     # With wheat tiles, animals are bought and structures consume tiles.
     n_plants = len(plan.plant_queue)
     assert n_plants >= 22, f"expected at least 22 queued plants, got {n_plants}"
-    assert plan.intents["hire"] <= 1
+    assert plan.intents["hire"] >= 2  # MIN_HANDS floor guarantees 3 hands by day 14
     assert plan.water_budget_exceeded is False
 
 
