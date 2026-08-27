@@ -97,7 +97,7 @@ BUY_WHEAT_TRIGGER_DAYS = 1.5
 PHASE1_WHEAT_TILES = 2            # NW wheat for day-4 cash + animal feed
 PHASE1_MELON_TILES_NW = 4
 PHASE1_GEESE_DAY0_2 = 6
-BUY_LAND_NE_DAY = 6               # melons planted day<=7 still get 2 cycles
+BUY_LAND_NE_DAY = 29   # was 6; effectively no time-gate
 BUY_LAND_SW_MIN_BANK = 2600
 BUY_LAND_SE_MIN_BANK = 5200
 MELON_PLANT_LAST_DAY_FERT = 17    # last planting that still harvests by 29
@@ -107,6 +107,16 @@ HIRE_BUDGET_MAX_HANDS = 7
 ENDGAME_START_DAY = 28
 ANIMAL_FEED_CUTOFF_DAY = 29     # feeding active Days 0–28; disabled Day 29
 ANIMAL_CARE_CUTOFF_DAY = 29     # care active Days 0–28; disabled Day 29
+
+# Static crop caps — safety net to prevent monoculture if scoring has bugs.
+# Portfolio-aware scoring (Fix 3) is the primary diversification mechanism.
+CROP_TILE_CAPS = {
+    "WHEAT": 99,        # no cap — wheat is the backbone
+    "CARROT": 8,        # moderate glut risk
+    "TOMATO": 6,        # low yield rate
+    "STRAWBERRY": 4,    # slow maturing + extreme glut
+    "MELON": 6,         # max 6 tiles (glut threshold ~4-5)
+}
 FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
 
 # Animal expansion targets (tiles), adjusted dynamically by land/money.

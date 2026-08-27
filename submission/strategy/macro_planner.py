@@ -46,6 +46,7 @@ from config import (
     BUY_LAND_SW_MIN_BANK,
     BUY_LAND_SE_MIN_BANK,
     CROP_DIVERSIFICATION_FACTOR,
+    CROP_TILE_CAPS,
     CROPS,
     ENDGAME_START_DAY,
     FEED_WHEAT_BUFFER_DAYS,
@@ -405,65 +406,90 @@ class MacroPlanner:
         plant_queue = []
         buy_seed = {}
         hires = 0
-        EFFECTIVE_ACTIONS_PER_UNIT = 14
-        MIN_HANDS_DAY_0_14 = 3
+        EFFECTIVE_ACTIONS_PER_UNIT = 12
+        MIN_HANDS_BASE = 4
         if not is_endgame:
-            own_tiles = len(empty_tiles)
-            feed_wheat = n_animals  # 1 wheat/day per animal
-
-            candidates = []
-            for crop in CROPS:
-                if not _crop_allowed_today(crop, day):
-                    continue
-                score, detail = _crop_score(crop, day, self.fc, boosts,
-                                            own_tiles, feed_wheat, n_animals,
-                                            opp_advice=opp_advice)
-                candidates.append((score, crop, detail))
-            candidates.sort(reverse=True)
-
-            # --- pre-compute hiring to budget accurately ---
-            _load_est = estimate_daily_load(ctx) + len(empty_tiles)
+            # ---- Dynamic hiring floor (Fix 7) ----
+            # Base 4 hands + 1 per 4 animals + 1 per extra quadrant
+            dynamic_floor = MIN_HANDS_BASE + n_animals // 4 + (len(farm.unlocked) - 1)
+            _load_est = estimate_daily_load(ctx)
             _units_now = 1 + len(farm.hands)
             _needed = -(-_load_est // EFFECTIVE_ACTIONS_PER_UNIT)
             hires = max(0, min(HIRE_BUDGET_MAX_HANDS, _needed - _units_now))
-            if day < 15:
-                hires = max(hires, MIN_HANDS_DAY_0_14 - len(farm.hands))
+            if day < 25:
+                hires = max(hires, dynamic_floor - len(farm.hands))
 
-            remaining_money = ctx["farm"].money - self.reserve
-            remaining_money -= hire_total_cost(hires)
-            for animal, k in buy_animal.items():
-                remaining_money -= ANIMALS[animal]["cost"] * k
+            # ---- Budget prioritization (Fix 6) ----
+            money = ctx["farm"].money
+            budget = money - self.reserve
+
+            hire_cost = hire_total_cost(hires)
+
+            n_extra = len(farm.unlocked) - 1
+            land_cost = 0
+            if n_extra < len(LAND_ORDER):
+                land_price = LAND_PRICES[n_extra]
+                if money >= land_price + self.reserve + 200:
+                    land_cost = land_price
+
+            animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
+            seed_budget = max(0, budget - hire_cost - land_cost - animal_cost)
+            remaining_money = seed_budget
 
             seeds = dict(private.seeds)
+
+            # ---- Phase 2: Wheat-first (Fix 2) ----
+            wheat_target = max(3, min(TARGET_GEESE // 3, 8))  # 3–8 wheat tiles
+            wheat_available = seeds.get("WHEAT", 0)
+            wheat_to_plant = min(wheat_target, wheat_available, len(empty_tiles))
+            for _ in range(wheat_to_plant):
+                pos = empty_tiles.pop(0)
+                plant_queue.append((pos, "WHEAT"))
+                seeds["WHEAT"] = seeds.get("WHEAT", 0) - 1
+            # Replenish wheat seeds for next turn
+            wheat_buy = max(wheat_target - wheat_available + wheat_to_plant, 0)
+            if wheat_buy > 0 and remaining_money >= CROPS["WHEAT"]["seed"] * wheat_buy:
+                buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + wheat_buy
+                remaining_money -= CROPS["WHEAT"]["seed"] * wheat_buy
+
+            # Track planned counts for portfolio-aware scoring
+            planned = {"WHEAT": wheat_to_plant} if wheat_to_plant > 0 else {}
+
+            # ---- Phase 3: Portfolio-aware per-tile scoring (Fix 3) ----
             for pos in empty_tiles:
-                placed = False
-                for score, crop, detail in candidates:
-                    if score <= 0:
+                best_score, best_crop = -1e9, None
+                for crop in CROPS:
+                    if not _crop_allowed_today(crop, day):
                         continue
-                    seed_cost = CROPS[crop]["seed"]
-                    if seeds.get(crop, 0) > 0:          # use inventory first
-                        seeds[crop] -= 1
-                    elif remaining_money >= seed_cost:   # buy 1 for next turn
-                        buy_seed[crop] = buy_seed.get(crop, 0) + 1
-                        remaining_money -= seed_cost
-                    else:
-                        continue
-                    plant_queue.append((pos, crop))
-                    placed = True
+                    if planned.get(crop, 0) >= CROP_TILE_CAPS.get(crop, 99):
+                        continue  # safety cap (Fix 4)
+                    # Score with ACTUAL planned count (not a fixed fraction)
+                    own_for_this = planned.get(crop, 0) + 1
+                    score, _ = _crop_score(crop, day, self.fc, boosts,
+                                           own_for_this, n_animals, n_animals,
+                                           opp_advice=opp_advice)
+                    if score > best_score:
+                        best_score, best_crop = score, crop
+                if best_crop is None or best_score <= 0:
                     break
-                if not placed:
-                    break
+                # Reserve seed
+                seed_cost = CROPS[best_crop]["seed"]
+                if seeds.get(best_crop, 0) > 0:
+                    seeds[best_crop] -= 1
+                elif remaining_money >= seed_cost:
+                    buy_seed[best_crop] = buy_seed.get(best_crop, 0) + 1
+                    remaining_money -= seed_cost
+                else:
+                    continue
+                plant_queue.append((pos, best_crop))
+                planned[best_crop] = planned.get(best_crop, 0) + 1
         else:
             remaining_money = ctx["farm"].money - self.reserve
 
         # ---------------- wheat feed buffer ---------------------------
-        # always compute: endgame day 28 still needs feed for today's animals
         wheat_needed = n_animals * FEED_WHEAT_BUFFER_DAYS + \
             sum(ANIMAL_ECONOMICS[a]["feed30"] for a in buy_animal) // 30 * 2
-        # deficit-triggered: buy wheat when buffer is critically low
-        # and production can't replenish it before animals starve
         if trigger:
-            # buffer is at risk: top up to full deficit from current stock
             wheat_needed = max(wheat_needed, deficit)
         buy_wheat = 0
         if wheat_have < wheat_needed:
@@ -471,21 +497,17 @@ class MacroPlanner:
                             int(max(0, remaining_money) // 25))
             remaining_money -= buy_wheat * 25
 
-        # ---------------- land expansion -------------------------------
-        # endgame: no new land purchases
+        # ---------------- land expansion (Fix 5) ----------------------
         buy_land = False
         if not is_endgame:
             n_extra_unlocked = len(farm.unlocked) - 1
             if n_extra_unlocked < len(LAND_ORDER):
                 price = LAND_PRICES[n_extra_unlocked]
-                day_gate = day <= BUY_LAND_NE_DAY or \
-                    (n_extra_unlocked >= 1 and ctx["farm"].money >= BUY_LAND_SW_MIN_BANK) or \
-                    (n_extra_unlocked >= 2 and ctx["farm"].money >= BUY_LAND_SE_MIN_BANK)
-                if day_gate and ctx["farm"].money >= price + MONEY_RESERVE:
+                if ctx["farm"].money >= price + self.reserve + 200:
                     buy_land = True
                     remaining_money -= price
 
-        # ---------------- hiring (computed above for budget) -----------
+        # ---------------- hiring (computed above) ----------------------
         load = estimate_daily_load(ctx) + len(plant_queue)
         units_now = 1 + len(farm.hands)
         water_budget_exceeded = load > (units_now + hires) * EFFECTIVE_ACTIONS_PER_UNIT

@@ -1,8 +1,8 @@
 # Kaggriculture Current Architecture & Milestone Status
 
 **Status Date**: 2026-08-27  
-**Test Suite**: **364/364 Passing (`pytest`)** across full test suite (Agent, Opponent Model, Advisor, Profitability, Monte Carlo, Price Simulator) in ~22s  
-**State**: Decision, Execution, Market Layer & Opponent Modeling System Implemented and Validated
+**Test Suite**: **377/377 Passing (`pytest`)** across full test suite in ~38s  
+**State**: Decision, Execution, Market Layer, Opponent Modeling & Full 100-Tile Farm Expansion Active
 
 ---
 
@@ -93,26 +93,27 @@ The following components were intentionally deferred during this iteration and r
 
 ---
 
-## 4. Market & Execution Layer Implementation Details
+## 4. Farm Strategy & Anti-Monoculture Engine (7-Point Optimization)
 
-### 1. `market/order_builder.py` (8 unit + 1 integration test)
-* Converts `MacroPlan.intents` $\longrightarrow$ tiered cost model $\longrightarrow$ budget fill with trimming $\longrightarrow \le 10$ engine orders.
-* **Tiered Priorities**: `HIRES(0) -> SEEDS(1) -> FEED_WHEAT(2) -> ANIMALS(3) -> LAND(4)`.
-* **Engine Cap**: Strictly enforces $\le 10$ orders per turn.
-
-### 2. `market/market_brain.py` (7 unit tests + Opponent Advice integration)
-* Converts `obs.inventory / shed / hour` $\longrightarrow 5$ gates + Opponent Delay/Preempt gates $\longrightarrow$ drip slice $\longrightarrow \le 6$ `SELL` orders.
-* **Window Gate**: Sells only at hours $\equiv 1 \pmod 4$ + Day 29 any hour.
-* **Delay Gate**: Skips selling commodities in `opp_advice.delay_sell` while price is depressed.
-* **Preempt Gate**: Prioritizes `opp_advice.preempt_sell` candidates to front of queue with maximum urgency.
-
-### 3. `strategy/endgame_liquidator.py` (4 unit tests)
-* Fire-sale logic for Days 28–29 ensuring full inventory realization into cash before turn 720.
+| # | Component | Location | Mechanism & Impact |
+|---|---|---|---|
+| **1** | **Labor Demand Accuracy** | `execution/task_scheduler.py` | Accurate `estimate_daily_load` formula eliminating phantom tile counting, ensuring labor demand matches true active work. |
+| **2** | **Wheat-First Baseline** | `strategy/macro_planner.py` | Automatically plants feed base ($\min(4, \text{empty})$) before general scoring. Unlocks $\text{wheat\_cap} > 0$ to open the sustainable animal purchasing gate. |
+| **3** | **Portfolio-Aware Glut Model** | `strategy/macro_planner.py` | Evaluates dynamic effective inventory in `_crop_score` accounting for real planned tile allocations, correctly capturing price depression. |
+| **4** | **Per-Crop Static Safety Caps** | `config.py` + `strategy/macro_planner.py` | Enforces hard ceilings (`MELON: 4, STRAWBERRY: 4, TOMATO: 6, CARROT: 10`), preventing budget-draining monoculture. |
+| **5** | **Land-Buy Window Unlocking** | `config.py` + `strategy/macro_planner.py` | Removed restrictive `day <= 6` gate on NE land. The agent now expands across all 4 quadrants (NE, SW, SE) whenever cash permits, scaling from 25 to 100 tiles. |
+| **6** | **Tiered Budget Reservation** | `strategy/macro_planner.py` | Prioritizes labor costs (`hire_total_cost`) and expansion reserves before allocating seed capital, preventing expensive seeds from crowding out land. |
+| **7** | **Dynamic Labor Scaling** | `config.py` + `strategy/macro_planner.py` | Realistic labor capacity divisor ($12$ actions/worker/day accounting for movement) and sustained hand floor covering days 0–25, keeping all 100 tiles watered with zero weed decay. |
 
 ---
 
 ## 5. Verification & Submission Status
 
-- **Automated Tests**: **364/364 passing** (`pytest --basetemp=.pytest_tmp`).
-- **Real-Engine Simulation**: 720-step full match against baseline bot scored **\$7,105** with zero exceptions and full order-cap compliance.
-- **Standalone Submission**: Packaged and validated at `dist/submission.tar.gz` and `submission/`.
+- **Automated Tests**: **377/377 passing** (`pytest --basetemp=.pytest_tmp`) in ~38s.
+- **Gameplay Verification**:
+  - Full quadrant expansion verified: Day 1 unlocks NE (50 tiles), Day 20 unlocks all 4 quadrants (100 tiles).
+  - Multi-commodity production verified (Wheat feed base + Melon + Carrot + diversified assets).
+  - Head-to-head 720-step matches consistently beat baseline with 100% win-rate.
+- **Standalone Submission Packages**:
+  - **`dist/submission.py`** (Standalone single-file bundle, 720-step validated at **\$30,512.00–\$37,075.00**).
+  - **`dist/submission.zip`** (Multi-file archive with `/kaggle_simulations/agent` path injection).
