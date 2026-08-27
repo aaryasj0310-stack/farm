@@ -70,6 +70,17 @@ def test_non_window_hour_emits_nothing():
     assert details["reason"] == "not_a_sell_window"
 
 
+def test_non_window_hour_under_shed_pressure_emits_emergency_sells():
+    brain = MarketBrain(FakeFC())
+    # Shed holding 85 melons (>= SHED_SOFT_CAP 80) on non-window hour 3
+    ctx = make_ctx(hour=3, shed={"MELON": 85})
+    orders, details = brain.sell_orders(ctx)
+    assert len(orders) > 0
+    assert orders[0][0] == "SELL"
+    assert orders[0][1] == "MELON"
+    assert details["pressure"] is True
+
+
 def test_window_sells_respect_drip_budget_and_stock():
     brain = MarketBrain(FakeFC())
     ctx = make_ctx(day=10, hour=5, shed={"MELON": 50})

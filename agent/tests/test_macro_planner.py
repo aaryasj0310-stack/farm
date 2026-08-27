@@ -229,3 +229,14 @@ def test_day28_wheat_buffer_computed():
     # feeding enabled on day 28 → wheat buffer should be planned
     assert plan.feeding_enabled is True
     assert plan.intents["buy_wheat"] >= 2  # at least buffer for 1 animal
+
+
+def test_baked_economics_structure():
+    """Verify baked economics values for all crops and animals."""
+    from strategy.baked_economics import (
+        CROP_ECONOMICS, CROP_CYCLE_LEN, ANIMAL_ECONOMICS, ANIMAL_TARGETS
+    )
+    assert set(CROP_ECONOMICS.keys()) == {"WHEAT", "CARROT", "TOMATO", "STRAWBERRY", "MELON"}
+    assert set(ANIMAL_ECONOMICS.keys()) == {"GOOSE", "COW", "SHEEP"}
+    assert all(c["yield30"] > 0 for c in CROP_ECONOMICS.values())
+    assert all(a["out30"] > 0 for a in ANIMAL_ECONOMICS.values())

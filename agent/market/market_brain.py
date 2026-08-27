@@ -30,6 +30,7 @@ from config import (
     ENDGAME_RISK_DAYS,
     ENDGAME_START_DAY,
     FEED_WHEAT_BUFFER_DAYS,
+    FINAL_DUMP_DAYS,
     FLOOR_HOLD_MIN_DAYS_LEFT,
     HOLD_AT_FLOOR_PRODUCTS,
     MAX_MARKET_ORDERS,
@@ -66,14 +67,14 @@ class MarketBrain:
         days_left = 29 - day
         endgame = day >= ENDGAME_START_DAY
 
-        if not self._is_sell_hour(day, hour) and not (endgame and day == 29):
-            return [], {"reason": "not_a_sell_window"}
-
         shed = ctx["private"].shed
         animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal)
         reserved_wheat = animals * FEED_WHEAT_BUFFER_DAYS
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
+
+        if not self._is_sell_hour(day, hour) and not (endgame and day == 29) and not pressure:
+            return [], {"reason": "not_a_sell_window"}
 
         # Phase 6: extract opp_advice sets for fast lookup
         preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()
@@ -120,7 +121,8 @@ class MarketBrain:
             if spot <= 1:
                 qty = stock if aggressive else MIN_SLICE_QTY
             else:
-                eff_keep = keep_frac if not aggressive else min(keep_frac, 0.60)
+                aggressive_limit = FINAL_DUMP_DAYS.get(day, 0.60)
+                eff_keep = keep_frac if not aggressive else min(keep_frac, aggressive_limit)
                 q_max = self._drip_budget(prod, inv.get(prod, 10000),
                                           eff_keep, spot)
                 if q_max >= MIN_SLICE_QTY:

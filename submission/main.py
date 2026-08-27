@@ -161,7 +161,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     # 3. Market layer: purchase intent compilation and dynamic sell/liquidate orders
     purchase_orders, _ledger = builder.build(ctx, plan.intents)
     if ctx["day"] >= 28:
-        sell_orders, _d = liquidator.plan(ctx)
+        sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
     else:
         sell_orders, _d = brain.sell_orders(ctx, opp_advice=opp_advice)
 
@@ -188,5 +188,8 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 # KAGGLE ENTRY POINT (LAST 'def')
 # ==============================================================================
 def agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Official competition entry point."""
-    return _agent_decision(obs)
+    """Official competition entry point with top-level fail-safe."""
+    try:
+        return _agent_decision(obs)
+    except Exception:
+        return dict(PASS_ACTION)

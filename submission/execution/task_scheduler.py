@@ -297,6 +297,10 @@ def estimate_daily_load(ctx):
             info = ANIMALS.get(t.animal)
             if info and (day + 1 - t.placed_day - info["first_yield_day"]) % info["interval"] == 0:
                 load += 1  # production-day feed + harvest next morning
-    load += len(ctx["private"].seeds) and sum(
-        1 for t in ctx["farm"].iter_tiles() if t.kind == "EMPTY")
+    seed_units = sum(ctx["private"].seeds.values())
+    empty_unlocked = sum(
+        1 for t in ctx["farm"].iter_tiles()
+        if t.kind == "EMPTY" and ctx["farm"].quadrant_of(t.pos) in ctx["farm"].unlocked
+    )
+    load += min(seed_units, empty_unlocked)
     return load

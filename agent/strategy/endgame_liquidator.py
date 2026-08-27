@@ -42,7 +42,7 @@ class EndgameLiquidator:
         return uplift < 0.02 or p_floor_end > 0.30
 
     # ------------------------------------------------------------------
-    def plan(self, ctx, max_slots=MAX_MARKET_ORDERS):
+    def plan(self, ctx, max_slots=MAX_MARKET_ORDERS, opp_advice=None):
         """Aggressive endgame sells for THIS turn.
 
         Uses MarketBrain in its naturally aggressive endgame mode and then
@@ -50,7 +50,8 @@ class EndgameLiquidator:
         drip budgeting gets a follow-up slice on later windows automatically
         (stock shrinks monotonically), so round-robin coverage emerges.
         """
-        orders, details = self.brain.sell_orders(ctx, max_slots=max_slots)
+        orders, details = self.brain.sell_orders(ctx, max_slots=max_slots,
+                                                 opp_advice=opp_advice)
         details["liquidated_products"] = sorted(
             c["product"] for c in details.get("candidates", []))
         return orders, details
