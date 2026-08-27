@@ -55,8 +55,11 @@ class MarketBrain:
         self.fc = forecast
 
     # ------------------------------------------------------------------
-    def sell_orders(self, ctx, max_slots=None):
-        """Returns (orders, details). orders: [["SELL", prod, qty], ...]."""
+    def sell_orders(self, ctx, max_slots=None, opp_advice=None):
+        """Returns (orders, details). orders: [["SELL", prod, qty], ...].
+
+        Phase 6: opp_advice adds preempt-sell urgency and post-crash delay.
+        """
         if max_slots is None:
             max_slots = int(MAX_MARKET_ORDERS * SELL_SLOT_SHARE)
         day, hour = ctx["day"], ctx["hour"]
@@ -71,6 +74,10 @@ class MarketBrain:
         reserved_wheat = animals * FEED_WHEAT_BUFFER_DAYS
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
+
+        # Phase 6: extract opp_advice sets for fast lookup
+        preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()
+        delay_set = set(opp_advice.delay_sell) if opp_advice else set()
 
         inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
         candidates = []
@@ -101,14 +108,16 @@ class MarketBrain:
                 and days_left > ENDGAME_RISK_DAYS
                 and prod not in HOLD_AT_FLOOR_PRODUCTS
             )
+
+            # --- Phase 6: post-crash delay hold ---------------------
+            if prod in delay_set and not aggressive and day < 28:
+                continue
+
             if hold_for_recovery and not aggressive:
                 continue
 
             # --- quantity ---------------------------------------------
             if spot <= 1:
-                # Floor freeze: sales here have ZERO market impact, so once
-                # aggressive we dump ALL of it (each unit still books $1);
-                # outside aggressive mode only a token slice escapes.
                 qty = stock if aggressive else MIN_SLICE_QTY
             else:
                 eff_keep = keep_frac if not aggressive else min(keep_frac, 0.60)
@@ -126,10 +135,17 @@ class MarketBrain:
             avg_est = total_revenue_estimate(prod, inv.get(prod, 10000),
                                              qty) / qty
             reason = self._reason(prod, spot, carry, aggressive, pressure)
+
+            # --- Phase 6: preempt sell urgency boost ----------------
+            urgency = stock / (shed_total or 1)
+            if prod in preempt_set:
+                urgency = max(urgency, 0.99)  # force to front of queue
+                reason = "preempt_dump"
+
             candidates.append({
                 "product": prod, "qty": int(qty), "spot": spot,
                 "avg_est": round(avg_est, 2), "reason": reason,
-                "urgency": stock / (shed_total or 1),
+                "urgency": urgency,
             })
 
         candidates.sort(key=lambda c: -c["urgency"])

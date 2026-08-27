@@ -198,7 +198,7 @@ def _cum_own_production(crop, own_tiles, harvest_index, feed_wheat_per_day=0,
 
 
 def _crop_score(crop, day, forecast, boosts, own_tiles=0,
-                feed_wheat_per_day=0, n_animals=0):
+                feed_wheat_per_day=0, n_animals=0, opp_advice=None):
     """Expected net coins for ONE tile planted today with this crop.
 
     Uses post-own-supply pricing: effective_inventory = I0 - town_drain + own.
@@ -208,6 +208,9 @@ def _crop_score(crop, day, forecast, boosts, own_tiles=0,
 
     P3: own_tiles is scaled by CROP_DIVERSIFICATION_FACTOR to avoid phantom
     mono-crop over-penalization when the actual portfolio is diversified.
+
+    Phase 6: opp_advice adds opponent supply glut to effective inventory and
+    applies a counter-pick monopoly boost for uncompeted crops.
     """
     e = CROP_ECONOMICS[crop]
     hdays = _harvest_days(crop, day)
@@ -220,17 +223,25 @@ def _crop_score(crop, day, forecast, boosts, own_tiles=0,
     effective_tiles = own_tiles * div_factor if own_tiles > 0 else 0
     details = {"eff_prices": {}, "cum_own": {}}
     score = 0.0
+    # Phase 6: opponent supply adjustment — extra units opponent will flood
+    opp_supply = 0.0
+    if opp_advice is not None:
+        opp_supply = opp_advice.supply_adjustment.get(crop, 0.0)
+    # Phase 6: counter-pick monopoly boost — opponent ignoring this crop
+    counter_pick_boost = 1.0
+    if opp_advice is not None and crop in opp_advice.counter_pick:
+        counter_pick_boost = 1.15  # +15% revenue for uncompeted niche
     for idx, h in enumerate(hdays, 1):
         cum_town = _cum_town_drain(forecast, crop, h)
         cum_own = _cum_own_production(crop, effective_tiles, idx,
                                       feed_wheat_per_day, h, plant_day,
                                       n_animals)
-        inv_eff = MARKET_I0 - cum_town + cum_own
+        inv_eff = MARKET_I0 - cum_town + cum_own + opp_supply
         p = market_price(crop, inv_eff)
         f = min(1.0 + SHOP_BOOST_WEIGHT * boosts.get(crop, 0), BOOST_CAP)
-        details["eff_prices"][h] = round(p * f, 2)
+        details["eff_prices"][h] = round(p * f * counter_pick_boost, 2)
         details["cum_own"][h] = int(cum_own)
-        score += cy * p * f
+        score += cy * p * f * counter_pick_boost
     net = score - e["cost30"]
     per_day = net / 30.0
     return per_day, details
@@ -295,7 +306,7 @@ class MacroPlanner:
         self.reserve = money_reserve
 
     # ------------------------------------------------------------------
-    def build(self, ctx, boosts=None):
+    def build(self, ctx, boosts=None, opp_advice=None):
         boosts = boosts or {}
         day = ctx["day"]
         farm = ctx["farm"]
@@ -403,7 +414,8 @@ class MacroPlanner:
                 if not _crop_allowed_today(crop, day):
                     continue
                 score, detail = _crop_score(crop, day, self.fc, boosts,
-                                            own_tiles, feed_wheat, n_animals)
+                                            own_tiles, feed_wheat, n_animals,
+                                            opp_advice=opp_advice)
                 candidates.append((score, crop, detail))
             candidates.sort(reverse=True)
 

@@ -137,3 +137,22 @@ def test_compose_caps_and_priority():
     out = B.compose([["BUY_A", "X", 1]] * 9 + [["BUY_B", "X", 1]],
                     sells, cap=10, purchases_first=True)
     assert len(out) == 10 and all(o[0].startswith("BUY") for o in out)
+
+
+def test_endgame_overrides_delay_sell():
+    """Day 29 liquidates everything despite delay_sell flag."""
+    from strategy.opponent_advisor import OpponentAdvice
+    brain = MarketBrain(FakeFC())
+    delay_advice = OpponentAdvice(delay_sell=["MELON"])
+
+    # Day 10: delay_sell holds MELON
+    ctx_mid = make_ctx(day=10, hour=1, shed={"MELON": 30})
+    orders_mid, _ = brain.sell_orders(ctx_mid, opp_advice=delay_advice)
+    assert not any(o[1] == "MELON" for o in orders_mid), \
+        "delay_sell should hold MELON on day 10"
+
+    # Day 29: delay_sell is overridden — MELON must be sold
+    ctx_end = make_ctx(day=29, hour=1, shed={"MELON": 30})
+    orders_end, _ = brain.sell_orders(ctx_end, opp_advice=delay_advice)
+    assert any(o[1] == "MELON" for o in orders_end), \
+        "day 29 must liquidate despite delay_sell"

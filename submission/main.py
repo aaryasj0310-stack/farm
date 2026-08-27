@@ -1,11 +1,14 @@
 """
-🌾 Kaggriculture Master Agent — Closed-Loop Adaptive Architecture
+Kaggriculture Master Agent — Closed-Loop Adaptive Architecture
 
 Architecture Chain:
   obs -> parse_observation -> PriceForecast (W1) -> MacroPlanner (W2)
       -> TaskScheduler (unit actions)
       + OrderBuilder (purchase orders) + MarketBrain (sell orders) + EndgameLiquidator
       -> Action Dict {"farmer": ..., "hands": ..., "market": ...}
+
+  Phase 6: Opponent Modeling pipeline
+      obs -> get_state() -> OpponentModel -> OpponentAdvisor -> MacroPlanner + MarketBrain
 
 Submission Rule Compliance:
   - The last 'def' in this file is the agent entry point: def agent(obs, config=None)
@@ -39,9 +42,17 @@ from strategy.price_forecast import PriceForecast
 from strategy.macro_planner import MacroPlanner
 from strategy.endgame_liquidator import EndgameLiquidator
 from strategy.shop_adapter import demand_boosts
+from strategy.opponent_advisor import build_opponent_advice
 from execution.task_scheduler import assign_tasks, build_tasks
 from market.order_builder import OrderBuilder
 from market.market_brain import MarketBrain
+from state.state_tracker import get_state, record_our_sale
+from state.opponent_model import (
+    snapshot_opponent_farm, detect_tile_deltas, infer_turn_transactions,
+    forecast_opponent_production, get_imminent_harvests,
+    summarize_opponent_commitments, update_opponent_shed_estimate,
+    compute_opponent_sell_probabilities,
+)
 
 PASS_ACTION = {"farmer": ["PASS"], "hands": [], "market": []}
 
@@ -51,6 +62,10 @@ _PLANNER = None
 _BUILDER = None
 _BRAIN = None
 _LIQUIDATOR = None
+
+# Persistent opponent modeling state (survives across turns within one process)
+_prev_opp_snapshot = None
+_estimated_shed = None
 
 
 def _get_components():
@@ -64,8 +79,66 @@ def _get_components():
     return _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR
 
 
+def _build_opp_advice(ctx, mem):
+    """Build OpponentAdvice from current observation and persistent memory.
+
+    Returns OpponentAdvice (always safe — empty advice on any missing data).
+    """
+    from strategy.opponent_advisor import OpponentAdvice
+    try:
+        opp_farm = ctx.get("opponent_farm")
+        if opp_farm is None:
+            return OpponentAdvice()
+
+        # Phase 1: snapshot and detect deltas
+        global _prev_opp_snapshot, _estimated_shed
+        new_snap = snapshot_opponent_farm(opp_farm)
+        deltas = detect_tile_deltas(opp_farm, _prev_opp_snapshot)
+        _prev_opp_snapshot = new_snap
+
+        # Phase 2: forecast production
+        forecast = forecast_opponent_production(opp_farm, ctx["day"])
+
+        # Phase 3: update shed estimate
+        opp_animals = sum(1 for t in opp_farm.iter_tiles() if t.is_animal)
+        opp_sales = mem.get("opp_sales_inferred", {})
+        _estimated_shed = update_opponent_shed_estimate(
+            _estimated_shed, deltas, opp_sales,
+            opp_animals, ctx["day"], ctx["hour"],
+        )
+
+        # Phase 3: sell probabilities
+        opp_state_for_probs = {
+            "estimated_shed": _estimated_shed,
+            "sell_probs": {},
+            "opp_sales_inferred": opp_sales,
+            "shed_pressure": sum(_estimated_shed.values()) / 100.0,
+            "forecast": forecast,
+            "commitments": summarize_opponent_commitments(opp_farm),
+            "animal_counts": {t.animal: 1 for t in opp_farm.iter_tiles()
+                              if t.is_animal},
+        }
+        sell_probs = compute_opponent_sell_probabilities(
+            opp_farm, _estimated_shed, ctx, mem,
+        )
+        opp_state_for_probs["sell_probs"] = sell_probs
+
+        # Phase 5: build advice
+        boosts = demand_boosts(
+            ctx.get("town", {}).get("unlocked_shops", []),
+        )
+        advice = build_opponent_advice(
+            opp_state_for_probs, ctx, forecast, boosts=boosts,
+        )
+        return advice
+    except Exception:
+        # Never let opponent modeling crash the main agent
+        return OpponentAdvice()
+
+
 def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
-    ctx = parse_observation(obs)
+    # Phase 6: use get_state for persistent memory + episode detection
+    ctx, mem = get_state(obs)
     if ctx is None:
         return dict(PASS_ACTION)
 
@@ -75,8 +148,11 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     known_shops = obs.get("town", {}).get("unlocked_shops", [])
     boosts = demand_boosts(known_shops)
 
-    # 1. Macro strategic planning
-    plan = planner.build(ctx, boosts=boosts)
+    # Phase 6: build opponent advice
+    opp_advice = _build_opp_advice(ctx, mem)
+
+    # 1. Macro strategic planning (with opponent supply/counter-pick)
+    plan = planner.build(ctx, boosts=boosts, opp_advice=opp_advice)
 
     # 2. Execution layer: unit tasks and greedy spatial assignment
     tasks = build_tasks(ctx, plan)
@@ -87,12 +163,17 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     if ctx["day"] >= 28:
         sell_orders, _d = liquidator.plan(ctx)
     else:
-        sell_orders, _d = brain.sell_orders(ctx)
+        sell_orders, _d = brain.sell_orders(ctx, opp_advice=opp_advice)
 
     market = MarketBrain.compose(
         purchase_orders, sell_orders,
         purchases_first=(ctx["hour"] == 0)
     )
+
+    # Phase 6: record our sales for drain ledger accuracy
+    for order in market:
+        if order[0] == "SELL":
+            record_our_sale(order[1], order[2])
 
     # 4. Action dict assembly
     n_units = 1 + len(ctx["farm"].hands)
