@@ -147,9 +147,11 @@ def _build_opp_advice(ctx, mem):
         opp_state_for_probs["sell_probs"] = sell_probs
 
         # Phase 5: build advice
-        boosts = demand_boosts(
-            ctx.get("town", {}).get("unlocked_shops", []),
-        )
+        town_obj = ctx.get("town")
+        unlocked_shops = getattr(town_obj, "unlocked_shops", None)
+        if unlocked_shops is None and isinstance(town_obj, dict):
+            unlocked_shops = town_obj.get("unlocked_shops", [])
+        boosts = demand_boosts(unlocked_shops or [])
         advice = build_opponent_advice(
             opp_state_for_probs, ctx, forecast, boosts=boosts,
         )

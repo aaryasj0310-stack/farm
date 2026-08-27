@@ -157,7 +157,7 @@ def build_tasks(ctx, macro):
                 add(PRIORITY_PLANT_AND_WATER, "PLANT", pos, args=[crop],
                     kind="plant", meta={"paired_water": True})
             else:
-                break  # serialize strictly: never exceed seed stock
+                continue  # skip this crop's remaining instances, keep processing others
 
     # ---------------- structures & animals ----------------
     for pos in macro.build_queue[:2]:

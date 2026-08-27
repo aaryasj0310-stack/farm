@@ -9030,7 +9030,7 @@ def build_tasks(ctx, macro):
                 add(PRIORITY_PLANT_AND_WATER, "PLANT", pos, args=[crop],
                     kind="plant", meta={"paired_water": True})
             else:
-                break  # serialize strictly: never exceed seed stock
+                continue  # skip this crop's remaining instances, keep processing others
 
     # ---------------- structures & animals ----------------
     for pos in macro.build_queue[:2]:
@@ -9517,8 +9517,33 @@ class MacroPlanner:
 
         buy_animal = {}
         reserved_structure_tiles = []
+        EFFECTIVE_ACTIONS_PER_UNIT = 12
+        MIN_HANDS_BASE = 4
+
+        # Pre-compute workforce size for labor capacity checks
+        hires = 0
+        if not is_endgame:
+            dynamic_floor = MIN_HANDS_BASE + n_animals // 4 + (len(farm.unlocked) - 1)
+            _load_est = estimate_daily_load(ctx)
+            _units_now = 1 + len(farm.hands)
+            _needed = -(-_load_est // EFFECTIVE_ACTIONS_PER_UNIT)
+            hires = max(0, min(HIRE_BUDGET_MAX_HANDS, _needed - _units_now))
+            if day < 25:
+                hires = max(hires, dynamic_floor - len(farm.hands))
+
         # endgame: no new animals — just feed what we have
         if not is_endgame:
+            # Labor capacity check: can the workforce handle more animals?
+            # Use ACTUAL current capacity (hired hands act T+1, not today)
+            ANIMAL_LABOR_PER_HEAD = 3
+            current_load = estimate_daily_load(ctx)
+            actual_units = 1 + len(farm.hands)
+            current_capacity = actual_units * EFFECTIVE_ACTIONS_PER_UNIT
+            spare_labor = max(0, current_capacity - current_load)
+
+            # Tile reservation: keep minimum tiles for crops
+            MIN_CROP_TILES_RESERVE = 5
+
             for animal in ANIMAL_LIST:
                 target = ANIMAL_TARGETS.get(animal, 0)
                 deficit_a = target - counts.get(animal, 0)
@@ -9536,6 +9561,9 @@ class MacroPlanner:
                 feed_cost = econ["feed30"] * 25.0
                 if gross - feed_cost - info["cost"] <= 0:
                     continue                                    # unprofitable regime
+                # Labor gate: can the farm handle one more animal?
+                if spare_labor < ANIMAL_LABOR_PER_HEAD:
+                    continue                                    # workforce saturated
                 affordable = ctx["farm"].money >= info["cost"] + self.reserve
                 if affordable and deficit_a > 0:
                     buy_animal[animal] = buy_animal.get(animal, 0) + 1
@@ -9547,6 +9575,8 @@ class MacroPlanner:
                 if free_struct:
                     pass                                        # place handled below
                 elif empty_tiles:
+                    if len(empty_tiles) <= MIN_CROP_TILES_RESERVE:
+                        continue  # save remaining tiles for planting
                     tile = empty_tiles.pop(0)
                     reserved_structure_tiles.append(tile)
 
@@ -9566,20 +9596,7 @@ class MacroPlanner:
         # endgame: no new planting — just harvest and sell
         plant_queue = []
         buy_seed = {}
-        hires = 0
-        EFFECTIVE_ACTIONS_PER_UNIT = 12
-        MIN_HANDS_BASE = 4
         if not is_endgame:
-            # ---- Dynamic hiring floor (Fix 7) ----
-            # Base 4 hands + 1 per 4 animals + 1 per extra quadrant
-            dynamic_floor = MIN_HANDS_BASE + n_animals // 4 + (len(farm.unlocked) - 1)
-            _load_est = estimate_daily_load(ctx)
-            _units_now = 1 + len(farm.hands)
-            _needed = -(-_load_est // EFFECTIVE_ACTIONS_PER_UNIT)
-            hires = max(0, min(HIRE_BUDGET_MAX_HANDS, _needed - _units_now))
-            if day < 25:
-                hires = max(hires, dynamic_floor - len(farm.hands))
-
             # ---- Budget prioritization (Fix 6) ----
             money = ctx["farm"].money
             budget = money - self.reserve
@@ -9624,7 +9641,6 @@ class MacroPlanner:
                         continue
                     if planned.get(crop, 0) >= CROP_TILE_CAPS.get(crop, 99):
                         continue  # safety cap (Fix 4)
-                    # Score with ACTUAL planned count (not a fixed fraction)
                     own_for_this = planned.get(crop, 0) + 1
                     score, _ = _crop_score(crop, day, self.fc, boosts,
                                            own_for_this, n_animals, n_animals,
@@ -9632,7 +9648,7 @@ class MacroPlanner:
                     if score > best_score:
                         best_score, best_crop = score, crop
                 if best_crop is None or best_score <= 0:
-                    break
+                    break  # no profitable crop for this tile — stop planting
                 # Reserve seed
                 seed_cost = CROPS[best_crop]["seed"]
                 if seeds.get(best_crop, 0) > 0:
@@ -9709,7 +9725,15 @@ class MacroPlanner:
                         tiles_used += alloc
 
                     lifetime_profit = total_daily_profit * days_remaining
-                    if lifetime_profit > price * LAND_ROI_THRESHOLD:
+                    # Operational capacity: can the farm work the new land?
+                    current_load = estimate_daily_load(ctx) + len(plant_queue)
+                    current_units = 1 + len(farm.hands) + hires
+                    current_capacity = current_units * EFFECTIVE_ACTIONS_PER_UNIT
+                    spare_capacity = max(0, current_capacity - current_load)
+                    can_service_new_land = spare_capacity >= 10
+
+                    if (lifetime_profit > price * LAND_ROI_THRESHOLD
+                            and can_service_new_land):
                         buy_land = True
                         remaining_money -= price
 
@@ -10359,9 +10383,11 @@ def _build_opp_advice(ctx, mem):
         opp_state_for_probs["sell_probs"] = sell_probs
 
         # Phase 5: build advice
-        boosts = demand_boosts(
-            ctx.get("town", {}).get("unlocked_shops", []),
-        )
+        town_obj = ctx.get("town")
+        unlocked_shops = getattr(town_obj, "unlocked_shops", None)
+        if unlocked_shops is None and isinstance(town_obj, dict):
+            unlocked_shops = town_obj.get("unlocked_shops", [])
+        boosts = demand_boosts(unlocked_shops or [])
         advice = build_opponent_advice(
             opp_state_for_probs, ctx, forecast, boosts=boosts,
         )

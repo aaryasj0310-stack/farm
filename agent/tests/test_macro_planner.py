@@ -151,9 +151,9 @@ def test_animal_expansion_intents_and_feed():
                  "consecutive_unfed": 0, "fertilizer_available": False,
                  "pending_care_bonus": 0})]
     fc = make_forecast(BASE_PRICES)
-    # 10 wheat tiles → capacity 60 → sustainable 2 animals (60//30)
+    # 10 wheat tiles, 5 hands → capacity 60 → sustainable 2 animals (60//30)
     ctx = make_ctx(day=8, money=20000, animals=animals, shed={"WHEAT": 0},
-                   wheat_tiles=10)
+                   wheat_tiles=10, hands=[(3,3)] * 5)
     plan = MacroPlanner(fc).build(ctx)
     # sustainable=2, current=1 → can buy at most 1 more
     total_buys = sum(plan.intents["buy_animal"].values())

@@ -239,8 +239,9 @@ def test_planner_no_trigger_with_sufficient_wheat():
                         "fertilizer_available": False, "pending_care_bonus": 0})]
     fc = make_forecast(BASE_PRICES)
     # 20 wheat tiles × 6 = 120 capacity; 1 animal × 22 days = 22 demand → surplus
+    # Need hands for labor gate: 5 hands + 1 farmer = 6 units × 12 = 72 capacity
     ctx = make_ctx(day=8, money=20000, animals=animals,
-                   shed={"WHEAT": 0}, wheat_tiles=20)
+                   shed={"WHEAT": 0}, wheat_tiles=20, hands=[(3,3)] * 5)
     plan = MacroPlanner(fc).build(ctx)
     # deficit is zero (120 cap > 24 demand) → no deficit trigger
     # but planner buys animals (goose+cow+sheep) and their feed adds to buffer
