@@ -97,7 +97,7 @@ def build_single_file_submission(sub_dir: str, dist_dir: str) -> str:
         re.MULTILINE | re.DOTALL
     )
     pattern_try_except = re.compile(
-        r'^try:\s*\n(?:\s+from\s+[^\n]+\n)+\s*except\s+ImportError:\s*\n(?:\s+from\s+[^\n]+\n)+',
+        r'^try:\s*\n(?:\s+from\s+[^\n]+\s+import\s+(?:\([^\)]*\)|[^\n]+)\n*)+\s*except\s+ImportError:\s*\n(?:\s+from\s+[^\n]+\s+import\s+(?:\([^\)]*\)|[^\n]+)\n*)+',
         re.MULTILINE
     )
     pattern_std_imports = re.compile(

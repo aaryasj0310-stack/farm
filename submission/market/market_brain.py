@@ -59,7 +59,12 @@ class MarketBrain:
     def sell_orders(self, ctx, max_slots=None, opp_advice=None):
         """Returns (orders, details). orders: [["SELL", prod, qty], ...].
 
-        Phase 6: opp_advice adds preempt-sell urgency and post-crash delay.
+        v5.9: Sell every hour (not just t%4==1) to fund mandatory hires.
+        Batch sizes follow spec:
+          Days 0-5:  10-20 units per product
+          Days 6-8:  5-10 units
+          Days 9+:   3-5 units
+        Carry/floor holds are relaxed — cash flow > price optimization.
         """
         if max_slots is None:
             max_slots = int(MAX_MARKET_ORDERS * SELL_SLOT_SHARE)
@@ -73,8 +78,9 @@ class MarketBrain:
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
-        if not self._is_sell_hour(day, hour) and not (endgame and day == 29) and not pressure:
-            return [], {"reason": "not_a_sell_window"}
+        # v5.9: Sell every hour (cash flow for hires) except hour 0 (purchases)
+        if hour == 0 and not endgame:
+            return [], {"reason": "hour0_purchases"}
 
         # Phase 6: extract opp_advice sets for fast lookup
         preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()
@@ -82,7 +88,18 @@ class MarketBrain:
 
         inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
         candidates = []
+        
+        # v5.9: Spec batch sizes per phase
+        if day <= 5:
+            batch_target = 15  # sell 10-20 units
+        elif day <= 8:
+            batch_target = 7   # sell 5-10 units
+        else:
+            batch_target = 4   # sell 3-5 units
+        
         for prod in SELLABLE:
+            if prod in delay_set and not endgame:
+                continue
             stock = int(shed.get(prod, 0))
             if stock <= 0:
                 continue
@@ -91,57 +108,33 @@ class MarketBrain:
                 if stock <= 0:
                     continue
             spot = market_price(prod, inv.get(prod, 10000))
-            keep_frac = DRIP_PRICE_KEEP_FRAC.get(prod, 0.95)
-
-            # --- rule: floor hold ------------------------------------
-            if spot <= 1 and prod in HOLD_AT_FLOOR_PRODUCTS \
-                    and days_left >= FLOOR_HOLD_MIN_DAYS_LEFT and not endgame:
-                continue
-
-            # --- rule: carry check -----------------------------------
-            horizon_day = min(day + CARRY_HORIZON_DAYS, 29)
-            e_future = self.fc.expected_price(prod, horizon_day)
-            carry = (e_future / spot - 1.0) if spot > 0 else 0.0
-            aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
-            hold_for_recovery = (
-                carry > MIN_CARRY_GAIN
-                and not pressure
-                and days_left > ENDGAME_RISK_DAYS
-                and prod not in HOLD_AT_FLOOR_PRODUCTS
-            )
-
-            # --- Phase 6: post-crash delay hold ---------------------
-            if prod in delay_set and not aggressive and day < 28:
-                continue
-
-            if hold_for_recovery and not aggressive:
-                continue
-
-            # --- quantity ---------------------------------------------
+            
+            # v5.9: Never hold at floor — sell everything for cash flow
             if spot <= 1:
-                qty = stock if aggressive else MIN_SLICE_QTY
-            else:
-                aggressive_limit = FINAL_DUMP_DAYS.get(day, 0.60)
-                eff_keep = keep_frac if not aggressive else min(keep_frac, aggressive_limit)
-                q_max = self._drip_budget(prod, inv.get(prod, 10000),
-                                          eff_keep, spot)
-                if q_max >= MIN_SLICE_QTY:
-                    qty = min(stock, q_max)
-                elif aggressive:
-                    qty = min(stock, 1)
-                else:
-                    qty = 0
+                qty = stock if endgame else min(stock, batch_target)
+                if qty > 0:
+                    candidates.append({
+                        "product": prod, "qty": int(qty), "spot": spot,
+                        "avg_est": spot, "reason": "floor_sell",
+                        "urgency": 0.5,
+                    })
+                continue
+
+            # v5.9: No carry holds — sell at spec batch size for cash flow
+            aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
+            qty = min(stock, batch_target)
+            
             if qty <= 0:
                 continue
 
             avg_est = total_revenue_estimate(prod, inv.get(prod, 10000),
                                              qty) / qty
-            reason = self._reason(prod, spot, carry, aggressive, pressure)
+            reason = "spec_batch_sell"
+            urgency = stock / (shed_total or 1)
 
             # --- Phase 6: preempt sell urgency boost ----------------
-            urgency = stock / (shed_total or 1)
             if prod in preempt_set:
-                urgency = max(urgency, 0.99)  # force to front of queue
+                urgency = max(urgency, 0.99)
                 reason = "preempt_dump"
 
             candidates.append({

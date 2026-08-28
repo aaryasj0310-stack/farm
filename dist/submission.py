@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Set
 
 """Tunable hyperparameters + engine-constant mirror (latest kaggriculture.py).
 
+v5.9: Fixed hiring schedule + action-budget allocator.
 All engine facts here are mirrored from the installed kaggle_environments
 kaggriculture plugin (CROPS / ANIMALS / MARKET_PARAMS / SHOPS / timings).
 """
@@ -77,6 +78,7 @@ PRIORITY_FERT_COLLECT = 80
 PRIORITY_BONUS_WATER = 70
 PRIORITY_CARE_ANIMAL = 60
 PRIORITY_STANDARD_HARVEST = 50
+PRIORITY_FERTILIZE_CROP = 48
 PRIORITY_PLACE_ANIMAL = 45
 PRIORITY_PLANT_AND_WATER = 40
 PRIORITY_BUILD_STRUCTURE = 35
@@ -167,6 +169,78 @@ DEBUG = False
 def log(msg):
     if DEBUG:
         print(f"[agent] {msg}")
+
+
+# ====================================================================
+# v5.9: Fixed Hiring Schedule + Land Policy
+# ====================================================================
+
+# Fixed hiring schedule — NEVER override with money/market conditions.
+# Key = day range start, Value = hands count to hire each morning.
+# Engine resets farm["hands"] to [] daily; must re-hire every day.
+# Cost per day: 4h=$7, 8h=$54, 10h=$143, 12h=$376 (fibonacci pricing).
+DAY_TO_HANDS = {
+    0: 4,    # Days 0-5: 4 hands (120 actions/day)
+    6: 8,    # Days 6-8: 8 hands (216 actions/day)
+    9: 10,   # Day 9: 10 hands (264 actions/day)
+    10: 12,  # Days 10-29: 12 hands (312 actions/day)
+    30: 0,   # Day 30: 0 hands (main farmer only)
+}
+
+def get_target_hands(day):
+    """Return the target hired-hands count for a given day."""
+    result = 0
+    for start_day in sorted(DAY_TO_HANDS.keys()):
+        if day >= start_day:
+            result = DAY_TO_HANDS[start_day]
+    return result
+
+def get_actions_available(day):
+    """Total actions available per day given the fixed schedule."""
+    hands = get_target_hands(day)
+    total_units = 1 + hands  # farmer + hired hands
+    return total_units * TURNS_PER_DAY
+
+# Land purchase policy — fixed days and money thresholds.
+# Quadrant numbering: NW=1 (starting), NE=2 ($1k), SW=3 ($2k), SE=4 ($4k)
+# Strategy: Only buy quadrants 1-3 (75 tiles). NEVER buy quadrant 4.
+QUADRANT_UNLOCK_DAYS = {
+    2: 6,    # Quadrant 2 (NE): buy on day 6
+    3: 9,    # Quadrant 3 (SW): buy on day 9
+}
+QUADRANT_MONEY_THRESHOLDS = {
+    2: 2000,  # Need >= $2,000 to buy Q2 (keep safety buffer)
+    3: 4000,  # Need >= $4,000 to buy Q3
+}
+QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
+
+# Animal scaling targets by workforce size (hands count)
+# Maps hands_count -> (target_geese, target_cows, target_sheep)
+# Spec: 4h→4-6 animals; 8h→8-12; 10h→12-16; 12h→16-20. Geese first, then cows, then sheep.
+ANIMAL_SCALING = {
+    4:  (4, 0, 0),    # Days 0-5: 4 geese
+    8:  (8, 2, 0),    # Days 6-8: 8 geese + 2 cows = 10 animals
+    10: (10, 3, 1),   # Day 9: 10 geese + 3 cows + 1 sheep = 14 animals
+    12: (12, 4, 2),   # Days 10-29: 12 geese + 4 cows + 2 sheep = 18 animals
+}
+
+def get_animal_targets(hands):
+    """Return (geese, cows, sheep) targets based on current hands count."""
+    result = (0, 0, 0)
+    for h in sorted(ANIMAL_SCALING.keys()):
+        if hands >= h:
+            result = ANIMAL_SCALING[h]
+    return result
+
+# Sell batch sizes by phase
+SELL_BATCH_SIZES = {
+    "phase1": 10,  # Days 0-5: sell in batches of 10-20
+    "phase2": 5,   # Days 6-8: sell in batches of 5-10
+    "phase3": 3,   # Days 9+: sell in batches of 3-5
+}
+
+# Default fallback actions when task queue is empty
+DEFAULT_ACTIONS = ["COLLECT_FERTILIZER", "SELL_SURPLUS", "WATER_MATURE"]
 
 # ===========================================================================
 # END MODULE: config.py
@@ -7375,6 +7449,57 @@ def in_bonus_window(tile, day):
     return start <= age <= cd["max_yield_day"]
 
 
+def needs_water_today(tile, day):
+    """Determine if a plant tile must/should be watered today under Points 1.2 & 1.5.
+    
+    Guardrail 1: Planting day ALWAYS requires same-day water (starts with counter=1).
+    Guardrail 2: If missed yesterday (counter >= 1), MUST water today (prevent weed).
+    Guardrail 3: In bonus window (one-time) or active production (ongoing) -> ALWAYS water.
+    Guardrail 4: Pre-bonus / non-bonus -> alternate days by spatial checkerboard ((x + y + day) % 2 == 0).
+    """
+    if not tile.is_plant:
+        return False
+    if tile.watered_today:
+        return False
+        
+    # Guardrail 1: Planting day
+    if tile.planted_day is not None and tile.planted_day == day:
+        return True
+        
+    # Guardrail 2: Missed yesterday -> mandatory survival watering
+    if tile.consecutive_unwatered >= 1:
+        return True
+        
+    cd = CROPS.get(tile.crop)
+    if cd is None:
+        return True
+        
+    # Guardrail 3: Ongoing crops (Tomato, Strawberry)
+    if cd["ongoing"]:
+        age = crop_age(tile, day)
+        first_yield = cd.get("first_yield_day", 8)
+        # In juvenile growth phase (no fruit yet) -> alternate days safely
+        if age < first_yield:
+            return (tile.x + tile.y + day) % 2 == 0
+        # In production phase:
+        # - Tomato: yields daily (ages 8-11) -> water daily
+        # - Strawberry: yields on even ages (10, 12, 14, 16) -> water on production days
+        interval = cd.get("interval", 1)
+        if interval <= 1:
+            return True
+        is_production_day = (age - first_yield) % interval == 0
+        if is_production_day:
+            return True
+        # Off-day during production -> alternate days
+        return (tile.x + tile.y + day) % 2 == 0
+
+    if in_bonus_window(tile, day):
+        return True
+        
+    # Guardrail 4: Outside bonus window and watered yesterday -> alternate days
+    return (tile.x + tile.y + day) % 2 == 0
+
+
 def decay_step_for(tile):
     """First global step at which this one-time plant starts losing units."""
     cd = CROPS[tile.crop]
@@ -7390,7 +7515,6 @@ def turns_until_decay(tile, step):
 
 def animal_production_days(tile):
     a = ANIMAL_LIST and None  # placeholder to keep lints quiet
-    from config import ANIMALS
     info = ANIMALS.get(tile.animal)
     if info is None:
         return set()
@@ -8712,7 +8836,10 @@ def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx):
 
         # Get current spot price from market inventory
         market_obj = ctx.get("market") if ctx else None
-        inv = getattr(market_obj, "inventory", {}) if market_obj else {}
+        if isinstance(market_obj, dict):
+            inv = market_obj.get("inventory", market_obj)
+        else:
+            inv = getattr(market_obj, "inventory", {}) if market_obj else {}
         current_inv = inv.get(product, 10000)
 
         # Import market_price at function scope to avoid circular import issues
@@ -8892,6 +9019,8 @@ def reroute_to_shed_access(unit_pos):
 
 """Per-turn prioritized task construction + greedy distance assignment.
 
+v5.9: Action-budget allocator with utilization tracking.
+
 Engine facts encoded here:
   - One action per unit per turn; moves and ops are mutually exclusive.
   - HANDS HIRED THIS TURN CANNOT ACT THIS TURN: interpreter applies unit
@@ -8912,6 +9041,56 @@ Engine facts encoded here:
 """
 
 
+# v5.9: Daily utilization tracking (accumulated across all 24 hours of each day)
+_daily_log = {}
+_daily_accum = {}
+
+def get_daily_log():
+    """Return the utilization log for the current episode."""
+    return _daily_log
+
+def reset_daily_log():
+    """Reset utilization log at start of new episode."""
+    global _daily_log, _daily_accum
+    _daily_log = {}
+    _daily_accum = {}
+
+def _record_turn_utilization(ctx, n_units, actions_taken):
+    """Accumulate hourly utilization and finalize daily log at hour 23."""
+    day, hour = ctx["day"], ctx["hour"]
+    if day not in _daily_accum:
+        _daily_accum[day] = {"available": 0, "used": 0, "idle": 0, "idle_causes": []}
+    
+    used = sum(1 for a in actions_taken.values() if a != ["PASS"])
+    avail = n_units
+    idle = max(0, avail - used)
+    
+    _daily_accum[day]["available"] += avail
+    _daily_accum[day]["used"] += used
+    _daily_accum[day]["idle"] += idle
+    if idle > 0:
+        _daily_accum[day]["idle_causes"].append("no_tasks" if used == 0 else "partial_idle")
+        
+    if hour == 23 or ctx.get("step", 0) % TURNS_PER_DAY == 23:
+        tot_avail = _daily_accum[day]["available"]
+        tot_used = _daily_accum[day]["used"]
+        tot_idle = _daily_accum[day]["idle"]
+        shed_cnt = sum(ctx["private"].shed.values()) if ctx.get("private") else 0
+        unlocked_cnt = len(ctx["farm"].unlocked) if ctx.get("farm") else 1
+        n_hands = len(ctx["farm"].hands) if ctx.get("farm") else 0
+        from market.order_builder import hire_total_cost
+        
+        _daily_log[day] = {
+            "actions_available": tot_avail,
+            "actions_used": tot_used,
+            "idle_actions": tot_idle,
+            "utilization_pct": round(100.0 * tot_used / max(1, tot_avail), 1),
+            "shed_occupancy": shed_cnt,
+            "quadrant_ownership": unlocked_cnt,
+            "daily_hires": n_hands,
+            "hire_cost": hire_total_cost(n_hands),
+            "idle_cause": "queue_empty" if tot_idle > 0 else None,
+        }
 
 
 def farm_pos_of(ctx):
@@ -8956,29 +9135,45 @@ def build_tasks(ctx, macro):
 
         if not t.watered_today and hour < 23:
             dying_tomorrow = t.consecutive_unwatered >= 1
-            prio = PRIORITY_URGENT_SURVIVAL if dying_tomorrow else (
-                PRIORITY_BONUS_WATER if in_bonus_window(t, day) else 30)
-            # P4: Day 28 — allow bonus watering for late-planted crops
-            # that are in their bonus window and will harvest by Day 29
-            if not macro.watering_enabled:
-                if day == 28 and in_bonus_window(t, day):
-                    age = crop_age(t, day)
+            if dying_tomorrow:
+                # Guardrail 2: mandatory survival watering
+                need_water.append((PRIORITY_URGENT_SURVIVAL, t))
+            elif needs_water_today(t, day):
+                prio = PRIORITY_BONUS_WATER if in_bonus_window(t, day) else 30
+                if not macro.watering_enabled and day == 28 and in_bonus_window(t, day):
                     cd = CROPS.get(t.crop, {})
                     harvestable_by_29 = (t.planted_day is not None
                                          and t.planted_day + cd.get("max_yield_day", 99) <= 29)
-                    if harvestable_by_29:
-                        pass  # allow watering — will be queued below
-                    else:
+                    if not harvestable_by_29:
                         continue
-                else:
-                    continue
-            if not dying_tomorrow and macro.water_budget_exceeded:
-                water_starved = True   # skip-day fallback: alternate batches
-                if (t.x + t.y + day) % 2 != 0:
-                    continue
-            need_water.append((prio, t))
+                need_water.append((prio, t))
+
     for prio, t in need_water:
         add(prio, "WATER", t.pos, kind="water")
+
+    # ---------------- fertilizer application (Strawberries & Tomatoes) ----
+    fert_in_shed = int(ctx["private"].shed.get("FERTILIZER", 0)) if ctx.get("private") else 0
+    fert_held = sum(int(inv.get("FERTILIZER", 0)) for inv in (ctx["private"].inventories if ctx.get("private") else []))
+    total_fert = fert_in_shed + fert_held
+    
+    if total_fert > 0 and hour < 20:
+        fert_targets = []
+        for t in plants:
+            if t.crop in ("STRAWBERRY", "TOMATO") and t.fertilized_until_day < day:
+                fert_targets.append(t.pos)
+                
+        for pos in fert_targets[:total_fert]:
+            add(PRIORITY_FERTILIZE_CROP, "FERTILIZE", pos, kind="fertilize_crop")
+            
+        # Stage fertilizer pickup from shed if needed
+        needed_pickup = len(fert_targets) - fert_held
+        if needed_pickup > 0 and fert_in_shed > 0:
+            grab_fert = min(fert_in_shed, needed_pickup)
+            farmer_pos = tuple(farm_pos_of(ctx))
+            target = min(SHED_ACCESS_TILES,
+                         key=lambda tp: abs(tp[0] - farmer_pos[0]) + abs(tp[1] - farmer_pos[1]))
+            add(PRIORITY_FEED_STAGING + 1, "PICKUP", tuple(target),
+                args=["FERTILIZER", int(grab_fert)], kind="pickup_fertilizer")
 
     # ---------------- animals ----------------
     feeds_due = 0
@@ -9051,7 +9246,10 @@ def build_tasks(ctx, macro):
 
 
 def assign_tasks(tasks, ctx, extra_units=()):
-    """Greedy closest-unit dispatch. Returns per-unit actions + bookkeeping."""
+    """Greedy closest-unit dispatch. Returns per-unit actions + bookkeeping.
+    
+    v5.9: Tracks daily utilization and logs idle actions.
+    """
     farm = ctx["farm"]
     units = [(0, tuple(farm.farmer))]
     for i, h in enumerate(farm.hands):
@@ -9076,6 +9274,10 @@ def assign_tasks(tasks, ctx, extra_units=()):
             item = task["args"][0]
             if item in ANIMALS:
                 return set(holders.get(item, []))   # empty => defer, don't no-op
+        elif task["op"] == "FERTILIZE":
+            return set(holders.get("FERTILIZER", []))
+        elif task["op"] == "FEED":
+            return set(holders.get("WHEAT", []))
         return None                                  # no restriction
 
     busy = set()
@@ -9102,9 +9304,57 @@ def assign_tasks(tasks, ctx, extra_units=()):
         task["unit_pos"] = pos_by_idx[best]
         assignment[best] = task
 
+    # v5.9: Fallback assignment for idle units to guarantee zero wasted actions
+    # Default fallback priority: COLLECT_FERTILIZER -> WATER_MATURE/UNWATERED -> DIG_WEED
+    unassigned_units = [idx for idx, _ in units if idx not in busy]
+    if unassigned_units:
+        targeted_positions = {tuple(t["target"]) for t in assignment.values() if t.get("target")}
+        
+        # 1. Fallback: collect any available fertilizer
+        for t in farm.iter_tiles():
+            if not unassigned_units:
+                break
+            if t.is_animal and t.fertilizer_available and tuple(t.pos) not in targeted_positions:
+                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                unassigned_units.remove(best_u)
+                busy.add(best_u)
+                task = {"priority": 10, "op": "COLLECT_FERTILIZER", "target": tuple(t.pos),
+                        "args": [], "kind": "fallback_fert", "meta": {}, "unit_pos": pos_by_idx[best_u]}
+                assignment[best_u] = task
+                targeted_positions.add(tuple(t.pos))
+
+        # 2. Fallback: water any mature or unwatered crop
+        for t in farm.iter_tiles():
+            if not unassigned_units:
+                break
+            if t.is_plant and not t.watered_today and tuple(t.pos) not in targeted_positions:
+                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                unassigned_units.remove(best_u)
+                busy.add(best_u)
+                task = {"priority": 10, "op": "WATER", "target": tuple(t.pos),
+                        "args": [], "kind": "fallback_water", "meta": {}, "unit_pos": pos_by_idx[best_u]}
+                assignment[best_u] = task
+                targeted_positions.add(tuple(t.pos))
+
+        # 3. Fallback: dig any weed on unlocked land
+        for t in farm.iter_tiles():
+            if not unassigned_units:
+                break
+            if t.kind == "WEED" and farm.quadrant_of(t.pos) in farm.unlocked and tuple(t.pos) not in targeted_positions:
+                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                unassigned_units.remove(best_u)
+                busy.add(best_u)
+                task = {"priority": 5, "op": "DIG", "target": tuple(t.pos),
+                        "args": [], "kind": "fallback_dig", "meta": {}, "unit_pos": pos_by_idx[best_u]}
+                assignment[best_u] = task
+                targeted_positions.add(tuple(t.pos))
+
     actions = {idx: ["PASS"] for idx in range(len(units))}
     for idx, task in assignment.items():
         actions[idx] = emit(task)
+
+    # v5.9: Track utilization across all 24 hours of the day
+    _record_turn_utilization(ctx, len(units), actions)
 
     # Bookkeeping: PLANT intents count as seed reservations whether or not the
     # unit is standing on the tile yet (seeds are consumed only on execution,
@@ -9144,7 +9394,6 @@ def emit(task):
     pos = tuple(task.get("unit_pos", (4, 4)))
 
     if target is not None and pos != tuple(target):
-        from pathfinding import bfs_first_step
         move = bfs_first_step(pos, tuple(target))
         if move is not None:
             return [move]
@@ -9228,28 +9477,6 @@ Known simplifications (documented, deliberate):
 # ---------------------------------------------------------------------------
 # Asset economics — imported from authoritative baked_economics artifact.
 # ---------------------------------------------------------------------------
-try:
-    from strategy.baked_economics import (
-        ANIMAL_ECONOMICS,
-        ANIMAL_TARGETS,
-        BOOST_CAP,
-        CROP_CYCLE_LEN,
-        CROP_ECONOMICS,
-        MONEY_RESERVE,
-        SHOP_BOOST_WEIGHT,
-    )
-except ImportError:
-    from baked_economics import (
-        ANIMAL_ECONOMICS,
-        ANIMAL_TARGETS,
-        BOOST_CAP,
-        CROP_CYCLE_LEN,
-        CROP_ECONOMICS,
-        MONEY_RESERVE,
-        SHOP_BOOST_WEIGHT,
-    )
-
-
 @dataclass
 class MacroPlan:
     day: int
@@ -9267,6 +9494,8 @@ class MacroPlan:
 
 def _crop_allowed_today(crop, day):
     """True if planted today it still completes its final harvest by day 29."""
+    if day > 25:
+        return False  # v5.9: STOP all seed purchases after day 25
     cd = CROPS[crop]
     if cd["ongoing"]:
         # latest scheduled production: first + (count-1) * interval
@@ -9519,23 +9748,26 @@ class MacroPlanner:
         buy_animal = {}
         reserved_structure_tiles = []
         EFFECTIVE_ACTIONS_PER_UNIT = 12
-        MIN_HANDS_BASE = 4
 
-        # Pre-compute workforce size for labor capacity checks
-        hires = 0
-        if not is_endgame:
-            dynamic_floor = MIN_HANDS_BASE + n_animals // 4 + (len(farm.unlocked) - 1)
-            _load_est = estimate_daily_load(ctx)
-            _units_now = 1 + len(farm.hands)
-            _needed = -(-_load_est // EFFECTIVE_ACTIONS_PER_UNIT)
-            hires = max(0, min(HIRE_BUDGET_MAX_HANDS, _needed - _units_now))
-            if day < 25:
-                hires = max(hires, dynamic_floor - len(farm.hands))
+        # v5.9: Fixed hiring schedule — no dynamic computation
+        target_hands = get_target_hands(day)
+        current_hands = len(farm.hands)
+        hires = max(0, target_hands - current_hands)
+
+        # v5.9: Animal targets from fixed scaling schedule
+        target_geese, target_cows, target_sheep = get_animal_targets(target_hands)
+        # Map targets to animal list
+        fixed_targets = {"GOOSE": target_geese, "COW": target_cows, "SHEEP": target_sheep}
 
         # endgame: no new animals — just feed what we have
         if not is_endgame:
+            # v5.9: Cash-flow guard — only buy animals if we can fund
+            # mandatory hires for the next 3 days.
+            future_hire_cost = sum(hire_total_cost(get_target_hands(d))
+                                   for d in range(day, min(day + 3, 30)))
+            cash_for_animals = max(0, ctx["farm"].money - future_hire_cost - self.reserve)
+            
             # Labor capacity check: can the workforce handle more animals?
-            # Use ACTUAL current capacity (hired hands act T+1, not today)
             ANIMAL_LABOR_PER_HEAD = 3
             current_load = estimate_daily_load(ctx)
             actual_units = 1 + len(farm.hands)
@@ -9546,11 +9778,10 @@ class MacroPlanner:
             MIN_CROP_TILES_RESERVE = 5
 
             for animal in ANIMAL_LIST:
-                target = ANIMAL_TARGETS.get(animal, 0)
+                target = fixed_targets.get(animal, 0)
                 deficit_a = target - counts.get(animal, 0)
                 if deficit_a <= 0:
                     continue
-                # dynamic cap: don't exceed sustainable herd size
                 if n_animals + sum(buy_animal.values()) >= sustainable:
                     continue
                 info = ANIMALS[animal]
@@ -9561,13 +9792,13 @@ class MacroPlanner:
                 gross = econ["out30"] * e_price
                 feed_cost = econ["feed30"] * 25.0
                 if gross - feed_cost - info["cost"] <= 0:
-                    continue                                    # unprofitable regime
-                # Labor gate: can the farm handle one more animal?
+                    continue
                 if spare_labor < ANIMAL_LABOR_PER_HEAD:
-                    continue                                    # workforce saturated
-                affordable = ctx["farm"].money >= info["cost"] + self.reserve
-                if affordable and deficit_a > 0:
+                    continue
+                # v5.9: Buy only if cash-for-animals covers the cost
+                if cash_for_animals >= info["cost"]:
                     buy_animal[animal] = buy_animal.get(animal, 0) + 1
+                    cash_for_animals -= info["cost"]
 
                 # queue structure build for one deficit slot per day
                 struct_kind = info["structure"]
@@ -9586,7 +9817,7 @@ class MacroPlanner:
             animal_by_structure = {}
             for animal in ANIMAL_LIST:
                 info = ANIMALS[animal]
-                deficit = ANIMAL_TARGETS.get(animal, 0) - counts.get(animal, 0)
+                deficit = fixed_targets.get(animal, 0) - counts.get(animal, 0)
                 if deficit > 0:
                     animal_by_structure.setdefault(info["structure"], animal)
             op = "BUILD_COOP" if "COOP" in animal_by_structure else "BUILD_PASTURE"
@@ -9600,8 +9831,7 @@ class MacroPlanner:
         if not is_endgame:
             # ---- Budget prioritization (Fix 6) ----
             money = ctx["farm"].money
-            budget = money - self.reserve
-
+            
             hire_cost = hire_total_cost(hires)
 
             n_extra = len(farm.unlocked) - 1
@@ -9612,36 +9842,54 @@ class MacroPlanner:
                     land_cost = land_price
 
             animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
-            seed_budget = max(0, budget - hire_cost - land_cost - animal_cost)
+            # v5.9: Hires are mandatory — subtract hire cost from money first.
+            # Remaining money (after hires + reserve) is available for seeds/land/animals.
+            post_hire_money = max(0.0, money - hire_cost)
+            seed_budget = max(0, post_hire_money - self.reserve - land_cost - animal_cost)
             remaining_money = seed_budget
 
             seeds = dict(private.seeds)
 
-            # ---- Phase 2: Wheat-first (Fix 2) ----
-            wheat_target = max(3, min(TARGET_GEESE // 3, 8))  # 3–8 wheat tiles
+            # ---- v5.9: Plant ALL empty tiles with best crops ----
+            # Spec: "Day 0: PLANT all available tiles with wheat AND WATER
+            # every planted tile the same day."
+            # Fill every empty tile with the highest-scoring crop.
+            
+            # Phase 2a: Wheat planting
+            # Day 0: Plant all available tiles with wheat (backbone + prevents weed trap)
+            # Days > 0: Plant wheat up to target buffer, leaving remaining tiles for cash crops
             wheat_available = seeds.get("WHEAT", 0)
-            wheat_to_plant = min(wheat_target, wheat_available, len(empty_tiles))
+            if day == 0:
+                wheat_to_plant = len(empty_tiles)
+                if wheat_to_plant > wheat_available:
+                    needed_seeds = wheat_to_plant - wheat_available
+                    buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + needed_seeds
+                    remaining_money = max(0.0, remaining_money - needed_seeds * CROPS["WHEAT"]["seed"])
+                    seeds["WHEAT"] = wheat_to_plant
+            else:
+                existing_wheat = sum(1 for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT")
+                wheat_cap = max(6, target_geese // 3 + 2)
+                wheat_needed = max(0, wheat_cap - existing_wheat)
+                wheat_to_plant = min(wheat_available, wheat_needed, len(empty_tiles))
+
             for _ in range(wheat_to_plant):
-                pos = empty_tiles.pop(0)
-                plant_queue.append((pos, "WHEAT"))
-                seeds["WHEAT"] = seeds.get("WHEAT", 0) - 1
-            # Replenish wheat seeds for next turn
-            wheat_buy = max(wheat_target - wheat_available + wheat_to_plant, 0)
-            if wheat_buy > 0 and remaining_money >= CROPS["WHEAT"]["seed"] * wheat_buy:
-                buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + wheat_buy
-                remaining_money -= CROPS["WHEAT"]["seed"] * wheat_buy
+                if empty_tiles:
+                    pos = empty_tiles.pop(0)
+                    plant_queue.append((pos, "WHEAT"))
+                    seeds["WHEAT"] = max(0, seeds.get("WHEAT", 0) - 1)
 
             # Track planned counts for portfolio-aware scoring
             planned = {"WHEAT": wheat_to_plant} if wheat_to_plant > 0 else {}
 
-            # ---- Phase 3: Portfolio-aware per-tile scoring (Fix 3) ----
-            for pos in empty_tiles:
+            # Phase 2b: Fill remaining empty tiles with best-scoring crops
+            # Only plant if we have seeds or money to buy them
+            for pos in list(empty_tiles):
                 best_score, best_crop = -1e9, None
                 for crop in CROPS:
                     if not _crop_allowed_today(crop, day):
                         continue
                     if planned.get(crop, 0) >= CROP_TILE_CAPS.get(crop, 99):
-                        continue  # safety cap (Fix 4)
+                        continue
                     own_for_this = planned.get(crop, 0) + 1
                     score, _ = _crop_score(crop, day, self.fc, boosts,
                                            own_for_this, n_animals, n_animals,
@@ -9649,8 +9897,7 @@ class MacroPlanner:
                     if score > best_score:
                         best_score, best_crop = score, crop
                 if best_crop is None or best_score <= 0:
-                    break  # no profitable crop for this tile — stop planting
-                # Reserve seed
+                    break
                 seed_cost = CROPS[best_crop]["seed"]
                 if seeds.get(best_crop, 0) > 0:
                     seeds[best_crop] -= 1
@@ -9661,6 +9908,7 @@ class MacroPlanner:
                     continue
                 plant_queue.append((pos, best_crop))
                 planned[best_crop] = planned.get(best_crop, 0) + 1
+                empty_tiles.remove(pos)
         else:
             remaining_money = ctx["farm"].money - self.reserve
 
@@ -9675,68 +9923,21 @@ class MacroPlanner:
                             int(max(0, remaining_money) // 25))
             remaining_money -= buy_wheat * 25
 
-        # ---- ROI-based land expansion ----
+        # ---- v5.9: Fixed land expansion schedule ----
         buy_land = False
-        if not is_endgame and day <= LAND_BUY_LAST_DAY:
+        if not is_endgame:
             n_extra_unlocked = len(farm.unlocked) - 1
-            if n_extra_unlocked < len(LAND_ORDER):
-                price = LAND_PRICES[n_extra_unlocked]
-                tiles_added = 25
-                days_remaining = max(0, 29 - day)
+            next_quadrant = n_extra_unlocked + 2  # quadrants are 1-indexed: NW=1, NE=2, SW=3, SE=4
 
-                # Safety: cash reserve
-                if ctx["farm"].money < price + MONEY_RESERVE:
-                    pass  # can't afford
-                # Safety: feed secured for existing animals
-                elif n_animals > 0 and wheat_have < n_animals * FEED_WHEAT_BUFFER_DAYS:
-                    pass  # feed not secured — don't expand
-                else:
-                    # Score the top 4 crops, allocate tiles proportionally to caps,
-                    # and sum expected lifetime profit.
-                    crop_scores = []
-                    for crop in CROPS:
-                        if not _crop_allowed_today(crop, day):
-                            continue
-                        score, _ = _crop_score(crop, day, self.fc, boosts,
-                                               own_tiles=0,
-                                               feed_wheat_per_day=n_animals,
-                                               n_animals=n_animals,
-                                               opp_advice=opp_advice)
-                        if score > 0:
-                            crop_scores.append((score, crop))
-                    crop_scores.sort(reverse=True)
-
-                    # Allocate tiles: top crop gets up to its cap, then next, etc.
-                    total_daily_profit = 0.0
-                    tiles_used = 0
-                    # Count current planned tiles per crop from plant_queue
-                    planned = {}
-                    for _, cq in plant_queue:
-                        planned[cq] = planned.get(cq, 0) + 1
-                    for score, crop in crop_scores:
-                        if tiles_used >= tiles_added:
-                            break
-                        cap = CROP_TILE_CAPS.get(crop, 99)
-                        remaining_cap = max(0, cap - planned.get(crop, 0))
-                        alloc = min(remaining_cap, tiles_added - tiles_used)
-                        if alloc <= 0:
-                            continue
-                        total_daily_profit += score * alloc
-                        planned[crop] = planned.get(crop, 0) + alloc
-                        tiles_used += alloc
-
-                    lifetime_profit = total_daily_profit * days_remaining
-                    # Operational capacity: can the farm work the new land?
-                    current_load = estimate_daily_load(ctx) + len(plant_queue)
-                    current_units = 1 + len(farm.hands) + hires
-                    current_capacity = current_units * EFFECTIVE_ACTIONS_PER_UNIT
-                    spare_capacity = max(0, current_capacity - current_load)
-                    can_service_new_land = spare_capacity >= 10
-
-                    if (lifetime_profit > price * LAND_ROI_THRESHOLD
-                            and can_service_new_land):
-                        buy_land = True
-                        remaining_money -= price
+            # Hard block: NEVER buy quadrant 4
+            if next_quadrant in QUADRANT_HARD_BLOCK:
+                pass  # blocked forever
+            elif next_quadrant in QUADRANT_UNLOCK_DAYS:
+                unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
+                money_threshold = QUADRANT_MONEY_THRESHOLDS[next_quadrant]
+                if day >= unlock_day and ctx["farm"].money >= money_threshold:
+                    buy_land = True
+                    remaining_money -= LAND_PRICES[n_extra_unlocked]
 
         # ---------------- hiring (computed above) ----------------------
         load = estimate_daily_load(ctx) + len(plant_queue)
@@ -9782,9 +9983,11 @@ def _mean_over(forecast, product, days):
 
 
 def estimate_daily_load(ctx):
-    """Rough action-count needed today (mirrors task_scheduler helper)."""
-    from task_scheduler import estimate_daily_load as esl
-    return esl(ctx)
+    """Rough action-count needed today."""
+    farm = ctx["farm"]
+    plants = sum(1 for t in farm.iter_tiles() if t.is_plant)
+    animals = sum(1 for t in farm.iter_tiles() if t.is_animal)
+    return plants * 2 + animals * 3
 
 # ===========================================================================
 # END MODULE: strategy/macro_planner.py
@@ -9838,7 +10041,12 @@ class OrderBuilder:
 
     # ------------------------------------------------------------------
     def build(self, ctx, intents):
-        """intents: MacroPlan.intents dict. Returns (orders, ledger)."""
+        """intents: MacroPlan.intents dict. Returns (orders, ledger).
+        
+        v5.9: Hires are NON-NEGOTIABLE. They get first claim on money,
+        regardless of budget/reserve. Seeds, animals, land are bought
+        only with what remains after hire cost.
+        """
         farm = ctx["farm"]
         money = float(farm.money)
         budget = max(0.0, money - self.reserve)
@@ -9850,12 +10058,17 @@ class OrderBuilder:
         ledger = {"budget": round(budget, 2), "queued": [],
                   "dropped": [], "spent_estimate": 0.0}
 
-        # ---- tier 0: hires -------------------------------------------
+        # ---- v5.9: Hires get absolute priority (full money) -----------
         tiers = []
         k = int(intents.get("hire", 0))
+        hire_cost = 0.0
         if k > 0:
+            hire_cost = float(hire_total_cost(k))
             tiers.append((TIER_HIRES, "hire",
-                          {"count": k}, hire_total_cost(k)))
+                          {"count": k}, hire_cost))
+
+        # ---- Remaining budget after mandatory hires (protecting reserve) ----
+        post_hire_budget = max(0.0, budget - hire_cost)
 
         # ---- tier 1: seeds -------------------------------------------
         for crop, n in sorted(intents.get("buy_seed", {}).items()):
@@ -9893,29 +10106,23 @@ class OrderBuilder:
             land_price = LAND_PRICES[n_extra]
             tiers.append((TIER_LAND, "land", {}, float(land_price)))
 
-        # ---- fill tiers within budget, trimming counts ---------------
+        # ---- fill tiers: hires first (non-negotiable), then rest ------
         spent = 0.0
         kept = []
         for tier, kind, payload, est in sorted(tiers, key=lambda t: t[0]):
-            remaining = budget - spent
+            if kind == "hire":
+                # Hires use full money — always fit
+                kept.append((tier, kind, payload, est))
+                spent += est
+                continue
+            # Everything else uses post-hire budget
+            remaining = max(0.0, post_hire_budget - (spent - hire_cost))
             if est <= remaining + 1e-9:
                 kept.append((tier, kind, payload, est))
                 spent += est
                 continue
             # partial trim for count-based kinds
-            if kind == "hire":
-                n_max = 0
-                while n_max < payload["count"] and hire_total_cost(n_max + 1) <= remaining + 1e-9:
-                    n_max += 1
-                if n_max > 0:
-                    c = float(hire_total_cost(n_max))
-                    kept.append((tier, "hire", {"count": n_max}, c))
-                    spent += c
-                    ledger["dropped"].append(
-                        {"kind": "hire", "trimmed_from": payload["count"], "to": n_max})
-                else:
-                    ledger["dropped"].append({"kind": "hire", "reason": "budget"})
-            elif kind == "seed":
+            if kind == "seed":
                 unit = CROPS[payload["crop"]]["seed"]
                 n_max = int(remaining // unit)
                 if n_max > 0:
@@ -9953,17 +10160,13 @@ class OrderBuilder:
                                  unit_px * n_max))
                     spent += unit_px * n_max
                     ledger["dropped"].append({"kind": "wheat",
-                                              "trimmed_from": payload["n"],
-                                              "to": n_max})
+                                               "trimmed_from": payload["n"],
+                                               "to": n_max})
                 else:
                     ledger["dropped"].append({"kind": "wheat",
                                               "reason": "budget"})
             elif kind == "land":
                 ledger["dropped"].append({"kind": "land",
-                                          "reason": "budget"})
-            elif kind == "hire":
-                # hires are cheap; only drop if literally nothing fits
-                ledger["dropped"].append({"kind": "hire",
                                           "reason": "budget"})
 
         # ---- emit engine-format orders, honoring the 10-order cap -----
@@ -10011,6 +10214,8 @@ class OrderBuilder:
                     ledger["dropped"].append({"kind": "animal_slots",
                                               "animal": payload["animal"]})
             elif kind == "land":
+                next_quadrant = len(farm.unlocked) + 1
+                assert next_quadrant != 4, "Quadrant 4 (SE) is permanently hard-blocked and must NEVER be purchased!"
                 if take(None):
                     orders.append(["BUY_LAND"])
                     queued["land"] = True
@@ -10085,7 +10290,12 @@ class MarketBrain:
     def sell_orders(self, ctx, max_slots=None, opp_advice=None):
         """Returns (orders, details). orders: [["SELL", prod, qty], ...].
 
-        Phase 6: opp_advice adds preempt-sell urgency and post-crash delay.
+        v5.9: Sell every hour (not just t%4==1) to fund mandatory hires.
+        Batch sizes follow spec:
+          Days 0-5:  10-20 units per product
+          Days 6-8:  5-10 units
+          Days 9+:   3-5 units
+        Carry/floor holds are relaxed — cash flow > price optimization.
         """
         if max_slots is None:
             max_slots = int(MAX_MARKET_ORDERS * SELL_SLOT_SHARE)
@@ -10099,8 +10309,9 @@ class MarketBrain:
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
-        if not self._is_sell_hour(day, hour) and not (endgame and day == 29) and not pressure:
-            return [], {"reason": "not_a_sell_window"}
+        # v5.9: Sell every hour (cash flow for hires) except hour 0 (purchases)
+        if hour == 0 and not endgame:
+            return [], {"reason": "hour0_purchases"}
 
         # Phase 6: extract opp_advice sets for fast lookup
         preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()
@@ -10108,7 +10319,18 @@ class MarketBrain:
 
         inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
         candidates = []
+        
+        # v5.9: Spec batch sizes per phase
+        if day <= 5:
+            batch_target = 15  # sell 10-20 units
+        elif day <= 8:
+            batch_target = 7   # sell 5-10 units
+        else:
+            batch_target = 4   # sell 3-5 units
+        
         for prod in SELLABLE:
+            if prod in delay_set and not endgame:
+                continue
             stock = int(shed.get(prod, 0))
             if stock <= 0:
                 continue
@@ -10117,57 +10339,33 @@ class MarketBrain:
                 if stock <= 0:
                     continue
             spot = market_price(prod, inv.get(prod, 10000))
-            keep_frac = DRIP_PRICE_KEEP_FRAC.get(prod, 0.95)
-
-            # --- rule: floor hold ------------------------------------
-            if spot <= 1 and prod in HOLD_AT_FLOOR_PRODUCTS \
-                    and days_left >= FLOOR_HOLD_MIN_DAYS_LEFT and not endgame:
-                continue
-
-            # --- rule: carry check -----------------------------------
-            horizon_day = min(day + CARRY_HORIZON_DAYS, 29)
-            e_future = self.fc.expected_price(prod, horizon_day)
-            carry = (e_future / spot - 1.0) if spot > 0 else 0.0
-            aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
-            hold_for_recovery = (
-                carry > MIN_CARRY_GAIN
-                and not pressure
-                and days_left > ENDGAME_RISK_DAYS
-                and prod not in HOLD_AT_FLOOR_PRODUCTS
-            )
-
-            # --- Phase 6: post-crash delay hold ---------------------
-            if prod in delay_set and not aggressive and day < 28:
-                continue
-
-            if hold_for_recovery and not aggressive:
-                continue
-
-            # --- quantity ---------------------------------------------
+            
+            # v5.9: Never hold at floor — sell everything for cash flow
             if spot <= 1:
-                qty = stock if aggressive else MIN_SLICE_QTY
-            else:
-                aggressive_limit = FINAL_DUMP_DAYS.get(day, 0.60)
-                eff_keep = keep_frac if not aggressive else min(keep_frac, aggressive_limit)
-                q_max = self._drip_budget(prod, inv.get(prod, 10000),
-                                          eff_keep, spot)
-                if q_max >= MIN_SLICE_QTY:
-                    qty = min(stock, q_max)
-                elif aggressive:
-                    qty = min(stock, 1)
-                else:
-                    qty = 0
+                qty = stock if endgame else min(stock, batch_target)
+                if qty > 0:
+                    candidates.append({
+                        "product": prod, "qty": int(qty), "spot": spot,
+                        "avg_est": spot, "reason": "floor_sell",
+                        "urgency": 0.5,
+                    })
+                continue
+
+            # v5.9: No carry holds — sell at spec batch size for cash flow
+            aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
+            qty = min(stock, batch_target)
+            
             if qty <= 0:
                 continue
 
             avg_est = total_revenue_estimate(prod, inv.get(prod, 10000),
                                              qty) / qty
-            reason = self._reason(prod, spot, carry, aggressive, pressure)
+            reason = "spec_batch_sell"
+            urgency = stock / (shed_total or 1)
 
             # --- Phase 6: preempt sell urgency boost ----------------
-            urgency = stock / (shed_total or 1)
             if prod in preempt_set:
-                urgency = max(urgency, 0.99)  # force to front of queue
+                urgency = max(urgency, 0.99)
                 reason = "preempt_dump"
 
             candidates.append({
@@ -10344,7 +10542,6 @@ def _build_opp_advice(ctx, mem):
 
     Returns OpponentAdvice (always safe — empty advice on any missing data).
     """
-    from strategy.opponent_advisor import OpponentAdvice
     try:
         opp_farm = ctx.get("opponent_farm")
         if opp_farm is None:
@@ -10406,6 +10603,10 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     planner, builder, brain, liquidator = _get_components()
 
+    # v5.9: Reset daily log at start of day 0
+    if ctx["day"] == 0 and ctx["hour"] == 0:
+        reset_daily_log()
+
     # Dynamic shop boosts from observed town unlocks
     known_shops = obs.get("town", {}).get("unlocked_shops", [])
     boosts = demand_boosts(known_shops)
@@ -10416,12 +10617,22 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     # 1. Macro strategic planning (with opponent supply/counter-pick)
     plan = planner.build(ctx, boosts=boosts, opp_advice=opp_advice)
 
+    # v5.9: Hard guard — NEVER allow quadrant 4 purchase
+    if plan.intents.get("buy_land"):
+        n_extra = len(ctx["farm"].unlocked) - 1
+        next_q = n_extra + 2
+        if next_q in QUADRANT_HARD_BLOCK:
+            plan.intents["buy_land"] = False  # force block
+
     # 2. Execution layer: unit tasks and greedy spatial assignment
     tasks = build_tasks(ctx, plan)
     asg = assign_tasks(tasks, ctx)
 
-    # 3. Market layer: purchase intent compilation and dynamic sell/liquidate orders
-    purchase_orders, _ledger = builder.build(ctx, plan.intents)
+    # 3. Market layer: purchase intent compilation (morning market at hour 0) and dynamic sell orders
+    purchase_orders = []
+    if ctx["hour"] == 0:
+        purchase_orders, _ledger = builder.build(ctx, plan.intents)
+        
     if ctx["day"] >= 28:
         sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
     else:

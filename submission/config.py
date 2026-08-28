@@ -1,5 +1,6 @@
 """Tunable hyperparameters + engine-constant mirror (latest kaggriculture.py).
 
+v5.9: Fixed hiring schedule + action-budget allocator.
 All engine facts here are mirrored from the installed kaggle_environments
 kaggriculture plugin (CROPS / ANIMALS / MARKET_PARAMS / SHOPS / timings).
 """
@@ -67,6 +68,7 @@ PRIORITY_FERT_COLLECT = 80
 PRIORITY_BONUS_WATER = 70
 PRIORITY_CARE_ANIMAL = 60
 PRIORITY_STANDARD_HARVEST = 50
+PRIORITY_FERTILIZE_CROP = 48
 PRIORITY_PLACE_ANIMAL = 45
 PRIORITY_PLANT_AND_WATER = 40
 PRIORITY_BUILD_STRUCTURE = 35
@@ -157,3 +159,75 @@ DEBUG = False
 def log(msg):
     if DEBUG:
         print(f"[agent] {msg}")
+
+
+# ====================================================================
+# v5.9: Fixed Hiring Schedule + Land Policy
+# ====================================================================
+
+# Fixed hiring schedule — NEVER override with money/market conditions.
+# Key = day range start, Value = hands count to hire each morning.
+# Engine resets farm["hands"] to [] daily; must re-hire every day.
+# Cost per day: 4h=$7, 8h=$54, 10h=$143, 12h=$376 (fibonacci pricing).
+DAY_TO_HANDS = {
+    0: 4,    # Days 0-5: 4 hands (120 actions/day)
+    6: 8,    # Days 6-8: 8 hands (216 actions/day)
+    9: 10,   # Day 9: 10 hands (264 actions/day)
+    10: 12,  # Days 10-29: 12 hands (312 actions/day)
+    30: 0,   # Day 30: 0 hands (main farmer only)
+}
+
+def get_target_hands(day):
+    """Return the target hired-hands count for a given day."""
+    result = 0
+    for start_day in sorted(DAY_TO_HANDS.keys()):
+        if day >= start_day:
+            result = DAY_TO_HANDS[start_day]
+    return result
+
+def get_actions_available(day):
+    """Total actions available per day given the fixed schedule."""
+    hands = get_target_hands(day)
+    total_units = 1 + hands  # farmer + hired hands
+    return total_units * TURNS_PER_DAY
+
+# Land purchase policy — fixed days and money thresholds.
+# Quadrant numbering: NW=1 (starting), NE=2 ($1k), SW=3 ($2k), SE=4 ($4k)
+# Strategy: Only buy quadrants 1-3 (75 tiles). NEVER buy quadrant 4.
+QUADRANT_UNLOCK_DAYS = {
+    2: 6,    # Quadrant 2 (NE): buy on day 6
+    3: 9,    # Quadrant 3 (SW): buy on day 9
+}
+QUADRANT_MONEY_THRESHOLDS = {
+    2: 2000,  # Need >= $2,000 to buy Q2 (keep safety buffer)
+    3: 4000,  # Need >= $4,000 to buy Q3
+}
+QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
+
+# Animal scaling targets by workforce size (hands count)
+# Maps hands_count -> (target_geese, target_cows, target_sheep)
+# Spec: 4h→4-6 animals; 8h→8-12; 10h→12-16; 12h→16-20. Geese first, then cows, then sheep.
+ANIMAL_SCALING = {
+    4:  (4, 0, 0),    # Days 0-5: 4 geese
+    8:  (8, 2, 0),    # Days 6-8: 8 geese + 2 cows = 10 animals
+    10: (10, 3, 1),   # Day 9: 10 geese + 3 cows + 1 sheep = 14 animals
+    12: (12, 4, 2),   # Days 10-29: 12 geese + 4 cows + 2 sheep = 18 animals
+}
+
+def get_animal_targets(hands):
+    """Return (geese, cows, sheep) targets based on current hands count."""
+    result = (0, 0, 0)
+    for h in sorted(ANIMAL_SCALING.keys()):
+        if hands >= h:
+            result = ANIMAL_SCALING[h]
+    return result
+
+# Sell batch sizes by phase
+SELL_BATCH_SIZES = {
+    "phase1": 10,  # Days 0-5: sell in batches of 10-20
+    "phase2": 5,   # Days 6-8: sell in batches of 5-10
+    "phase3": 3,   # Days 9+: sell in batches of 3-5
+}
+
+# Default fallback actions when task queue is empty
+DEFAULT_ACTIONS = ["COLLECT_FERTILIZER", "SELL_SURPLUS", "WATER_MATURE"]

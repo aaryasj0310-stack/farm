@@ -45,12 +45,13 @@ except ImportError:
     from state.observation_parser import parse_observation
 
 try:
+    from config import QUADRANT_HARD_BLOCK
     from strategy.price_forecast import PriceForecast
     from strategy.macro_planner import MacroPlanner
     from strategy.endgame_liquidator import EndgameLiquidator
     from strategy.shop_adapter import demand_boosts
-    from strategy.opponent_advisor import build_opponent_advice
-    from execution.task_scheduler import assign_tasks, build_tasks
+    from strategy.opponent_advisor import build_opponent_advice, OpponentAdvice
+    from execution.task_scheduler import assign_tasks, build_tasks, get_daily_log, reset_daily_log
     from market.order_builder import OrderBuilder
     from market.market_brain import MarketBrain
     from state.state_tracker import get_state, record_our_sale
@@ -61,12 +62,13 @@ try:
         compute_opponent_sell_probabilities,
     )
 except ImportError:
+    from config import QUADRANT_HARD_BLOCK
     from price_forecast import PriceForecast
     from macro_planner import MacroPlanner
     from endgame_liquidator import EndgameLiquidator
     from shop_adapter import demand_boosts
-    from opponent_advisor import build_opponent_advice
-    from task_scheduler import assign_tasks, build_tasks
+    from opponent_advisor import build_opponent_advice, OpponentAdvice
+    from task_scheduler import assign_tasks, build_tasks, get_daily_log, reset_daily_log
     from order_builder import OrderBuilder
     from market_brain import MarketBrain
     from state_tracker import get_state, record_our_sale
@@ -107,7 +109,6 @@ def _build_opp_advice(ctx, mem):
 
     Returns OpponentAdvice (always safe — empty advice on any missing data).
     """
-    from strategy.opponent_advisor import OpponentAdvice
     try:
         opp_farm = ctx.get("opponent_farm")
         if opp_farm is None:
@@ -169,6 +170,10 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     planner, builder, brain, liquidator = _get_components()
 
+    # v5.9: Reset daily log at start of day 0
+    if ctx["day"] == 0 and ctx["hour"] == 0:
+        reset_daily_log()
+
     # Dynamic shop boosts from observed town unlocks
     known_shops = obs.get("town", {}).get("unlocked_shops", [])
     boosts = demand_boosts(known_shops)
@@ -179,12 +184,22 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     # 1. Macro strategic planning (with opponent supply/counter-pick)
     plan = planner.build(ctx, boosts=boosts, opp_advice=opp_advice)
 
+    # v5.9: Hard guard — NEVER allow quadrant 4 purchase
+    if plan.intents.get("buy_land"):
+        n_extra = len(ctx["farm"].unlocked) - 1
+        next_q = n_extra + 2
+        if next_q in QUADRANT_HARD_BLOCK:
+            plan.intents["buy_land"] = False  # force block
+
     # 2. Execution layer: unit tasks and greedy spatial assignment
     tasks = build_tasks(ctx, plan)
     asg = assign_tasks(tasks, ctx)
 
-    # 3. Market layer: purchase intent compilation and dynamic sell/liquidate orders
-    purchase_orders, _ledger = builder.build(ctx, plan.intents)
+    # 3. Market layer: purchase intent compilation (morning market at hour 0) and dynamic sell orders
+    purchase_orders = []
+    if ctx["hour"] == 0:
+        purchase_orders, _ledger = builder.build(ctx, plan.intents)
+        
     if ctx["day"] >= 28:
         sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
     else:

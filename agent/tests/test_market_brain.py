@@ -62,81 +62,25 @@ def make_ctx(day=10, hour=5, shed=None, inv=None, animals=0, plants=()):
     return parse_observation(obs)
 
 
-def test_non_window_hour_emits_nothing():
+def test_hour0_emits_nothing_except_purchases():
     brain = MarketBrain(FakeFC())
-    ctx = make_ctx(hour=3, shed={"MELON": 30})
+    ctx = make_ctx(hour=0, shed={"MELON": 30})
     orders, details = brain.sell_orders(ctx)
     assert orders == []
-    assert details["reason"] == "not_a_sell_window"
+    assert details["reason"] == "hour0_purchases"
 
 
-def test_non_window_hour_under_shed_pressure_emits_emergency_sells():
+def test_batch_sells_respect_phase_batch_targets():
     brain = MarketBrain(FakeFC())
-    # Shed holding 85 melons (>= SHED_SOFT_CAP 80) on non-window hour 3
-    ctx = make_ctx(hour=3, shed={"MELON": 85})
-    orders, details = brain.sell_orders(ctx)
-    assert len(orders) > 0
-    assert orders[0][0] == "SELL"
-    assert orders[0][1] == "MELON"
-    assert details["pressure"] is True
+    # Phase 1 (day 3): batch target 15
+    ctx_p1 = make_ctx(day=3, hour=1, shed={"MELON": 50})
+    orders_p1, _ = brain.sell_orders(ctx_p1)
+    assert orders_p1[0][2] == 15
 
-
-def test_window_sells_respect_drip_budget_and_stock():
-    brain = MarketBrain(FakeFC())
-    ctx = make_ctx(day=10, hour=5, shed={"MELON": 50})
-    orders, details = brain.sell_orders(ctx)
-    melon = [c for c in details["candidates"] if c["product"] == "MELON"]
-    assert melon and melon[0]["qty"] <= 50
-    for o in orders:
-        assert o[0] == "SELL" and 1 <= o[2] <= 50
-
-
-def test_slots_cap_and_urgency_ranking():
-    brain = MarketBrain(FakeFC())
-    big_shed = {"WHEAT": 60, "MELON": 40, "EGG": 30, "WOOL": 20,
-                "CARROT": 15, "TOMATO": 10, "STRAWBERRY": 8,
-                "FERTILIZER": 5, "MILK": 4}
-    ctx = make_ctx(day=10, hour=5, shed=big_shed)
-    max_slots = int(MAX_MARKET_ORDERS * 0.6)     # 6 sells max
-    orders, details = brain.sell_orders(ctx, max_slots=max_slots)
-    assert len(orders) <= max_slots
-    # ranked by shed share: the largest stock leads
-    assert orders[0][1] == "WHEAT"
-
-
-def test_wheat_reserve_protects_animal_feed():
-    brain = MarketBrain(FakeFC())
-    ctx = make_ctx(day=10, hour=5, shed={"WHEAT": 12}, animals=5)
-    _, details = brain.sell_orders(ctx)
-    wheat = [c for c in details["candidates"] if c["product"] == "WHEAT"]
-    if wheat:
-        assert wheat[0]["qty"] <= 12 - 5 * 2        # FEED_WHEAT_BUFFER_DAYS=2
-
-
-def test_floor_hold_releases_near_endgame():
-    brain = MarketBrain(FakeFC())
-    deep_glut = {"MELON": 26000}
-    held_ctx = make_ctx(day=10, hour=5, shed={"MELON": 40}, inv=deep_glut)
-    orders_held, _ = brain.sell_orders(held_ctx)
-    assert not any(o[1] == "MELON" for o in orders_held), \
-        "floored premium must be held while season remains"
-
-    dump_ctx = make_ctx(day=29, hour=1, shed={"MELON": 40}, inv=deep_glut)
-    orders_dump, _ = brain.sell_orders(dump_ctx)
-    melon_dump = [o for o in orders_dump if o[1] == "MELON"]
-    assert melon_dump and melon_dump[0][2] == 40
-
-
-def test_carry_hold_when_recovery_outweighs_sale():
-    class RisingFC(FakeFC):
-        def expected_price(self, product, day):
-            # E[P] grows 10%/day -> strong carry signal for WHEAT
-            return 25 * (1.10 ** max(0, day))
-
-    brain = MarketBrain(RisingFC())
-    ctx = make_ctx(day=10, hour=5, shed={"WHEAT": 30}, animals=0)
-    orders, _ = brain.sell_orders(ctx)
-    assert not any(o[1] == "WHEAT" for o in orders)
+    # Phase 3 (day 15): batch target 4
+    ctx_p3 = make_ctx(day=15, hour=1, shed={"MELON": 50})
+    orders_p3, _ = brain.sell_orders(ctx_p3)
+    assert orders_p3[0][2] == 4
 
 
 def test_compose_caps_and_priority():

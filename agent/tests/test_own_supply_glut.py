@@ -225,7 +225,7 @@ def test_wheat_feed_offset_reduces_own_production():
 def test_planner_no_melon_dominance_with_own_tiles():
     """With 22 free tiles, planner includes melon (P3 preserves priority)."""
     fc = make_forecast(BASE_PRICES)
-    seeds = {"MELON": 30, "WHEAT": 30, "CARROT": 30, "TOMATO": 30,
+    seeds = {"MELON": 30, "WHEAT": 5, "CARROT": 30, "TOMATO": 30,
              "STRAWBERRY": 30}
     ctx = make_ctx(day=5, money=99999, seeds=seeds)
     plan = MacroPlanner(fc).build(ctx)

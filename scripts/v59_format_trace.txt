@@ -1,0 +1,99 @@
+Day  0 H 0 call#1:
+  farmer: len=1 first_3=['NORTH']
+  hands: len=0 first_3=[]
+  market: len=10 first_3=[['HIRE'], ['HIRE'], ['HIRE']]
+Day  0 H 1 call#2:
+  farmer: len=1 first_3=['NORTH']
+  hands: len=4 first_3=[['NORTH'], ['NORTH'], ['NORTH']]
+  market: len=1 first_3=[['BUY_ANIMAL', 'GOOSE', 1]]
+Day  0 H 2 call#3:
+  farmer: len=1 first_3=['NORTH']
+  hands: len=4 first_3=[['NORTH'], ['NORTH'], ['NORTH']]
+  market: len=1 first_3=[['BUY_ANIMAL', 'GOOSE', 1]]
+Day  0 H 3 call#4:
+  farmer: len=1 first_3=['NORTH']
+  hands: len=4 first_3=[['NORTH'], ['NORTH'], ['NORTH']]
+  market: len=1 first_3=[['BUY_ANIMAL', 'GOOSE', 1]]
+Day  0 H 4 call#5:
+  farmer: len=1 first_3=['WEST']
+  hands: len=4 first_3=[['NORTH'], ['NORTH'], ['NORTH']]
+  market: len=1 first_3=[['BUY_ANIMAL', 'GOOSE', 1]]
+Day  0 H 5 call#6:
+  farmer: len=1 first_3=['WEST']
+  hands: len=4 first_3=[['WEST'], ['WEST'], ['NORTH']]
+  market: len=0 first_3=[]
+Day  0 H 6 call#7:
+  farmer: len=1 first_3=['WEST']
+  hands: len=4 first_3=[['WEST'], ['WEST'], ['PLANT', 'WHEAT']]
+  market: len=0 first_3=[]
+Day  0 H 7 call#8:
+  farmer: len=2 first_3=['PLANT', 'WHEAT']
+  hands: len=4 first_3=[['PLANT', 'WHEAT'], ['PLANT', 'WHEAT'], ['WATER']]
+  market: len=0 first_3=[]
+Day  0 H 8 call#9:
+  farmer: len=1 first_3=['WATER']
+  hands: len=4 first_3=[['WATER'], ['WATER'], ['SOUTH']]
+  market: len=1 first_3=[['BUY_SEED', 'WHEAT', 3]]
+Day  0 H 9 call#10:
+  farmer: len=1 first_3=['SOUTH']
+  hands: len=4 first_3=[['SOUTH'], ['SOUTH'], ['PLANT', 'WHEAT']]
+  market: len=0 first_3=[]
+Day  0 H10 call#11:
+  farmer: len=2 first_3=['PLANT', 'WHEAT']
+  hands: len=4 first_3=[['PLANT', 'WHEAT'], ['PLANT', 'WHEAT'], ['WATER']]
+  market: len=1 first_3=[['BUY_SEED', 'WHEAT', 1]]
+Day  0 H11 call#12:
+  farmer: len=1 first_3=['WATER']
+  hands: len=4 first_3=[['WATER'], ['WATER'], ['SOUTH']]
+  market: len=1 first_3=[['BUY_SEED', 'WHEAT', 4]]
+Day  0 H12 call#13:
+  farmer: len=1 first_3=['SOUTH']
+  hands: len=4 first_3=[['SOUTH'], ['SOUTH'], ['PLANT', 'WHEAT']]
+  market: len=0 first_3=[]
+Day  0 H13 call#14:
+  farmer: len=2 first_3=['PLANT', 'WHEAT']
+  hands: len=4 first_3=[['PLANT', 'WHEAT'], ['PLANT', 'WHEAT'], ['WATER']]
+  market: len=1 first_3=[['BUY_SEED', 'WHEAT', 1]]
+Day  0 H14 call#15:
+  farmer: len=1 first_3=['WATER']
+  hands: len=4 first_3=[['WATER'], ['WATER'], ['SOUTH']]
+  market: len=0 first_3=[]
+Day  0 H15 call#16:
+  farmer: len=1 first_3=['SOUTH']
+  hands: len=4 first_3=[['SOUTH'], ['SOUTH'], ['PLANT', 'WHEAT']]
+  market: len=0 first_3=[]
+Day  0 H16 call#17:
+  farmer: len=2 first_3=['PLANT', 'WHEAT']
+  hands: len=4 first_3=[['PLANT', 'WHEAT'], ['PLANT', 'WHEAT'], ['WATER']]
+  market: len=0 first_3=[]
+Day  0 H17 call#18:
+  farmer: len=1 first_3=['WATER']
+  hands: len=4 first_3=[['WATER'], ['WATER'], ['SOUTH']]
+  market: len=0 first_3=[]
+Day  0 H18 call#19:
+  farmer: len=1 first_3=['SOUTH']
+  hands: len=4 first_3=[['SOUTH'], ['SOUTH'], ['PLANT', 'MELON']]
+  market: len=0 first_3=[]
+Day  0 H19 call#20:
+  farmer: len=1 first_3=['PASS']
+  hands: len=4 first_3=[['PASS'], ['PASS'], ['WATER']]
+  market: len=0 first_3=[]
+Day  0 H20 call#21:
+  farmer: len=1 first_3=['PASS']
+  hands: len=4 first_3=[['PASS'], ['PASS'], ['PASS']]
+  market: len=0 first_3=[]
+Day  0 H21 call#22:
+  farmer: len=1 first_3=['PASS']
+  hands: len=4 first_3=[['PASS'], ['PASS'], ['PASS']]
+  market: len=0 first_3=[]
+Day  0 H22 call#23:
+  farmer: len=1 first_3=['PASS']
+  hands: len=4 first_3=[['PASS'], ['PASS'], ['PASS']]
+  market: len=0 first_3=[]
+Day  0 H23 call#24:
+  farmer: len=1 first_3=['PASS']
+  hands: len=4 first_3=[['PASS'], ['PASS'], ['PASS']]
+  market: len=0 first_3=[]
+
+Total calls: 719
+Final hands: 12 money: $15972

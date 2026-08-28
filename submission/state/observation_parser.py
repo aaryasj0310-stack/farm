@@ -2,7 +2,7 @@
 
 Handles both plain dicts and kaggle Struct objects via the `g()` accessor.
 """
-from config import ANIMAL_LIST, CROPS, PRODUCTS, SHED_ACCESS_TILES, TURNS_PER_DAY
+from config import ANIMAL_LIST, ANIMALS, CROPS, PRODUCTS, SHED_ACCESS_TILES, TURNS_PER_DAY
 
 
 def g(obj, key, default=None):
@@ -162,6 +162,57 @@ def in_bonus_window(tile, day):
     return start <= age <= cd["max_yield_day"]
 
 
+def needs_water_today(tile, day):
+    """Determine if a plant tile must/should be watered today under Points 1.2 & 1.5.
+    
+    Guardrail 1: Planting day ALWAYS requires same-day water (starts with counter=1).
+    Guardrail 2: If missed yesterday (counter >= 1), MUST water today (prevent weed).
+    Guardrail 3: In bonus window (one-time) or active production (ongoing) -> ALWAYS water.
+    Guardrail 4: Pre-bonus / non-bonus -> alternate days by spatial checkerboard ((x + y + day) % 2 == 0).
+    """
+    if not tile.is_plant:
+        return False
+    if tile.watered_today:
+        return False
+        
+    # Guardrail 1: Planting day
+    if tile.planted_day is not None and tile.planted_day == day:
+        return True
+        
+    # Guardrail 2: Missed yesterday -> mandatory survival watering
+    if tile.consecutive_unwatered >= 1:
+        return True
+        
+    cd = CROPS.get(tile.crop)
+    if cd is None:
+        return True
+        
+    # Guardrail 3: Ongoing crops (Tomato, Strawberry)
+    if cd["ongoing"]:
+        age = crop_age(tile, day)
+        first_yield = cd.get("first_yield_day", 8)
+        # In juvenile growth phase (no fruit yet) -> alternate days safely
+        if age < first_yield:
+            return (tile.x + tile.y + day) % 2 == 0
+        # In production phase:
+        # - Tomato: yields daily (ages 8-11) -> water daily
+        # - Strawberry: yields on even ages (10, 12, 14, 16) -> water on production days
+        interval = cd.get("interval", 1)
+        if interval <= 1:
+            return True
+        is_production_day = (age - first_yield) % interval == 0
+        if is_production_day:
+            return True
+        # Off-day during production -> alternate days
+        return (tile.x + tile.y + day) % 2 == 0
+
+    if in_bonus_window(tile, day):
+        return True
+        
+    # Guardrail 4: Outside bonus window and watered yesterday -> alternate days
+    return (tile.x + tile.y + day) % 2 == 0
+
+
 def decay_step_for(tile):
     """First global step at which this one-time plant starts losing units."""
     cd = CROPS[tile.crop]
@@ -177,7 +228,6 @@ def turns_until_decay(tile, step):
 
 def animal_production_days(tile):
     a = ANIMAL_LIST and None  # placeholder to keep lints quiet
-    from config import ANIMALS
     info = ANIMALS.get(tile.animal)
     if info is None:
         return set()

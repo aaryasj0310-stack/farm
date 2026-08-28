@@ -1,5 +1,7 @@
 """Per-turn prioritized task construction + greedy distance assignment.
 
+v5.9: Action-budget allocator with utilization tracking.
+
 Engine facts encoded here:
   - One action per unit per turn; moves and ops are mutually exclusive.
   - HANDS HIRED THIS TURN CANNOT ACT THIS TURN: interpreter applies unit
@@ -28,6 +30,7 @@ from config import (
     PRIORITY_DECAY_HARVEST,
     PRIORITY_FEED_STAGING,
     PRIORITY_FERT_COLLECT,
+    PRIORITY_FERTILIZE_CROP,
     PRIORITY_PLACE_ANIMAL,
     PRIORITY_PLANT_AND_WATER,
     PRIORITY_PROD_DAY_FEED,
@@ -35,9 +38,66 @@ from config import (
     PRIORITY_URGENT_SURVIVAL,
     PRIORITY_WEED_DIG,
     SHED_ACCESS_TILES,
+    TURNS_PER_DAY,
     log,
 )
-from observation_parser import crop_age, in_bonus_window
+from observation_parser import crop_age, in_bonus_window, needs_water_today
+try:
+    from execution.pathfinding import bfs_first_step
+except ImportError:
+    from pathfinding import bfs_first_step
+
+
+# v5.9: Daily utilization tracking (accumulated across all 24 hours of each day)
+_daily_log = {}
+_daily_accum = {}
+
+def get_daily_log():
+    """Return the utilization log for the current episode."""
+    return _daily_log
+
+def reset_daily_log():
+    """Reset utilization log at start of new episode."""
+    global _daily_log, _daily_accum
+    _daily_log = {}
+    _daily_accum = {}
+
+def _record_turn_utilization(ctx, n_units, actions_taken):
+    """Accumulate hourly utilization and finalize daily log at hour 23."""
+    day, hour = ctx["day"], ctx["hour"]
+    if day not in _daily_accum:
+        _daily_accum[day] = {"available": 0, "used": 0, "idle": 0, "idle_causes": []}
+    
+    used = sum(1 for a in actions_taken.values() if a != ["PASS"])
+    avail = n_units
+    idle = max(0, avail - used)
+    
+    _daily_accum[day]["available"] += avail
+    _daily_accum[day]["used"] += used
+    _daily_accum[day]["idle"] += idle
+    if idle > 0:
+        _daily_accum[day]["idle_causes"].append("no_tasks" if used == 0 else "partial_idle")
+        
+    if hour == 23 or ctx.get("step", 0) % TURNS_PER_DAY == 23:
+        tot_avail = _daily_accum[day]["available"]
+        tot_used = _daily_accum[day]["used"]
+        tot_idle = _daily_accum[day]["idle"]
+        shed_cnt = sum(ctx["private"].shed.values()) if ctx.get("private") else 0
+        unlocked_cnt = len(ctx["farm"].unlocked) if ctx.get("farm") else 1
+        n_hands = len(ctx["farm"].hands) if ctx.get("farm") else 0
+        from market.order_builder import hire_total_cost
+        
+        _daily_log[day] = {
+            "actions_available": tot_avail,
+            "actions_used": tot_used,
+            "idle_actions": tot_idle,
+            "utilization_pct": round(100.0 * tot_used / max(1, tot_avail), 1),
+            "shed_occupancy": shed_cnt,
+            "quadrant_ownership": unlocked_cnt,
+            "daily_hires": n_hands,
+            "hire_cost": hire_total_cost(n_hands),
+            "idle_cause": "queue_empty" if tot_idle > 0 else None,
+        }
 
 
 def farm_pos_of(ctx):
@@ -82,29 +142,45 @@ def build_tasks(ctx, macro):
 
         if not t.watered_today and hour < 23:
             dying_tomorrow = t.consecutive_unwatered >= 1
-            prio = PRIORITY_URGENT_SURVIVAL if dying_tomorrow else (
-                PRIORITY_BONUS_WATER if in_bonus_window(t, day) else 30)
-            # P4: Day 28 — allow bonus watering for late-planted crops
-            # that are in their bonus window and will harvest by Day 29
-            if not macro.watering_enabled:
-                if day == 28 and in_bonus_window(t, day):
-                    age = crop_age(t, day)
+            if dying_tomorrow:
+                # Guardrail 2: mandatory survival watering
+                need_water.append((PRIORITY_URGENT_SURVIVAL, t))
+            elif needs_water_today(t, day):
+                prio = PRIORITY_BONUS_WATER if in_bonus_window(t, day) else 30
+                if not macro.watering_enabled and day == 28 and in_bonus_window(t, day):
                     cd = CROPS.get(t.crop, {})
                     harvestable_by_29 = (t.planted_day is not None
                                          and t.planted_day + cd.get("max_yield_day", 99) <= 29)
-                    if harvestable_by_29:
-                        pass  # allow watering — will be queued below
-                    else:
+                    if not harvestable_by_29:
                         continue
-                else:
-                    continue
-            if not dying_tomorrow and macro.water_budget_exceeded:
-                water_starved = True   # skip-day fallback: alternate batches
-                if (t.x + t.y + day) % 2 != 0:
-                    continue
-            need_water.append((prio, t))
+                need_water.append((prio, t))
+
     for prio, t in need_water:
         add(prio, "WATER", t.pos, kind="water")
+
+    # ---------------- fertilizer application (Strawberries & Tomatoes) ----
+    fert_in_shed = int(ctx["private"].shed.get("FERTILIZER", 0)) if ctx.get("private") else 0
+    fert_held = sum(int(inv.get("FERTILIZER", 0)) for inv in (ctx["private"].inventories if ctx.get("private") else []))
+    total_fert = fert_in_shed + fert_held
+    
+    if total_fert > 0 and hour < 20:
+        fert_targets = []
+        for t in plants:
+            if t.crop in ("STRAWBERRY", "TOMATO") and t.fertilized_until_day < day:
+                fert_targets.append(t.pos)
+                
+        for pos in fert_targets[:total_fert]:
+            add(PRIORITY_FERTILIZE_CROP, "FERTILIZE", pos, kind="fertilize_crop")
+            
+        # Stage fertilizer pickup from shed if needed
+        needed_pickup = len(fert_targets) - fert_held
+        if needed_pickup > 0 and fert_in_shed > 0:
+            grab_fert = min(fert_in_shed, needed_pickup)
+            farmer_pos = tuple(farm_pos_of(ctx))
+            target = min(SHED_ACCESS_TILES,
+                         key=lambda tp: abs(tp[0] - farmer_pos[0]) + abs(tp[1] - farmer_pos[1]))
+            add(PRIORITY_FEED_STAGING + 1, "PICKUP", tuple(target),
+                args=["FERTILIZER", int(grab_fert)], kind="pickup_fertilizer")
 
     # ---------------- animals ----------------
     feeds_due = 0
@@ -177,7 +253,10 @@ def build_tasks(ctx, macro):
 
 
 def assign_tasks(tasks, ctx, extra_units=()):
-    """Greedy closest-unit dispatch. Returns per-unit actions + bookkeeping."""
+    """Greedy closest-unit dispatch. Returns per-unit actions + bookkeeping.
+    
+    v5.9: Tracks daily utilization and logs idle actions.
+    """
     farm = ctx["farm"]
     units = [(0, tuple(farm.farmer))]
     for i, h in enumerate(farm.hands):
@@ -202,6 +281,10 @@ def assign_tasks(tasks, ctx, extra_units=()):
             item = task["args"][0]
             if item in ANIMALS:
                 return set(holders.get(item, []))   # empty => defer, don't no-op
+        elif task["op"] == "FERTILIZE":
+            return set(holders.get("FERTILIZER", []))
+        elif task["op"] == "FEED":
+            return set(holders.get("WHEAT", []))
         return None                                  # no restriction
 
     busy = set()
@@ -228,9 +311,57 @@ def assign_tasks(tasks, ctx, extra_units=()):
         task["unit_pos"] = pos_by_idx[best]
         assignment[best] = task
 
+    # v5.9: Fallback assignment for idle units to guarantee zero wasted actions
+    # Default fallback priority: COLLECT_FERTILIZER -> WATER_MATURE/UNWATERED -> DIG_WEED
+    unassigned_units = [idx for idx, _ in units if idx not in busy]
+    if unassigned_units:
+        targeted_positions = {tuple(t["target"]) for t in assignment.values() if t.get("target")}
+        
+        # 1. Fallback: collect any available fertilizer
+        for t in farm.iter_tiles():
+            if not unassigned_units:
+                break
+            if t.is_animal and t.fertilizer_available and tuple(t.pos) not in targeted_positions:
+                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                unassigned_units.remove(best_u)
+                busy.add(best_u)
+                task = {"priority": 10, "op": "COLLECT_FERTILIZER", "target": tuple(t.pos),
+                        "args": [], "kind": "fallback_fert", "meta": {}, "unit_pos": pos_by_idx[best_u]}
+                assignment[best_u] = task
+                targeted_positions.add(tuple(t.pos))
+
+        # 2. Fallback: water any mature or unwatered crop
+        for t in farm.iter_tiles():
+            if not unassigned_units:
+                break
+            if t.is_plant and not t.watered_today and tuple(t.pos) not in targeted_positions:
+                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                unassigned_units.remove(best_u)
+                busy.add(best_u)
+                task = {"priority": 10, "op": "WATER", "target": tuple(t.pos),
+                        "args": [], "kind": "fallback_water", "meta": {}, "unit_pos": pos_by_idx[best_u]}
+                assignment[best_u] = task
+                targeted_positions.add(tuple(t.pos))
+
+        # 3. Fallback: dig any weed on unlocked land
+        for t in farm.iter_tiles():
+            if not unassigned_units:
+                break
+            if t.kind == "WEED" and farm.quadrant_of(t.pos) in farm.unlocked and tuple(t.pos) not in targeted_positions:
+                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                unassigned_units.remove(best_u)
+                busy.add(best_u)
+                task = {"priority": 5, "op": "DIG", "target": tuple(t.pos),
+                        "args": [], "kind": "fallback_dig", "meta": {}, "unit_pos": pos_by_idx[best_u]}
+                assignment[best_u] = task
+                targeted_positions.add(tuple(t.pos))
+
     actions = {idx: ["PASS"] for idx in range(len(units))}
     for idx, task in assignment.items():
         actions[idx] = emit(task)
+
+    # v5.9: Track utilization across all 24 hours of the day
+    _record_turn_utilization(ctx, len(units), actions)
 
     # Bookkeeping: PLANT intents count as seed reservations whether or not the
     # unit is standing on the tile yet (seeds are consumed only on execution,
@@ -270,7 +401,6 @@ def emit(task):
     pos = tuple(task.get("unit_pos", (4, 4)))
 
     if target is not None and pos != tuple(target):
-        from pathfinding import bfs_first_step
         move = bfs_first_step(pos, tuple(target))
         if move is not None:
             return [move]

@@ -54,7 +54,12 @@ class OrderBuilder:
 
     # ------------------------------------------------------------------
     def build(self, ctx, intents):
-        """intents: MacroPlan.intents dict. Returns (orders, ledger)."""
+        """intents: MacroPlan.intents dict. Returns (orders, ledger).
+        
+        v5.9: Hires are NON-NEGOTIABLE. They get first claim on money,
+        regardless of budget/reserve. Seeds, animals, land are bought
+        only with what remains after hire cost.
+        """
         farm = ctx["farm"]
         money = float(farm.money)
         budget = max(0.0, money - self.reserve)
@@ -66,12 +71,17 @@ class OrderBuilder:
         ledger = {"budget": round(budget, 2), "queued": [],
                   "dropped": [], "spent_estimate": 0.0}
 
-        # ---- tier 0: hires -------------------------------------------
+        # ---- v5.9: Hires get absolute priority (full money) -----------
         tiers = []
         k = int(intents.get("hire", 0))
+        hire_cost = 0.0
         if k > 0:
+            hire_cost = float(hire_total_cost(k))
             tiers.append((TIER_HIRES, "hire",
-                          {"count": k}, hire_total_cost(k)))
+                          {"count": k}, hire_cost))
+
+        # ---- Remaining budget after mandatory hires (protecting reserve) ----
+        post_hire_budget = max(0.0, budget - hire_cost)
 
         # ---- tier 1: seeds -------------------------------------------
         for crop, n in sorted(intents.get("buy_seed", {}).items()):
@@ -109,29 +119,23 @@ class OrderBuilder:
             land_price = LAND_PRICES[n_extra]
             tiers.append((TIER_LAND, "land", {}, float(land_price)))
 
-        # ---- fill tiers within budget, trimming counts ---------------
+        # ---- fill tiers: hires first (non-negotiable), then rest ------
         spent = 0.0
         kept = []
         for tier, kind, payload, est in sorted(tiers, key=lambda t: t[0]):
-            remaining = budget - spent
+            if kind == "hire":
+                # Hires use full money — always fit
+                kept.append((tier, kind, payload, est))
+                spent += est
+                continue
+            # Everything else uses post-hire budget
+            remaining = max(0.0, post_hire_budget - (spent - hire_cost))
             if est <= remaining + 1e-9:
                 kept.append((tier, kind, payload, est))
                 spent += est
                 continue
             # partial trim for count-based kinds
-            if kind == "hire":
-                n_max = 0
-                while n_max < payload["count"] and hire_total_cost(n_max + 1) <= remaining + 1e-9:
-                    n_max += 1
-                if n_max > 0:
-                    c = float(hire_total_cost(n_max))
-                    kept.append((tier, "hire", {"count": n_max}, c))
-                    spent += c
-                    ledger["dropped"].append(
-                        {"kind": "hire", "trimmed_from": payload["count"], "to": n_max})
-                else:
-                    ledger["dropped"].append({"kind": "hire", "reason": "budget"})
-            elif kind == "seed":
+            if kind == "seed":
                 unit = CROPS[payload["crop"]]["seed"]
                 n_max = int(remaining // unit)
                 if n_max > 0:
@@ -169,17 +173,13 @@ class OrderBuilder:
                                  unit_px * n_max))
                     spent += unit_px * n_max
                     ledger["dropped"].append({"kind": "wheat",
-                                              "trimmed_from": payload["n"],
-                                              "to": n_max})
+                                               "trimmed_from": payload["n"],
+                                               "to": n_max})
                 else:
                     ledger["dropped"].append({"kind": "wheat",
                                               "reason": "budget"})
             elif kind == "land":
                 ledger["dropped"].append({"kind": "land",
-                                          "reason": "budget"})
-            elif kind == "hire":
-                # hires are cheap; only drop if literally nothing fits
-                ledger["dropped"].append({"kind": "hire",
                                           "reason": "budget"})
 
         # ---- emit engine-format orders, honoring the 10-order cap -----
@@ -227,6 +227,8 @@ class OrderBuilder:
                     ledger["dropped"].append({"kind": "animal_slots",
                                               "animal": payload["animal"]})
             elif kind == "land":
+                next_quadrant = len(farm.unlocked) + 1
+                assert next_quadrant != 4, "Quadrant 4 (SE) is permanently hard-blocked and must NEVER be purchased!"
                 if take(None):
                     orders.append(["BUY_LAND"])
                     queued["land"] = True

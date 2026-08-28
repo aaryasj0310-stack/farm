@@ -171,7 +171,10 @@ def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx):
 
         # Get current spot price from market inventory
         market_obj = ctx.get("market") if ctx else None
-        inv = getattr(market_obj, "inventory", {}) if market_obj else {}
+        if isinstance(market_obj, dict):
+            inv = market_obj.get("inventory", market_obj)
+        else:
+            inv = getattr(market_obj, "inventory", {}) if market_obj else {}
         current_inv = inv.get(product, 10000)
 
         # Import market_price at function scope to avoid circular import issues
