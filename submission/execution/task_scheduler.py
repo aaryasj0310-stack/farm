@@ -270,8 +270,9 @@ def build_tasks(ctx, macro):
     # ---------------- weeds ----------------
     blocked = {tuple(p) for p, _ in macro.plant_queue}
     for t in ctx["farm"].iter_tiles():
-        if t.kind == "WEED" and t.pos in blocked and hour < 22:
-            add(PRIORITY_WEED_DIG, "DIG", t.pos, kind="dig")
+        if t.kind == "WEED" and ctx["farm"].quadrant_of(t.pos) in ctx["farm"].unlocked and hour < 23:
+            prio = PRIORITY_WEED_DIG + 15 if t.pos in blocked else PRIORITY_WEED_DIG
+            add(prio, "DIG", t.pos, kind="dig")
 
     return tasks
 

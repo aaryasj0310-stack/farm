@@ -9257,8 +9257,9 @@ def build_tasks(ctx, macro):
     # ---------------- weeds ----------------
     blocked = {tuple(p) for p, _ in macro.plant_queue}
     for t in ctx["farm"].iter_tiles():
-        if t.kind == "WEED" and t.pos in blocked and hour < 22:
-            add(PRIORITY_WEED_DIG, "DIG", t.pos, kind="dig")
+        if t.kind == "WEED" and ctx["farm"].quadrant_of(t.pos) in ctx["farm"].unlocked and hour < 23:
+            prio = PRIORITY_WEED_DIG + 15 if t.pos in blocked else PRIORITY_WEED_DIG
+            add(prio, "DIG", t.pos, kind="dig")
 
     return tasks
 
@@ -10135,7 +10136,8 @@ class OrderBuilder:
                     1 for t in farm.iter_tiles()
                     if t.kind == struct_type and not t.is_animal
                 )
-                animals_in_shed = int(ctx["private"].shed.get(animal, 0)) if ctx.get("private") else 0
+                matching_animals = [a for a, info in ANIMALS.items() if info["structure"] == struct_type]
+                animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
                 max_buyable = max(0, free_structures - animals_in_shed)
                 room_limited = min(k, max_buyable, shed_room)
                 if room_limited <= 0:
