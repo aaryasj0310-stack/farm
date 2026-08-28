@@ -227,6 +227,7 @@ def test_planner_triggers_wheat_purchase_on_deficit():
     ctx = make_ctx(day=8, money=20000, animals=animals,
                    shed={"WHEAT": 0}, wheat_tiles=0)
     plan = MacroPlanner(fc).build(ctx)
+    print("DEBUG INTENTS:", plan.intents, "deficit:", detect_wheat_deficit(0, 0, 22, 1, 2))
     # 1 animal, 0 wheat capacity, 22 days left → deficit = 1×22+1×2=24
     assert plan.intents["buy_wheat"] >= 24
 

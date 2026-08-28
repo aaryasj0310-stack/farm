@@ -128,9 +128,9 @@ LAND_BUY_LAST_DAY = 20         # hard cutoff — land bought after Day 20 can't 
 # Portfolio-aware scoring (Fix 3) is the primary diversification mechanism.
 CROP_TILE_CAPS = {
     "WHEAT": 99,        # no cap — wheat is the backbone
-    "CARROT": 8,        # moderate glut risk
-    "TOMATO": 6,        # low yield rate
-    "STRAWBERRY": 4,    # slow maturing + extreme glut
+    "CARROT": 16,       # diversified cash crop
+    "TOMATO": 14,       # high value
+    "STRAWBERRY": 10,   # high value + fertilizer
     "MELON": 6,         # max 6 tiles (glut threshold ~4-5)
 }
 FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
@@ -9804,8 +9804,6 @@ class MacroPlanner:
                 deficit_a = target - counts.get(animal, 0)
                 if deficit_a <= 0:
                     continue
-                if n_animals + sum(buy_animal.values()) >= sustainable:
-                    continue
                 info = ANIMALS[animal]
                 econ = ANIMAL_ECONOMICS[animal]
                 prod = info["product"]
@@ -9830,21 +9828,16 @@ class MacroPlanner:
                         del structures_empty[free_struct[0]]
                 elif empty_tiles:
                     # No structure exists -> queue structure build first on authoritative empty tile
-                    if len(empty_tiles) > MIN_CROP_TILES_RESERVE:
+                    existing_structs = sum(1 for t in farm.iter_tiles() if t.kind == struct_kind) + len(reserved_structure_tiles)
+                    target_structs = target if animal == "GOOSE" else (fixed_targets.get("COW", 0) + fixed_targets.get("SHEEP", 0))
+                    if existing_structs < target_structs and len(reserved_structure_tiles) < 1 and len(empty_tiles) > MIN_CROP_TILES_RESERVE:
                         tile = empty_tiles.pop(0)
-                        reserved_structure_tiles.append(tile)
+                        reserved_structure_tiles.append((tile, "BUILD_" + struct_kind))
 
-        # single build_op per day: prefer whichever deficit came first
+        # single build_op per day: use the specific op for the reserved tile
         if reserved_structure_tiles:
-            animal_by_structure = {}
-            for animal in ANIMAL_LIST:
-                info = ANIMALS[animal]
-                deficit = fixed_targets.get(animal, 0) - counts.get(animal, 0)
-                if deficit > 0:
-                    animal_by_structure.setdefault(info["structure"], animal)
-            op = "BUILD_COOP" if "COOP" in animal_by_structure else "BUILD_PASTURE"
-            plan.build_op = op
-            plan.build_queue = reserved_structure_tiles[:3]
+            plan.build_op = reserved_structure_tiles[0][1]
+            plan.build_queue = [t for t, _ in reserved_structure_tiles[:3]]
 
         # ---------------- crop queue on remaining tiles ----------------
         # endgame: no new planting — just harvest and sell
@@ -9904,9 +9897,24 @@ class MacroPlanner:
                     seeds["WHEAT"] = wheat_to_plant
             else:
                 existing_wheat = sum(1 for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT")
-                wheat_cap = max(6, target_geese // 3 + 2)
+                quadrant_wheat_target = max(6, len(farm.unlocked) * 5)
+                wheat_cap = min(len(empty_tiles) // 2 + 2, quadrant_wheat_target)
                 wheat_needed = max(0, wheat_cap - existing_wheat)
-                wheat_to_plant = min(wheat_available, wheat_needed, len(empty_tiles))
+                wheat_to_plant = min(wheat_needed, len(empty_tiles))
+                if wheat_to_plant > wheat_available:
+                    needed_seeds = wheat_to_plant - wheat_available
+                    if remaining_money >= needed_seeds * CROPS["WHEAT"]["seed"]:
+                        buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + needed_seeds
+                        remaining_money = max(0.0, remaining_money - needed_seeds * CROPS["WHEAT"]["seed"])
+                        wheat_available += needed_seeds
+                    else:
+                        affordable = int(remaining_money // CROPS["WHEAT"]["seed"])
+                        needed_seeds = min(needed_seeds, affordable)
+                        if needed_seeds > 0:
+                            buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + needed_seeds
+                            remaining_money = max(0.0, remaining_money - needed_seeds * CROPS["WHEAT"]["seed"])
+                            wheat_available += needed_seeds
+                wheat_to_plant = min(wheat_available, wheat_to_plant, len(empty_tiles))
 
             for _ in range(wheat_to_plant):
                 if empty_tiles:
@@ -10346,7 +10354,7 @@ class MarketBrain:
 
         shed = ctx["private"].shed
         animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal)
-        reserved_wheat = animals * FEED_WHEAT_BUFFER_DAYS
+        reserved_wheat = 0 if endgame else animals * FEED_WHEAT_BUFFER_DAYS
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
@@ -10392,9 +10400,9 @@ class MarketBrain:
                     })
                 continue
 
-            # v5.9: No carry holds — sell at spec batch size for cash flow
+            # v5.9: In endgame/aggressive mode, dump entire stock; otherwise sell at spec batch size
             aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
-            qty = min(stock, batch_target)
+            qty = stock if (endgame or days_left <= 2) else min(stock, batch_target)
             
             if qty <= 0:
                 continue
@@ -10675,9 +10683,9 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         purchase_orders, _ledger = builder.build(ctx, plan.intents)
     elif ctx["hour"] == 1:
         # Check if any target hires from today's plan were deferred from Hour 0
-        target_h = plan.intents.get("hire", 0)
-        current_h = len(ctx["farm"].hands)
-        hires_needed = max(0, target_h - current_h)
+        target_h = get_target_hands(ctx["day"])
+        hires_so_far = ctx["farm"].hires_today
+        hires_needed = max(0, target_h - hires_so_far)
         if hires_needed > 0:
             for _ in range(min(hires_needed, 10)):
                 purchase_orders.append(["HIRE"])

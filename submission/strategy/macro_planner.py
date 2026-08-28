@@ -400,8 +400,6 @@ class MacroPlanner:
                 deficit_a = target - counts.get(animal, 0)
                 if deficit_a <= 0:
                     continue
-                if n_animals + sum(buy_animal.values()) >= sustainable:
-                    continue
                 info = ANIMALS[animal]
                 econ = ANIMAL_ECONOMICS[animal]
                 prod = info["product"]
@@ -426,21 +424,16 @@ class MacroPlanner:
                         del structures_empty[free_struct[0]]
                 elif empty_tiles:
                     # No structure exists -> queue structure build first on authoritative empty tile
-                    if len(empty_tiles) > MIN_CROP_TILES_RESERVE:
+                    existing_structs = sum(1 for t in farm.iter_tiles() if t.kind == struct_kind) + len(reserved_structure_tiles)
+                    target_structs = target if animal == "GOOSE" else (fixed_targets.get("COW", 0) + fixed_targets.get("SHEEP", 0))
+                    if existing_structs < target_structs and len(reserved_structure_tiles) < 1 and len(empty_tiles) > MIN_CROP_TILES_RESERVE:
                         tile = empty_tiles.pop(0)
-                        reserved_structure_tiles.append(tile)
+                        reserved_structure_tiles.append((tile, "BUILD_" + struct_kind))
 
-        # single build_op per day: prefer whichever deficit came first
+        # single build_op per day: use the specific op for the reserved tile
         if reserved_structure_tiles:
-            animal_by_structure = {}
-            for animal in ANIMAL_LIST:
-                info = ANIMALS[animal]
-                deficit = fixed_targets.get(animal, 0) - counts.get(animal, 0)
-                if deficit > 0:
-                    animal_by_structure.setdefault(info["structure"], animal)
-            op = "BUILD_COOP" if "COOP" in animal_by_structure else "BUILD_PASTURE"
-            plan.build_op = op
-            plan.build_queue = reserved_structure_tiles[:3]
+            plan.build_op = reserved_structure_tiles[0][1]
+            plan.build_queue = [t for t, _ in reserved_structure_tiles[:3]]
 
         # ---------------- crop queue on remaining tiles ----------------
         # endgame: no new planting — just harvest and sell
@@ -500,9 +493,24 @@ class MacroPlanner:
                     seeds["WHEAT"] = wheat_to_plant
             else:
                 existing_wheat = sum(1 for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT")
-                wheat_cap = max(6, target_geese // 3 + 2)
+                quadrant_wheat_target = max(6, len(farm.unlocked) * 5)
+                wheat_cap = min(len(empty_tiles) // 2 + 2, quadrant_wheat_target)
                 wheat_needed = max(0, wheat_cap - existing_wheat)
-                wheat_to_plant = min(wheat_available, wheat_needed, len(empty_tiles))
+                wheat_to_plant = min(wheat_needed, len(empty_tiles))
+                if wheat_to_plant > wheat_available:
+                    needed_seeds = wheat_to_plant - wheat_available
+                    if remaining_money >= needed_seeds * CROPS["WHEAT"]["seed"]:
+                        buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + needed_seeds
+                        remaining_money = max(0.0, remaining_money - needed_seeds * CROPS["WHEAT"]["seed"])
+                        wheat_available += needed_seeds
+                    else:
+                        affordable = int(remaining_money // CROPS["WHEAT"]["seed"])
+                        needed_seeds = min(needed_seeds, affordable)
+                        if needed_seeds > 0:
+                            buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + needed_seeds
+                            remaining_money = max(0.0, remaining_money - needed_seeds * CROPS["WHEAT"]["seed"])
+                            wheat_available += needed_seeds
+                wheat_to_plant = min(wheat_available, wheat_to_plant, len(empty_tiles))
 
             for _ in range(wheat_to_plant):
                 if empty_tiles:

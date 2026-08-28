@@ -118,9 +118,9 @@ LAND_BUY_LAST_DAY = 20         # hard cutoff — land bought after Day 20 can't 
 # Portfolio-aware scoring (Fix 3) is the primary diversification mechanism.
 CROP_TILE_CAPS = {
     "WHEAT": 99,        # no cap — wheat is the backbone
-    "CARROT": 8,        # moderate glut risk
-    "TOMATO": 6,        # low yield rate
-    "STRAWBERRY": 4,    # slow maturing + extreme glut
+    "CARROT": 16,       # diversified cash crop
+    "TOMATO": 14,       # high value
+    "STRAWBERRY": 10,   # high value + fertilizer
     "MELON": 6,         # max 6 tiles (glut threshold ~4-5)
 }
 FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end

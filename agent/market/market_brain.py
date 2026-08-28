@@ -74,7 +74,7 @@ class MarketBrain:
 
         shed = ctx["private"].shed
         animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal)
-        reserved_wheat = animals * FEED_WHEAT_BUFFER_DAYS
+        reserved_wheat = 0 if endgame else animals * FEED_WHEAT_BUFFER_DAYS
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
@@ -120,9 +120,9 @@ class MarketBrain:
                     })
                 continue
 
-            # v5.9: No carry holds — sell at spec batch size for cash flow
+            # v5.9: In endgame/aggressive mode, dump entire stock; otherwise sell at spec batch size
             aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
-            qty = min(stock, batch_target)
+            qty = stock if (endgame or days_left <= 2) else min(stock, batch_target)
             
             if qty <= 0:
                 continue

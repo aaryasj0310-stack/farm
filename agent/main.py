@@ -201,9 +201,9 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         purchase_orders, _ledger = builder.build(ctx, plan.intents)
     elif ctx["hour"] == 1:
         # Check if any target hires from today's plan were deferred from Hour 0
-        target_h = plan.intents.get("hire", 0)
-        current_h = len(ctx["farm"].hands)
-        hires_needed = max(0, target_h - current_h)
+        target_h = get_target_hands(ctx["day"])
+        hires_so_far = ctx["farm"].hires_today
+        hires_needed = max(0, target_h - hires_so_far)
         if hires_needed > 0:
             for _ in range(min(hires_needed, 10)):
                 purchase_orders.append(["HIRE"])
