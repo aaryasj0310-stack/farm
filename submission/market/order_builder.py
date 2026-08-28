@@ -98,6 +98,7 @@ class OrderBuilder:
             tiers.append((TIER_FEED_WHEAT, "wheat", {"n": w}, est))
 
         # ---- tier 3: animals -----------------------------------------
+        claimed_structures = {}
         for animal, k in sorted(intents.get("buy_animal", {}).items()):
             k = int(k)
             if k > 0 and animal in ANIMALS:
@@ -108,13 +109,15 @@ class OrderBuilder:
                 )
                 matching_animals = [a for a, info in ANIMALS.items() if info["structure"] == struct_type]
                 animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
-                max_buyable = max(0, free_structures - animals_in_shed)
+                claimed = claimed_structures.get(struct_type, 0)
+                max_buyable = max(0, free_structures - animals_in_shed - claimed)
                 room_limited = min(k, max_buyable, shed_room)
                 if room_limited <= 0:
                     ledger["dropped"].append({"kind": "animal",
                                               "animal": animal,
                                               "reason": "no_empty_structure" if max_buyable <= 0 else "shed_full"})
                     continue
+                claimed_structures[struct_type] = claimed + room_limited
                 unit = ANIMALS[animal]["cost"]
                 tiers.append((TIER_ANIMALS, "animal",
                               {"animal": animal, "n": room_limited},

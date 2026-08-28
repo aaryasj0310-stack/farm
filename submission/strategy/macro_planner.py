@@ -591,10 +591,11 @@ class MacroPlanner:
             if held:
                 place_queue.append({"op": "PLACE", "target": sorted(free)[0],
                                     "args": [animal]})
+                break
             elif private.shed.get(animal, 0) > 0:
                 place_queue.append({"op": "PICKUP",
                                     "target": (4, 4), "args": [animal]})
-            break   # one species per day keeps the queue focused
+                break
 
         # P0 Guarantee: structure tiles and planting tiles must be strictly mutually exclusive!
         structure_tiles_set = set(plan.build_queue)
