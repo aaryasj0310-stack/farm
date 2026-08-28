@@ -42,9 +42,6 @@ from config import (
     ANIMAL_FEED_CUTOFF_DAY,
     ANIMAL_LIST,
     ANIMALS,
-    BUY_LAND_NE_DAY,
-    BUY_LAND_SW_MIN_BANK,
-    BUY_LAND_SE_MIN_BANK,
     CROP_DIVERSIFICATION_FACTOR,
     CROP_TILE_CAPS,
     CROPS,
@@ -366,6 +363,7 @@ class MacroPlanner:
                             if t.kind in ("COOP", "PASTURE") and not t.is_animal}
 
         buy_animal = {}
+        buy_wheat = 0
         reserved_structure_tiles = []
         EFFECTIVE_ACTIONS_PER_UNIT = 12
 
@@ -390,8 +388,8 @@ class MacroPlanner:
             # Labor capacity check: can the workforce handle more animals?
             ANIMAL_LABOR_PER_HEAD = 3
             current_load = estimate_daily_load(ctx)
-            actual_units = 1 + len(farm.hands)
-            current_capacity = actual_units * EFFECTIVE_ACTIONS_PER_UNIT
+            planned_units = 1 + target_hands
+            current_capacity = planned_units * EFFECTIVE_ACTIONS_PER_UNIT
             spare_labor = max(0, current_capacity - current_load)
 
             # Tile reservation: keep minimum tiles for crops
@@ -415,22 +413,22 @@ class MacroPlanner:
                     continue
                 if spare_labor < ANIMAL_LABOR_PER_HEAD:
                     continue
-                # v5.9: Buy only if cash-for-animals covers the cost
-                if cash_for_animals >= info["cost"]:
-                    buy_animal[animal] = buy_animal.get(animal, 0) + 1
-                    cash_for_animals -= info["cost"]
 
-                # queue structure build for one deficit slot per day
+                # P0: Enforce Structure -> Animal dependency
                 struct_kind = info["structure"]
                 free_struct = [pos for pos, k in structures_empty.items()
                                if k == struct_kind]
                 if free_struct:
-                    pass                                        # place handled below
+                    # Empty structure exists on board -> safe to buy animal
+                    if cash_for_animals >= info["cost"]:
+                        buy_animal[animal] = buy_animal.get(animal, 0) + 1
+                        cash_for_animals -= info["cost"]
+                        del structures_empty[free_struct[0]]
                 elif empty_tiles:
-                    if len(empty_tiles) <= MIN_CROP_TILES_RESERVE:
-                        continue  # save remaining tiles for planting
-                    tile = empty_tiles.pop(0)
-                    reserved_structure_tiles.append(tile)
+                    # No structure exists -> queue structure build first on authoritative empty tile
+                    if len(empty_tiles) > MIN_CROP_TILES_RESERVE:
+                        tile = empty_tiles.pop(0)
+                        reserved_structure_tiles.append(tile)
 
         # single build_op per day: prefer whichever deficit came first
         if reserved_structure_tiles:
@@ -448,27 +446,41 @@ class MacroPlanner:
         # endgame: no new planting — just harvest and sell
         plant_queue = []
         buy_seed = {}
-        if not is_endgame:
-            # ---- Budget prioritization (Fix 6) ----
-            money = ctx["farm"].money
+        # ---- Budget prioritization (Fix 6) ----
+        money = ctx["farm"].money
+        hire_cost = hire_total_cost(hires)
+
+        n_extra = len(farm.unlocked) - 1
+        land_cost = 0
+        if not is_endgame and n_extra < len(LAND_ORDER):
+            land_price = LAND_PRICES[n_extra]
+            if money >= land_price + self.reserve + 200:
+                land_cost = land_price
+
+        animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
+        
+        # Feed wheat buffer needed for existing + newly bought animals
+        # In early game (day <= 5), ensure at least 5 wheat buffer so animals survive until farm wheat matures
+        buy_wheat = 0
+        if plan.feeding_enabled:
+            wheat_buffer_target = 5 if day <= 5 and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
+            wheat_needed = (n_animals + sum(buy_animal.values())) * wheat_buffer_target
+            if trigger:
+                wheat_needed = max(wheat_needed, deficit)
             
-            hire_cost = hire_total_cost(hires)
-
-            n_extra = len(farm.unlocked) - 1
-            land_cost = 0
-            if n_extra < len(LAND_ORDER):
-                land_price = LAND_PRICES[n_extra]
-                if money >= land_price + self.reserve + 200:
-                    land_cost = land_price
-
-            animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
-            # v5.9: Hires are mandatory — subtract hire cost from money first.
-            # Remaining money (after hires + reserve) is available for seeds/land/animals.
             post_hire_money = max(0.0, money - hire_cost)
-            seed_budget = max(0, post_hire_money - self.reserve - land_cost - animal_cost)
-            remaining_money = seed_budget
+            available_before_seeds = max(0.0, post_hire_money - self.reserve - land_cost - animal_cost)
+            if wheat_have < wheat_needed:
+                buy_wheat = min(wheat_needed - wheat_have, int(available_before_seeds // 25))
+        wheat_feed_cost = buy_wheat * 25
 
-            seeds = dict(private.seeds)
+        post_hire_money = max(0.0, money - hire_cost)
+        available_before_seeds = max(0.0, post_hire_money - self.reserve - land_cost - animal_cost)
+        seed_budget = max(0.0, available_before_seeds - wheat_feed_cost)
+        remaining_money = seed_budget
+
+        seeds = dict(private.seeds)
+        if not is_endgame:
 
             # ---- v5.9: Plant ALL empty tiles with best crops ----
             # Spec: "Day 0: PLANT all available tiles with wheat AND WATER
@@ -532,17 +544,6 @@ class MacroPlanner:
         else:
             remaining_money = ctx["farm"].money - self.reserve
 
-        # ---------------- wheat feed buffer ---------------------------
-        wheat_needed = n_animals * FEED_WHEAT_BUFFER_DAYS + \
-            sum(ANIMAL_ECONOMICS[a]["feed30"] for a in buy_animal) // 30 * 2
-        if trigger:
-            wheat_needed = max(wheat_needed, deficit)
-        buy_wheat = 0
-        if wheat_have < wheat_needed:
-            buy_wheat = min(wheat_needed - wheat_have,
-                            int(max(0, remaining_money) // 25))
-            remaining_money -= buy_wheat * 25
-
         # ---- v5.9: Fixed land expansion schedule ----
         buy_land = False
         if not is_endgame:
@@ -570,9 +571,12 @@ class MacroPlanner:
         for i, inv in enumerate(private.inventories):
             for item in inv:
                 inv_hold.setdefault(item, []).append(i)
+        
+        all_empty_structures = {t.pos: t.kind for t in farm.iter_tiles()
+                                if t.kind in ("COOP", "PASTURE") and not t.is_animal}
         for animal in ANIMAL_LIST:
             struct = ANIMALS[animal]["structure"]
-            free = [pos for pos, k in structures_empty.items() if k == struct]
+            free = [pos for pos, k in all_empty_structures.items() if k == struct]
             if not free:
                 continue
             held = inv_hold.get(animal)
@@ -583,6 +587,12 @@ class MacroPlanner:
                 place_queue.append({"op": "PICKUP",
                                     "target": (4, 4), "args": [animal]})
             break   # one species per day keeps the queue focused
+
+        # P0 Guarantee: structure tiles and planting tiles must be strictly mutually exclusive!
+        structure_tiles_set = set(plan.build_queue)
+        plant_tiles_set = {pos for pos, _ in plan.plant_queue}
+        assert not (structure_tiles_set & plant_tiles_set), \
+            f"Structure tiles {structure_tiles_set} and plant tiles {plant_tiles_set} must be mutually exclusive!"
 
         plan.plant_queue = plant_queue
         plan.water_budget_exceeded = water_budget_exceeded

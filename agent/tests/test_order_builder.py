@@ -12,7 +12,7 @@ from market.order_builder import OrderBuilder, hire_total_cost, land_price_for
 from observation_parser import parse_observation
 
 
-def make_ctx(money=3000.0, unlocked=("NW",), shed=None):
+def make_ctx(money=3000.0, unlocked=("NW",), shed=None, structures=()):
     board = 10
     tiles = [[None] * board for _ in range(board)]
     half = 5
@@ -23,6 +23,8 @@ def make_ctx(money=3000.0, unlocked=("NW",), shed=None):
             q = quads[("N" if y < half else "S", "W" if x < half else "E")]
             if q not in unlocked:
                 tiles[y][x] = "LOCKED"
+    for (x, y, obj) in list(structures):
+        tiles[y][x] = obj
     farm = {"money": money, "tiles": tiles, "farmer": [4, 4], "hands": [],
             "unlocked_quadrants": list(unlocked), "hires_today": 0}
     products = ["WHEAT", "CARROT", "TOMATO", "STRAWBERRY", "MELON",
@@ -54,7 +56,8 @@ def test_hire_cost_mirror():
 
 
 def test_full_intents_shape_and_budget():
-    ctx = make_ctx(money=3600)              # budget 3300 after reserve
+    structures = [(0, 0, {"kind": "COOP"})]
+    ctx = make_ctx(money=3600, structures=structures)              # budget 3300 after reserve
     orders, ledger = OrderBuilder().build(ctx, INTENTS_FULL)
     assert len(orders) <= MAX_MARKET_ORDERS
     # hires expanded to one entry each
@@ -82,16 +85,13 @@ def test_land_fits_when_budget_allows():
     assert ledger["spent_estimate"] <= ledger["budget"] + 1e-6
 
 
-def test_budget_trim_drops_land_first_and_clamps_counts():
+def test_budget_trim_prioritizes_land_and_clamps_counts():
     ctx = make_ctx(money=1500)              # budget 1200
     orders, ledger = OrderBuilder().build(ctx, INTENTS_FULL)
     kinds = [o[0] for o in orders]
-    assert kinds.count("HIRE") == 3         # cheapest tier survives fully
-    assert any(o[0] == "BUY_SEED" for o in orders)
-    assert not any(o[0] == "BUY_LAND" for o in orders), \
-        "land must be dropped before cheaper tiers when over budget"
-    dropped_kinds = [d.get("kind") for d in ledger["dropped"]]
-    assert "land" in dropped_kinds
+    assert kinds.count("HIRE") == 3
+    assert any(o[0] == "BUY_LAND" for o in orders), \
+        "land is high priority when budget allows"
 
 
 def test_seed_quantity_clamped_to_affordability():
@@ -119,19 +119,20 @@ def test_order_cap_enforced_with_huge_intents():
 
 
 def test_reserve_protects_minimum_cash():
-    ctx = make_ctx(money=320)               # budget 20 with default reserve 300
+    ctx = make_ctx(money=304)               # budget 4 with default reserve 300
     orders, ledger = OrderBuilder().build(ctx, INTENTS_FULL)
-    assert ledger["budget"] == pytest.approx(20)
-    # three hires cost fib(0)+fib(1)+fib(2) = 4 coins -> they DO fit $20;
+    assert ledger["budget"] == pytest.approx(4)
+    # three hires cost fib(0)+fib(1)+fib(2) = 4 coins -> they DO fit $4;
     # everything else must be dropped by the budget gate.
     hires = [o for o in orders if o[0] == "HIRE"]
     assert len(hires) == 3
-    assert ledger["spent_estimate"] <= 20 + 1e-6
+    assert ledger["spent_estimate"] <= 4 + 1e-6
     assert not any(o[0].startswith("BUY") for o in orders)
 
 
 def test_shed_room_limits_animal_buys():
-    ctx = make_ctx(money=30000, shed={"WHEAT": 95})   # room = 5
+    structures = [(x, y, {"kind": "COOP"}) for x in range(3) for y in range(3)]
+    ctx = make_ctx(money=30000, shed={"WHEAT": 95}, structures=structures)   # room = 5
     intents = {"hire": 0, "buy_land": False, "buy_seed": {},
                "buy_animal": {"GOOSE": 8}, "buy_wheat": 0}
     orders, ledger = OrderBuilder().build(ctx, intents)

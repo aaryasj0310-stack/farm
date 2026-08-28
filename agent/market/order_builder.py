@@ -40,12 +40,12 @@ def hire_total_cost(k_hands, mult=1):
     return sum(_fib(i) for i in range(k_hands)) * mult
 
 
-# Priority tiers (lower = executed earlier when cash runs short).
-TIER_HIRES = 0
-TIER_SEEDS = 1
-TIER_FEED_WHEAT = 2
+# Priority tiers (lower = executed earlier when order slots / cash run short).
+TIER_LAND = 0
+TIER_FEED_WHEAT = 1
+TIER_SEEDS = 2
 TIER_ANIMALS = 3
-TIER_LAND = 4
+TIER_HIRES = 4
 
 
 class OrderBuilder:
@@ -101,11 +101,18 @@ class OrderBuilder:
         for animal, k in sorted(intents.get("buy_animal", {}).items()):
             k = int(k)
             if k > 0 and animal in ANIMALS:
-                room_limited = min(k, shed_room)
+                struct_type = ANIMALS[animal]["structure"]
+                free_structures = sum(
+                    1 for t in farm.iter_tiles()
+                    if t.kind == struct_type and not t.is_animal
+                )
+                animals_in_shed = int(ctx["private"].shed.get(animal, 0)) if ctx.get("private") else 0
+                max_buyable = max(0, free_structures - animals_in_shed)
+                room_limited = min(k, max_buyable, shed_room)
                 if room_limited <= 0:
                     ledger["dropped"].append({"kind": "animal",
                                               "animal": animal,
-                                              "reason": "shed_full"})
+                                              "reason": "no_empty_structure" if max_buyable <= 0 else "shed_full"})
                     continue
                 unit = ANIMALS[animal]["cost"]
                 tiers.append((TIER_ANIMALS, "animal",

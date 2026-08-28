@@ -70,8 +70,8 @@ PRIORITY_CARE_ANIMAL = 60
 PRIORITY_STANDARD_HARVEST = 50
 PRIORITY_FERTILIZE_CROP = 48
 PRIORITY_PLACE_ANIMAL = 45
+PRIORITY_BUILD_STRUCTURE = 75
 PRIORITY_PLANT_AND_WATER = 40
-PRIORITY_BUILD_STRUCTURE = 35
 PRIORITY_WEED_DIG = 20
 
 # ------------------------------------------------------------- policy -------
@@ -100,9 +100,6 @@ BUY_WHEAT_TRIGGER_DAYS = 1.5
 PHASE1_WHEAT_TILES = 2            # NW wheat for day-4 cash + animal feed
 PHASE1_MELON_TILES_NW = 4
 PHASE1_GEESE_DAY0_2 = 6
-BUY_LAND_NE_DAY = 29   # was 6; effectively no time-gate
-BUY_LAND_SW_MIN_BANK = 2600
-BUY_LAND_SE_MIN_BANK = 5200
 MELON_PLANT_LAST_DAY_FERT = 17    # last planting that still harvests by 29
 MELON_PLANT_LAST_DAY = 19
 
@@ -199,8 +196,8 @@ QUADRANT_UNLOCK_DAYS = {
     3: 9,    # Quadrant 3 (SW): buy on day 9
 }
 QUADRANT_MONEY_THRESHOLDS = {
-    2: 2000,  # Need >= $2,000 to buy Q2 (keep safety buffer)
-    3: 4000,  # Need >= $4,000 to buy Q3
+    2: 1500,  # Need >= $1,500 to buy Q2 ($1,000 land + $500 buffer)
+    3: 2450,  # Need >= $2,450 to buy Q3 ($2,000 land + $143 hires + $300 buffer)
 }
 QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
 
@@ -228,6 +225,3 @@ SELL_BATCH_SIZES = {
     "phase2": 5,   # Days 6-8: sell in batches of 5-10
     "phase3": 3,   # Days 9+: sell in batches of 3-5
 }
-
-# Default fallback actions when task queue is empty
-DEFAULT_ACTIONS = ["COLLECT_FERTILIZER", "SELL_SURPLUS", "WATER_MATURE"]

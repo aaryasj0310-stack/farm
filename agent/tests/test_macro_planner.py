@@ -154,15 +154,15 @@ def test_animal_expansion_intents_and_feed():
                  "yield_units": 1, "fed_today": True, "cared_today": False,
                  "consecutive_unfed": 0, "fertilizer_available": False,
                  "pending_care_bonus": 0})]
+    structures = [(2, 3, {"kind": "COOP"})]
     fc = make_forecast(BASE_PRICES)
     # 10 wheat tiles, 5 hands → capacity 60 → sustainable 2 animals (60//30)
-    ctx = make_ctx(day=8, money=20000, animals=animals, shed={"WHEAT": 0},
+    ctx = make_ctx(day=8, money=20000, animals=animals, structures=structures, shed={"WHEAT": 0},
                    wheat_tiles=10, hands=[(3,3)] * 5)
     plan = MacroPlanner(fc).build(ctx)
-    # sustainable=2, current=1 → can buy at most 1 more
+    # sustainable=2, current=1, 1 empty coop → buys 1 more
     total_buys = sum(plan.intents["buy_animal"].values())
     assert total_buys >= 1
-    assert plan.build_op in ("BUILD_COOP", "BUILD_PASTURE")
     # feed buffer for existing animals triggers wheat purchase
     assert plan.intents["buy_wheat"] >= 2
 
@@ -401,10 +401,10 @@ def test_land_expansion_roi_positive_when_profitable():
 def test_land_expansion_skipped_when_below_threshold():
     """Land not bought if money < threshold."""
     fc = make_forecast(BASE_PRICES)
-    ctx = make_ctx(day=6, money=1500, unlocked=("NW",))
+    ctx = make_ctx(day=6, money=1400, unlocked=("NW",))
     plan = MacroPlanner(fc).build(ctx)
     assert plan.intents["buy_land"] is False, \
-        "Day 6 with < $2000 -> no Q2 buy"
+        "Day 6 with < $1500 -> no Q2 buy"
 
 
 def test_land_expansion_quadrant4_hard_blocked():

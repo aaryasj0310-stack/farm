@@ -80,8 +80,8 @@ PRIORITY_CARE_ANIMAL = 60
 PRIORITY_STANDARD_HARVEST = 50
 PRIORITY_FERTILIZE_CROP = 48
 PRIORITY_PLACE_ANIMAL = 45
+PRIORITY_BUILD_STRUCTURE = 75
 PRIORITY_PLANT_AND_WATER = 40
-PRIORITY_BUILD_STRUCTURE = 35
 PRIORITY_WEED_DIG = 20
 
 # ------------------------------------------------------------- policy -------
@@ -110,9 +110,6 @@ BUY_WHEAT_TRIGGER_DAYS = 1.5
 PHASE1_WHEAT_TILES = 2            # NW wheat for day-4 cash + animal feed
 PHASE1_MELON_TILES_NW = 4
 PHASE1_GEESE_DAY0_2 = 6
-BUY_LAND_NE_DAY = 29   # was 6; effectively no time-gate
-BUY_LAND_SW_MIN_BANK = 2600
-BUY_LAND_SE_MIN_BANK = 5200
 MELON_PLANT_LAST_DAY_FERT = 17    # last planting that still harvests by 29
 MELON_PLANT_LAST_DAY = 19
 
@@ -209,8 +206,8 @@ QUADRANT_UNLOCK_DAYS = {
     3: 9,    # Quadrant 3 (SW): buy on day 9
 }
 QUADRANT_MONEY_THRESHOLDS = {
-    2: 2000,  # Need >= $2,000 to buy Q2 (keep safety buffer)
-    3: 4000,  # Need >= $4,000 to buy Q3
+    2: 1500,  # Need >= $1,500 to buy Q2 ($1,000 land + $500 buffer)
+    3: 2450,  # Need >= $2,450 to buy Q3 ($2,000 land + $143 hires + $300 buffer)
 }
 QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
 
@@ -238,9 +235,6 @@ SELL_BATCH_SIZES = {
     "phase2": 5,   # Days 6-8: sell in batches of 5-10
     "phase3": 3,   # Days 9+: sell in batches of 3-5
 }
-
-# Default fallback actions when task queue is empty
-DEFAULT_ACTIONS = ["COLLECT_FERTILIZER", "SELL_SURPLUS", "WATER_MATURE"]
 
 # ===========================================================================
 # END MODULE: config.py
@@ -9151,22 +9145,44 @@ def build_tasks(ctx, macro):
     for prio, t in need_water:
         add(prio, "WATER", t.pos, kind="water")
 
-    # ---------------- fertilizer application (Strawberries & Tomatoes) ----
+    # ---------------- fertilizer application (Strawberries, Tomatoes, & Surplus Arbitrage) ----
     fert_in_shed = int(ctx["private"].shed.get("FERTILIZER", 0)) if ctx.get("private") else 0
     fert_held = sum(int(inv.get("FERTILIZER", 0)) for inv in (ctx["private"].inventories if ctx.get("private") else []))
     total_fert = fert_in_shed + fert_held
     
     if total_fert > 0 and hour < 20:
-        fert_targets = []
+        # Live fertilizer spot price from market
+        fert_spot_price = ctx["market"].prices.get("FERTILIZER", 100) if ctx.get("market") else 100
+        
+        tier1_strawberry = []
+        tier2_tomato = []
+        tier3_wheat = []
+        tier4_carrot = []
+        
         for t in plants:
-            if t.crop in ("STRAWBERRY", "TOMATO") and t.fertilized_until_day < day:
-                fert_targets.append(t.pos)
-                
-        for pos in fert_targets[:total_fert]:
+            if t.fertilized_until_day < day:
+                age = crop_age(t, day)
+                # Tier 1: Strawberry 2-application precision (Ages 9-10 covers 10 & 12; Ages 13-14 covers 14 & 16)
+                if t.crop == "STRAWBERRY" and (9 <= age <= 10 or 13 <= age <= 14):
+                    tier1_strawberry.append(t.pos)
+                # Tier 2: Tomato 2-application precision (Ages 7-8 covers 8, 9, 10; Ages 10-11 covers 11)
+                elif t.crop == "TOMATO" and (7 <= age <= 8 or 10 <= age <= 11):
+                    tier2_tomato.append(t.pos)
+                # Tier 3: Surplus Wheat Arbitrage (applies when market price < $50, window ages 1-2)
+                elif fert_spot_price < 50 and t.crop == "WHEAT" and (1 <= age <= 2):
+                    tier3_wheat.append(t.pos)
+                # Tier 4: Surplus Carrot Arbitrage (applies when market price < $35, window ages 1-2)
+                elif fert_spot_price < 35 and t.crop == "CARROT" and (1 <= age <= 2):
+                    tier4_carrot.append(t.pos)
+                    
+        # Prioritize Tier 1 -> Tier 2 -> Tier 3 -> Tier 4
+        all_fert_targets = tier1_strawberry + tier2_tomato + tier3_wheat + tier4_carrot
+        
+        for pos in all_fert_targets[:total_fert]:
             add(PRIORITY_FERTILIZE_CROP, "FERTILIZE", pos, kind="fertilize_crop")
             
         # Stage fertilizer pickup from shed if needed
-        needed_pickup = len(fert_targets) - fert_held
+        needed_pickup = len(all_fert_targets[:total_fert]) - fert_held
         if needed_pickup > 0 and fert_in_shed > 0:
             grab_fert = min(fert_in_shed, needed_pickup)
             farmer_pos = tuple(farm_pos_of(ctx))
@@ -9194,6 +9210,8 @@ def build_tasks(ctx, macro):
                 meta={"wheat": 1})
             feed_now = True
         feeds_due += 1 if feed_now else 0
+        if t.yield_units > 0:
+            add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_animal")
         if t.fertilizer_available:
             add(PRIORITY_FERT_COLLECT, "COLLECT_FERTILIZER", t.pos, kind="fert")
         want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
@@ -9231,10 +9249,10 @@ def build_tasks(ctx, macro):
     # ---------------- structures & animals ----------------
     for pos in macro.build_queue[:2]:
         add(PRIORITY_BUILD_STRUCTURE, macro.build_op, pos, kind="build")
-        for task in macro.place_queue[:2]:
-            add(PRIORITY_PLACE_ANIMAL, task["op"], task.get("target"),
-                args=task.get("args", []),
-                kind=task.get("kind", "place_animal"))
+    for task in macro.place_queue[:2]:
+        add(PRIORITY_PLACE_ANIMAL, task["op"], task.get("target"),
+            args=task.get("args", []),
+            kind=task.get("kind", "place_animal"))
 
     # ---------------- weeds ----------------
     blocked = {tuple(p) for p, _ in macro.plant_queue}
@@ -9289,6 +9307,9 @@ def assign_tasks(tasks, ctx, extra_units=()):
             deferred_place.append(task)               # nobody holds it yet
             continue
         target = task.get("target") or tuple(farm.farmer)
+        # Explicit locked-quadrant task guard: never assign operations on locked land
+        if task["op"] not in ("PICKUP", "PASS") and farm.quadrant_of(target) not in farm.unlocked:
+            continue
         best, best_d = None, 10 ** 9
         for idx, pos in units:
             if idx in busy:
@@ -9383,7 +9404,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         "watered_now": watered_now,
         "harvested": harvested,
         "fed": fed_animals,
-        "deferred_place": [t.get("args", [None])[0] for t in deferred_place],
+        "deferred_place": [(t.get("args") or [None])[0] for t in deferred_place],
     }
 
 
@@ -9746,6 +9767,7 @@ class MacroPlanner:
                             if t.kind in ("COOP", "PASTURE") and not t.is_animal}
 
         buy_animal = {}
+        buy_wheat = 0
         reserved_structure_tiles = []
         EFFECTIVE_ACTIONS_PER_UNIT = 12
 
@@ -9770,8 +9792,8 @@ class MacroPlanner:
             # Labor capacity check: can the workforce handle more animals?
             ANIMAL_LABOR_PER_HEAD = 3
             current_load = estimate_daily_load(ctx)
-            actual_units = 1 + len(farm.hands)
-            current_capacity = actual_units * EFFECTIVE_ACTIONS_PER_UNIT
+            planned_units = 1 + target_hands
+            current_capacity = planned_units * EFFECTIVE_ACTIONS_PER_UNIT
             spare_labor = max(0, current_capacity - current_load)
 
             # Tile reservation: keep minimum tiles for crops
@@ -9795,22 +9817,22 @@ class MacroPlanner:
                     continue
                 if spare_labor < ANIMAL_LABOR_PER_HEAD:
                     continue
-                # v5.9: Buy only if cash-for-animals covers the cost
-                if cash_for_animals >= info["cost"]:
-                    buy_animal[animal] = buy_animal.get(animal, 0) + 1
-                    cash_for_animals -= info["cost"]
 
-                # queue structure build for one deficit slot per day
+                # P0: Enforce Structure -> Animal dependency
                 struct_kind = info["structure"]
                 free_struct = [pos for pos, k in structures_empty.items()
                                if k == struct_kind]
                 if free_struct:
-                    pass                                        # place handled below
+                    # Empty structure exists on board -> safe to buy animal
+                    if cash_for_animals >= info["cost"]:
+                        buy_animal[animal] = buy_animal.get(animal, 0) + 1
+                        cash_for_animals -= info["cost"]
+                        del structures_empty[free_struct[0]]
                 elif empty_tiles:
-                    if len(empty_tiles) <= MIN_CROP_TILES_RESERVE:
-                        continue  # save remaining tiles for planting
-                    tile = empty_tiles.pop(0)
-                    reserved_structure_tiles.append(tile)
+                    # No structure exists -> queue structure build first on authoritative empty tile
+                    if len(empty_tiles) > MIN_CROP_TILES_RESERVE:
+                        tile = empty_tiles.pop(0)
+                        reserved_structure_tiles.append(tile)
 
         # single build_op per day: prefer whichever deficit came first
         if reserved_structure_tiles:
@@ -9828,27 +9850,41 @@ class MacroPlanner:
         # endgame: no new planting — just harvest and sell
         plant_queue = []
         buy_seed = {}
-        if not is_endgame:
-            # ---- Budget prioritization (Fix 6) ----
-            money = ctx["farm"].money
+        # ---- Budget prioritization (Fix 6) ----
+        money = ctx["farm"].money
+        hire_cost = hire_total_cost(hires)
+
+        n_extra = len(farm.unlocked) - 1
+        land_cost = 0
+        if not is_endgame and n_extra < len(LAND_ORDER):
+            land_price = LAND_PRICES[n_extra]
+            if money >= land_price + self.reserve + 200:
+                land_cost = land_price
+
+        animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
+        
+        # Feed wheat buffer needed for existing + newly bought animals
+        # In early game (day <= 5), ensure at least 5 wheat buffer so animals survive until farm wheat matures
+        buy_wheat = 0
+        if plan.feeding_enabled:
+            wheat_buffer_target = 5 if day <= 5 and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
+            wheat_needed = (n_animals + sum(buy_animal.values())) * wheat_buffer_target
+            if trigger:
+                wheat_needed = max(wheat_needed, deficit)
             
-            hire_cost = hire_total_cost(hires)
-
-            n_extra = len(farm.unlocked) - 1
-            land_cost = 0
-            if n_extra < len(LAND_ORDER):
-                land_price = LAND_PRICES[n_extra]
-                if money >= land_price + self.reserve + 200:
-                    land_cost = land_price
-
-            animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
-            # v5.9: Hires are mandatory — subtract hire cost from money first.
-            # Remaining money (after hires + reserve) is available for seeds/land/animals.
             post_hire_money = max(0.0, money - hire_cost)
-            seed_budget = max(0, post_hire_money - self.reserve - land_cost - animal_cost)
-            remaining_money = seed_budget
+            available_before_seeds = max(0.0, post_hire_money - self.reserve - land_cost - animal_cost)
+            if wheat_have < wheat_needed:
+                buy_wheat = min(wheat_needed - wheat_have, int(available_before_seeds // 25))
+        wheat_feed_cost = buy_wheat * 25
 
-            seeds = dict(private.seeds)
+        post_hire_money = max(0.0, money - hire_cost)
+        available_before_seeds = max(0.0, post_hire_money - self.reserve - land_cost - animal_cost)
+        seed_budget = max(0.0, available_before_seeds - wheat_feed_cost)
+        remaining_money = seed_budget
+
+        seeds = dict(private.seeds)
+        if not is_endgame:
 
             # ---- v5.9: Plant ALL empty tiles with best crops ----
             # Spec: "Day 0: PLANT all available tiles with wheat AND WATER
@@ -9912,17 +9948,6 @@ class MacroPlanner:
         else:
             remaining_money = ctx["farm"].money - self.reserve
 
-        # ---------------- wheat feed buffer ---------------------------
-        wheat_needed = n_animals * FEED_WHEAT_BUFFER_DAYS + \
-            sum(ANIMAL_ECONOMICS[a]["feed30"] for a in buy_animal) // 30 * 2
-        if trigger:
-            wheat_needed = max(wheat_needed, deficit)
-        buy_wheat = 0
-        if wheat_have < wheat_needed:
-            buy_wheat = min(wheat_needed - wheat_have,
-                            int(max(0, remaining_money) // 25))
-            remaining_money -= buy_wheat * 25
-
         # ---- v5.9: Fixed land expansion schedule ----
         buy_land = False
         if not is_endgame:
@@ -9950,9 +9975,12 @@ class MacroPlanner:
         for i, inv in enumerate(private.inventories):
             for item in inv:
                 inv_hold.setdefault(item, []).append(i)
+        
+        all_empty_structures = {t.pos: t.kind for t in farm.iter_tiles()
+                                if t.kind in ("COOP", "PASTURE") and not t.is_animal}
         for animal in ANIMAL_LIST:
             struct = ANIMALS[animal]["structure"]
-            free = [pos for pos, k in structures_empty.items() if k == struct]
+            free = [pos for pos, k in all_empty_structures.items() if k == struct]
             if not free:
                 continue
             held = inv_hold.get(animal)
@@ -9963,6 +9991,12 @@ class MacroPlanner:
                 place_queue.append({"op": "PICKUP",
                                     "target": (4, 4), "args": [animal]})
             break   # one species per day keeps the queue focused
+
+        # P0 Guarantee: structure tiles and planting tiles must be strictly mutually exclusive!
+        structure_tiles_set = set(plan.build_queue)
+        plant_tiles_set = {pos for pos, _ in plan.plant_queue}
+        assert not (structure_tiles_set & plant_tiles_set), \
+            f"Structure tiles {structure_tiles_set} and plant tiles {plant_tiles_set} must be mutually exclusive!"
 
         plan.plant_queue = plant_queue
         plan.water_budget_exceeded = water_budget_exceeded
@@ -10027,12 +10061,12 @@ def hire_total_cost(k_hands, mult=1):
     return sum(_fib(i) for i in range(k_hands)) * mult
 
 
-# Priority tiers (lower = executed earlier when cash runs short).
-TIER_HIRES = 0
-TIER_SEEDS = 1
-TIER_FEED_WHEAT = 2
+# Priority tiers (lower = executed earlier when order slots / cash run short).
+TIER_LAND = 0
+TIER_FEED_WHEAT = 1
+TIER_SEEDS = 2
 TIER_ANIMALS = 3
-TIER_LAND = 4
+TIER_HIRES = 4
 
 
 class OrderBuilder:
@@ -10088,11 +10122,18 @@ class OrderBuilder:
         for animal, k in sorted(intents.get("buy_animal", {}).items()):
             k = int(k)
             if k > 0 and animal in ANIMALS:
-                room_limited = min(k, shed_room)
+                struct_type = ANIMALS[animal]["structure"]
+                free_structures = sum(
+                    1 for t in farm.iter_tiles()
+                    if t.kind == struct_type and not t.is_animal
+                )
+                animals_in_shed = int(ctx["private"].shed.get(animal, 0)) if ctx.get("private") else 0
+                max_buyable = max(0, free_structures - animals_in_shed)
+                room_limited = min(k, max_buyable, shed_room)
                 if room_limited <= 0:
                     ledger["dropped"].append({"kind": "animal",
                                               "animal": animal,
-                                              "reason": "shed_full"})
+                                              "reason": "no_empty_structure" if max_buyable <= 0 else "shed_full"})
                     continue
                 unit = ANIMALS[animal]["cost"]
                 tiers.append((TIER_ANIMALS, "animal",
@@ -10628,10 +10669,18 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     tasks = build_tasks(ctx, plan)
     asg = assign_tasks(tasks, ctx)
 
-    # 3. Market layer: purchase intent compilation (morning market at hour 0) and dynamic sell orders
+    # 3. Market layer: purchase intent compilation (morning market at hour 0 + deferred hires at hour 1)
     purchase_orders = []
     if ctx["hour"] == 0:
         purchase_orders, _ledger = builder.build(ctx, plan.intents)
+    elif ctx["hour"] == 1:
+        # Check if any target hires from today's plan were deferred from Hour 0
+        target_h = plan.intents.get("hire", 0)
+        current_h = len(ctx["farm"].hands)
+        hires_needed = max(0, target_h - current_h)
+        if hires_needed > 0:
+            for _ in range(min(hires_needed, 10)):
+                purchase_orders.append(["HIRE"])
         
     if ctx["day"] >= 28:
         sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
@@ -10640,7 +10689,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     market = MarketBrain.compose(
         purchase_orders, sell_orders,
-        purchases_first=(ctx["hour"] == 0)
+        purchases_first=(ctx["hour"] in (0, 1))
     )
 
     # Phase 6: record our sales for drain ledger accuracy

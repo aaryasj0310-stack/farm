@@ -195,10 +195,18 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     tasks = build_tasks(ctx, plan)
     asg = assign_tasks(tasks, ctx)
 
-    # 3. Market layer: purchase intent compilation (morning market at hour 0) and dynamic sell orders
+    # 3. Market layer: purchase intent compilation (morning market at hour 0 + deferred hires at hour 1)
     purchase_orders = []
     if ctx["hour"] == 0:
         purchase_orders, _ledger = builder.build(ctx, plan.intents)
+    elif ctx["hour"] == 1:
+        # Check if any target hires from today's plan were deferred from Hour 0
+        target_h = plan.intents.get("hire", 0)
+        current_h = len(ctx["farm"].hands)
+        hires_needed = max(0, target_h - current_h)
+        if hires_needed > 0:
+            for _ in range(min(hires_needed, 10)):
+                purchase_orders.append(["HIRE"])
         
     if ctx["day"] >= 28:
         sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
@@ -207,7 +215,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     market = MarketBrain.compose(
         purchase_orders, sell_orders,
-        purchases_first=(ctx["hour"] == 0)
+        purchases_first=(ctx["hour"] in (0, 1))
     )
 
     # Phase 6: record our sales for drain ledger accuracy

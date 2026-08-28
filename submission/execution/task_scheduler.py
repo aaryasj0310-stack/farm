@@ -158,22 +158,44 @@ def build_tasks(ctx, macro):
     for prio, t in need_water:
         add(prio, "WATER", t.pos, kind="water")
 
-    # ---------------- fertilizer application (Strawberries & Tomatoes) ----
+    # ---------------- fertilizer application (Strawberries, Tomatoes, & Surplus Arbitrage) ----
     fert_in_shed = int(ctx["private"].shed.get("FERTILIZER", 0)) if ctx.get("private") else 0
     fert_held = sum(int(inv.get("FERTILIZER", 0)) for inv in (ctx["private"].inventories if ctx.get("private") else []))
     total_fert = fert_in_shed + fert_held
     
     if total_fert > 0 and hour < 20:
-        fert_targets = []
+        # Live fertilizer spot price from market
+        fert_spot_price = ctx["market"].prices.get("FERTILIZER", 100) if ctx.get("market") else 100
+        
+        tier1_strawberry = []
+        tier2_tomato = []
+        tier3_wheat = []
+        tier4_carrot = []
+        
         for t in plants:
-            if t.crop in ("STRAWBERRY", "TOMATO") and t.fertilized_until_day < day:
-                fert_targets.append(t.pos)
-                
-        for pos in fert_targets[:total_fert]:
+            if t.fertilized_until_day < day:
+                age = crop_age(t, day)
+                # Tier 1: Strawberry 2-application precision (Ages 9-10 covers 10 & 12; Ages 13-14 covers 14 & 16)
+                if t.crop == "STRAWBERRY" and (9 <= age <= 10 or 13 <= age <= 14):
+                    tier1_strawberry.append(t.pos)
+                # Tier 2: Tomato 2-application precision (Ages 7-8 covers 8, 9, 10; Ages 10-11 covers 11)
+                elif t.crop == "TOMATO" and (7 <= age <= 8 or 10 <= age <= 11):
+                    tier2_tomato.append(t.pos)
+                # Tier 3: Surplus Wheat Arbitrage (applies when market price < $50, window ages 1-2)
+                elif fert_spot_price < 50 and t.crop == "WHEAT" and (1 <= age <= 2):
+                    tier3_wheat.append(t.pos)
+                # Tier 4: Surplus Carrot Arbitrage (applies when market price < $35, window ages 1-2)
+                elif fert_spot_price < 35 and t.crop == "CARROT" and (1 <= age <= 2):
+                    tier4_carrot.append(t.pos)
+                    
+        # Prioritize Tier 1 -> Tier 2 -> Tier 3 -> Tier 4
+        all_fert_targets = tier1_strawberry + tier2_tomato + tier3_wheat + tier4_carrot
+        
+        for pos in all_fert_targets[:total_fert]:
             add(PRIORITY_FERTILIZE_CROP, "FERTILIZE", pos, kind="fertilize_crop")
             
         # Stage fertilizer pickup from shed if needed
-        needed_pickup = len(fert_targets) - fert_held
+        needed_pickup = len(all_fert_targets[:total_fert]) - fert_held
         if needed_pickup > 0 and fert_in_shed > 0:
             grab_fert = min(fert_in_shed, needed_pickup)
             farmer_pos = tuple(farm_pos_of(ctx))
@@ -201,6 +223,8 @@ def build_tasks(ctx, macro):
                 meta={"wheat": 1})
             feed_now = True
         feeds_due += 1 if feed_now else 0
+        if t.yield_units > 0:
+            add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_animal")
         if t.fertilizer_available:
             add(PRIORITY_FERT_COLLECT, "COLLECT_FERTILIZER", t.pos, kind="fert")
         want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
@@ -238,10 +262,10 @@ def build_tasks(ctx, macro):
     # ---------------- structures & animals ----------------
     for pos in macro.build_queue[:2]:
         add(PRIORITY_BUILD_STRUCTURE, macro.build_op, pos, kind="build")
-        for task in macro.place_queue[:2]:
-            add(PRIORITY_PLACE_ANIMAL, task["op"], task.get("target"),
-                args=task.get("args", []),
-                kind=task.get("kind", "place_animal"))
+    for task in macro.place_queue[:2]:
+        add(PRIORITY_PLACE_ANIMAL, task["op"], task.get("target"),
+            args=task.get("args", []),
+            kind=task.get("kind", "place_animal"))
 
     # ---------------- weeds ----------------
     blocked = {tuple(p) for p, _ in macro.plant_queue}
@@ -296,6 +320,9 @@ def assign_tasks(tasks, ctx, extra_units=()):
             deferred_place.append(task)               # nobody holds it yet
             continue
         target = task.get("target") or tuple(farm.farmer)
+        # Explicit locked-quadrant task guard: never assign operations on locked land
+        if task["op"] not in ("PICKUP", "PASS") and farm.quadrant_of(target) not in farm.unlocked:
+            continue
         best, best_d = None, 10 ** 9
         for idx, pos in units:
             if idx in busy:
@@ -390,7 +417,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         "watered_now": watered_now,
         "harvested": harvested,
         "fed": fed_animals,
-        "deferred_place": [t.get("args", [None])[0] for t in deferred_place],
+        "deferred_place": [(t.get("args") or [None])[0] for t in deferred_place],
     }
 
 
