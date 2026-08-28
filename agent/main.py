@@ -45,7 +45,7 @@ except ImportError:
     from state.observation_parser import parse_observation
 
 try:
-    from config import QUADRANT_HARD_BLOCK
+    from config import QUADRANT_HARD_BLOCK, get_target_hands
     from strategy.price_forecast import PriceForecast
     from strategy.macro_planner import MacroPlanner
     from strategy.endgame_liquidator import EndgameLiquidator
@@ -62,7 +62,7 @@ try:
         compute_opponent_sell_probabilities,
     )
 except ImportError:
-    from config import QUADRANT_HARD_BLOCK
+    from config import QUADRANT_HARD_BLOCK, get_target_hands
     from price_forecast import PriceForecast
     from macro_planner import MacroPlanner
     from endgame_liquidator import EndgameLiquidator
