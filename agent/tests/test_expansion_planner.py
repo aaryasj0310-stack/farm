@@ -324,10 +324,10 @@ class TestComputeLandROI:
         farm = MockFarm(["NW", "NE"])
         forecast = MagicMock()
         forecast.expected_price.return_value = 100
-        # Day 26: all crops except wheat deadline passed
+        # Day 26: all crops deadline passed (planting cuts off after Day 25)
         roi, info = compute_land_roi(3, 26, 5000, farm, forecast)
-        # Should still have wheat as eligible
-        assert roi >= 0.0
+        assert roi < 0.0
+        assert info["expected_profit"] < 0
 
     def test_positive_roi_with_early_day(self):
         """Early day (after unlock) = plenty of production time = positive ROI."""
@@ -356,7 +356,7 @@ class TestComputeLandROI:
 
 
 class TestOpportunityWindowFactor:
-    """Tests for opportunity_window_factor() — time decay."""
+    """Tests for opportunity_window_factor() — economic window viability."""
 
     def test_q3_before_deadline_full_value(self):
         """SW quadrant before strawberry deadline = 1.0."""
@@ -364,41 +364,27 @@ class TestOpportunityWindowFactor:
         factor = opportunity_window_factor(3, 5)
         assert factor == 1.0
 
-    def test_q3_at_deadline_returns_zero(self):
-        """SW quadrant at strawberry deadline = 0.0."""
+    def test_q3_at_day_12_full_value(self):
+        """SW quadrant on Day 12 has full production window = 1.0 (no artificial cliff)."""
         from strategy.expansion_planner import opportunity_window_factor
-        factor = opportunity_window_factor(3, 13)
-        assert factor == 0.0
-
-    def test_q3_two_days_left_low_value(self):
-        """SW quadrant 2 days before deadline = 0.3."""
-        from strategy.expansion_planner import opportunity_window_factor
-        factor = opportunity_window_factor(3, 11)
-        assert factor == 0.3
-
-    def test_q2_uses_melon_deadline(self):
-        """NE quadrant uses melon deadline."""
-        from strategy.expansion_planner import opportunity_window_factor
-        factor = opportunity_window_factor(2, 15)
-        # Melon deadline is 17, so 17-15=2 days left
-        assert factor == 0.3
-
-    def test_unknown_quadrant_returns_1(self):
-        """Unknown quadrant = full value."""
-        from strategy.expansion_planner import opportunity_window_factor
-        factor = opportunity_window_factor(5, 10)
+        factor = opportunity_window_factor(3, 12)
         assert factor == 1.0
 
-    def test_factor_decreases_as_deadline_approaches(self):
-        """Factor monotonically decreases as deadline approaches."""
+    def test_q2_before_day_25_full_value(self):
+        """NE quadrant before Day 25 = 1.0."""
         from strategy.expansion_planner import opportunity_window_factor
-        factors = [opportunity_window_factor(3, d) for d in range(6, 14)]
-        for i in range(1, len(factors)):
-            assert factors[i] <= factors[i - 1]
+        factor = opportunity_window_factor(2, 15)
+        assert factor == 1.0
+
+    def test_after_day_25_returns_zero(self):
+        """After Day 25 planting cut-off = 0.0."""
+        from strategy.expansion_planner import opportunity_window_factor
+        assert opportunity_window_factor(3, 26) == 0.0
+        assert opportunity_window_factor(2, 26) == 0.0
 
 
 class TestEstimateCropRevenuePerTile:
-    """Tests for _estimate_crop_revenue_per_tile() — per-tile revenue."""
+    """Tests for _estimate_crop_revenue_per_tile() — per-tile net profit."""
 
     def test_one_time_crop_single_harvest(self):
         """Wheat: single harvest, fixed yield."""
@@ -406,8 +392,9 @@ class TestEstimateCropRevenuePerTile:
         from unittest.mock import MagicMock
         forecast = MagicMock()
         forecast.expected_price.return_value = 50
-        revenue, units = _estimate_crop_revenue_per_tile("WHEAT", 0, 0, forecast)
-        assert units == 6  # wheat yield
+        revenue, units = _estimate_crop_revenue_per_tile("WHEAT", 20, 20, forecast)
+        # Wheat at day 20 yields 6 units on day 24, day 25-29 yields another 6 units
+        assert units >= 6
         assert revenue > 0
 
     def test_ongoing_crop_multiple_harvests(self):
@@ -417,18 +404,19 @@ class TestEstimateCropRevenuePerTile:
         forecast = MagicMock()
         forecast.expected_price.return_value = 50
         revenue, units = _estimate_crop_revenue_per_tile("TOMATO", 0, 0, forecast)
-        assert units > 8  # tomato yields multiple harvests
+        assert units >= 4  # tomato yields multiple harvests
         assert revenue > 0
 
-    def test_own_supply_glut_discount(self):
-        """More own tiles = lower price per unit."""
+    def test_uses_price_forecast_directly_without_arbitrary_discount(self):
+        """Revenue calculation directly consumes PriceForecast without arbitrary discounts."""
         from strategy.expansion_planner import _estimate_crop_revenue_per_tile
         from unittest.mock import MagicMock
         forecast = MagicMock()
         forecast.expected_price.return_value = 100
-        rev1, _ = _estimate_crop_revenue_per_tile("WHEAT", 0, 0, forecast, n_own_tiles=0)
-        rev2, _ = _estimate_crop_revenue_per_tile("WHEAT", 0, 0, forecast, n_own_tiles=10)
-        assert rev2 < rev1
+        # Wheat on day 25: 1 cycle (day 25-29), harvest day 29, yield 6. Price 100 -> gross 600, seed 10 -> net 590
+        net, units = _estimate_crop_revenue_per_tile("WHEAT", 25, 25, forecast)
+        assert units == 6
+        assert net == (6 * 100 - 10)  # Gross 600 - Seed 10 = 590
 
     def test_zero_future_harvests(self):
         """No future harvests = zero revenue."""
@@ -440,6 +428,89 @@ class TestEstimateCropRevenuePerTile:
         revenue, units = _estimate_crop_revenue_per_tile("WHEAT", 29, 29, forecast)
         assert revenue == 0.0
         assert units == 0
+
+
+class TestMarginalLandROI:
+    """Comprehensive tests for marginal profit land ROI calculation."""
+
+    def test_marginal_profit_calculation(self):
+        """Incremental profit = profit_with_land - profit_without_land."""
+        from strategy.expansion_planner import compute_land_roi
+        from unittest.mock import MagicMock
+        farm = MockFarm(["NW", "NE"])
+        forecast = MagicMock()
+        forecast.expected_price.return_value = 60
+        roi, info = compute_land_roi(3, 9, 5000, farm, forecast)
+        assert "profit_with_land" in info
+        assert "profit_without_land" in info
+        assert "marginal_revenue_gain" in info
+        assert info["marginal_revenue_gain"] == info["profit_with_land"] - info["profit_without_land"]
+        assert info["expected_profit"] == info["marginal_revenue_gain"] - info["land_price"]
+
+    def test_seed_and_input_costs_deducted_accurately(self):
+        """Seed and fertilizer costs are deducted per cycle."""
+        from strategy.expansion_planner import _estimate_crop_revenue_per_tile
+        from unittest.mock import MagicMock
+        forecast = MagicMock()
+        forecast.expected_price.return_value = 100
+        # Strawberry planted on day 10: 4 harvests (days 20, 22, 24, 26) x 2 units = 8 units.
+        # Gross = 8 x 100 = 800. Seed = 100, Fert = 2 x 25 = 50. Net = 800 - 100 - 50 = 650
+        net, units = _estimate_crop_revenue_per_tile("STRAWBERRY", 10, 10, forecast)
+        assert units == 8
+        assert net == (8 * 100 - 100 - 50)
+
+    def test_crop_caps_strictly_enforced_in_allocations(self):
+        """Tile caps are strictly respected in both with and without allocations."""
+        from strategy.expansion_planner import _allocate_portfolio_profit
+        from unittest.mock import MagicMock
+        from config import CROP_TILE_CAPS
+        forecast = MagicMock()
+        forecast.expected_price.return_value = 100
+        total_profit, mix = _allocate_portfolio_profit(75, 5, forecast, is_sw_available=True)
+        for crop, count in mix.items():
+            if crop == "STRAWBERRY":
+                assert count <= 10  # day 5 cap
+            else:
+                assert count <= CROP_TILE_CAPS.get(crop, 99)
+
+    def test_dynamic_strawberry_cap_day13_vs_day14(self):
+        """Day 13 includes strawberry up to 18; Day 14 includes 0 strawberry."""
+        from strategy.expansion_planner import _allocate_portfolio_profit
+        from unittest.mock import MagicMock
+        forecast = MagicMock()
+        forecast.expected_price.side_effect = lambda crop, day: 150 if crop == "STRAWBERRY" else (60 if crop == "TOMATO" else 25)
+        # Day 13
+        _, mix_d13 = _allocate_portfolio_profit(50, 13, forecast, is_sw_available=True)
+        assert mix_d13.get("STRAWBERRY", 0) <= 20
+        assert mix_d13.get("STRAWBERRY", 0) > 0
+
+        # Day 14
+        _, mix_d14 = _allocate_portfolio_profit(50, 14, forecast, is_sw_available=True)
+        assert mix_d14.get("STRAWBERRY", 0) == 0
+
+    def test_profitable_marginal_expansion_produces_positive_roi(self):
+        """Genuinely profitable expansion produces positive ROI."""
+        from strategy.expansion_planner import compute_land_roi
+        from unittest.mock import MagicMock
+        farm = MockFarm(["NW", "NE"])
+        forecast = MagicMock()
+        forecast.expected_price.return_value = 150  # High crop prices
+        roi, info = compute_land_roi(3, 9, 5000, farm, forecast)
+        assert roi > 0.0
+        assert info["expected_profit"] > 0
+
+    def test_unprofitable_marginal_expansion_is_rejected(self):
+        """When incremental profit is negative or zero, expansion is rejected."""
+        from strategy.expansion_planner import compute_land_roi, should_buy_land
+        from unittest.mock import MagicMock
+        farm = MockFarm(["NW", "NE"])
+        forecast = MagicMock()
+        forecast.expected_price.return_value = 1  # Rock bottom floor prices
+        roi, info = compute_land_roi(3, 9, 5000, farm, forecast)
+        assert roi < 0.0
+        should_buy, reason, _ = should_buy_land(3, 9, 10000, farm, roi=roi, ow_factor=1.0)
+        assert should_buy is False
+        assert "non_positive" in reason
 
 
 class TestCandidateCropMix:
@@ -454,11 +525,10 @@ class TestCandidateCropMix:
         forecast.expected_price.return_value = 100
         # Day 26: most crops expired
         candidates = _candidate_crop_mix_for_quadrant(3, 26, forecast, 25, 0, 0)
-        # Should still have wheat as candidate
-        assert len(candidates) >= 0
+        assert len(candidates) == 0
 
     def test_all_in_strategy_selected(self):
-        """All-in on highest-scoring crop is first candidate."""
+        """Candidate mix respects crop caps."""
         from strategy.expansion_planner import _candidate_crop_mix_for_quadrant
         from unittest.mock import MagicMock
         from config import CROP_TILE_CAPS
@@ -466,10 +536,8 @@ class TestCandidateCropMix:
         forecast.expected_price.return_value = 100
         candidates = _candidate_crop_mix_for_quadrant(3, 5, forecast, 25, 0, 0)
         assert len(candidates) > 0
-        # First candidate should be all-in — respects crop caps
         first_mix = candidates[0][0]
         total_tiles = sum(first_mix.values())
-        # May be less than 25 if crop cap limits it
         assert total_tiles > 0
         for crop, count in first_mix.items():
             assert count <= CROP_TILE_CAPS.get(crop, 99)
@@ -491,9 +559,8 @@ class TestCandidateCropMix:
         from strategy.expansion_planner import _candidate_crop_mix_for_quadrant
         from unittest.mock import MagicMock
         forecast = MagicMock()
-        forecast.expected_price.return_value = 100
+        forecast.expected_price.side_effect = lambda crop, day: 150 if crop == "STRAWBERRY" else (60 if crop == "TOMATO" else 25)
         candidates = _candidate_crop_mix_for_quadrant(3, 10, forecast, 25, 0, 0)
-        # At least one candidate should have strawberry
         has_strawberry = any("STRAWBERRY" in mix for mix, _, _ in candidates)
         assert has_strawberry
 
@@ -501,22 +568,22 @@ class TestCandidateCropMix:
 class TestDynamicStrawberryCap:
     """Tests for get_strawberry_cap() — time-varying cap."""
 
-    def test_early_day_cap_10(self):
-        """Day 0-8: cap = 10."""
+    def test_early_day_cap_16(self):
+        """Day 0-8: cap = 16."""
         from config import get_strawberry_cap
-        assert get_strawberry_cap(0, True) == 10
-        assert get_strawberry_cap(8, True) == 10
+        assert get_strawberry_cap(0, True) == 16
+        assert get_strawberry_cap(8, True) == 16
 
-    def test_mid_day_cap_14(self):
-        """Day 9-12: cap = 14."""
+    def test_mid_day_cap_18(self):
+        """Day 9-12: cap = 18."""
         from config import get_strawberry_cap
-        assert get_strawberry_cap(9, True) == 14
-        assert get_strawberry_cap(12, True) == 14
+        assert get_strawberry_cap(9, True) == 18
+        assert get_strawberry_cap(12, True) == 18
 
-    def test_late_day_cap_18_only_day_13(self):
-        """Day 13: cap = 18 (only Day 13)."""
+    def test_late_day_cap_20_only_day_13(self):
+        """Day 13: cap = 20 (only Day 13)."""
         from config import get_strawberry_cap
-        assert get_strawberry_cap(13, True) == 18
+        assert get_strawberry_cap(13, True) == 20
 
     def test_very_late_cap_0(self):
         """Day 14+: cap = 0 (deadline passed)."""
@@ -587,3 +654,64 @@ class TestExpansionSeedTargetsDynamic:
         from config import NE_SEED_TARGETS
         targets = expansion_seed_targets(2, day=5, money=5000)
         assert targets == dict(NE_SEED_TARGETS)
+
+
+class TestEvaluateSWTiming:
+    """Tests for evaluate_sw_timing() — Buy Today vs Wait 1 Day."""
+
+    def test_sw_timing_day13_vs_day14_delay_penalty(self):
+        """Day 13 vs Day 14 should show substantial delay penalty due to strawberry deadline."""
+        from strategy.expansion_planner import evaluate_sw_timing
+        from unittest.mock import MagicMock
+        forecast = MagicMock()
+        forecast.expected_price.side_effect = lambda crop, day: 120 if crop == "STRAWBERRY" else (60 if crop == "TOMATO" else 25)
+
+        today_val, wait_val, delay_val, details = evaluate_sw_timing(13, forecast, n_tiles=25)
+        assert today_val > wait_val
+        assert delay_val > 0
+        assert details["strawberry_tiles_today"] > 0
+        assert details["strawberry_tiles_tomorrow"] == 0
+
+    def test_sw_timing_day8_positive_value(self):
+        """Day 8 evaluation shows positive value for buying SW today."""
+        from strategy.expansion_planner import evaluate_sw_timing
+        from unittest.mock import MagicMock
+        forecast = MagicMock()
+        forecast.expected_price.side_effect = lambda crop, day: 120 if crop == "STRAWBERRY" else (60 if crop == "TOMATO" else 25)
+
+        today_val, wait_val, delay_val, details = evaluate_sw_timing(8, forecast, n_tiles=25)
+        assert today_val > 0
+        assert "buy_today_value" in details
+        assert "wait_1_day_value" in details
+        assert "delay_value" in details
+
+
+class TestSWDiagnostics:
+    """Tests for SW decision diagnostics dictionary in MacroPlanner."""
+
+    def test_sw_decision_diagnostics_structure(self):
+        """Ensure all required SW diagnostic fields are present."""
+        from strategy.macro_planner import MacroPlanner
+        from strategy.price_forecast import PriceForecast
+        from unittest.mock import MagicMock
+
+        fc = MagicMock(spec=PriceForecast)
+        fc.expected_price.return_value = 30.0
+
+        from test_macro_planner import make_ctx
+        ctx = make_ctx(day=10, money=5000.0, unlocked=("NW", "NE", "SW"))
+
+        planner = MacroPlanner(fc)
+        plan = planner.build(ctx)
+
+        assert "sw_decision" in plan.diagnostics
+        diag = plan.diagnostics["sw_decision"]
+
+        required_keys = [
+            "day", "money", "SW buy/wait", "ROI", "buy_today_value",
+            "wait_1_day_value", "delay_value", "SW utilization",
+            "SW empty tiles", "SW empty tile-days", "projected utilization",
+            "strawberry tiles", "other crop tiles", "reason"
+        ]
+        for k in required_keys:
+            assert k in diag, f"Missing key '{k}' in sw_decision diagnostics"

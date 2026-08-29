@@ -343,12 +343,12 @@ def test_portfolio_aware_prevents_monoculture():
 # ─── Crop Tile Caps (Fix 4) ─────────────────────────────────────────────────
 
 def test_crop_tile_caps_prevent_excess():
-    """Even with infinite money and high melon price, melon tiles capped at 6."""
+    """Even with infinite money and high melon price, melon tiles capped at 10."""
     fc = make_forecast({**BASE_PRICES, "MELON": 500})
     ctx = make_ctx(day=8, money=99999, seeds={"MELON": 50, "WHEAT": 50})
     plan = MacroPlanner(fc).build(ctx)
     melon_count = sum(1 for _, c in plan.plant_queue if c == "MELON")
-    assert melon_count <= 6, f"expected <=6 melon tiles (cap), got {melon_count}"
+    assert melon_count <= 10, f"expected <=10 melon tiles (cap), got {melon_count}"
 
 
 def test_crop_tile_caps_wheat_unlimited():

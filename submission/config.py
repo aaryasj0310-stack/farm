@@ -64,14 +64,14 @@ PRIORITY_URGENT_SURVIVAL = 100
 PRIORITY_DECAY_HARVEST = 90
 PRIORITY_FEED_STAGING = 86       # PICKUP wheat so upcoming FEEDs can execute
 PRIORITY_PROD_DAY_FEED = 85
-PRIORITY_FERT_COLLECT = 80
+PRIORITY_PLANT_AND_WATER = 75    # plant seeds early so crops get full-day growth
 PRIORITY_BONUS_WATER = 70
-PRIORITY_CARE_ANIMAL = 60
-PRIORITY_STANDARD_HARVEST = 50
-PRIORITY_FERTILIZE_CROP = 48
+PRIORITY_STANDARD_HARVEST = 65
+PRIORITY_FERTILIZE_CROP = 60
+PRIORITY_FERT_COLLECT = 55       # fertilizer doesn't decay; collect across day
+PRIORITY_CARE_ANIMAL = 50
 PRIORITY_PLACE_ANIMAL = 45
-PRIORITY_BUILD_STRUCTURE = 75
-PRIORITY_PLANT_AND_WATER = 40
+PRIORITY_BUILD_STRUCTURE = 40
 PRIORITY_WEED_DIG = 20
 
 # ------------------------------------------------------------- policy -------
@@ -116,21 +116,23 @@ LAND_BUY_LAST_DAY = 20         # hard cutoff — land bought after Day 20 can't 
 
 # Static crop caps — safety net to prevent monoculture if scoring has bugs.
 # Portfolio-aware scoring (Fix 3) is the primary diversification mechanism.
+# Static crop caps — safety net to prevent monoculture if scoring has bugs.
+# Portfolio-aware scoring is the primary diversification mechanism.
 CROP_TILE_CAPS = {
     "WHEAT": 99,        # no cap — wheat is the backbone
     "CARROT": 16,       # diversified cash crop
-    "TOMATO": 14,       # high value
-    "STRAWBERRY": 10,   # high value + fertilizer
-    "MELON": 6,         # max 6 tiles (glut threshold ~4-5)
+    "TOMATO": 16,       # high value ongoing
+    "STRAWBERRY": 20,   # high value ongoing (expanded for leader-style production)
+    "MELON": 10,        # max 10 tiles (leader-style early high-value harvest)
 }
 FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
 
-# Animal expansion targets (tiles), adjusted dynamically by land/money.
-TARGET_GEESE = 18
-TARGET_COWS = 3
-TARGET_SHEEP = 3
+# Animal expansion targets (tiles), adjusted dynamically by land/feed/labor/money.
+TARGET_GEESE = 6
+TARGET_COWS = 8
+TARGET_SHEEP = 8
 ANIMAL_EXPANSION_HORIZON_DAYS = 14   # ramp projection window
-MAX_ANIMAL_BUYS_PER_DAY = 1          # max new animals placed per day
+MAX_ANIMAL_BUYS_PER_DAY = 2          # max new animals placed per day
 
 # Diversification discount: fraction of empty tiles assumed for a single crop
 # in own-supply glut scoring. Prevents phantom mono-crop over-penalization.
@@ -192,8 +194,8 @@ def get_actions_available(day):
 # Quadrant numbering: NW=1 (starting), NE=2 ($1k), SW=3 ($2k), SE=4 ($4k)
 # Strategy: Only buy quadrants 1-3 (75 tiles). NEVER buy quadrant 4.
 QUADRANT_UNLOCK_DAYS = {
-    2: 6,    # Quadrant 2 (NE): buy on day 6
-    3: 9,    # Quadrant 3 (SW): buy on day 9
+    2: 6,    # Quadrant 2 (NE): buy on day 6 (pre-buy day 5)
+    3: 9,    # Quadrant 3 (SW): buy on day 9 (pre-buy day 8)
 }
 QUADRANT_MONEY_THRESHOLDS = {
     2: 1500,  # Need >= $1,500 to buy Q2 ($1,000 land + $500 buffer)
@@ -234,22 +236,22 @@ SW_TREASURY_SEED_COST = (
 # ====================================================================
 
 def get_strawberry_cap(day, land_purchased=False):
-    """Time-varying strawberry cap: 10 → 14 → 18 (Day 13 only) → 0.
+    """Time-varying strawberry cap: 16 → 18 → 20 (Day 13 only) → 0.
 
     Rationale:
-    - Day 0-8: Conservative (10) — early season, plenty of time
-    - Day 9-12: Expanding (14) — SW just unlocked, need production
-    - Day 13: Aggressive (18) — last day to plant strawberry (deadline)
+    - Day 0-8: Expanding (16) — early season in NW/NE
+    - Day 9-12: Aggressive (18) — SW expanding production
+    - Day 13: Maximum (20) — last day to plant strawberry (deadline)
     - Day 14+: Zero (0) — deadline passed, no new strawberry planting
     """
     if not land_purchased:
         return 0
     if day <= 8:
-        return 10
+        return 16
     elif day <= 12:
-        return 14
-    elif day == 13:
         return 18
+    elif day == 13:
+        return 20
     else:
         return 0
 
@@ -290,12 +292,11 @@ def get_sw_seed_targets(day, money, land_cost=2000):
 
 # Animal scaling targets by workforce size (hands count)
 # Maps hands_count -> (target_geese, target_cows, target_sheep)
-# Spec: 4h→4-6 animals; 8h→8-12; 10h→12-16; 12h→16-20. Geese first, then cows, then sheep.
 ANIMAL_SCALING = {
-    4:  (4, 0, 0),    # Days 0-5: 4 geese
-    8:  (8, 2, 0),    # Days 6-8: 8 geese + 2 cows = 10 animals
-    10: (10, 3, 1),   # Day 9: 10 geese + 3 cows + 1 sheep = 14 animals
-    12: (12, 4, 2),   # Days 10-29: 12 geese + 4 cows + 2 sheep = 18 animals
+    4:  (0, 2, 2),    # Days 0-5: 2 cows + 2 sheep (leader opening)
+    8:  (2, 4, 4),    # Days 6-8: 2 geese + 4 cows + 4 sheep = 10 animals
+    10: (3, 6, 6),    # Day 9: 3 geese + 6 cows + 6 sheep = 15 animals
+    12: (4, 8, 8),    # Days 10-29: 4 geese + 8 cows + 8 sheep = 20 animals
 }
 
 def get_animal_targets(hands):

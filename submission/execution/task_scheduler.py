@@ -262,7 +262,7 @@ def build_tasks(ctx, macro):
     # ---------------- structures & animals ----------------
     for pos in macro.build_queue[:2]:
         add(PRIORITY_BUILD_STRUCTURE, macro.build_op, pos, kind="build")
-    for task in macro.place_queue[:2]:
+    for task in macro.place_queue[:4]:
         add(PRIORITY_PLACE_ANIMAL, task["op"], task.get("target"),
             args=task.get("args", []),
             kind=task.get("kind", "place_animal"))

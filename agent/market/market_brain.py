@@ -107,6 +107,18 @@ class MarketBrain:
                 stock = max(0, stock - reserved_wheat)
                 if stock <= 0:
                     continue
+            elif prod == "FERTILIZER" and not endgame:
+                # Reserve fertilizer needed for crops during daytime application hours (max 2 per day)
+                if hour <= 18:
+                    fert_needed = sum(1 for t in ctx["farm"].iter_tiles()
+                                      if t.is_plant and t.crop in ("STRAWBERRY", "TOMATO", "MELON")
+                                      and t.fertilized_until_day < day)
+                    fert_reserve = min(2, fert_needed)
+                else:
+                    fert_reserve = 0
+                stock = max(0, stock - fert_reserve)
+                if stock <= 0:
+                    continue
             spot = market_price(prod, inv.get(prod, 10000))
             
             # v5.9: Never hold at floor — sell everything for cash flow
@@ -120,9 +132,9 @@ class MarketBrain:
                     })
                 continue
 
-            # v5.9: In endgame/aggressive mode, dump entire stock; otherwise sell at spec batch size
+            # v5.9: In endgame/aggressive mode or for surplus fertilizer, dump stock; otherwise sell at spec batch size
             aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
-            qty = stock if (endgame or days_left <= 2) else min(stock, batch_target)
+            qty = stock if (endgame or days_left <= 2 or prod == "FERTILIZER") else min(stock, batch_target)
             
             if qty <= 0:
                 continue

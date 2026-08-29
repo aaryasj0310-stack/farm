@@ -75,179 +75,133 @@ def expansion_seed_targets(next_quadrant, day=None, money=None, land_cost=2000):
 
 
 # ---------------------------------------------------------------------------
-# Dynamic land ROI estimation
+# Dynamic land ROI estimation (Marginal Profit Formulation)
 # ---------------------------------------------------------------------------
 
 TILES_PER_QUADRANT = 25  # 5x5 grid per quadrant
 
+
 def _estimate_crop_revenue_per_tile(crop, plant_day, current_day,
                                      forecast, n_own_tiles=0, n_opp_tiles=0):
-    """Estimate expected revenue per tile for a crop planted on plant_day.
+    """Estimate expected net profit per tile for a crop planted on plant_day.
 
-    Uses the crop's harvest schedule and expected market prices,
-    accounting for own-supply glut and opponent supply.
+    Uses the crop's harvest schedule and expected market prices from PriceForecast.
+    Accurately accounts for seed costs and fertilizer applications per cycle.
+    Returns (net_profit, total_units).
     """
     cd = CROPS[crop]
     econ = CROP_ECONOMICS[crop]
-    cycle_len = CROP_CYCLE_LEN[crop]
+    fert_apps = econ.get("apps", 0)
+    fert_cost_per_app = 25.0
+    fert_cost_per_cycle = fert_apps * fert_cost_per_app
+    seed_cost_per_cycle = cd["seed"]
 
-    # Compute harvest days
-    if cd["ongoing"]:
-        harvest_days = []
-        d = plant_day + cd["first_yield_day"]
-        while d <= 29:
-            harvest_days.append(d)
-            d += cd["interval"]
-        if not harvest_days:
-            return 0.0, 0
-        units_per_harvest = cd["max_yield"]
-    else:
-        harvest_day = plant_day + cd["max_yield_day"]
-        if harvest_day > 29:
-            return 0.0, 0
-        harvest_days = [harvest_day]
-        units_per_harvest = cd["max_yield"]
-
-    # Only count harvests that haven't happened yet
-    future_harvests = [h for h in harvest_days if h >= current_day]
-    if not future_harvests:
-        return 0.0, 0
-
-    total_revenue = 0.0
+    total_net = 0.0
     total_units = 0
-    for h in future_harvests:
-        # Own-supply glut: each tile's production adds to market inventory
-        # Approximate: own tiles reduce price by ~2% per tile
-        own_discount = max(0.7, 1.0 - 0.02 * n_own_tiles)
-        opp_discount = max(0.8, 1.0 - 0.01 * n_opp_tiles)
-        price = forecast.expected_price(crop, h) * own_discount * opp_discount
-        revenue = units_per_harvest * price
-        total_revenue += revenue
-        total_units += units_per_harvest
 
-    # Deduct seed cost (one-time per cycle)
-    seed_cost = cd["seed"]
-    # Deduct fertilizer cost if applicable
-    fert_cost = econ["apps"] * 25.0  # ~$25 per fert app
+    if cd["ongoing"]:
+        # Ongoing crop (Tomato, Strawberry): planted once, harvested up to max_yield times
+        h_days = []
+        d = plant_day + cd["first_yield_day"]
+        for _ in range(cd["max_yield"]):
+            if d <= 29:
+                h_days.append(d)
+            d += cd["interval"]
 
-    net_revenue = total_revenue - seed_cost - fert_cost
-    return net_revenue, total_units
+        future_harvests = [h for h in h_days if h >= current_day]
+        if not future_harvests:
+            return 0.0, 0
+
+        # Fertilized ongoing crops yield 2 units per harvest (1 unit unfertilized)
+        units_per_harvest = 2 if fert_apps > 0 else 1
+        gross_revenue = 0.0
+        for h in future_harvests:
+            price = forecast.expected_price(crop, h)
+            gross_revenue += units_per_harvest * price
+            total_units += units_per_harvest
+
+        # Deduct seed and fertilizer cost once for the ongoing crop lifecycle
+        net_profit = gross_revenue - seed_cost_per_cycle - fert_cost_per_cycle
+        return net_profit, total_units
+
+    else:
+        # One-time crop (Wheat, Carrot, Melon): replanted across remaining season
+        cycle_len = CROP_CYCLE_LEN[crop]
+        cycle_start = plant_day
+        units_per_harvest = cd["max_yield"]
+
+        while cycle_start <= 25 and cycle_start + cd["max_yield_day"] <= 29:
+            harvest_day = cycle_start + cd["max_yield_day"]
+            if harvest_day >= current_day:
+                price = forecast.expected_price(crop, harvest_day)
+                rev = units_per_harvest * price
+                cycle_cost = seed_cost_per_cycle + fert_cost_per_cycle
+                total_net += (rev - cycle_cost)
+                total_units += units_per_harvest
+            cycle_start += cycle_len
+
+        return total_net, total_units
 
 
-def _candidate_crop_mix_for_quadrant(next_quadrant, current_day, forecast,
-                                      n_tiles, n_own_tiles, n_opp_tiles):
-    """Generate candidate crop mixes for a quadrant and score each.
+def _allocate_portfolio_profit(n_tiles, current_day, forecast, is_sw_available=False):
+    """Heuristically allocate up to n_tiles among eligible crops to maximize profit.
 
-    Returns list of (mix_dict, expected_revenue_per_tile, total_revenue).
+    Returns (total_expected_profit, allocation_dict).
+    Respects CROP_TILE_CAPS and dynamic strawberry caps.
     """
-    # Determine which crops are eligible
-    eligible = []
+    if n_tiles <= 0 or current_day > 25:
+        return 0.0, {}
+
+    from config import get_strawberry_cap
+
+    scored_crops = []
     for crop in CROPS:
         if not _crop_allowed_quick(crop, current_day):
             continue
-        cap = CROP_TILE_CAPS.get(crop, 99)
-        eligible.append((crop, cap))
+        net_profit, _ = _estimate_crop_revenue_per_tile(
+            crop, current_day, current_day, forecast)
+        if net_profit <= 0:
+            continue
 
-    if not eligible:
+        if crop == "STRAWBERRY":
+            cap = get_strawberry_cap(current_day, is_sw_available)
+        else:
+            cap = CROP_TILE_CAPS.get(crop, 99)
+
+        if cap > 0:
+            scored_crops.append((crop, net_profit, cap))
+
+    # Sort crops by expected net profit per tile (highest first)
+    scored_crops.sort(key=lambda x: -x[1])
+
+    remaining_tiles = n_tiles
+    total_profit = 0.0
+    allocation = {}
+
+    for crop, profit_per_tile, cap in scored_crops:
+        alloc = min(remaining_tiles, cap)
+        if alloc > 0:
+            allocation[crop] = alloc
+            total_profit += alloc * profit_per_tile
+            remaining_tiles -= alloc
+        if remaining_tiles <= 0:
+            break
+
+    return total_profit, allocation
+
+
+def _candidate_crop_mix_for_quadrant(next_quadrant, current_day, forecast,
+                                      n_tiles=TILES_PER_QUADRANT, n_own_tiles=0, n_opp_tiles=0):
+    """Generate candidate crop mixes for a quadrant.
+
+    Returns list of (mix_dict, avg_revenue_per_tile, total_revenue).
+    """
+    is_sw = (next_quadrant == 3)
+    profit, mix = _allocate_portfolio_profit(n_tiles, current_day, forecast, is_sw_available=is_sw)
+    if not mix or profit <= 0:
         return []
-
-    # Generate candidate mixes
-    candidates = []
-
-    # Strategy 1: All-in on highest-scoring crop
-    best_crop = None
-    best_revenue = -1e9
-    for crop, cap in eligible:
-        n = min(n_tiles, cap)
-        rev, _ = _estimate_crop_revenue_per_tile(
-            crop, current_day, current_day, forecast,
-            n_own_tiles, n_opp_tiles)
-        if rev > best_revenue:
-            best_revenue = rev
-            best_crop = crop
-    if best_crop:
-        n = min(n_tiles, CROP_TILE_CAPS.get(best_crop, 99))
-        candidates.append({best_crop: n})
-
-    # Strategy 2: Diversified mix (top 2-3 crops by revenue)
-    scored = []
-    for crop, cap in eligible:
-        rev, _ = _estimate_crop_revenue_per_tile(
-            crop, current_day, current_day, forecast,
-            n_own_tiles, n_opp_tiles)
-        scored.append((crop, rev, cap))
-    scored.sort(key=lambda x: -x[1])
-
-    # Top crop gets half, rest split remaining
-    if len(scored) >= 2:
-        mix = {}
-        remaining = n_tiles
-        for i, (crop, rev, cap) in enumerate(scored[:3]):
-            if i == 0:
-                n = min(remaining, cap, n_tiles // 2)
-            else:
-                n = min(remaining, cap, remaining // max(1, 3 - i))
-            if n > 0:
-                mix[crop] = n
-                remaining -= n
-        if mix:
-            candidates.append(mix)
-
-    # Strategy 3: Strawberry-heavy (for SW before deadline)
-    if next_quadrant == 3 and current_day <= STRAWBERRY_PLANT_DEADLINE:
-        straw_cap = CROP_TILE_CAPS.get("STRAWBERRY", 10)
-        rev, _ = _estimate_crop_revenue_per_tile(
-            "STRAWBERRY", current_day, current_day, forecast,
-            n_own_tiles, n_opp_tiles)
-        if rev > 0:
-            straw_n = min(n_tiles, straw_cap, 12)
-            remaining = n_tiles - straw_n
-            mix = {"STRAWBERRY": straw_n}
-            # Fill rest with tomato if eligible
-            if remaining > 0:
-                for crop, cap in eligible:
-                    if crop != "STRAWBERRY":
-                        n = min(remaining, cap, remaining)
-                        if n > 0:
-                            mix[crop] = n
-                            remaining -= n
-                            break
-            candidates.append(mix)
-
-    # Strategy 4: Tomato-heavy (ongoing crop, good late-season value)
-    if "TOMATO" in [c for c, _ in eligible]:
-        tomato_cap = CROP_TILE_CAPS.get("TOMATO", 14)
-        rev, _ = _estimate_crop_revenue_per_tile(
-            "TOMATO", current_day, current_day, forecast,
-            n_own_tiles, n_opp_tiles)
-        if rev > 0:
-            tomato_n = min(n_tiles, tomato_cap, 10)
-            remaining = n_tiles - tomato_n
-            mix = {"TOMATO": tomato_n}
-            # Fill rest with best remaining crop
-            for crop, cap in eligible:
-                if crop != "TOMATO":
-                    n = min(remaining, cap, remaining)
-                    if n > 0:
-                        mix[crop] = n
-                        remaining -= n
-                        break
-            candidates.append(mix)
-
-    # Score each candidate
-    scored_candidates = []
-    for mix in candidates:
-        total_rev = 0
-        for crop, n in mix.items():
-            rev, _ = _estimate_crop_revenue_per_tile(
-                crop, current_day, current_day, forecast,
-                n_own_tiles, n_opp_tiles)
-            total_rev += rev * n
-        avg_rev = total_rev / max(1, sum(mix.values()))
-        scored_candidates.append((mix, avg_rev, total_rev))
-
-    scored_candidates.sort(key=lambda x: -x[1])
-    return scored_candidates
+    avg_rev = profit / max(1, sum(mix.values()))
+    return [(mix, avg_rev, profit)]
 
 
 def _crop_allowed_quick(crop, day):
@@ -261,18 +215,54 @@ def _crop_allowed_quick(crop, day):
         last_harvest = cd["max_yield_day"]
     if day + last_harvest > 29:
         return False
+    if crop == "STRAWBERRY":
+        return day <= STRAWBERRY_PLANT_DEADLINE  # Day 13
     if crop == "MELON":
-        return day <= 17  # MELON_PLANT_DEADLINE
+        return day <= MELON_PLANT_DEADLINE  # Day 17
     return True
+
+
+def evaluate_sw_timing(current_day, forecast, n_tiles=TILES_PER_QUADRANT):
+    """Compare buying SW today vs waiting 1 day.
+
+    Estimates:
+      1. buy_today_value: expected profit from allocating SW tiles on current_day
+      2. wait_1_day_value: expected profit from allocating SW tiles on current_day + 1
+      3. delay_value: opportunity cost lost by delaying purchase by 1 day (buy_today_value - wait_1_day_value)
+
+    Returns (buy_today_value, wait_1_day_value, delay_value, details).
+    """
+    buy_today_val, mix_today = _allocate_portfolio_profit(
+        n_tiles, current_day, forecast, is_sw_available=True)
+
+    wait_1_day_val, mix_tomorrow = _allocate_portfolio_profit(
+        n_tiles, min(29, current_day + 1), forecast, is_sw_available=True)
+
+    delay_val = max(0.0, buy_today_val - wait_1_day_val)
+
+    details = {
+        "current_day": current_day,
+        "buy_today_value": round(buy_today_val, 1),
+        "wait_1_day_value": round(wait_1_day_val, 1),
+        "delay_value": round(delay_val, 1),
+        "mix_today": mix_today,
+        "mix_tomorrow": mix_tomorrow,
+        "strawberry_tiles_today": mix_today.get("STRAWBERRY", 0),
+        "strawberry_tiles_tomorrow": mix_tomorrow.get("STRAWBERRY", 0),
+    }
+    return buy_today_val, wait_1_day_val, delay_val, details
 
 
 def compute_land_roi(next_quadrant, current_day, money, farm, forecast,
                      n_own_tiles=0, n_opp_tiles=0):
-    """Estimate marginal expected value of buying the next quadrant today.
+    """Estimate marginal expected profit and ROI of buying the next quadrant today.
 
-    Returns (roi: float, info: dict).
-    roi = expected_incremental_profit / land_cost
-    roi > 1.0 means the land pays for itself.
+    Calculates:
+      profit_with_new_land - profit_without_new_land - land_cost
+
+    roi = (incremental_profit - land_cost) / land_cost
+    roi > 0.0 means the incremental revenue generated by the new land exceeds
+    its purchase price.
     """
     if next_quadrant not in QUADRANT_UNLOCK_DAYS:
         return 0.0, {"reason": "no_schedule"}
@@ -291,62 +281,86 @@ def compute_land_roi(next_quadrant, current_day, money, farm, forecast,
     if days_left <= 0:
         return 0.0, {"reason": "season_over"}
 
-    # Generate candidate crop mixes and pick the best
-    candidates = _candidate_crop_mix_for_quadrant(
-        next_quadrant, current_day, forecast,
-        TILES_PER_QUADRANT, n_own_tiles, n_opp_tiles)
+    # Available crop tiles on current land vs expanded land
+    n_curr_quadrants = len(farm.unlocked)
+    total_curr_tiles = n_curr_quadrants * TILES_PER_QUADRANT
+    
+    occupied = 0
+    if hasattr(farm, "iter_tiles"):
+        occupied = sum(1 for t in farm.iter_tiles()
+                       if getattr(t, "is_animal", False) or getattr(t, "kind", None) in ("COOP", "PASTURE"))
 
-    if not candidates:
-        return 0.0, {"reason": "no_eligible_crops"}
+    t_without = max(0, total_curr_tiles - occupied)
+    t_with = t_without + TILES_PER_QUADRANT
 
-    best_mix, best_avg_rev, best_total_rev = candidates[0]
+    # Evaluate profit without new land
+    is_sw_curr = ("SW" in farm.unlocked)
+    profit_without, mix_without = _allocate_portfolio_profit(
+        t_without, current_day, forecast, is_sw_available=is_sw_curr)
 
-    # Expected profit = total revenue - land cost - seed costs
-    seed_costs = sum(CROPS[c]["seed"] * n for c, n in best_mix.items())
-    expected_profit = best_total_rev - land_price - seed_costs
+    # Evaluate profit with new land
+    is_sw_with = is_sw_curr or (next_quadrant == 3)
+    profit_with, mix_with = _allocate_portfolio_profit(
+        t_with, current_day, forecast, is_sw_available=is_sw_with)
 
-    # Account for capital opportunity cost: money spent on land can't earn interest
-    # Approximate: 5% opportunity cost for remaining season
-    opp_cost_factor = 1.0 - 0.05 * (days_left / 30.0)
-    expected_profit *= opp_cost_factor
-
+    # Incremental profit caused specifically by the additional 25 tiles
+    marginal_revenue_gain = max(0.0, profit_with - profit_without)
+    expected_profit = marginal_revenue_gain - land_price
     roi = expected_profit / max(1, land_price)
+
+    # Expanded mix delta (which crops are allocated to the new tiles)
+    mix_delta = {}
+    for c in set(mix_with) | set(mix_without):
+        d_tiles = mix_with.get(c, 0) - mix_without.get(c, 0)
+        if d_tiles > 0:
+            mix_delta[c] = d_tiles
+
+    # Dynamic SW timing comparison (Buy Today vs Wait 1 Day)
+    buy_today_val, wait_1_day_val, delay_val = marginal_revenue_gain, 0.0, 0.0
+    sw_timing_info = {}
+    if next_quadrant == 3:
+        buy_today_val, wait_1_day_val, delay_val, sw_timing_info = evaluate_sw_timing(
+            current_day, forecast, n_tiles=TILES_PER_QUADRANT)
 
     return roi, {
         "land_price": land_price,
-        "best_mix": best_mix,
-        "best_total_rev": round(best_total_rev, 0),
-        "seed_costs": seed_costs,
+        "profit_without_land": round(profit_without, 0),
+        "profit_with_land": round(profit_with, 0),
+        "marginal_revenue_gain": round(marginal_revenue_gain, 0),
         "expected_profit": round(expected_profit, 0),
-        "days_left": days_left,
         "roi": round(roi, 2),
+        "best_mix": mix_delta or mix_with,
+        "mix_with": mix_with,
+        "mix_without": mix_without,
+        "days_left": days_left,
+        "t_without": t_without,
+        "t_with": t_with,
+        "buy_today_value": round(buy_today_val, 1),
+        "wait_1_day_value": round(wait_1_day_val, 1),
+        "delay_value": round(delay_val, 1),
+        "sw_timing": sw_timing_info,
     }
 
 
 def opportunity_window_factor(next_quadrant, current_day):
-    """Time-window factor that declines as key crop deadlines approach.
+    """Time-window factor based on planting viability window.
 
-    Returns 1.0 when plenty of time, declining to 0.0 after deadline.
-    This MODIFIES the ROI but does NOT replace urgency.
+    Returns 1.0 when the season permits profitable production,
+    and 0.0 when no productive planting window remains.
     """
+    if current_day > 25:
+        return 0.0  # planting stops after Day 25
+
     if next_quadrant == 3:
-        deadline = STRAWBERRY_PLANT_DEADLINE
+        # SW primary crop is Strawberry (deadline Day 13)
+        # When current_day <= 13, window is fully open.
+        # After Day 13, Strawberry cap becomes 0, but other crops (Tomato, Carrot)
+        # can still be evaluated cleanly by compute_land_roi.
+        return 1.0
     elif next_quadrant == 2:
-        deadline = MELON_PLANT_DEADLINE
-    else:
         return 1.0
 
-    days_to_deadline = deadline - current_day
-    if days_to_deadline <= 0:
-        return 0.0  # deadline passed — value is zero
-    elif days_to_deadline <= 2:
-        return 0.3  # very low — almost no time to profit
-    elif days_to_deadline <= 4:
-        return 0.6  # low — limited production window
-    elif days_to_deadline <= 7:
-        return 0.8  # moderate
-    else:
-        return 1.0  # full value — plenty of time
+    return 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -470,46 +484,41 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     # Total required: land + mandatory + seed_tranche + reserve
     total_required = land_price + mandatory + seed_cost + reserve
 
-    # v5.11: Combine ROI with opportunity window
+    # Dynamic SW timing details
+    buy_today_val, wait_1_day_val, delay_val = 0.0, 0.0, 0.0
+    sw_timing_info = {}
+    if next_quadrant == 3 and forecast is not None:
+        buy_today_val, wait_1_day_val, delay_val, sw_timing_info = evaluate_sw_timing(
+            current_day, forecast, n_tiles=TILES_PER_QUADRANT)
+
     adjusted_roi = roi * ow_factor
+
+    diag_base = {
+        "land_price": land_price,
+        "mandatory": mandatory,
+        "seed_cost": seed_cost,
+        "reserve": reserve,
+        "total_required": total_required,
+        "roi": roi,
+        "ow_factor": ow_factor,
+        "adjusted_roi": adjusted_roi,
+        "buy_today_value": round(buy_today_val, 1),
+        "wait_1_day_value": round(wait_1_day_val, 1),
+        "delay_value": round(delay_val, 1),
+        "sw_timing": sw_timing_info,
+    }
 
     # v5.11: STRICT GATE — adjusted_roi must be positive to buy
     if adjusted_roi <= 0:
-        return False, f"adjusted_roi_{adjusted_roi:.2f}_non_positive", {
-            "land_price": land_price,
-            "mandatory": mandatory,
-            "seed_cost": seed_cost,
-            "reserve": reserve,
-            "total_required": total_required,
-            "roi": roi,
-            "ow_factor": ow_factor,
-            "adjusted_roi": adjusted_roi,
-        }
+        return False, f"adjusted_roi_{adjusted_roi:.2f}_non_positive", diag_base
 
     if money >= total_required:
-        return True, "treasury_sufficient_roi_positive", {
-            "land_price": land_price,
-            "mandatory": mandatory,
-            "seed_cost": seed_cost,
-            "reserve": reserve,
-            "total_required": total_required,
-            "roi": roi,
-            "ow_factor": ow_factor,
-            "adjusted_roi": adjusted_roi,
-        }
+        return True, "treasury_sufficient_roi_positive", diag_base
     else:
         shortfall = total_required - money
-        return False, f"short_{shortfall:.0f}", {
-            "land_price": land_price,
-            "mandatory": mandatory,
-            "seed_cost": seed_cost,
-            "reserve": reserve,
-            "total_required": total_required,
-            "shortfall": shortfall,
-            "roi": roi,
-            "ow_factor": ow_factor,
-            "adjusted_roi": adjusted_roi,
-        }
+        diag = dict(diag_base)
+        diag["shortfall"] = shortfall
+        return False, f"short_{shortfall:.0f}", diag
 
 
 # ---------------------------------------------------------------------------
