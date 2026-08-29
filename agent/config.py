@@ -201,6 +201,93 @@ QUADRANT_MONEY_THRESHOLDS = {
 }
 QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
 
+# ====================================================================
+# v5.10: Expansion Planner — deadline-aware land + seed pre-purchase
+# ====================================================================
+
+# Absolute planting deadlines (last valid day to plant for full harvest by day 29)
+STRAWBERRY_PLANT_DEADLINE = 13   # last_harvest = 10 + 3*2 = 16; 29-16=13
+MELON_PLANT_DEADLINE = 17        # max_yield_day=12; 29-12=17
+
+# Seed pre-purchase lead days (buy seeds N days before land unlock)
+PRE_BUY_LEAD_DAYS = 1
+
+# SW expansion seed targets (tunable for A/B testing)
+SW_SEED_TARGETS = {
+    "STRAWBERRY": 8,   # primary high-value crop for SW
+    "TOMATO": 4,       # secondary ongoing crop
+}
+NE_SEED_TARGETS = {
+    "CARROT": 8,       # fast cash crop for NE
+    "TOMATO": 4,       # secondary ongoing crop
+}
+
+# SW treasury minimum: land + seeds + feed + reserve
+# This is the MINIMUM cash required before buying SW — non-negotiable
+SW_TREASURY_SEED_COST = (
+    SW_SEED_TARGETS.get("STRAWBERRY", 8) * 100 +   # strawberry seeds
+    SW_SEED_TARGETS.get("TOMATO", 4) * 50           # tomato seeds
+)
+
+# ====================================================================
+# v5.11: Dynamic strawberry cap — deadline-consistent
+# ====================================================================
+
+def get_strawberry_cap(day, land_purchased=False):
+    """Time-varying strawberry cap: 10 → 14 → 18 (Day 13 only) → 0.
+
+    Rationale:
+    - Day 0-8: Conservative (10) — early season, plenty of time
+    - Day 9-12: Expanding (14) — SW just unlocked, need production
+    - Day 13: Aggressive (18) — last day to plant strawberry (deadline)
+    - Day 14+: Zero (0) — deadline passed, no new strawberry planting
+    """
+    if not land_purchased:
+        return 0
+    if day <= 8:
+        return 10
+    elif day <= 12:
+        return 14
+    elif day == 13:
+        return 18
+    else:
+        return 0
+
+
+# ====================================================================
+# v5.11: Dynamic SW seed tranche — deadline-aware
+# ====================================================================
+
+def get_sw_seed_targets(day, money, land_cost=2000):
+    """Dynamic SW seed targets — never recommend strawberry after Day 13.
+
+    Rationale:
+    - Day 0-8: Full mix (8 strawberry + 4 tomato = 12 tiles)
+    - Day 9-12: Strawberry-heavy (10 strawberry + 2 tomato = 12 tiles)
+    - Day 13: Strawberry-only (12 strawberry = 12 tiles) — last day
+    - Day 14+: Tomato-only (6 tomato = 6 tiles) — no strawberry after deadline
+
+    Treasury constraint: Only buy what we can afford after land cost.
+    """
+    seed_budget = max(0, money - land_cost - 300)  # 300 = reserve
+
+    if day <= 8:
+        targets = {"STRAWBERRY": 8, "TOMATO": 4}
+    elif day <= 12:
+        targets = {"STRAWBERRY": 10, "TOMATO": 2}
+    elif day == 13:
+        targets = {"STRAWBERRY": 12, "TOMATO": 0}
+    else:
+        targets = {"STRAWBERRY": 0, "TOMATO": 6}
+
+    # Treasury constraint: reduce if can't afford
+    total_cost = sum(CROPS[c]["seed"] * n for c, n in targets.items())
+    if total_cost > seed_budget and seed_budget >= 0:
+        scale = seed_budget / max(1, total_cost)
+        targets = {c: max(0, int(n * scale)) for c, n in targets.items()}
+
+    return targets
+
 # Animal scaling targets by workforce size (hands count)
 # Maps hands_count -> (target_geese, target_cows, target_sheep)
 # Spec: 4h→4-6 animals; 8h→8-12; 10h→12-16; 12h→16-20. Geese first, then cows, then sheep.

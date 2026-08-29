@@ -1,0 +1,73 @@
+{
+  "experiments": [
+    {
+      "name": "sw_seed_mix",
+      "description": "Test SW seed tranche variants: static vs dynamic vs aggressive",
+      "variants": [
+        {
+          "name": "static_8_4",
+          "description": "v5.10 baseline: 8 strawberry + 4 tomato",
+          "config": {"sw_seed_strategy": "static", "strawberry": 8, "tomato": 4}
+        },
+        {
+          "name": "dynamic_deadline",
+          "description": "v5.11 dynamic: adapts to deadline",
+          "config": {"sw_seed_strategy": "dynamic"}
+        },
+        {
+          "name": "aggressive_strawberry",
+          "description": "Aggressive: 12 strawberry only",
+          "config": {"sw_seed_strategy": "static", "strawberry": 12, "tomato": 0}
+        }
+      ],
+      "episodes_per_variant": 100,
+      "seeds": [101, 202, 303, 404, 505],
+      "metrics": [
+        "terminal_wealth",
+        "sw_occupancy",
+        "strawberry_tiles",
+        "strawberry_revenue",
+        "seed_cost",
+        "day10_cash",
+        "day20_cash"
+      ]
+    },
+    {
+      "name": "day0_sw_interaction",
+      "description": "Day-0 allocation × SW purchase policy interaction",
+      "variants": [
+        {
+          "name": "melon0_sw_fixed",
+          "description": "No melon + fixed SW day 9",
+          "config": {"day0_melon": 0, "sw_purchase": "fixed_day_9"}
+        },
+        {
+          "name": "melon6_sw_dynamic",
+          "description": "6 melon + dynamic SW (ROI + deadline)",
+          "config": {"day0_melon": 6, "sw_purchase": "roi_plus_deadline"}
+        },
+        {
+          "name": "melon8_sw_dynamic",
+          "description": "8 melon + dynamic SW (ROI + deadline)",
+          "config": {"day0_melon": 8, "sw_purchase": "roi_plus_deadline"}
+        },
+        {
+          "name": "melon10_sw_dynamic",
+          "description": "10 melon + dynamic SW (ROI + deadline)",
+          "config": {"day0_melon": 10, "sw_purchase": "roi_plus_deadline"}
+        }
+      ],
+      "episodes_per_variant": 100,
+      "seeds": [101, 202, 303, 404, 505],
+      "metrics": [
+        "terminal_wealth",
+        "day0_melon_tiles",
+        "sw_purchase_day",
+        "sw_occupancy",
+        "strawberry_tiles",
+        "land_roi",
+        "adjusted_roi"
+      ]
+    }
+  ]
+}
