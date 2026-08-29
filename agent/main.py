@@ -19,6 +19,7 @@ from __future__ import annotations
 import os
 import sys
 from typing import Any, Dict, Optional
+from collections import Counter
 
 # Safe path injection for Kaggle execution environment (where __file__ is undefined)
 _CWD = os.getcwd()
@@ -139,8 +140,8 @@ def _build_opp_advice(ctx, mem):
             "shed_pressure": sum(_estimated_shed.values()) / 100.0,
             "forecast": forecast,
             "commitments": summarize_opponent_commitments(opp_farm),
-            "animal_counts": {t.animal: 1 for t in opp_farm.iter_tiles()
-                              if t.is_animal},
+            "animal_counts": dict(Counter(t.animal for t in opp_farm.iter_tiles()
+                                          if t.is_animal)),
         }
         sell_probs = compute_opponent_sell_probabilities(
             opp_farm, _estimated_shed, ctx, mem,

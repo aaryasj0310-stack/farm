@@ -78,9 +78,14 @@ class MarketBrain:
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
-        # v5.9: Sell every hour (cash flow for hires) except hour 0 (purchases)
         if hour == 0 and not endgame:
             return [], {"reason": "hour0_purchases"}
+
+        # Strict sell timing: sell during post-drain windows (SELL_HOUR_SET = {1, 5, 9, 13, 17, 21})
+        # Override and sell on other hours ONLY if shed is under heavy pressure (>= SHED_SOFT_CAP) or endgame
+        is_sell_window = (hour in SELL_HOUR_SET)
+        if not is_sell_window and not pressure and not endgame:
+            return [], {"reason": "waiting_for_sell_window"}
 
         # Phase 6: extract opp_advice sets for fast lookup
         preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()

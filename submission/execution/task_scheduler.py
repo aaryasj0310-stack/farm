@@ -146,9 +146,14 @@ def build_tasks(ctx, macro):
                 # Guardrail 2: mandatory survival watering
                 need_water.append((PRIORITY_URGENT_SURVIVAL, t))
             elif needs_water_today(t, day):
-                prio = PRIORITY_BONUS_WATER if in_bonus_window(t, day) else 30
+                is_newly_planted = (t.planted_day == day)
+                if is_newly_planted:
+                    prio = PRIORITY_BONUS_WATER + 5  # Urgent paired water for new plants
+                elif in_bonus_window(t, day) or cd.get("ongoing"):
+                    prio = PRIORITY_BONUS_WATER
+                else:
+                    prio = 30
                 if not macro.watering_enabled and day == 28 and in_bonus_window(t, day):
-                    cd = CROPS.get(t.crop, {})
                     harvestable_by_29 = (t.planted_day is not None
                                          and t.planted_day + cd.get("max_yield_day", 99) <= 29)
                     if not harvestable_by_29:
@@ -233,23 +238,26 @@ def build_tasks(ctx, macro):
 
     # WHEAT STAGING: engine FEED consumes the UNIT's inventory (never the
     # shed), so staged PICKUP tasks must run before any FEED can succeed.
+    # Distribute wheat across multiple workers in small chunks (2-3 wheat)
+    # so multiple workers can feed animals simultaneously!
     if feeds_due > 0:
-        held = sum(int(inv.get("WHEAT", 0))
-                   for inv in ctx["private"].inventories)
+        held = sum(int(inv.get("WHEAT", 0)) for inv in ctx["private"].inventories)
         shed_wheat = int(ctx["private"].shed.get("WHEAT", 0))
-        grab = min(shed_wheat, max(feeds_due - held, 0))
-        if grab > 0:
-            farmer_pos = tuple(farm_pos_of(ctx))
-            target = min(SHED_ACCESS_TILES,
-                         key=lambda tp: abs(tp[0] - farmer_pos[0])
-                         + abs(tp[1] - farmer_pos[1]))
-            add(PRIORITY_FEED_STAGING, "PICKUP", tuple(target),
-                args=["WHEAT", int(grab)], kind="pickup_wheat")
+        needed = min(shed_wheat, max(feeds_due - held, 0))
+        if needed > 0:
+            chunk_size = 3
+            n_chunks = (needed + chunk_size - 1) // chunk_size
+            for c_idx in range(n_chunks):
+                take = min(chunk_size, needed - c_idx * chunk_size)
+                target = SHED_ACCESS_TILES[c_idx % len(SHED_ACCESS_TILES)]
+                add(PRIORITY_FEED_STAGING, "PICKUP", tuple(target),
+                    args=["WHEAT", int(take)], kind="pickup_wheat")
 
     # ---------------- planting queue (seed-conflict-safe) ----------------
     seeds = ctx["private"].seeds
     wanted_plants = list(macro.plant_queue)  # [(pos, crop)]
-    if hour <= 18 and macro.watering_enabled:
+    # Planting cutoff at hour 17 ensures every newly planted seed can be watered before midnight
+    if hour <= 17 and macro.watering_enabled:
         by_crop = {}
         for pos, crop in wanted_plants:
             if seeds.get(crop, 0) > by_crop.get(crop, 0):

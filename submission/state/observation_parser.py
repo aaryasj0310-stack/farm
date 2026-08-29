@@ -187,24 +187,9 @@ def needs_water_today(tile, day):
     if cd is None:
         return True
         
-    # Guardrail 3: Ongoing crops (Tomato, Strawberry)
+    # Guardrail 3: Ongoing crops (Tomato, Strawberry) must be watered daily for maximum yield
     if cd["ongoing"]:
-        age = crop_age(tile, day)
-        first_yield = cd.get("first_yield_day", 8)
-        # In juvenile growth phase (no fruit yet) -> alternate days safely
-        if age < first_yield:
-            return (tile.x + tile.y + day) % 2 == 0
-        # In production phase:
-        # - Tomato: yields daily (ages 8-11) -> water daily
-        # - Strawberry: yields on even ages (10, 12, 14, 16) -> water on production days
-        interval = cd.get("interval", 1)
-        if interval <= 1:
-            return True
-        is_production_day = (age - first_yield) % interval == 0
-        if is_production_day:
-            return True
-        # Off-day during production -> alternate days
-        return (tile.x + tile.y + day) % 2 == 0
+        return True
 
     if in_bonus_window(tile, day):
         return True

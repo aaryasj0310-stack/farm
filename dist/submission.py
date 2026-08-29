@@ -138,9 +138,9 @@ CROP_TILE_CAPS = {
 FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
 
 # Animal expansion targets (tiles), adjusted dynamically by land/feed/labor/money.
-TARGET_GEESE = 6
-TARGET_COWS = 8
-TARGET_SHEEP = 8
+TARGET_GEESE = 2
+TARGET_COWS = 6
+TARGET_SHEEP = 4
 ANIMAL_EXPANSION_HORIZON_DAYS = 14   # ramp projection window
 MAX_ANIMAL_BUYS_PER_DAY = 2          # max new animals placed per day
 
@@ -7556,24 +7556,9 @@ def needs_water_today(tile, day):
     if cd is None:
         return True
         
-    # Guardrail 3: Ongoing crops (Tomato, Strawberry)
+    # Guardrail 3: Ongoing crops (Tomato, Strawberry) must be watered daily for maximum yield
     if cd["ongoing"]:
-        age = crop_age(tile, day)
-        first_yield = cd.get("first_yield_day", 8)
-        # In juvenile growth phase (no fruit yet) -> alternate days safely
-        if age < first_yield:
-            return (tile.x + tile.y + day) % 2 == 0
-        # In production phase:
-        # - Tomato: yields daily (ages 8-11) -> water daily
-        # - Strawberry: yields on even ages (10, 12, 14, 16) -> water on production days
-        interval = cd.get("interval", 1)
-        if interval <= 1:
-            return True
-        is_production_day = (age - first_yield) % interval == 0
-        if is_production_day:
-            return True
-        # Off-day during production -> alternate days
-        return (tile.x + tile.y + day) % 2 == 0
+        return True
 
     if in_bonus_window(tile, day):
         return True
@@ -7622,7 +7607,8 @@ _STATE = {
     "known_shops": [],
     "town_drain_seen": {},       # product -> units inferred drained by town
     "opp_sales_inferred": {},    # product -> units inferred sold by opponent
-    "our_units_sold": {},        # product -> units we sold (from our orders)
+    "our_units_sold": {},        # product -> total units we sold (cumulative)
+    "our_units_sold_last_step": {},  # product -> units sold on immediate previous step
     "prev_opp_money": None,      # opponent money on previous turn
     "opp_money_deltas": deque(maxlen=OPP_MONEY_WINDOW),  # recent delta list
     "noop_attempts": 0,
@@ -7665,6 +7651,7 @@ def reset_memory(mem):
     mem["town_drain_seen"] = {}
     mem["opp_sales_inferred"] = {}
     mem["our_units_sold"] = {}
+    mem["our_units_sold_last_step"] = {}
     mem["prev_opp_money"] = None
     mem["opp_money_deltas"] = deque(maxlen=OPP_MONEY_WINDOW)
     mem["noop_attempts"] = 0
@@ -7677,7 +7664,7 @@ def _update_drain_ledger(ctx, mem):
 
     Everything that is not explained by town consumption must be player
     activity (ours or opponent's) -> attribute to opponent after subtracting
-    our own recorded sells/buys.
+    our own recorded step-level sells/buys.
     """
     inv_now = ctx["market"].inventory
     prev = mem["prev_inventory"]
@@ -7686,13 +7673,17 @@ def _update_drain_ledger(ctx, mem):
         for item in PRODUCTS:
             delta = inv_now.get(item, 0) - prev.get(item, 0)
             expected_town = _expected_town_consumption(item, shops, ctx["step"])
-            net_player = -delta - expected_town   # positive => players net added
-            ours = mem["our_units_sold"].get(item, 0)
-            opp_added = net_player - ours
-            if abs(opp_added) >= 1:
+            # delta = net_player_sales - expected_town
+            # net_player_sales = delta + expected_town
+            net_player = delta + expected_town
+            ours_step = mem.get("our_units_sold_last_step", {}).get(item, 0)
+            opp_added = max(0.0, net_player - ours_step)
+            if opp_added >= 0.5:
                 mem["opp_sales_inferred"][item] = \
                     mem["opp_sales_inferred"].get(item, 0) + opp_added
     mem["prev_inventory"] = dict(inv_now)
+    # Clear step-level sales for next turn
+    mem["our_units_sold_last_step"] = {}
 
 
 def _expected_town_consumption(item, shops, step):
@@ -7739,6 +7730,8 @@ def _update_opp_money(ctx, mem):
 def record_our_sale(product, units):
     mem = _STATE
     mem["our_units_sold"][product] = mem["our_units_sold"].get(product, 0) + units
+    mem.setdefault("our_units_sold_last_step", {})[product] = \
+        mem.get("our_units_sold_last_step", {}).get(product, 0) + units
 
 
 def noop_penalty():
@@ -9221,9 +9214,14 @@ def build_tasks(ctx, macro):
                 # Guardrail 2: mandatory survival watering
                 need_water.append((PRIORITY_URGENT_SURVIVAL, t))
             elif needs_water_today(t, day):
-                prio = PRIORITY_BONUS_WATER if in_bonus_window(t, day) else 30
+                is_newly_planted = (t.planted_day == day)
+                if is_newly_planted:
+                    prio = PRIORITY_BONUS_WATER + 5  # Urgent paired water for new plants
+                elif in_bonus_window(t, day) or cd.get("ongoing"):
+                    prio = PRIORITY_BONUS_WATER
+                else:
+                    prio = 30
                 if not macro.watering_enabled and day == 28 and in_bonus_window(t, day):
-                    cd = CROPS.get(t.crop, {})
                     harvestable_by_29 = (t.planted_day is not None
                                          and t.planted_day + cd.get("max_yield_day", 99) <= 29)
                     if not harvestable_by_29:
@@ -9308,23 +9306,26 @@ def build_tasks(ctx, macro):
 
     # WHEAT STAGING: engine FEED consumes the UNIT's inventory (never the
     # shed), so staged PICKUP tasks must run before any FEED can succeed.
+    # Distribute wheat across multiple workers in small chunks (2-3 wheat)
+    # so multiple workers can feed animals simultaneously!
     if feeds_due > 0:
-        held = sum(int(inv.get("WHEAT", 0))
-                   for inv in ctx["private"].inventories)
+        held = sum(int(inv.get("WHEAT", 0)) for inv in ctx["private"].inventories)
         shed_wheat = int(ctx["private"].shed.get("WHEAT", 0))
-        grab = min(shed_wheat, max(feeds_due - held, 0))
-        if grab > 0:
-            farmer_pos = tuple(farm_pos_of(ctx))
-            target = min(SHED_ACCESS_TILES,
-                         key=lambda tp: abs(tp[0] - farmer_pos[0])
-                         + abs(tp[1] - farmer_pos[1]))
-            add(PRIORITY_FEED_STAGING, "PICKUP", tuple(target),
-                args=["WHEAT", int(grab)], kind="pickup_wheat")
+        needed = min(shed_wheat, max(feeds_due - held, 0))
+        if needed > 0:
+            chunk_size = 3
+            n_chunks = (needed + chunk_size - 1) // chunk_size
+            for c_idx in range(n_chunks):
+                take = min(chunk_size, needed - c_idx * chunk_size)
+                target = SHED_ACCESS_TILES[c_idx % len(SHED_ACCESS_TILES)]
+                add(PRIORITY_FEED_STAGING, "PICKUP", tuple(target),
+                    args=["WHEAT", int(take)], kind="pickup_wheat")
 
     # ---------------- planting queue (seed-conflict-safe) ----------------
     seeds = ctx["private"].seeds
     wanted_plants = list(macro.plant_queue)  # [(pos, crop)]
-    if hour <= 18 and macro.watering_enabled:
+    # Planting cutoff at hour 17 ensures every newly planted seed can be watered before midnight
+    if hour <= 17 and macro.watering_enabled:
         by_crop = {}
         for pos, crop in wanted_plants:
             if seeds.get(crop, 0) > by_crop.get(crop, 0):
@@ -10664,9 +10665,14 @@ class MarketBrain:
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
-        # v5.9: Sell every hour (cash flow for hires) except hour 0 (purchases)
         if hour == 0 and not endgame:
             return [], {"reason": "hour0_purchases"}
+
+        # Strict sell timing: sell during post-drain windows (SELL_HOUR_SET = {1, 5, 9, 13, 17, 21})
+        # Override and sell on other hours ONLY if shed is under heavy pressure (>= SHED_SOFT_CAP) or endgame
+        is_sell_window = (hour in SELL_HOUR_SET)
+        if not is_sell_window and not pressure and not endgame:
+            return [], {"reason": "waiting_for_sell_window"}
 
         # Phase 6: extract opp_advice sets for fast lookup
         preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()
@@ -10879,6 +10885,7 @@ Submission Rule Compliance:
 
 
 
+
 PASS_ACTION = {"farmer": ["PASS"], "hands": [], "market": []}
 
 # Singleton / lazy-loaded instances
@@ -10939,8 +10946,8 @@ def _build_opp_advice(ctx, mem):
             "shed_pressure": sum(_estimated_shed.values()) / 100.0,
             "forecast": forecast,
             "commitments": summarize_opponent_commitments(opp_farm),
-            "animal_counts": {t.animal: 1 for t in opp_farm.iter_tiles()
-                              if t.is_animal},
+            "animal_counts": dict(Counter(t.animal for t in opp_farm.iter_tiles()
+                                          if t.is_animal)),
         }
         sell_probs = compute_opponent_sell_probabilities(
             opp_farm, _estimated_shed, ctx, mem,

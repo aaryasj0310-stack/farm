@@ -128,9 +128,9 @@ CROP_TILE_CAPS = {
 FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
 
 # Animal expansion targets (tiles), adjusted dynamically by land/feed/labor/money.
-TARGET_GEESE = 6
-TARGET_COWS = 8
-TARGET_SHEEP = 8
+TARGET_GEESE = 2
+TARGET_COWS = 6
+TARGET_SHEEP = 4
 ANIMAL_EXPANSION_HORIZON_DAYS = 14   # ramp projection window
 MAX_ANIMAL_BUYS_PER_DAY = 2          # max new animals placed per day
 

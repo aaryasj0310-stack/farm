@@ -13,7 +13,8 @@ _STATE = {
     "known_shops": [],
     "town_drain_seen": {},       # product -> units inferred drained by town
     "opp_sales_inferred": {},    # product -> units inferred sold by opponent
-    "our_units_sold": {},        # product -> units we sold (from our orders)
+    "our_units_sold": {},        # product -> total units we sold (cumulative)
+    "our_units_sold_last_step": {},  # product -> units sold on immediate previous step
     "prev_opp_money": None,      # opponent money on previous turn
     "opp_money_deltas": deque(maxlen=OPP_MONEY_WINDOW),  # recent delta list
     "noop_attempts": 0,
@@ -56,6 +57,7 @@ def reset_memory(mem):
     mem["town_drain_seen"] = {}
     mem["opp_sales_inferred"] = {}
     mem["our_units_sold"] = {}
+    mem["our_units_sold_last_step"] = {}
     mem["prev_opp_money"] = None
     mem["opp_money_deltas"] = deque(maxlen=OPP_MONEY_WINDOW)
     mem["noop_attempts"] = 0
@@ -68,7 +70,7 @@ def _update_drain_ledger(ctx, mem):
 
     Everything that is not explained by town consumption must be player
     activity (ours or opponent's) -> attribute to opponent after subtracting
-    our own recorded sells/buys.
+    our own recorded step-level sells/buys.
     """
     inv_now = ctx["market"].inventory
     prev = mem["prev_inventory"]
@@ -77,13 +79,17 @@ def _update_drain_ledger(ctx, mem):
         for item in PRODUCTS:
             delta = inv_now.get(item, 0) - prev.get(item, 0)
             expected_town = _expected_town_consumption(item, shops, ctx["step"])
-            net_player = -delta - expected_town   # positive => players net added
-            ours = mem["our_units_sold"].get(item, 0)
-            opp_added = net_player - ours
-            if abs(opp_added) >= 1:
+            # delta = net_player_sales - expected_town
+            # net_player_sales = delta + expected_town
+            net_player = delta + expected_town
+            ours_step = mem.get("our_units_sold_last_step", {}).get(item, 0)
+            opp_added = max(0.0, net_player - ours_step)
+            if opp_added >= 0.5:
                 mem["opp_sales_inferred"][item] = \
                     mem["opp_sales_inferred"].get(item, 0) + opp_added
     mem["prev_inventory"] = dict(inv_now)
+    # Clear step-level sales for next turn
+    mem["our_units_sold_last_step"] = {}
 
 
 def _expected_town_consumption(item, shops, step):
@@ -130,6 +136,8 @@ def _update_opp_money(ctx, mem):
 def record_our_sale(product, units):
     mem = _STATE
     mem["our_units_sold"][product] = mem["our_units_sold"].get(product, 0) + units
+    mem.setdefault("our_units_sold_last_step", {})[product] = \
+        mem.get("our_units_sold_last_step", {}).get(product, 0) + units
 
 
 def noop_penalty():
