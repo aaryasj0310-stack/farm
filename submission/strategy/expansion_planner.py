@@ -32,6 +32,7 @@ from config import (
     MARKET_I0,
     CROP_TILE_CAPS,
     get_sw_seed_targets,
+    get_strawberry_cap,
 )
 from strategy.baked_economics import CROP_ECONOMICS, CROP_CYCLE_LEN
 
@@ -148,8 +149,6 @@ def _allocate_portfolio_profit(n_tiles, current_day, forecast, is_sw_available=F
     """
     if n_tiles <= 0 or current_day > 25:
         return 0.0, {}
-
-    from config import get_strawberry_cap
 
     scored_crops = []
     for crop in CROPS:

@@ -107,6 +107,10 @@ MELON_PLANT_LAST_DAY = 19
 C2_MAX_SPILLOVER_DIST = 12         # Max Manhattan distance allowed for cross-quadrant spillover
 C2_SPILLOVER_PRIORITY_FLOOR = 20   # Minimum task priority eligible for cross-quadrant dispatch
 
+# Stage 8B Phase 1F: C6 Clustered Dispatch / Logistics Efficiency
+C6_CLUSTER_RADIUS = 1              # Manhattan radius to qualify as adjacent/clustered task
+C6_CLUSTER_BONUS = 2               # Distance discount for adjacent tasks; double discount for co-located tasks (d=0)
+
 EFFECTIVE_ACTIONS_PER_UNIT = 12
 MIN_HANDS_BASE = 4
 HIRE_BUDGET_MAX_HANDS = 7
