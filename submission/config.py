@@ -284,6 +284,11 @@ ANIMAL_SCALING = {
     12: (0, 6, 12),   # Days 10-29: 6 cows + 12 sheep = 18 animals
 }
 
+# Stage 8B Phase 1A: C4 — Late-Game Livestock Investment Cap
+# Stage 8A empirical cutoff boundary: Day 12. Animals purchased Day 12+ fail to amortize
+# capital cost, pasture build cost, feed procurement, and care opportunity costs.
+C4_LIVESTOCK_CUTOFF_DAY = 12
+
 def get_animal_targets(day=None, money=None, shed_wheat=None, current_animals=None, max_pastures=20, hands=None):
     """Return animal targets. Supports both legacy hands count signature and full Astra heuristic."""
     if hands is not None:

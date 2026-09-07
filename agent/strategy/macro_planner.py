@@ -76,6 +76,7 @@ from config import (
     QUADRANT_HARD_BLOCK,
     get_strawberry_cap,
     get_sw_seed_targets,
+    C4_LIVESTOCK_CUTOFF_DAY,
 )
 from strategy.animal_planner import get_animal_targets
 from strategy.expansion_planner import (
@@ -449,7 +450,8 @@ class MacroPlanner:
         # Dynamic animal targets via corrected Astra heuristic
         # Days 0-5: Zero livestock ramp (protects Day 3-5 NE land unlock fund of $1,000 and strawberry seeds).
         # Livestock ramp begins Day 6+ when workforce reaches 8 hands and Day 4 wheat has matured for feed.
-        if is_endgame or day >= 24 or day < 6:
+        # Stage 8B C4: Cease new livestock investment on or after C4_LIVESTOCK_CUTOFF_DAY (Day 12).
+        if is_endgame or day >= C4_LIVESTOCK_CUTOFF_DAY or day < 6:
             dynamic_targets = {"COW": 0 if day < 6 else counts.get("COW", 0),
                                "SHEEP": 0 if day < 6 else counts.get("SHEEP", 0),
                                "GOOSE": 0}
@@ -464,7 +466,8 @@ class MacroPlanner:
 
         # Purchase affordable animals if empty pasture exists
         # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
-        if not is_endgame and day <= 23:
+        # Stage 8B C4: Cap animal purchases and pasture construction on or after C4_LIVESTOCK_CUTOFF_DAY
+        if not is_endgame and day < C4_LIVESTOCK_CUTOFF_DAY:
             for animal in ("SHEEP", "COW", "GOOSE"):
                 target = dynamic_targets.get(animal, 0)
                 info = ANIMALS[animal]

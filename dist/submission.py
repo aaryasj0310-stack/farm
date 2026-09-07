@@ -294,6 +294,11 @@ ANIMAL_SCALING = {
     12: (0, 6, 12),   # Days 10-29: 6 cows + 12 sheep = 18 animals
 }
 
+# Stage 8B Phase 1A: C4 — Late-Game Livestock Investment Cap
+# Stage 8A empirical cutoff boundary: Day 12. Animals purchased Day 12+ fail to amortize
+# capital cost, pasture build cost, feed procurement, and care opportunity costs.
+C4_LIVESTOCK_CUTOFF_DAY = 12
+
 def get_animal_targets(day=None, money=None, shed_wheat=None, current_animals=None, max_pastures=20, hands=None):
     """Return animal targets. Supports both legacy hands count signature and full Astra heuristic."""
     if hands is not None:
@@ -9555,12 +9560,22 @@ Corrected engine rules & mechanics:
 HERD_CAP = 20          # fertilizer clearance, not the 75-tile physical maximum
 SHEEP_CAP = 12         # 3-4 wool / 3 days: <= 12-13/day town wool drain
 COW_CAP = 19           # 2-3 milk / 2 days: <= 19 milk/day town drain
+try:
+    from config import C4_LIVESTOCK_CUTOFF_DAY
+except ImportError:
+    C4_LIVESTOCK_CUTOFF_DAY = 12
+
 FEED_PRICE = 25        # conservative market replacement cost
 FEED_BUFFER_DAYS = 3
 
 
-def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20):
+def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20, cutoff_day=None):
     """Choose the highest modeled incremental terminal profit affordable now.
+
+    Stage 8B C4 Policy: Enforces late-game livestock investment cap (cutoff_day=12).
+    Purchases on or after cutoff_day fail to amortize capital costs, feed, and care.
+    Also enforces economic feasibility: an animal must produce primary product (milk/wool)
+    to be considered viable; fertilizer alone cannot cover costs.
 
     O(21**2) worst-case, O(1) extra space; no imports, I/O or randomness.
     Recompute after actual purchases; execute additions only when housing and
@@ -9576,7 +9591,10 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20)
     remaining = max(0, 29 - day)
     herd = c0 + s0 + g0
     effective_herd_cap = min(HERD_CAP, int(max_pastures))
-    if remaining == 0 or herd >= effective_herd_cap:
+    
+    # C4: Late-game livestock investment cap
+    effective_cutoff = C4_LIVESTOCK_CUTOFF_DAY if cutoff_day is None else int(cutoff_day)
+    if remaining == 0 or herd >= effective_herd_cap or day >= effective_cutoff:
         return result
 
     cash = max(0.0, float(money))
@@ -9588,8 +9606,17 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20)
     # SHEEP: first yield at day + 6 (6 wool), then every 3 days (4 wool)
     wool_units = (6 + 4 * ((remaining - 6) // 3)) if remaining >= 6 else 0
     
-    cow_profit = 160 * milk_units + (100 - FEED_PRICE) * remaining - 400
-    sheep_profit = 200 * wool_units + (100 - FEED_PRICE) * remaining - 500
+    # C4 Economic Feasibility: An animal must produce its primary product to justify purchase.
+    # Fertilizer alone cannot cover purchase + feed + care costs before season end.
+    if milk_units <= 0:
+        cow_profit = 0
+    else:
+        cow_profit = 160 * milk_units + (100 - FEED_PRICE) * remaining - 400
+
+    if wool_units <= 0:
+        sheep_profit = 0
+    else:
+        sheep_profit = 200 * wool_units + (100 - FEED_PRICE) * remaining - 500
     
     room = effective_herd_cap - herd
     max_c = min(room, max(0, COW_CAP - c0)) if cow_profit > 0 else 0
@@ -10648,7 +10675,8 @@ class MacroPlanner:
         # Dynamic animal targets via corrected Astra heuristic
         # Days 0-5: Zero livestock ramp (protects Day 3-5 NE land unlock fund of $1,000 and strawberry seeds).
         # Livestock ramp begins Day 6+ when workforce reaches 8 hands and Day 4 wheat has matured for feed.
-        if is_endgame or day >= 24 or day < 6:
+        # Stage 8B C4: Cease new livestock investment on or after C4_LIVESTOCK_CUTOFF_DAY (Day 12).
+        if is_endgame or day >= C4_LIVESTOCK_CUTOFF_DAY or day < 6:
             dynamic_targets = {"COW": 0 if day < 6 else counts.get("COW", 0),
                                "SHEEP": 0 if day < 6 else counts.get("SHEEP", 0),
                                "GOOSE": 0}
@@ -10663,7 +10691,8 @@ class MacroPlanner:
 
         # Purchase affordable animals if empty pasture exists
         # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
-        if not is_endgame and day <= 23:
+        # Stage 8B C4: Cap animal purchases and pasture construction on or after C4_LIVESTOCK_CUTOFF_DAY
+        if not is_endgame and day < C4_LIVESTOCK_CUTOFF_DAY:
             for animal in ("SHEEP", "COW", "GOOSE"):
                 target = dynamic_targets.get(animal, 0)
                 info = ANIMALS[animal]
