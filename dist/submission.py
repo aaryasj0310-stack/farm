@@ -109,9 +109,13 @@ BUY_WHEAT_TRIGGER_DAYS = 2.0
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
 PHASE1_MELON_TILES_NW = 12        # NW melons for day-10 cash surge (Leader springboard)
-PHASE1_GEESE_DAY0_2 = 0            # Zero Geese policy: geese produce low-margin eggs
+PHASE1_GEESE_DAY0_2 = 0            # Zero Geese policy: geese produce low-margin down, zero fertilizer
 MELON_PLANT_LAST_DAY_FERT = 17    # last planting that still harvests by 29
 MELON_PLANT_LAST_DAY = 19
+
+# Stage 8B Phase 1E: C2 Adaptive Zonal Dispatch
+C2_MAX_SPILLOVER_DIST = 12         # Max Manhattan distance allowed for cross-quadrant spillover
+C2_SPILLOVER_PRIORITY_FLOOR = 20   # Minimum task priority eligible for cross-quadrant dispatch
 
 EFFECTIVE_ACTIONS_PER_UNIT = 12
 MIN_HANDS_BASE = 4
@@ -10066,10 +10070,42 @@ def build_tasks(ctx, macro):
     return tasks
 
 
-def assign_tasks(tasks, ctx, extra_units=()):
-    """Greedy closest-unit dispatch. Returns per-unit actions + bookkeeping.
+def get_home_quadrant(u_idx, n_units, unlocked):
+    """Stage 8B Phase 1E: C2 Adaptive Zonal Dispatch.
     
-    v5.9: Tracks daily utilization and logs idle actions.
+    Deterministic home quadrant mapping:
+    - If SW unlocked and n_units >= 5:
+      Rule W1 partitions the last 4 or 5 hands into SW squad.
+      Remaining non-SW hands are split evenly between NW and NE squads.
+    - If NE unlocked:
+      Units are split evenly between NW and NE squads.
+    - If only NW unlocked:
+      All units belong to NW squad.
+    """
+    if "SW" in unlocked and n_units >= 5:
+        sw_squad_size = 5 if n_units >= 13 else 4
+        sw_start = n_units - sw_squad_size
+        if u_idx >= sw_start:
+            return "SW"
+        non_sw = sw_start
+        half = max(1, non_sw // 2)
+        return "NW" if u_idx < half else "NE"
+    elif "NE" in unlocked:
+        half = max(1, n_units // 2)
+        return "NW" if u_idx < half else "NE"
+    else:
+        return "NW"
+
+
+def assign_tasks(tasks, ctx, extra_units=()):
+    """C2 Adaptive Zonal Dispatch + Greedy closest-unit assignment.
+    
+    Stage 8B Phase 1E:
+    - Prioritizes home-zone workers for tasks in their preferred quadrant.
+    - Permits controlled cross-zone spillover only when the home zone is underutilized.
+    - Enforces travel distance threshold and prohibits diagonal jumps (SW <-> NE).
+    - Preserves Rule W1/W2 SW squad partitioning, PORT_SW anchors, and shortest path routing.
+    - Tracks daily utilization and logs idle actions.
     """
     farm = ctx["farm"]
     units = [(0, tuple(farm.farmer))]
@@ -10078,6 +10114,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
     for idx, pos in extra_units:
         units.append((idx, tuple(pos)))
     pos_by_idx = dict(units)
+    n_units = len(units)
 
     # Holder map for PLACE tasks: engine PLACE requires the ACTING unit to
     # hold the animal, so dispatch must prefer/require holding units.
@@ -10101,63 +10138,80 @@ def assign_tasks(tasks, ctx, extra_units=()):
             return set(holders.get("WHEAT", []))
         return None                                  # no restriction
 
-    # Rule W1: Dedicated SW Squad partitioning
-    sw_unlocked = "SW" in farm.unlocked
-    n_units = len(units)
-    if sw_unlocked and n_units >= 5:
-        sw_squad_size = 5 if n_units >= 13 else 4
-        sw_units = set(range(n_units - sw_squad_size, n_units))
-        non_sw_units = set(range(n_units)) - sw_units
-    else:
-        sw_units = set()
-        non_sw_units = set(range(n_units))
+    # Stage 8B Phase 1E (C2): Deterministic home quadrants + Rule W1 SW squad preservation
+    home_quads = {u_idx: get_home_quadrant(u_idx, n_units, farm.unlocked) for u_idx in range(n_units)}
+    sw_units = {u_idx for u_idx, q in home_quads.items() if q == "SW"}
+
+    sorted_tasks = sorted(tasks, key=lambda t: -t["priority"])
+
+    # Track pending tasks per quadrant to detect local saturation/exhaustion
+    tasks_by_quad = {"NW": 0, "NE": 0, "SW": 0, "SE": 0}
+    for t in sorted_tasks:
+        tgt = t.get("target") or tuple(farm.farmer)
+        q = farm.quadrant_of(tgt)
+        tasks_by_quad[q] = tasks_by_quad.get(q, 0) + 1
 
     busy = set()
     assignment = {}          # unit_idx -> task
     deferred_place = []
-    for task in sorted(tasks, key=lambda t: -t["priority"]):
+    unassigned_home_tasks = dict(tasks_by_quad)
+
+    for task in sorted_tasks:
         eligible = _eligible(task)
         if eligible is not None and not eligible:
             deferred_place.append(task)               # nobody holds it yet
             continue
         target = task.get("target") or tuple(farm.farmer)
+        target_quad = farm.quadrant_of(target)
         # Explicit locked-quadrant task guard: never assign operations on locked land
-        if task["op"] not in ("PICKUP", "PASS") and farm.quadrant_of(target) not in farm.unlocked:
+        if task["op"] not in ("PICKUP", "PASS") and target_quad not in farm.unlocked:
             continue
 
-        is_sw_task = (farm.quadrant_of(target) == "SW")
+        prio = task.get("priority", 0)
+        is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or task.get("kind") in ("feed_rescue", "harvest_decay"))
 
-        # Partitioned candidate selection (Rule W1)
-        if sw_units:
-            if is_sw_task:
-                # SW tasks prefer SW squad
-                cand_idxs = [u[0] for u in units if u[0] in sw_units and u[0] not in busy]
-                if not cand_idxs:
-                    cand_idxs = [u[0] for u in units if u[0] not in busy]
-            else:
-                # Non-SW tasks prefer NW/NE squad
-                cand_idxs = [u[0] for u in units if u[0] in non_sw_units and u[0] not in busy]
-                if not cand_idxs:
-                    cand_idxs = [u[0] for u in units if u[0] not in busy]
-        else:
-            cand_idxs = [u[0] for u in units if u[0] not in busy]
-
+        free_units = [u[0] for u in units if u[0] not in busy]
         if eligible is not None:
-            preferred = [idx for idx in cand_idxs if idx in eligible]
-            if preferred:
-                cand_idxs = preferred
-            else:
-                cand_idxs = [idx for idx in eligible if idx not in busy]
+            free_units = [u for u in free_units if u in eligible]
 
-        best, best_d = None, 10 ** 9
-        for idx in cand_idxs:
-            pos = pos_by_idx[idx]
-            d = abs(pos[0] - target[0]) + abs(pos[1] - target[1])
-            if d < best_d:
-                best, best_d = idx, d
+        if not free_units:
+            continue
+
+        best = None
+        if is_urgent:
+            # Urgent survival: closest eligible unit regardless of zone
+            best = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        else:
+            # C2 Zonal Hierarchy:
+            # 1. Preferred home zone candidates
+            home_cands = [u for u in free_units if home_quads[u] == target_quad]
+            if home_cands:
+                best = min(home_cands, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+            else:
+                # 2. Controlled spillover: only workers whose home zone has NO unassigned tasks left
+                # (or fewer tasks than remaining workers in that home zone)
+                spillover_cands = []
+                for u in free_units:
+                    u_home = home_quads[u]
+                    free_in_home = sum(1 for fu in free_units if home_quads[fu] == u_home)
+                    rem_tasks_home = unassigned_home_tasks.get(u_home, 0)
+                    if rem_tasks_home < free_in_home:
+                        # Adjacency check: prevent diagonal cross-map jumps (SW <-> NE)
+                        if (u_home == "SW" and target_quad == "NE") or (u_home == "NE" and target_quad == "SW"):
+                            continue
+                        d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
+                        if d <= C2_MAX_SPILLOVER_DIST and prio >= C2_SPILLOVER_PRIORITY_FLOOR:
+                            spillover_cands.append((u, d))
+
+                if spillover_cands:
+                    best = min(spillover_cands, key=lambda x: x[1])[0]
+
         if best is None:
             continue
+
         busy.add(best)
+        if target_quad in unassigned_home_tasks:
+            unassigned_home_tasks[target_quad] = max(0, unassigned_home_tasks[target_quad] - 1)
 
         # Rule W2: SW squad hands anchor shed PICKUP at PORT_SW
         if best in sw_units and task.get("op") == "PICKUP" and task.get("target") in SHED_ACCESS_TILES:
@@ -10175,61 +10229,52 @@ def assign_tasks(tasks, ctx, extra_units=()):
         def _pick_best_unit(cands, target_pos):
             return min(cands, key=lambda u: abs(pos_by_idx[u][0] - target_pos[0]) + abs(pos_by_idx[u][1] - target_pos[1]))
 
-        # 1. Fallback: collect any available fertilizer
+        # 1. Fallback: collect any available fertilizer (prefer local home zone)
         for t in farm.iter_tiles():
             if not unassigned_units:
                 break
             if t.is_animal and t.fertilizer_available and tuple(t.pos) not in targeted_positions:
-                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
-                if sw_units:
-                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
-                    cands = pref if pref else unassigned_units
-                else:
-                    cands = unassigned_units
+                t_quad = farm.quadrant_of(t.pos)
+                pref = [u for u in unassigned_units if home_quads[u] == t_quad]
+                cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
+                if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
-                task = {"priority": 10, "op": "COLLECT_FERTILIZER", "target": tuple(t.pos),
-                        "args": [], "kind": "fallback_fert", "meta": {}, "unit_pos": pos_by_idx[best_u]}
-                assignment[best_u] = task
+                assignment[best_u] = {"priority": 10, "op": "COLLECT_FERTILIZER", "target": tuple(t.pos),
+                                      "args": [], "kind": "fallback_fert", "meta": {}, "unit_pos": pos_by_idx[best_u]}
                 targeted_positions.add(tuple(t.pos))
 
-        # 2. Fallback: water any mature or unwatered crop
+        # 2. Fallback: water any mature or unwatered crop (prefer local home zone)
         for t in farm.iter_tiles():
             if not unassigned_units:
                 break
             if t.is_plant and not t.watered_today and tuple(t.pos) not in targeted_positions:
-                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
-                if sw_units:
-                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
-                    cands = pref if pref else unassigned_units
-                else:
-                    cands = unassigned_units
+                t_quad = farm.quadrant_of(t.pos)
+                pref = [u for u in unassigned_units if home_quads[u] == t_quad]
+                cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
+                if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
-                task = {"priority": 10, "op": "WATER", "target": tuple(t.pos),
-                        "args": [], "kind": "fallback_water", "meta": {}, "unit_pos": pos_by_idx[best_u]}
-                assignment[best_u] = task
+                assignment[best_u] = {"priority": 10, "op": "WATER", "target": tuple(t.pos),
+                                      "args": [], "kind": "fallback_water", "meta": {}, "unit_pos": pos_by_idx[best_u]}
                 targeted_positions.add(tuple(t.pos))
 
-        # 3. Fallback: dig any weed on unlocked land
+        # 3. Fallback: dig any weed on unlocked land (prefer local home zone)
         for t in farm.iter_tiles():
             if not unassigned_units:
                 break
             if t.kind == "WEED" and farm.quadrant_of(t.pos) in farm.unlocked and tuple(t.pos) not in targeted_positions:
-                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
-                if sw_units:
-                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
-                    cands = pref if pref else unassigned_units
-                else:
-                    cands = unassigned_units
+                t_quad = farm.quadrant_of(t.pos)
+                pref = [u for u in unassigned_units if home_quads[u] == t_quad]
+                cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
+                if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
-                task = {"priority": 5, "op": "DIG", "target": tuple(t.pos),
-                        "args": [], "kind": "fallback_dig", "meta": {}, "unit_pos": pos_by_idx[best_u]}
-                assignment[best_u] = task
+                assignment[best_u] = {"priority": 5, "op": "DIG", "target": tuple(t.pos),
+                                      "args": [], "kind": "fallback_dig", "meta": {}, "unit_pos": pos_by_idx[best_u]}
                 targeted_positions.add(tuple(t.pos))
 
         # Rule W2 anchor: Send remaining idle SW squad hands to PORT_SW

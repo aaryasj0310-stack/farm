@@ -99,9 +99,13 @@ BUY_WHEAT_TRIGGER_DAYS = 2.0
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
 PHASE1_MELON_TILES_NW = 12        # NW melons for day-10 cash surge (Leader springboard)
-PHASE1_GEESE_DAY0_2 = 0            # Zero Geese policy: geese produce low-margin eggs
+PHASE1_GEESE_DAY0_2 = 0            # Zero Geese policy: geese produce low-margin down, zero fertilizer
 MELON_PLANT_LAST_DAY_FERT = 17    # last planting that still harvests by 29
 MELON_PLANT_LAST_DAY = 19
+
+# Stage 8B Phase 1E: C2 Adaptive Zonal Dispatch
+C2_MAX_SPILLOVER_DIST = 12         # Max Manhattan distance allowed for cross-quadrant spillover
+C2_SPILLOVER_PRIORITY_FLOOR = 20   # Minimum task priority eligible for cross-quadrant dispatch
 
 EFFECTIVE_ACTIONS_PER_UNIT = 12
 MIN_HANDS_BASE = 4
