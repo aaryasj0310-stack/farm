@@ -42,7 +42,10 @@ from config import (
     TURNS_PER_DAY,
     log,
 )
-from observation_parser import crop_age, in_bonus_window, needs_water_today
+try:
+    from state.observation_parser import crop_age, in_bonus_window, needs_water_today, turns_until_decay
+except ImportError:
+    from observation_parser import crop_age, in_bonus_window, needs_water_today, turns_until_decay
 try:
     from execution.pathfinding import bfs_first_step
 except ImportError:
@@ -132,14 +135,45 @@ def build_tasks(ctx, macro):
         if cd is None:
             continue
         age = crop_age(t, day)
-        mature_one_time = (not cd["ongoing"]) and age >= cd["max_yield_day"]
-        # decay-imminent harvest (one-time at/after max day, still alive)
-        if t.yield_units > 0 and mature_one_time:
-            add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_decay")
-        elif t.yield_units > 0 and cd["ongoing"]:
-            add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing")
-        elif t.yield_units >= cd["max_yield"] and not cd["ongoing"]:
-            add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_full")
+        # C5: Harvest Decision Logic
+        if not cd["ongoing"]:
+            # One-time crops (Wheat, Carrot, Melon)
+            is_max_day = (age >= cd["max_yield_day"])
+            is_max_yield = (t.yield_units >= cd["max_yield"])
+            tud = turns_until_decay(t, ctx["step"])
+            decay_imminent = (tud is not None and tud <= 4) or (age > cd["max_yield_day"]) or (hour >= 20 and is_max_day)
+            is_endgame = (day == 29 and age >= cd["first_yield_day"])
+            
+            if t.yield_units > 0:
+                if is_endgame:
+                    # Day 29 endgame liquidation: realize all available yield before season end
+                    add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_endgame")
+                elif decay_imminent:
+                    # Decay imminent: harvest to prevent crop decay
+                    add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_decay")
+                elif is_max_yield:
+                    # Already at absolute max yield cap: harvest immediately frees tile for replanting
+                    prio = PRIORITY_DECAY_HARVEST if is_max_day else PRIORITY_STANDARD_HARVEST
+                    add(prio, "HARVEST", t.pos, kind="harvest_full")
+                elif is_max_day and t.watered_today:
+                    # Watered today on max day: collected final bonus yield, harvest before tomorrow's decay
+                    add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_mature_watered")
+                # When is_max_day and not t.watered_today and hour < 20:
+                # Intentionally defer HARVEST so WATER executes first and collects +1 (+2) bonus!
+        else:
+            # Ongoing crops (Tomato, Strawberry)
+            tud = turns_until_decay(t, ctx["step"])
+            decay_imminent = (tud is not None and tud <= 24)
+            is_endgame = (day >= 28)
+            
+            if t.yield_units > 0:
+                if is_endgame or decay_imminent:
+                    add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_decay")
+                elif t.yield_units >= 2:
+                    # Efficient harvest of accumulated produce (2+ units per action)
+                    add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_accum")
+                elif t.yield_units >= cd["max_yield"]:
+                    add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_cap")
 
         if not t.watered_today and hour < 23:
             dying_tomorrow = t.consecutive_unwatered >= 1
@@ -151,7 +185,11 @@ def build_tasks(ctx, macro):
                 if is_newly_planted:
                     prio = PRIORITY_BONUS_WATER + 5  # Urgent paired water for new plants
                 elif in_bonus_window(t, day) or cd.get("ongoing"):
-                    prio = PRIORITY_BONUS_WATER
+                    # Elevate bonus water on max_yield_day so it waters promptly before harvest
+                    if not cd.get("ongoing") and age == cd["max_yield_day"]:
+                        prio = PRIORITY_BONUS_WATER + 6
+                    else:
+                        prio = PRIORITY_BONUS_WATER
                 else:
                     prio = 30
                 if not macro.watering_enabled and day == 28 and in_bonus_window(t, day):
