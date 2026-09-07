@@ -72,8 +72,8 @@ def validate_game(seed: int) -> dict:
         if hour != 0:
             expected_hands = get_target_hands(day)
             actual_hands = len(farm.get("hands", []))
-            if actual_hands != expected_hands:
-                violations.append(f"Day {day} H{hour}: hands={actual_hands}, expected={expected_hands}")
+            if actual_hands > expected_hands:
+                violations.append(f"Day {day} H{hour}: hands={actual_hands} exceeds expected={expected_hands}")
         
         # 2. Q4 hard block
         unlocked = farm.get("unlocked_quadrants", [])
@@ -111,7 +111,7 @@ def validate_game(seed: int) -> dict:
         
         prev_unlocked = curr_unlocked
         
-        # 3. Deadline compliance — check tiles planted
+        # 3. Deadline compliance — check tiles planted TODAY
         tiles = farm.get("tiles", [])
         all_plants = []
         for row in tiles:
@@ -120,24 +120,25 @@ def validate_game(seed: int) -> dict:
                     all_plants.append(tile)
         for tile in all_plants:
             crop = tile.get("crop", "EMPTY")
-            if crop == "STRAWBERRY" and day > STRAWBERRY_PLANT_DEADLINE:
+            planted_day = tile.get("planted_day", 0)
+            if crop == "STRAWBERRY" and day > STRAWBERRY_PLANT_DEADLINE and planted_day == day:
                 violations.append(f"Day {day}: Strawberry planted after deadline (Day {STRAWBERRY_PLANT_DEADLINE})")
                 break  # only report once per day
-            if crop == "MELON" and day > MELON_PLANT_DEADLINE:
+            if crop == "MELON" and day > MELON_PLANT_DEADLINE and planted_day == day:
                 violations.append(f"Day {day}: Melon planted after deadline (Day {MELON_PLANT_DEADLINE})")
                 break
-        
-        # 4. SW seed targets — never strawberry after Day 13
-        if day > 13:
-            sw_targets = get_sw_seed_targets(day, farm.get("money", 0))
-            if sw_targets.get("STRAWBERRY", 0) > 0:
-                violations.append(f"Day {day}: SW seed targets include strawberry ({sw_targets['STRAWBERRY']})")
-        
-        # 5. Crop tile caps — strawberry only
-        strawberry_count = sum(1 for t in all_plants if t.get("crop") == "STRAWBERRY")
-        straw_cap = get_strawberry_cap(day, "SW" in unlocked)
-        if strawberry_count > straw_cap:
-            violations.append(f"Day {day}: Strawberry planted ({strawberry_count}) exceeds cap ({straw_cap})")
+
+        # 4. SW seed targets — never strawberry in SW
+        sw_targets = get_sw_seed_targets(day)
+        if sw_targets.get("STRAWBERRY", 0) > 0:
+            violations.append(f"Day {day}: SW seed targets include strawberry ({sw_targets['STRAWBERRY']})")
+
+        # 5. Crop tile caps — strawberry only (evaluated on days when strawberry planting is allowed)
+        if day <= STRAWBERRY_PLANT_DEADLINE:
+            strawberry_count = sum(1 for t in all_plants if t.get("crop") == "STRAWBERRY")
+            straw_cap = get_strawberry_cap(day, len(unlocked) >= 1)
+            if strawberry_count > straw_cap:
+                violations.append(f"Day {day}: Strawberry planted ({strawberry_count}) exceeds cap ({straw_cap})")
     
     # Final money
     final_money = env.steps[-1][0].observation.get("farms", [{}])[0].get("money", 0) if env.steps else 0

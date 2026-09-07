@@ -39,6 +39,8 @@ from config import (
     SELL_HOUR_SET,
     SELL_SLOT_SHARE,
     SHED_SOFT_CAP,
+    SHED_RESUME_CAP,
+    MELON_SEASON_SALE_CAP,
 )
 
 from market.price_math import (
@@ -59,12 +61,18 @@ class MarketBrain:
     def sell_orders(self, ctx, max_slots=None, opp_advice=None):
         """Returns (orders, details). orders: [["SELL", prod, qty], ...].
 
-        v5.9: Sell every hour (not just t%4==1) to fund mandatory hires.
-        Batch sizes follow spec:
-          Days 0-5:  10-20 units per product
-          Days 6-8:  5-10 units
-          Days 9+:   3-5 units
-        Carry/floor holds are relaxed — cash flow > price optimization.
+        v5.12 Leader-calibrated sell policy:
+          Two-tier shed relief:
+            - Midnight hard-guard (hour >= 22 and shed_total > 88): urgency 2, dump inventory
+            - Emergency relief (shed_total >= SHED_SOFT_CAP (65)): urgency 1, override 4h window,
+              sell until shed <= SHED_RESUME_CAP (55)
+            - Normal mode (hour in SELL_HOUR_SET): urgency 0, post-drain sell windows
+          Order budget:
+            - Decrement order_budget -= 1 per order slice (MAX_MARKET_ORDERS = 10 is order count)
+          Feed protection:
+            - Reserved wheat = animals * FEED_WHEAT_BUFFER_DAYS strictly protected from sale
+          Melon quadratic cliff protection:
+            - Cumulative season melons sold capped at MELON_SEASON_SALE_CAP (150)
         """
         if max_slots is None:
             max_slots = int(MAX_MARKET_ORDERS * SELL_SLOT_SHARE)
@@ -78,13 +86,19 @@ class MarketBrain:
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
-        if hour == 0 and not endgame:
+        # Hour 0 purchases block sells in normal mode (unless endgame, emergency relief, or midnight guard)
+        if hour == 0 and not endgame and not pressure and not (hour >= 22 and shed_total > 88):
             return [], {"reason": "hour0_purchases"}
 
-        # Strict sell timing: sell during post-drain windows (SELL_HOUR_SET = {1, 5, 9, 13, 17, 21})
-        # Override and sell on other hours ONLY if shed is under heavy pressure (>= SHED_SOFT_CAP) or endgame
-        is_sell_window = (hour in SELL_HOUR_SET)
-        if not is_sell_window and not pressure and not endgame:
+        # Two-tier urgency:
+        # 2 = midnight hard-guard, 1 = emergency relief, 0 = normal post-drain window
+        if hour >= 22 and shed_total > 88:
+            urgency = 2
+        elif pressure:
+            urgency = 1
+        elif (hour in SELL_HOUR_SET) or endgame:
+            urgency = 0
+        else:
             return [], {"reason": "waiting_for_sell_window"}
 
         # Phase 6: extract opp_advice sets for fast lookup
@@ -92,28 +106,26 @@ class MarketBrain:
         delay_set = set(opp_advice.delay_sell) if opp_advice else set()
 
         inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
-        candidates = []
-        
-        # v5.9: Spec batch sizes per phase
+
+        # Spec batch sizes per phase
         if day <= 5:
             batch_target = 15  # sell 10-20 units
         elif day <= 8:
             batch_target = 7   # sell 5-10 units
         else:
             batch_target = 4   # sell 3-5 units
-        
+
+        # Available stock per product respecting reserves & caps
+        available_stock = {}
         for prod in SELLABLE:
-            if prod in delay_set and not endgame:
+            if prod in delay_set and not endgame and urgency < 2:
                 continue
             stock = int(shed.get(prod, 0))
             if stock <= 0:
                 continue
             if prod == "WHEAT":
                 stock = max(0, stock - reserved_wheat)
-                if stock <= 0:
-                    continue
-            elif prod == "FERTILIZER" and not endgame:
-                # Reserve fertilizer needed for crops during daytime application hours (max 2 per day)
+            elif prod == "FERTILIZER" and not endgame and urgency < 2:
                 if hour <= 18:
                     fert_needed = sum(1 for t in ctx["farm"].iter_tiles()
                                       if t.is_plant and t.crop in ("STRAWBERRY", "TOMATO", "MELON")
@@ -122,49 +134,97 @@ class MarketBrain:
                 else:
                     fert_reserve = 0
                 stock = max(0, stock - fert_reserve)
-                if stock <= 0:
-                    continue
+            elif prod == "MELON" and urgency < 2:
+                season_melons_sold = 0
+                try:
+                    from state.state_tracker import get_state
+                    season_melons_sold = get_state().get("our_units_sold", {}).get("MELON", 0)
+                except Exception:
+                    try:
+                        from state_tracker import get_state
+                        season_melons_sold = get_state().get("our_units_sold", {}).get("MELON", 0)
+                    except Exception:
+                        pass
+                melon_budget = max(0, MELON_SEASON_SALE_CAP - season_melons_sold)
+                stock = min(stock, melon_budget)
+
+            if stock > 0:
+                available_stock[prod] = stock
+
+        if not available_stock:
+            return [], {"reason": "no_available_stock", "pressure": pressure}
+
+        # Order budget in order slots (engine cap is 10 orders per turn)
+        order_budget = MAX_MARKET_ORDERS if (urgency >= 1 or endgame) else max_slots
+
+        # Slicing target for emergency relief
+        to_shed = max(0, shed_total - SHED_RESUME_CAP) if urgency == 1 else shed_total
+
+        # Candidate product ordering
+        # In emergency mode (when not endgame), follow liquidation priority: WHEAT -> CARROT -> TOMATO -> EGG -> MILK -> WOOL -> STRAWBERRY -> MELON -> FERTILIZER
+        LIQUIDATION_PRIORITY = ("WHEAT", "CARROT", "TOMATO", "EGG", "MILK", "WOOL", "STRAWBERRY", "MELON", "FERTILIZER")
+
+        candidates = []
+        for prod in SELLABLE:
+            if prod not in available_stock:
+                continue
+            st = available_stock[prod]
             spot = market_price(prod, inv.get(prod, 10000))
-            
-            # v5.9: Never hold at floor — sell everything for cash flow
+            urgency_score = st / (shed_total or 1)
             if spot <= 1:
-                qty = stock if endgame else min(stock, batch_target)
-                if qty > 0:
-                    candidates.append({
-                        "product": prod, "qty": int(qty), "spot": spot,
-                        "avg_est": spot, "reason": "floor_sell",
-                        "urgency": 0.5,
-                    })
-                continue
-
-            # v5.9: In endgame/aggressive mode or for surplus fertilizer, dump stock; otherwise sell at spec batch size
-            aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
-            qty = stock if (endgame or days_left <= 2 or prod == "FERTILIZER") else min(stock, batch_target)
-            
-            if qty <= 0:
-                continue
-
-            avg_est = total_revenue_estimate(prod, inv.get(prod, 10000),
-                                             qty) / qty
-            reason = "spec_batch_sell"
-            urgency = stock / (shed_total or 1)
-
-            # --- Phase 6: preempt sell urgency boost ----------------
+                urgency_score = 0.95
             if prod in preempt_set:
-                urgency = max(urgency, 0.99)
-                reason = "preempt_dump"
+                urgency_score = 0.99
+            candidates.append({"product": prod, "spot": spot, "urgency": urgency_score, "stock": st})
 
-            candidates.append({
-                "product": prod, "qty": int(qty), "spot": spot,
-                "avg_est": round(avg_est, 2), "reason": reason,
-                "urgency": urgency,
-            })
+        if urgency >= 1 and not endgame:
+            prio_map = {p: i for i, p in enumerate(LIQUIDATION_PRIORITY)}
+            candidates.sort(key=lambda c: (0 if c["product"] in preempt_set else 1, prio_map.get(c["product"], 99)))
+        else:
+            candidates.sort(key=lambda c: -c["urgency"])
 
-        candidates.sort(key=lambda c: -c["urgency"])
-        chosen = candidates[:max_slots]
-        orders = [["SELL", c["product"], c["qty"]] for c in chosen]
+        orders = []
+        for c in candidates:
+            if order_budget <= 0:
+                break
+            if not endgame and urgency == 1 and to_shed <= 0:
+                break
+            prod = c["product"]
+            st = available_stock[prod]
+            if st <= 0:
+                continue
+
+            bt = batch_target
+
+            if endgame or days_left <= 2 or urgency == 2 or prod == "FERTILIZER":
+                slice_qty = min(st, 20)
+            elif urgency == 1:
+                slice_qty = min(st, bt if bt > 10 else 10, to_shed)
+            else:
+                slice_qty = min(st, bt)
+
+            if slice_qty <= 0:
+                continue
+
+            orders.append(["SELL", prod, int(slice_qty)])
+            available_stock[prod] -= slice_qty
+            if urgency == 1:
+                to_shed -= slice_qty
+            order_budget -= 1
+
+            # In emergency mode, allow multiple slices of the overflowing product if to_shed remains
+            if not endgame and urgency == 1 and to_shed > 0 and order_budget > 0 and available_stock[prod] > 0:
+                while order_budget > 0 and to_shed > 0 and available_stock[prod] > 0:
+                    extra_qty = min(available_stock[prod], bt if bt > 10 else 10, to_shed)
+                    if extra_qty <= 0:
+                        break
+                    orders.append(["SELL", prod, int(extra_qty)])
+                    available_stock[prod] -= extra_qty
+                    to_shed -= extra_qty
+                    order_budget -= 1
+
         return orders, {"candidates": candidates, "days_left": days_left,
-                        "endgame": endgame, "pressure": pressure}
+                        "endgame": endgame, "pressure": pressure, "urgency": urgency}
 
     # ------------------------------------------------------------------
     def _drip_budget(self, prod, current_inv, keep_frac, spot):

@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from observation_parser import parse_observation
-from config import CROPS
+from config import CROPS, CROP_TILE_CAPS
 from strategy.macro_planner import MacroPlanner, _crop_allowed_today
 
 
@@ -343,12 +343,12 @@ def test_portfolio_aware_prevents_monoculture():
 # ─── Crop Tile Caps (Fix 4) ─────────────────────────────────────────────────
 
 def test_crop_tile_caps_prevent_excess():
-    """Even with infinite money and high melon price, melon tiles capped at 10."""
+    """Even with infinite money and high melon price, melon tiles capped at CROP_TILE_CAPS['MELON']."""
     fc = make_forecast({**BASE_PRICES, "MELON": 500})
     ctx = make_ctx(day=8, money=99999, seeds={"MELON": 50, "WHEAT": 50})
     plan = MacroPlanner(fc).build(ctx)
     melon_count = sum(1 for _, c in plan.plant_queue if c == "MELON")
-    assert melon_count <= 10, f"expected <=10 melon tiles (cap), got {melon_count}"
+    assert melon_count <= CROP_TILE_CAPS["MELON"], f"expected <={CROP_TILE_CAPS['MELON']} melon tiles (cap), got {melon_count}"
 
 
 def test_crop_tile_caps_wheat_unlimited():

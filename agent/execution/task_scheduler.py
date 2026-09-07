@@ -37,6 +37,7 @@ from config import (
     PRIORITY_STANDARD_HARVEST,
     PRIORITY_URGENT_SURVIVAL,
     PRIORITY_WEED_DIG,
+    PORT_SW,
     SHED_ACCESS_TILES,
     TURNS_PER_DAY,
     log,
@@ -229,7 +230,7 @@ def build_tasks(ctx, macro):
             feed_now = True
         feeds_due += 1 if feed_now else 0
         if t.yield_units > 0:
-            add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_animal")
+            add(PRIORITY_STANDARD_HARVEST + 5, "HARVEST", t.pos, kind="harvest_animal")
         if t.fertilizer_available:
             add(PRIORITY_FERT_COLLECT, "COLLECT_FERTILIZER", t.pos, kind="fert")
         want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
@@ -320,6 +321,17 @@ def assign_tasks(tasks, ctx, extra_units=()):
             return set(holders.get("WHEAT", []))
         return None                                  # no restriction
 
+    # Rule W1: Dedicated SW Squad partitioning
+    sw_unlocked = "SW" in farm.unlocked
+    n_units = len(units)
+    if sw_unlocked and n_units >= 5:
+        sw_squad_size = 5 if n_units >= 13 else 4
+        sw_units = set(range(n_units - sw_squad_size, n_units))
+        non_sw_units = set(range(n_units)) - sw_units
+    else:
+        sw_units = set()
+        non_sw_units = set(range(n_units))
+
     busy = set()
     assignment = {}          # unit_idx -> task
     deferred_place = []
@@ -332,18 +344,45 @@ def assign_tasks(tasks, ctx, extra_units=()):
         # Explicit locked-quadrant task guard: never assign operations on locked land
         if task["op"] not in ("PICKUP", "PASS") and farm.quadrant_of(target) not in farm.unlocked:
             continue
+
+        is_sw_task = (farm.quadrant_of(target) == "SW")
+
+        # Partitioned candidate selection (Rule W1)
+        if sw_units:
+            if is_sw_task:
+                # SW tasks prefer SW squad
+                cand_idxs = [u[0] for u in units if u[0] in sw_units and u[0] not in busy]
+                if not cand_idxs:
+                    cand_idxs = [u[0] for u in units if u[0] not in busy]
+            else:
+                # Non-SW tasks prefer NW/NE squad
+                cand_idxs = [u[0] for u in units if u[0] in non_sw_units and u[0] not in busy]
+                if not cand_idxs:
+                    cand_idxs = [u[0] for u in units if u[0] not in busy]
+        else:
+            cand_idxs = [u[0] for u in units if u[0] not in busy]
+
+        if eligible is not None:
+            preferred = [idx for idx in cand_idxs if idx in eligible]
+            if preferred:
+                cand_idxs = preferred
+            else:
+                cand_idxs = [idx for idx in eligible if idx not in busy]
+
         best, best_d = None, 10 ** 9
-        for idx, pos in units:
-            if idx in busy:
-                continue
-            if eligible is not None and idx not in eligible:
-                continue
+        for idx in cand_idxs:
+            pos = pos_by_idx[idx]
             d = abs(pos[0] - target[0]) + abs(pos[1] - target[1])
             if d < best_d:
                 best, best_d = idx, d
         if best is None:
             continue
         busy.add(best)
+
+        # Rule W2: SW squad hands anchor shed PICKUP at PORT_SW
+        if best in sw_units and task.get("op") == "PICKUP" and task.get("target") in SHED_ACCESS_TILES:
+            task["target"] = PORT_SW
+
         task["unit_pos"] = pos_by_idx[best]
         assignment[best] = task
 
@@ -352,13 +391,22 @@ def assign_tasks(tasks, ctx, extra_units=()):
     unassigned_units = [idx for idx, _ in units if idx not in busy]
     if unassigned_units:
         targeted_positions = {tuple(t["target"]) for t in assignment.values() if t.get("target")}
-        
+
+        def _pick_best_unit(cands, target_pos):
+            return min(cands, key=lambda u: abs(pos_by_idx[u][0] - target_pos[0]) + abs(pos_by_idx[u][1] - target_pos[1]))
+
         # 1. Fallback: collect any available fertilizer
         for t in farm.iter_tiles():
             if not unassigned_units:
                 break
             if t.is_animal and t.fertilizer_available and tuple(t.pos) not in targeted_positions:
-                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
+                if sw_units:
+                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
+                    cands = pref if pref else unassigned_units
+                else:
+                    cands = unassigned_units
+                best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 task = {"priority": 10, "op": "COLLECT_FERTILIZER", "target": tuple(t.pos),
@@ -371,7 +419,13 @@ def assign_tasks(tasks, ctx, extra_units=()):
             if not unassigned_units:
                 break
             if t.is_plant and not t.watered_today and tuple(t.pos) not in targeted_positions:
-                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
+                if sw_units:
+                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
+                    cands = pref if pref else unassigned_units
+                else:
+                    cands = unassigned_units
+                best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 task = {"priority": 10, "op": "WATER", "target": tuple(t.pos),
@@ -384,13 +438,31 @@ def assign_tasks(tasks, ctx, extra_units=()):
             if not unassigned_units:
                 break
             if t.kind == "WEED" and farm.quadrant_of(t.pos) in farm.unlocked and tuple(t.pos) not in targeted_positions:
-                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
+                if sw_units:
+                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
+                    cands = pref if pref else unassigned_units
+                else:
+                    cands = unassigned_units
+                best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 task = {"priority": 5, "op": "DIG", "target": tuple(t.pos),
                         "args": [], "kind": "fallback_dig", "meta": {}, "unit_pos": pos_by_idx[best_u]}
                 assignment[best_u] = task
                 targeted_positions.add(tuple(t.pos))
+
+        # Rule W2 anchor: Send remaining idle SW squad hands to PORT_SW
+        if sw_units:
+            for u in list(unassigned_units):
+                if u in sw_units:
+                    pos = pos_by_idx[u]
+                    if pos != PORT_SW:
+                        task = {"priority": 1, "op": "PASS", "target": PORT_SW,
+                                "args": [], "kind": "sw_anchor", "meta": {}, "unit_pos": pos}
+                        assignment[u] = task
+                        busy.add(u)
+                        unassigned_units.remove(u)
 
     actions = {idx: ["PASS"] for idx in range(len(units))}
     for idx, task in assignment.items():

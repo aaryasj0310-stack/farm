@@ -43,7 +43,7 @@ PRODUCTS = ["WHEAT", "CARROT", "TOMATO", "STRAWBERRY", "MELON",
 ANIMAL_LIST = list(ANIMALS)
 
 MARKET_I0 = 10000
-STARTING_MONEY = 1000
+STARTING_MONEY = 3000
 PRICE_FLOOR = 1
 MARKET_PARAMS = {
     "WHEAT":      {"base": 25,  "T": 400, "bf": "sqrt",  "bt": 0.80, "af": "log",    "at": 0.20},
@@ -74,14 +74,14 @@ PRIORITY_URGENT_SURVIVAL = 100
 PRIORITY_DECAY_HARVEST = 90
 PRIORITY_FEED_STAGING = 86       # PICKUP wheat so upcoming FEEDs can execute
 PRIORITY_PROD_DAY_FEED = 85
+PRIORITY_FERT_COLLECT = 75       # daily $100 cash per animal; elevated priority
 PRIORITY_PLANT_AND_WATER = 75    # plant seeds early so crops get full-day growth
 PRIORITY_BONUS_WATER = 70
+PRIORITY_CARE_ANIMAL = 65        # multiplies cow/sheep yield to 6/3 and 6/4; daily care essential
 PRIORITY_STANDARD_HARVEST = 65
+PRIORITY_PLACE_ANIMAL = 84       # immediate pickup and placement of purchased livestock
+PRIORITY_BUILD_STRUCTURE = 78     # build planned pastures so animals can be placed without delay
 PRIORITY_FERTILIZE_CROP = 60
-PRIORITY_FERT_COLLECT = 55       # fertilizer doesn't decay; collect across day
-PRIORITY_CARE_ANIMAL = 50
-PRIORITY_PLACE_ANIMAL = 45
-PRIORITY_BUILD_STRUCTURE = 40
 PRIORITY_WEED_DIG = 20
 
 # ------------------------------------------------------------- policy -------
@@ -103,13 +103,13 @@ DRIP_PRICE_KEEP_FRAC = {           # per-product keep-fraction while slicing
 }
 HOLD_AT_FLOOR_PRODUCTS = {"MELON", "STRAWBERRY", "MILK", "WOOL"}
 
-FEED_WHEAT_BUFFER_DAYS = 2        # keep >= animals * N days of feed wheat
-BUY_WHEAT_TRIGGER_DAYS = 1.5
+FEED_WHEAT_BUFFER_DAYS = 4        # keep >= animals * 4 days of feed wheat (bridges 4-day wheat cycle)
+BUY_WHEAT_TRIGGER_DAYS = 2.0
 
 # Phase knobs
-PHASE1_WHEAT_TILES = 2            # NW wheat for day-4 cash + animal feed
-PHASE1_MELON_TILES_NW = 4
-PHASE1_GEESE_DAY0_2 = 6
+PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
+PHASE1_MELON_TILES_NW = 12        # NW melons for day-10 cash surge (Leader springboard)
+PHASE1_GEESE_DAY0_2 = 0            # Zero Geese policy: geese produce low-margin eggs
 MELON_PLANT_LAST_DAY_FERT = 17    # last planting that still harvests by 29
 MELON_PLANT_LAST_DAY = 19
 
@@ -125,22 +125,20 @@ LAND_ROI_THRESHOLD = 1.5       # minimum lifetime_profit / price ratio
 LAND_BUY_LAST_DAY = 20         # hard cutoff — land bought after Day 20 can't pay back
 
 # Static crop caps — safety net to prevent monoculture if scoring has bugs.
-# Portfolio-aware scoring (Fix 3) is the primary diversification mechanism.
-# Static crop caps — safety net to prevent monoculture if scoring has bugs.
 # Portfolio-aware scoring is the primary diversification mechanism.
 CROP_TILE_CAPS = {
     "WHEAT": 99,        # no cap — wheat is the backbone
     "CARROT": 16,       # diversified cash crop
     "TOMATO": 16,       # high value ongoing
     "STRAWBERRY": 20,   # high value ongoing (expanded for leader-style production)
-    "MELON": 10,        # max 10 tiles (leader-style early high-value harvest)
+    "MELON": 12,        # max 12 tiles (leader-style early high-value harvest)
 }
 FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
 
 # Animal expansion targets (tiles), adjusted dynamically by land/feed/labor/money.
-TARGET_GEESE = 2
+TARGET_GEESE = 0
 TARGET_COWS = 6
-TARGET_SHEEP = 4
+TARGET_SHEEP = 12
 ANIMAL_EXPANSION_HORIZON_DAYS = 14   # ramp projection window
 MAX_ANIMAL_BUYS_PER_DAY = 2          # max new animals placed per day
 
@@ -154,7 +152,9 @@ CROP_DIVERSIFICATION_FACTOR = {
 # --- market layer (order_builder / market_brain / endgame_liquidator) ------
 MIN_CARRY_GAIN = 0.02          # hold only if E[P|+H] exceeds spot by >2%
 CARRY_HORIZON_DAYS = 3         # recovery look-ahead for hold decisions
-SHED_SOFT_CAP = 80             # start liquidating when shed nears 100 cap
+SHED_SOFT_CAP = 65             # start emergency liquidation when shed reaches 65 (Leader heuristic)
+SHED_RESUME_CAP = 55           # resume normal sell windows once shed falls <= 55
+MELON_SEASON_SALE_CAP = 150    # maximum cumulative melons to sell before quadratic price cliff
 ENDGAME_RISK_DAYS = 3          # days_left below this => aggressive dumping
 FLOOR_HOLD_MIN_DAYS_LEFT = 5   # hold $1-floored stock only if recovery time
 MIN_SLICE_QTY = 1              # smallest sell slice per product per window
@@ -181,8 +181,9 @@ def log(msg):
 DAY_TO_HANDS = {
     0: 4,    # Days 0-5: 4 hands (120 actions/day)
     6: 8,    # Days 6-8: 8 hands (216 actions/day)
-    9: 10,   # Day 9: 10 hands (264 actions/day)
-    10: 12,  # Days 10-29: 12 hands (312 actions/day)
+    9: 8,    # Day 9: 8 hands ($54/day) - saves $89 on SW unlock day
+    10: 10,  # Day 10: 10 hands ($143/day)
+    11: 12,  # Days 11-29: 12 hands ($376/day)
     30: 0,   # Day 30: 0 hands (main farmer only)
 }
 
@@ -204,12 +205,12 @@ def get_actions_available(day):
 # Quadrant numbering: NW=1 (starting), NE=2 ($1k), SW=3 ($2k), SE=4 ($4k)
 # Strategy: Only buy quadrants 1-3 (75 tiles). NEVER buy quadrant 4.
 QUADRANT_UNLOCK_DAYS = {
-    2: 6,    # Quadrant 2 (NE): buy on day 6 (pre-buy day 5)
+    2: 3,    # Quadrant 2 (NE): buy on days 3-5 (Leader heuristic: cash >= 1400)
     3: 9,    # Quadrant 3 (SW): buy on day 9 (pre-buy day 8)
 }
 QUADRANT_MONEY_THRESHOLDS = {
-    2: 1500,  # Need >= $1,500 to buy Q2 ($1,000 land + $500 buffer)
-    3: 2450,  # Need >= $2,450 to buy Q3 ($2,000 land + $143 hires + $300 buffer)
+    2: 1400,  # Need >= $1,400 to buy Q2 ($1,000 land + $400 seed/ops float)
+    3: 2204,  # Need >= $2,204 to buy Q3 ($2,000 land + $150 escrow + $54 hires)
 }
 QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
 
@@ -224,22 +225,22 @@ MELON_PLANT_DEADLINE = 17        # max_yield_day=12; 29-12=17
 # Seed pre-purchase lead days (buy seeds N days before land unlock)
 PRE_BUY_LEAD_DAYS = 1
 
-# SW expansion seed targets (tunable for A/B testing)
+# SW expansion seed targets & geometry constants
+SW_ESCROW_AMOUNT = 150           # 15 wheat seeds * $10 (Rule P1)
+PORT_SW = (4, 5)                 # Shed-access tile inside SW; squad anchor
+SW_SOIL_TILES = {(x, y) for x in range(5) for y in range(7, 10)}  # 15 tiles (rows 7,8,9)
+SW_PASTURE_TILES = {(x, 5) for x in range(4)} | {(x, 6) for x in range(5)}  # 9 tiles (rows 5,6)
+
 SW_SEED_TARGETS = {
-    "STRAWBERRY": 8,   # primary high-value crop for SW
-    "TOMATO": 4,       # secondary ongoing crop
+    "WHEAT": 15,                 # strictly WHEAT for animal feed engine (Rule P5)
 }
 NE_SEED_TARGETS = {
-    "CARROT": 8,       # fast cash crop for NE
-    "TOMATO": 4,       # secondary ongoing crop
+    "CARROT": 8,                 # fast cash crop for NE
+    "TOMATO": 4,                 # secondary ongoing crop
 }
 
-# SW treasury minimum: land + seeds + feed + reserve
-# This is the MINIMUM cash required before buying SW — non-negotiable
-SW_TREASURY_SEED_COST = (
-    SW_SEED_TARGETS.get("STRAWBERRY", 8) * 100 +   # strawberry seeds
-    SW_SEED_TARGETS.get("TOMATO", 4) * 50           # tomato seeds
-)
+# SW treasury seed cost: exactly the $150 escrow
+SW_TREASURY_SEED_COST = 150
 
 # ====================================================================
 # v5.11: Dynamic strawberry cap — deadline-consistent
@@ -267,55 +268,51 @@ def get_strawberry_cap(day, land_purchased=False):
 
 
 # ====================================================================
-# v5.11: Dynamic SW seed tranche — deadline-aware
+# v5.11 / v6.0: SW seed targets — Whitelist & Transition
 # ====================================================================
 
-def get_sw_seed_targets(day, money, land_cost=2000):
-    """Dynamic SW seed targets — never recommend strawberry after Day 13.
+def get_sw_seed_targets(day, money=0, land_cost=2000):
+    """SW seed targets: strictly WHEAT (D9-24) and CARROT (D25-27).
 
-    Rationale:
-    - Day 0-8: Full mix (8 strawberry + 4 tomato = 12 tiles)
-    - Day 9-12: Strawberry-heavy (10 strawberry + 2 tomato = 12 tiles)
-    - Day 13: Strawberry-only (12 strawberry = 12 tiles) — last day
-    - Day 14+: Tomato-only (6 tomato = 6 tiles) — no strawberry after deadline
-
-    Treasury constraint: Only buy what we can afford after land cost.
+    Rule P5: Eliminates strawberry/tomato capital trap and Day 13 lockout.
     """
-    seed_budget = max(0, money - land_cost - 300)  # 300 = reserve
-
-    if day <= 8:
-        targets = {"STRAWBERRY": 8, "TOMATO": 4}
-    elif day <= 12:
-        targets = {"STRAWBERRY": 10, "TOMATO": 2}
-    elif day == 13:
-        targets = {"STRAWBERRY": 12, "TOMATO": 0}
+    if day <= 24:
+        return {"WHEAT": 15}
+    elif day <= 27:
+        return {"CARROT": 15}
     else:
-        targets = {"STRAWBERRY": 0, "TOMATO": 6}
+        return {}
 
-    # Treasury constraint: reduce if can't afford
-    total_cost = sum(CROPS[c]["seed"] * n for c, n in targets.items())
-    if total_cost > seed_budget and seed_budget >= 0:
-        scale = seed_budget / max(1, total_cost)
-        targets = {c: max(0, int(n * scale)) for c, n in targets.items()}
-
-    return targets
-
+# Animal scaling targets by workforce size (hands count)
+# Maps hands_count -> (target_geese, target_cows, target_sheep)
 # Animal scaling targets by workforce size (hands count)
 # Maps hands_count -> (target_geese, target_cows, target_sheep)
 ANIMAL_SCALING = {
     4:  (0, 2, 2),    # Days 0-5: 2 cows + 2 sheep (leader opening)
-    8:  (2, 4, 4),    # Days 6-8: 2 geese + 4 cows + 4 sheep = 10 animals
-    10: (3, 6, 6),    # Day 9: 3 geese + 6 cows + 6 sheep = 15 animals
-    12: (4, 8, 8),    # Days 10-29: 4 geese + 8 cows + 8 sheep = 20 animals
+    8:  (0, 4, 4),    # Days 6-8: 4 cows + 4 sheep = 8 animals
+    10: (0, 5, 8),    # Day 9: 5 cows + 8 sheep = 13 animals
+    12: (0, 6, 12),   # Days 10-29: 6 cows + 12 sheep = 18 animals
 }
 
-def get_animal_targets(hands):
-    """Return (geese, cows, sheep) targets based on current hands count."""
-    result = (0, 0, 0)
-    for h in sorted(ANIMAL_SCALING.keys()):
-        if hands >= h:
-            result = ANIMAL_SCALING[h]
-    return result
+def get_animal_targets(day=None, money=None, shed_wheat=None, current_animals=None, max_pastures=20, hands=None):
+    """Return animal targets. Supports both legacy hands count signature and full Astra heuristic."""
+    if hands is not None:
+        result = (0, 0, 0)
+        for h in sorted(ANIMAL_SCALING.keys()):
+            if hands >= h:
+                result = ANIMAL_SCALING[h]
+        return result
+    if money is not None:
+        from strategy.animal_planner import get_animal_targets as _astra_targets
+        return _astra_targets(day, money, shed_wheat, current_animals, max_pastures=max_pastures)
+    if day is not None and isinstance(day, int) and day in ANIMAL_SCALING:
+        result = (0, 0, 0)
+        for h in sorted(ANIMAL_SCALING.keys()):
+            if day >= h:
+                result = ANIMAL_SCALING[h]
+        return result
+    from strategy.animal_planner import get_animal_targets as _astra_targets
+    return _astra_targets(day or 0, money or 0, shed_wheat or 0, current_animals or {}, max_pastures=max_pastures)
 
 # Sell batch sizes by phase
 SELL_BATCH_SIZES = {
@@ -8964,6 +8961,661 @@ def _compute_counter_pick(boosts, opp_state):
 # END MODULE: strategy/opponent_advisor.py
 # ===========================================================================
 
+"""v5.11: Expansion Planner — deadline-aware land valuation, dynamic ROI,
+treasury protection, seed pre-purchase, and crop-eligibility-driven urgency.
+
+Sits between MacroPlanner and OrderBuilder. Connects capital → land → seed →
+production → revenue as one integrated strategic loop.
+
+Core invariants:
+  - SW deadline (Day 13) is STATIC and absolute — never re-derived.
+  - Treasury safety is NON-NEGOTIABLE — high urgency triggers treasury
+    hoarding, NOT a looser purchase gate.
+  - Pre-buy seeds only from surplus AFTER current production is funded.
+  - Expansion tranche is a priority layer inside existing plant_queue,
+    not a competing planting system.
+  - Land decision = economic ROI + time-window urgency + treasury feasibility.
+"""
+
+
+
+
+# ---------------------------------------------------------------------------
+# Deadline helpers
+# ---------------------------------------------------------------------------
+
+def days_to_crop_deadline(crop, current_day):
+    """Days remaining until the crop's planting deadline passes.
+
+    Returns positive if still valid, zero/negative if deadline passed.
+    Uses static deadlines — no recomputation from crop params.
+    """
+    if crop == "STRAWBERRY":
+        return STRAWBERRY_PLANT_DEADLINE - current_day
+    if crop == "MELON":
+        return MELON_PLANT_DEADLINE - current_day
+    # One-time crops: deadline = 29 - max_yield_day
+    cd = CROPS[crop]
+    if cd["ongoing"]:
+        last_harvest = cd["first_yield_day"] + (cd["max_yield"] - 1) * cd["interval"]
+    else:
+        last_harvest = cd["max_yield_day"]
+    return (SEASON_DAYS - 1) - last_harvest - current_day
+
+
+def expansion_seed_targets(next_quadrant, day=None, money=None, land_cost=2000):
+    """Return {crop: count} seed targets for the given quadrant.
+
+    v6.0: For SW (Q3), strictly returns WHEAT (D9-24) or CARROT (D25-27).
+    """
+    if next_quadrant == 3:
+        return get_sw_seed_targets(day if day is not None else 9, money, land_cost)
+    if next_quadrant == 2:
+        return dict(NE_SEED_TARGETS)
+    return {}
+
+
+# ---------------------------------------------------------------------------
+# Dynamic land ROI estimation (Marginal Profit Formulation)
+# ---------------------------------------------------------------------------
+
+TILES_PER_QUADRANT = 25  # 5x5 grid per quadrant
+
+
+def _estimate_crop_revenue_per_tile(crop, plant_day, current_day,
+                                     forecast, n_own_tiles=0, n_opp_tiles=0):
+    """Estimate expected net profit per tile for a crop planted on plant_day.
+
+    Uses the crop's harvest schedule and expected market prices from PriceForecast.
+    Accurately accounts for seed costs and fertilizer applications per cycle.
+    Returns (net_profit, total_units).
+    """
+    cd = CROPS[crop]
+    econ = CROP_ECONOMICS[crop]
+    fert_apps = econ.get("apps", 0)
+    fert_cost_per_app = 25.0
+    fert_cost_per_cycle = fert_apps * fert_cost_per_app
+    seed_cost_per_cycle = cd["seed"]
+
+    total_net = 0.0
+    total_units = 0
+
+    if cd["ongoing"]:
+        # Ongoing crop (Tomato, Strawberry): planted once, harvested up to max_yield times
+        h_days = []
+        d = plant_day + cd["first_yield_day"]
+        for _ in range(cd["max_yield"]):
+            if d <= 29:
+                h_days.append(d)
+            d += cd["interval"]
+
+        future_harvests = [h for h in h_days if h >= current_day]
+        if not future_harvests:
+            return 0.0, 0
+
+        # Fertilized ongoing crops yield 2 units per harvest (1 unit unfertilized)
+        units_per_harvest = 2 if fert_apps > 0 else 1
+        gross_revenue = 0.0
+        for h in future_harvests:
+            price = forecast.expected_price(crop, h)
+            gross_revenue += units_per_harvest * price
+            total_units += units_per_harvest
+
+        # Deduct seed and fertilizer cost once for the ongoing crop lifecycle
+        net_profit = gross_revenue - seed_cost_per_cycle - fert_cost_per_cycle
+        return net_profit, total_units
+
+    else:
+        # One-time crop (Wheat, Carrot, Melon): replanted across remaining season
+        cycle_len = CROP_CYCLE_LEN[crop]
+        cycle_start = plant_day
+        units_per_harvest = cd["max_yield"]
+
+        while cycle_start <= 25 and cycle_start + cd["max_yield_day"] <= 29:
+            harvest_day = cycle_start + cd["max_yield_day"]
+            if harvest_day >= current_day:
+                price = forecast.expected_price(crop, harvest_day)
+                rev = units_per_harvest * price
+                cycle_cost = seed_cost_per_cycle + fert_cost_per_cycle
+                total_net += (rev - cycle_cost)
+                total_units += units_per_harvest
+            cycle_start += cycle_len
+
+        return total_net, total_units
+
+
+def _allocate_portfolio_profit(n_tiles, current_day, forecast, is_sw_available=False):
+    """Heuristically allocate up to n_tiles among eligible crops to maximize profit.
+
+    Returns (total_expected_profit, allocation_dict).
+    Respects CROP_TILE_CAPS and dynamic strawberry caps.
+    """
+    if n_tiles <= 0 or current_day > 25:
+        return 0.0, {}
+
+    from config import get_strawberry_cap
+
+    scored_crops = []
+    for crop in CROPS:
+        if not _crop_allowed_quick(crop, current_day):
+            continue
+        net_profit, _ = _estimate_crop_revenue_per_tile(
+            crop, current_day, current_day, forecast)
+        if net_profit <= 0:
+            continue
+
+        if crop == "STRAWBERRY":
+            cap = get_strawberry_cap(current_day, is_sw_available)
+        else:
+            cap = CROP_TILE_CAPS.get(crop, 99)
+
+        if cap > 0:
+            scored_crops.append((crop, net_profit, cap))
+
+    # Sort crops by expected net profit per tile (highest first)
+    scored_crops.sort(key=lambda x: -x[1])
+
+    remaining_tiles = n_tiles
+    total_profit = 0.0
+    allocation = {}
+
+    for crop, profit_per_tile, cap in scored_crops:
+        alloc = min(remaining_tiles, cap)
+        if alloc > 0:
+            allocation[crop] = alloc
+            total_profit += alloc * profit_per_tile
+            remaining_tiles -= alloc
+        if remaining_tiles <= 0:
+            break
+
+    return total_profit, allocation
+
+
+def _candidate_crop_mix_for_quadrant(next_quadrant, current_day, forecast,
+                                      n_tiles=TILES_PER_QUADRANT, n_own_tiles=0, n_opp_tiles=0):
+    """Generate candidate crop mixes for a quadrant.
+
+    Returns list of (mix_dict, avg_revenue_per_tile, total_revenue).
+    """
+    is_sw = (next_quadrant == 3)
+    profit, mix = _allocate_portfolio_profit(n_tiles, current_day, forecast, is_sw_available=is_sw)
+    if not mix or profit <= 0:
+        return []
+    avg_rev = profit / max(1, sum(mix.values()))
+    return [(mix, avg_rev, profit)]
+
+
+def _crop_allowed_quick(crop, day):
+    """Fast crop eligibility check without importing macro_planner."""
+    if day > 25:
+        return False
+    cd = CROPS[crop]
+    if cd["ongoing"]:
+        last_harvest = cd["first_yield_day"] + (cd["max_yield"] - 1) * cd["interval"]
+    else:
+        last_harvest = cd["max_yield_day"]
+    if day + last_harvest > 29:
+        return False
+    if crop == "STRAWBERRY":
+        return day <= STRAWBERRY_PLANT_DEADLINE  # Day 13
+    if crop == "MELON":
+        return day <= MELON_PLANT_DEADLINE  # Day 17
+    return True
+
+
+def evaluate_sw_timing(current_day, forecast, n_tiles=TILES_PER_QUADRANT):
+    """Compare buying SW today vs waiting 1 day.
+
+    Estimates:
+      1. buy_today_value: expected profit from allocating SW tiles on current_day
+      2. wait_1_day_value: expected profit from allocating SW tiles on current_day + 1
+      3. delay_value: opportunity cost lost by delaying purchase by 1 day (buy_today_value - wait_1_day_value)
+
+    Returns (buy_today_value, wait_1_day_value, delay_value, details).
+    """
+    buy_today_val, mix_today = _allocate_portfolio_profit(
+        n_tiles, current_day, forecast, is_sw_available=True)
+
+    wait_1_day_val, mix_tomorrow = _allocate_portfolio_profit(
+        n_tiles, min(29, current_day + 1), forecast, is_sw_available=True)
+
+    delay_val = max(0.0, buy_today_val - wait_1_day_val)
+
+    details = {
+        "current_day": current_day,
+        "buy_today_value": round(buy_today_val, 1),
+        "wait_1_day_value": round(wait_1_day_val, 1),
+        "delay_value": round(delay_val, 1),
+        "mix_today": mix_today,
+        "mix_tomorrow": mix_tomorrow,
+        "strawberry_tiles_today": mix_today.get("STRAWBERRY", 0),
+        "strawberry_tiles_tomorrow": mix_tomorrow.get("STRAWBERRY", 0),
+    }
+    return buy_today_val, wait_1_day_val, delay_val, details
+
+
+def compute_land_roi(next_quadrant, current_day, money, farm, forecast,
+                     n_own_tiles=0, n_opp_tiles=0):
+    """Estimate marginal expected profit and ROI of buying the next quadrant today.
+
+    Calculates:
+      profit_with_new_land - profit_without_new_land - land_cost
+
+    roi = (incremental_profit - land_cost) / land_cost
+    roi > 0.0 means the incremental revenue generated by the new land exceeds
+    its purchase price.
+    """
+    if next_quadrant not in QUADRANT_UNLOCK_DAYS:
+        return 0.0, {"reason": "no_schedule"}
+
+    unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
+    if current_day < unlock_day:
+        return 0.0, {"reason": f"before_unlock_{unlock_day}"}
+
+    n_extra = len(farm.unlocked) - 1
+    if n_extra >= len(LAND_PRICES):
+        return 0.0, {"reason": "all_unlocked"}
+    land_price = LAND_PRICES[n_extra]
+
+    # Time remaining for production
+    days_left = 29 - current_day
+    if days_left <= 0:
+        return 0.0, {"reason": "season_over"}
+
+    # Available crop tiles on current land vs expanded land
+    n_curr_quadrants = len(farm.unlocked)
+    total_curr_tiles = n_curr_quadrants * TILES_PER_QUADRANT
+    
+    occupied = 0
+    if hasattr(farm, "iter_tiles"):
+        occupied = sum(1 for t in farm.iter_tiles()
+                       if getattr(t, "is_animal", False) or getattr(t, "kind", None) in ("COOP", "PASTURE"))
+
+    t_without = max(0, total_curr_tiles - occupied)
+    t_with = t_without + TILES_PER_QUADRANT
+
+    # Evaluate profit without new land
+    is_sw_curr = ("SW" in farm.unlocked)
+    profit_without, mix_without = _allocate_portfolio_profit(
+        t_without, current_day, forecast, is_sw_available=is_sw_curr)
+
+    # Evaluate profit with new land
+    is_sw_with = is_sw_curr or (next_quadrant == 3)
+    profit_with, mix_with = _allocate_portfolio_profit(
+        t_with, current_day, forecast, is_sw_available=is_sw_with)
+
+    # Incremental profit caused specifically by the additional 25 tiles
+    marginal_revenue_gain = max(0.0, profit_with - profit_without)
+    expected_profit = marginal_revenue_gain - land_price
+    roi = expected_profit / max(1, land_price)
+
+    # Expanded mix delta (which crops are allocated to the new tiles)
+    mix_delta = {}
+    for c in set(mix_with) | set(mix_without):
+        d_tiles = mix_with.get(c, 0) - mix_without.get(c, 0)
+        if d_tiles > 0:
+            mix_delta[c] = d_tiles
+
+    # Dynamic SW timing comparison (Buy Today vs Wait 1 Day)
+    buy_today_val, wait_1_day_val, delay_val = marginal_revenue_gain, 0.0, 0.0
+    sw_timing_info = {}
+    if next_quadrant == 3:
+        buy_today_val, wait_1_day_val, delay_val, sw_timing_info = evaluate_sw_timing(
+            current_day, forecast, n_tiles=TILES_PER_QUADRANT)
+
+    return roi, {
+        "land_price": land_price,
+        "profit_without_land": round(profit_without, 0),
+        "profit_with_land": round(profit_with, 0),
+        "marginal_revenue_gain": round(marginal_revenue_gain, 0),
+        "expected_profit": round(expected_profit, 0),
+        "roi": round(roi, 2),
+        "best_mix": mix_delta or mix_with,
+        "mix_with": mix_with,
+        "mix_without": mix_without,
+        "days_left": days_left,
+        "t_without": t_without,
+        "t_with": t_with,
+        "buy_today_value": round(buy_today_val, 1),
+        "wait_1_day_value": round(wait_1_day_val, 1),
+        "delay_value": round(delay_val, 1),
+        "sw_timing": sw_timing_info,
+    }
+
+
+def opportunity_window_factor(next_quadrant, current_day):
+    """Time-window factor based on planting viability window.
+
+    Returns 1.0 when the season permits profitable production,
+    and 0.0 when no productive planting window remains.
+    """
+    if current_day > 25:
+        return 0.0  # planting stops after Day 25
+
+    if next_quadrant == 3:
+        # SW primary crop is Strawberry (deadline Day 13)
+        # When current_day <= 13, window is fully open.
+        # After Day 13, Strawberry cap becomes 0, but other crops (Tomato, Carrot)
+        # can still be evaluated cleanly by compute_land_roi.
+        return 1.0
+    elif next_quadrant == 2:
+        return 1.0
+
+    return 1.0
+
+
+# ---------------------------------------------------------------------------
+# Land urgency
+# ---------------------------------------------------------------------------
+
+def compute_land_urgency(next_quadrant, current_day, money, farm,
+                         current_commitments=0):
+    """Deadline-aware urgency for purchasing the next quadrant.
+
+    Returns (urgency: float 0..1, reason: str, info: dict).
+
+    Urgency is driven by days_to_deadline for the quadrant's key crop.
+    High urgency triggers treasury HOARDING (cut discretionary spending),
+    NOT a looser purchase gate. The purchase gate is always:
+        money >= land_price + current_commitments + seed_tranche + reserve
+    """
+    if next_quadrant not in QUADRANT_UNLOCK_DAYS:
+        return 0.0, "no_unlock_schedule", {}
+
+    unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
+    threshold = QUADRANT_MONEY_THRESHOLDS[next_quadrant]
+    n_extra = len(farm.unlocked) - 1
+    if n_extra >= len(LAND_PRICES):
+        return 0.0, "all_quadrants_unlocked", {}
+    land_price = LAND_PRICES[n_extra]
+
+    # Static deadline for the quadrant's key crop / payback window
+    if next_quadrant == 3:
+        deadline = 11  # Rule P2: pasture/fertilizer window requires unlock by Day 11
+    elif next_quadrant == 2:
+        deadline = MELON_PLANT_DEADLINE  # NE is less deadline-sensitive
+    else:
+        deadline = SEASON_DAYS - 1
+
+    days_to_deadline = deadline - current_day
+
+    # Seed tranche cost for this quadrant
+    targets = expansion_seed_targets(next_quadrant, current_day)
+    seed_cost = sum(CROPS[c]["seed"] * n for c, n in targets.items())
+
+    # Treasury requirement: land + seeds + feed + reserve
+    treasury_requirement = land_price + seed_cost + current_commitments + MONEY_RESERVE_DEFAULT
+
+    if current_day > deadline:
+        urgency = 0.0
+        reason = f"{next_quadrant}_deadline_passed"
+    elif current_day < unlock_day:
+        urgency = 0.1
+        reason = f"before_unlock_day_{unlock_day}"
+    elif days_to_deadline < 0:
+        urgency = 0.0
+        reason = "deadline_expired"
+    elif days_to_deadline <= 2:
+        urgency = 1.0
+        reason = f"critical_{days_to_deadline}_days_left"
+    elif days_to_deadline <= 4:
+        urgency = 0.8
+        reason = f"high_urgency_{days_to_deadline}_days_left"
+    elif money >= treasury_requirement:
+        urgency = 0.6
+        reason = "treasury_ready"
+    else:
+        urgency = 0.3
+        reason = f"building_treasury_need_{treasury_requirement - money:.0f}_more"
+
+    return urgency, reason, {
+        "unlock_day": unlock_day,
+        "threshold": threshold,
+        "land_price": land_price,
+        "deadline": deadline,
+        "days_to_deadline": days_to_deadline,
+        "seed_cost": seed_cost,
+        "treasury_requirement": treasury_requirement,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Purchase gate (non-negotiable treasury safety)
+# ---------------------------------------------------------------------------
+
+def should_buy_land(next_quadrant, current_day, money, farm,
+                    hire_cost=0, feed_cost=0, animal_cost=0,
+                    reserve=MONEY_RESERVE_DEFAULT, roi=0.0,
+                    ow_factor=1.0,
+                    forecast=None, n_own_tiles=0, n_opp_tiles=0):
+    """Determine if land should be purchased TODAY.
+
+    The gate requires:
+      1. Past unlock day
+      2. Money covers land + mandatory commitments + seed tranche + reserve
+      3. adjusted_roi > 0 (land + timing is economically justified)
+
+    v5.11: adjusted_roi = roi × ow_factor
+    If adjusted_roi <= 0, DO NOT BUY regardless of treasury.
+
+    High urgency does NOT loosen the gate. It only triggers treasury hoarding
+    in the macro planner's budget chain.
+    """
+    if next_quadrant not in QUADRANT_UNLOCK_DAYS:
+        return False, "no_schedule", {}
+    if next_quadrant in QUADRANT_HARD_BLOCK:
+        return False, "hard_blocked", {}
+
+    unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
+    if current_day < unlock_day:
+        return False, f"before_day_{unlock_day}", {}
+    if next_quadrant == 3 and current_day > 13:
+        return False, "sw_window_closed_after_day_13", {}
+
+    n_extra = len(farm.unlocked) - 1
+    if n_extra >= len(LAND_PRICES):
+        return False, "all_unlocked", {}
+    land_price = LAND_PRICES[n_extra]
+
+    # Seed tranche cost — use dynamic targets if available
+    targets = expansion_seed_targets(next_quadrant, current_day, money)
+    seed_cost = sum(CROPS[c]["seed"] * n for c, n in targets.items())
+
+    # Mandatory commitments: hires + feed + seeds for current production
+    mandatory = hire_cost + feed_cost + animal_cost
+
+    # Total required: land + mandatory + seed_tranche + reserve
+    total_required = land_price + mandatory + seed_cost + reserve
+
+    # Dynamic SW timing details
+    buy_today_val, wait_1_day_val, delay_val = 0.0, 0.0, 0.0
+    sw_timing_info = {}
+    if next_quadrant == 3 and forecast is not None:
+        buy_today_val, wait_1_day_val, delay_val, sw_timing_info = evaluate_sw_timing(
+            current_day, forecast, n_tiles=TILES_PER_QUADRANT)
+
+    adjusted_roi = roi * ow_factor
+
+    diag_base = {
+        "land_price": land_price,
+        "mandatory": mandatory,
+        "seed_cost": seed_cost,
+        "reserve": reserve,
+        "total_required": total_required,
+        "roi": roi,
+        "ow_factor": ow_factor,
+        "adjusted_roi": adjusted_roi,
+        "buy_today_value": round(buy_today_val, 1),
+        "wait_1_day_value": round(wait_1_day_val, 1),
+        "delay_value": round(delay_val, 1),
+        "sw_timing": sw_timing_info,
+    }
+
+    # Leader heuristic: Early NE land unlock on Days 3-5 when cash >= $1,400
+    if next_quadrant == 2 and 3 <= current_day <= 5 and money >= 1400:
+        return True, "early_ne_leader_unlock", diag_base
+
+    # v5.11: STRICT GATE — adjusted_roi must be positive to buy
+    if adjusted_roi <= 0:
+        return False, f"adjusted_roi_{adjusted_roi:.2f}_non_positive", diag_base
+
+    if money >= total_required:
+        return True, "treasury_sufficient_roi_positive", diag_base
+    else:
+        shortfall = total_required - money
+        diag = dict(diag_base)
+        diag["shortfall"] = shortfall
+        return False, f"short_{shortfall:.0f}", diag
+
+
+# ---------------------------------------------------------------------------
+# Seed pre-purchase (from surplus only)
+# ---------------------------------------------------------------------------
+
+def compute_pre_buy_seeds(next_quadrant, current_day, surplus_money):
+    """Compute seeds to pre-buy for a future land unlock.
+
+    Only purchases from SURPLUS after all current production is funded.
+    If surplus is zero, returns empty dict (seeds wait until unlock day).
+    """
+    if next_quadrant not in QUADRANT_UNLOCK_DAYS:
+        return {}
+    unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
+    if current_day != unlock_day - PRE_BUY_LEAD_DAYS:
+        return {}  # only pre-buy on the exact lead day
+
+    targets = expansion_seed_targets(next_quadrant)
+    result = {}
+    remaining = surplus_money
+
+    for crop, target_n in targets.items():
+        unit_cost = CROPS[crop]["seed"]
+        # Buy as many as surplus allows, up to target
+        affordable = min(target_n, int(remaining // unit_cost))
+        if affordable > 0:
+            result[crop] = affordable
+            remaining -= affordable * unit_cost
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Expansion crop priority (for injection into Phase 2b scoring loop)
+# ---------------------------------------------------------------------------
+
+def expansion_crop_priorities(next_quadrant, current_day):
+    """Return {crop: priority_bias} for the expansion tranche.
+
+    v6.0: For SW (Q3), strictly biases WHEAT (D9-24) and CARROT (D25-27).
+    Higher priority_bias means this crop should be preferred on
+    expansion tiles.
+    """
+    if next_quadrant == 3:
+        if current_day <= 24:
+            return {"WHEAT": 100.0}
+        elif current_day <= 27:
+            return {"CARROT": 100.0}
+        return {}
+
+    if current_day > STRAWBERRY_PLANT_DEADLINE:
+        return {}  # no priority after deadline
+
+    targets = expansion_seed_targets(next_quadrant, current_day)
+    priorities = {}
+    for crop, count in targets.items():
+        dt = days_to_crop_deadline(crop, current_day)
+        if dt <= 2:
+            priorities[crop] = 100.0  # critical — override scoring
+        elif dt <= 4:
+            priorities[crop] = 50.0   # high — strong bias
+        else:
+            priorities[crop] = 10.0   # moderate — mild bias
+
+    return priorities
+
+# ===========================================================================
+# END MODULE: strategy/expansion_planner.py
+# ===========================================================================
+
+"""Kaggriculture livestock targets: bounded, market-aware purchase heuristic.
+
+Corrected engine rules & mechanics:
+* day is 0..29 (Season is 30 days total). Remaining production days R = 29 - day.
+* Gestation / first yield lag: COW takes 8 days, SHEEP takes 6 days.
+* Care bonus: Daily CARE accumulates pending care bonus. COW yields 6 milk on first cycle
+  and 3 milk on subsequent 2-day cycles. SHEEP yields 6 wool on first cycle and 4 wool on
+  subsequent 3-day cycles (capped by max_held = 6).
+* Daily fertilizer ($100 base) drops every day starting day + 1. Net fertilizer profit = (100 - FEED_PRICE) * R.
+* Zero Geese policy: Geese yield low-margin eggs and consume farm capacity. GOOSE target is always 0.
+* Town drainage limits: SHEEP_CAP = 12 (13/day town wool drain), COW_CAP = 19 (19/day town milk drain),
+  HERD_CAP = 20 (20/day fertilizer drain).
+* Spatial pasture capacity: bounded by max_pastures.
+"""
+
+HERD_CAP = 20          # fertilizer clearance, not the 75-tile physical maximum
+SHEEP_CAP = 12         # 3-4 wool / 3 days: <= 12-13/day town wool drain
+COW_CAP = 19           # 2-3 milk / 2 days: <= 19 milk/day town drain
+FEED_PRICE = 25        # conservative market replacement cost
+FEED_BUFFER_DAYS = 3
+
+
+def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20):
+    """Choose the highest modeled incremental terminal profit affordable now.
+
+    O(21**2) worst-case, O(1) extra space; no imports, I/O or randomness.
+    Recompute after actual purchases; execute additions only when housing and
+    care/feed capacity are confirmed. Do not call on unreserved gross cash.
+    """
+    day = int(day)
+    if day < 0:
+        raise ValueError(f"day must be >= 0, got {day}")
+    c0 = max(0, int(current_animals.get("COW", 0)))
+    s0 = max(0, int(current_animals.get("SHEEP", 0)))
+    g0 = max(0, int(current_animals.get("GOOSE", 0)))
+    result = {"COW": c0, "SHEEP": s0, "GOOSE": 0}
+    remaining = max(0, 29 - day)
+    herd = c0 + s0 + g0
+    effective_herd_cap = min(HERD_CAP, int(max_pastures))
+    if remaining == 0 or herd >= effective_herd_cap:
+        return result
+
+    cash = max(0.0, float(money))
+    wheat = max(0, int(shed_wheat))
+    
+    # Accurate yield formulas with gestation lag and care bonus:
+    # COW: first yield at day + 8 (6 milk), then every 2 days (3 milk)
+    milk_units = (6 + 3 * ((remaining - 8) // 2)) if remaining >= 8 else 0
+    # SHEEP: first yield at day + 6 (6 wool), then every 3 days (4 wool)
+    wool_units = (6 + 4 * ((remaining - 6) // 3)) if remaining >= 6 else 0
+    
+    cow_profit = 160 * milk_units + (100 - FEED_PRICE) * remaining - 400
+    sheep_profit = 200 * wool_units + (100 - FEED_PRICE) * remaining - 500
+    
+    room = effective_herd_cap - herd
+    max_c = min(room, max(0, COW_CAP - c0)) if cow_profit > 0 else 0
+    max_s = min(room, max(0, SHEEP_CAP - s0)) if sheep_profit > 0 else 0
+    
+    best_profit = 0
+    best_spend = 0
+    for add_s in range(max_s + 1):
+        for add_c in range(min(max_c, room - add_s) + 1):
+            purchase_cost = 500 * add_s + 400 * add_c
+            feed_reserve = FEED_PRICE * max(
+                0, min(FEED_BUFFER_DAYS, remaining) * (herd + add_s + add_c) - wheat
+            )
+            if purchase_cost + feed_reserve > cash:
+                continue
+            profit = add_s * sheep_profit + add_c * cow_profit
+            if profit > best_profit or (profit == best_profit and purchase_cost < best_spend):
+                best_profit = profit
+                best_spend = purchase_cost
+                result = {"COW": c0 + add_c, "SHEEP": s0 + add_s, "GOOSE": 0}
+    return result
+
+# ===========================================================================
+# END MODULE: strategy/animal_planner.py
+# ===========================================================================
+
 """BFS pathfinding on the 10x10 farm grid.
 
 LOCKED tiles are fully PASSABLE traversal nodes (mechanic: movement onto
@@ -9297,7 +9949,7 @@ def build_tasks(ctx, macro):
             feed_now = True
         feeds_due += 1 if feed_now else 0
         if t.yield_units > 0:
-            add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_animal")
+            add(PRIORITY_STANDARD_HARVEST + 5, "HARVEST", t.pos, kind="harvest_animal")
         if t.fertilizer_available:
             add(PRIORITY_FERT_COLLECT, "COLLECT_FERTILIZER", t.pos, kind="fert")
         want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
@@ -9388,6 +10040,17 @@ def assign_tasks(tasks, ctx, extra_units=()):
             return set(holders.get("WHEAT", []))
         return None                                  # no restriction
 
+    # Rule W1: Dedicated SW Squad partitioning
+    sw_unlocked = "SW" in farm.unlocked
+    n_units = len(units)
+    if sw_unlocked and n_units >= 5:
+        sw_squad_size = 5 if n_units >= 13 else 4
+        sw_units = set(range(n_units - sw_squad_size, n_units))
+        non_sw_units = set(range(n_units)) - sw_units
+    else:
+        sw_units = set()
+        non_sw_units = set(range(n_units))
+
     busy = set()
     assignment = {}          # unit_idx -> task
     deferred_place = []
@@ -9400,18 +10063,45 @@ def assign_tasks(tasks, ctx, extra_units=()):
         # Explicit locked-quadrant task guard: never assign operations on locked land
         if task["op"] not in ("PICKUP", "PASS") and farm.quadrant_of(target) not in farm.unlocked:
             continue
+
+        is_sw_task = (farm.quadrant_of(target) == "SW")
+
+        # Partitioned candidate selection (Rule W1)
+        if sw_units:
+            if is_sw_task:
+                # SW tasks prefer SW squad
+                cand_idxs = [u[0] for u in units if u[0] in sw_units and u[0] not in busy]
+                if not cand_idxs:
+                    cand_idxs = [u[0] for u in units if u[0] not in busy]
+            else:
+                # Non-SW tasks prefer NW/NE squad
+                cand_idxs = [u[0] for u in units if u[0] in non_sw_units and u[0] not in busy]
+                if not cand_idxs:
+                    cand_idxs = [u[0] for u in units if u[0] not in busy]
+        else:
+            cand_idxs = [u[0] for u in units if u[0] not in busy]
+
+        if eligible is not None:
+            preferred = [idx for idx in cand_idxs if idx in eligible]
+            if preferred:
+                cand_idxs = preferred
+            else:
+                cand_idxs = [idx for idx in eligible if idx not in busy]
+
         best, best_d = None, 10 ** 9
-        for idx, pos in units:
-            if idx in busy:
-                continue
-            if eligible is not None and idx not in eligible:
-                continue
+        for idx in cand_idxs:
+            pos = pos_by_idx[idx]
             d = abs(pos[0] - target[0]) + abs(pos[1] - target[1])
             if d < best_d:
                 best, best_d = idx, d
         if best is None:
             continue
         busy.add(best)
+
+        # Rule W2: SW squad hands anchor shed PICKUP at PORT_SW
+        if best in sw_units and task.get("op") == "PICKUP" and task.get("target") in SHED_ACCESS_TILES:
+            task["target"] = PORT_SW
+
         task["unit_pos"] = pos_by_idx[best]
         assignment[best] = task
 
@@ -9420,13 +10110,22 @@ def assign_tasks(tasks, ctx, extra_units=()):
     unassigned_units = [idx for idx, _ in units if idx not in busy]
     if unassigned_units:
         targeted_positions = {tuple(t["target"]) for t in assignment.values() if t.get("target")}
-        
+
+        def _pick_best_unit(cands, target_pos):
+            return min(cands, key=lambda u: abs(pos_by_idx[u][0] - target_pos[0]) + abs(pos_by_idx[u][1] - target_pos[1]))
+
         # 1. Fallback: collect any available fertilizer
         for t in farm.iter_tiles():
             if not unassigned_units:
                 break
             if t.is_animal and t.fertilizer_available and tuple(t.pos) not in targeted_positions:
-                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
+                if sw_units:
+                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
+                    cands = pref if pref else unassigned_units
+                else:
+                    cands = unassigned_units
+                best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 task = {"priority": 10, "op": "COLLECT_FERTILIZER", "target": tuple(t.pos),
@@ -9439,7 +10138,13 @@ def assign_tasks(tasks, ctx, extra_units=()):
             if not unassigned_units:
                 break
             if t.is_plant and not t.watered_today and tuple(t.pos) not in targeted_positions:
-                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
+                if sw_units:
+                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
+                    cands = pref if pref else unassigned_units
+                else:
+                    cands = unassigned_units
+                best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 task = {"priority": 10, "op": "WATER", "target": tuple(t.pos),
@@ -9452,13 +10157,31 @@ def assign_tasks(tasks, ctx, extra_units=()):
             if not unassigned_units:
                 break
             if t.kind == "WEED" and farm.quadrant_of(t.pos) in farm.unlocked and tuple(t.pos) not in targeted_positions:
-                best_u = min(unassigned_units, key=lambda u: abs(pos_by_idx[u][0] - t.x) + abs(pos_by_idx[u][1] - t.y))
+                is_sw_tile = (farm.quadrant_of(t.pos) == "SW")
+                if sw_units:
+                    pref = [u for u in unassigned_units if (u in sw_units) == is_sw_tile]
+                    cands = pref if pref else unassigned_units
+                else:
+                    cands = unassigned_units
+                best_u = _pick_best_unit(cands, t.pos)
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 task = {"priority": 5, "op": "DIG", "target": tuple(t.pos),
                         "args": [], "kind": "fallback_dig", "meta": {}, "unit_pos": pos_by_idx[best_u]}
                 assignment[best_u] = task
                 targeted_positions.add(tuple(t.pos))
+
+        # Rule W2 anchor: Send remaining idle SW squad hands to PORT_SW
+        if sw_units:
+            for u in list(unassigned_units):
+                if u in sw_units:
+                    pos = pos_by_idx[u]
+                    if pos != PORT_SW:
+                        task = {"priority": 1, "op": "PASS", "target": PORT_SW,
+                                "args": [], "kind": "sw_anchor", "meta": {}, "unit_pos": pos}
+                        assignment[u] = task
+                        busy.add(u)
+                        unassigned_units.remove(u)
 
     actions = {idx: ["PASS"] for idx in range(len(units))}
     for idx, task in assignment.items():
@@ -9582,16 +10305,8 @@ Known simplifications (documented, deliberate):
 
 
 
-from strategy.expansion_planner import (
-    compute_land_urgency,
-    compute_land_roi,
-    opportunity_window_factor,
-    should_buy_land,
-    compute_pre_buy_seeds,
-    expansion_crop_priorities,
-    expansion_seed_targets,
-    TILES_PER_QUADRANT,
-)
+
+
 
 
 
@@ -9607,7 +10322,7 @@ class MacroPlan:
     feeding_enabled: bool = True
     plant_queue: list = field(default_factory=list)      # [(pos, crop)]
     build_queue: list = field(default_factory=list)      # [pos]
-    build_op: str = "BUILD_COOP"
+    build_op: str = "BUILD_PASTURE"
     place_queue: list = field(default_factory=list)      # [{op,target,args}]
     intents: dict = field(default_factory=dict)
     notes: list = field(default_factory=list)
@@ -9616,12 +10331,14 @@ class MacroPlan:
 
 def _crop_allowed_today(crop, day):
     """True if planted today it still completes its final harvest by day 29."""
-    if day > 25:
-        return False  # v5.9: STOP all seed purchases after day 25
+    if day > 25 and not (crop == "CARROT" and day <= 27):
+        return False  # STOP seed purchases after day 25, except Day 25-27 Carrot Blitz
     cd = CROPS[crop]
     if cd["ongoing"]:
         # latest scheduled production: first + (count-1) * interval
         last_harvest = cd["first_yield_day"] + (cd["max_yield"] - 1) * cd["interval"]
+    elif crop == "CARROT" and day == 27:
+        last_harvest = cd["first_yield_day"]  # yields on Day 29 (EV = +102.5/tile)
     else:
         last_harvest = cd["max_yield_day"]
     if day + last_harvest > 29:
@@ -9817,6 +10534,28 @@ def detect_wheat_deficit(wheat_capacity, wheat_have, days_left,
     return deficit, trigger
 
 
+def sw_plant_decision(day: int, free_tiles: int, wheat_stock: int, herd_size: int) -> dict:
+    """Computes exact wheat and carrot seed allocation for free SW soil tiles.
+
+    Mathematical specification:
+    - Day >= 28: Fallow / harvest-only (0 seeds).
+    - Day <= 25 and wheat_stock < feed_need: Allocate needed wheat seeds (ceil div).
+    - Remainder of free tiles go to CARROT.
+    - Day 27 EV gate: 0.5 * 3.5 * 70 - 20 = +102.5 > 0, so carrots are planted.
+    """
+    if day >= 28:
+        return {"WHEAT": 0, "CARROT": 0}
+    feed_need = herd_size * (29 - day + 1)
+    n_wheat = 0
+    if day <= 25 and wheat_stock < feed_need:
+        deficit = feed_need - wheat_stock
+        n_wheat = min(free_tiles, (deficit + 4) // 5)  # ceil div
+    n_carrot = max(0, free_tiles - n_wheat)
+    if day == 27 and (0.5 * 3.5 * 70 - 20) <= 0:
+        n_carrot = 0
+    return {"WHEAT": n_wheat, "CARROT": n_carrot}
+
+
 class MacroPlanner:
     """Produces the daily MacroPlan. Stateless w.r.t. previous calls."""
 
@@ -9850,7 +10589,8 @@ class MacroPlanner:
         n_animals = len(animals)
         empty_tiles = [t.pos for t in farm.iter_tiles()
                        if t.kind == "EMPTY" and
-                       farm.quadrant_of(t.pos) in farm.unlocked]
+                       farm.quadrant_of(t.pos) in farm.unlocked and
+                       t.pos != PORT_SW]
 
         # --- wheat capacity projection (dynamic animal cap) ---
         wheat_tiles = [t for t in farm.iter_tiles()
@@ -9885,80 +10625,80 @@ class MacroPlanner:
         current_hands = len(farm.hands)
         hires = max(0, target_hands - current_hands)
 
-        # Dynamic animal targets computation (Leader-Calibrated 5-constraint optimizer)
-        n_unlocked = len(farm.unlocked)
-        total_tiles = n_unlocked * 25
-        min_crop_reserve = 12 if n_unlocked == 1 else (24 if n_unlocked == 2 else 32)
-        space_cap = max(0, total_tiles - min_crop_reserve)
-
-        # Feed capacity from current + projected wheat production
-        wheat_have = int(private.shed.get("WHEAT", 0)) if private else 0
-        wheat_growing = sum(project_wheat_harvests(t.placed_day, day) for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT")
-        days_left_season = max(1, 29 - day)
-        projected_feed = (12 * (days_left_season // 4) * 6) if day <= 20 else 0
-        feed_cap = max(4, (wheat_have + wheat_growing + projected_feed) // (days_left_season + 2))
-
-        # Labor capacity from workforce actions
-        total_daily_actions = (1 + target_hands) * 24
-        plants_count = sum(1 for t in farm.iter_tiles() if t.is_plant)
-        spare_actions = max(0, total_daily_actions - int(plants_count * 1.5) - 10)
-        labor_cap = max(2, int(spare_actions // 3.0))
-
-        # Hard max herd size
-        max_herd = min(space_cap, feed_cap, labor_cap, 20)
-        if day >= 22:
-            max_herd = min(max_herd, n_animals)  # stop new animal expansion in late endgame
-
-        # Dynamic species targets (Leader mix: Cows & Sheep high-value core, Geese auxiliary)
-        if max_herd > 0:
-            cows_target = int(round(max_herd * 0.45))
-            sheep_target = int(round(max_herd * 0.45))
-            geese_target = max(0, max_herd - cows_target - sheep_target)
-            dynamic_targets = {"COW": cows_target, "SHEEP": sheep_target, "GOOSE": geese_target}
+        # Dynamic animal targets computation (Leader-Calibrated Astra heuristic)
+        # Blocker 4: Pastures strictly in SW quadrant (9 designated tiles). Zero pastures in NW or NE.
+        if "SW" in farm.unlocked:
+            existing_pastures = sum(1 for t in farm.iter_tiles() if t.kind == "PASTURE")
+            sw_pasture_cands = [t for t in empty_tiles if t in SW_PASTURE_TILES]
+            max_pastures = min(9, existing_pastures + len(sw_pasture_cands))
         else:
-            dynamic_targets = {"COW": 0, "SHEEP": 0, "GOOSE": 0}
+            existing_pastures = 0
+            sw_pasture_cands = []
+            max_pastures = 0
 
-        # endgame: no new animals — just feed what we have
-        if not is_endgame and day <= 21:
-            future_hire_cost = sum(hire_total_cost(get_target_hands(d))
-                                   for d in range(day, min(day + 3, 30)))
-            cash_for_animals = max(0, ctx["farm"].money - future_hire_cost - self.reserve)
-            
-            for animal in ("COW", "SHEEP", "GOOSE"):
+        # Discretionary cash reservation: wages, base reserve, and upcoming land/seed escrow
+        future_hire_cost = sum(hire_total_cost(get_target_hands(d))
+                               for d in range(day, min(day + 3, 30)))
+        seed_reserve = 150 if "SW" not in farm.unlocked and day in (8, 9) else 0
+        land_reserve = 2000 if "SW" not in farm.unlocked and day in (8, 9) and ctx["farm"].money >= 2000 else (
+            1000 if "NE" not in farm.unlocked and day in (3, 4) and ctx["farm"].money >= 1000 else 0
+        )
+        cash_for_animals = max(0.0, ctx["farm"].money - future_hire_cost - self.reserve - seed_reserve - land_reserve)
+
+        # Dynamic animal targets via corrected Astra heuristic
+        # Days 0-5: Zero livestock ramp (protects Day 3-5 NE land unlock fund of $1,000 and strawberry seeds).
+        # Livestock ramp begins Day 6+ when workforce reaches 8 hands and Day 4 wheat has matured for feed.
+        if is_endgame or day >= 24 or day < 6:
+            dynamic_targets = {"COW": 0 if day < 6 else counts.get("COW", 0),
+                               "SHEEP": 0 if day < 6 else counts.get("SHEEP", 0),
+                               "GOOSE": 0}
+        else:
+            dynamic_targets = get_animal_targets(
+                day=day,
+                money=cash_for_animals,
+                shed_wheat=wheat_have,
+                current_animals=counts,
+                max_pastures=max_pastures,
+            )
+
+        # Purchase affordable animals if empty pasture exists
+        # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
+        if not is_endgame and day <= 23:
+            for animal in ("SHEEP", "COW", "GOOSE"):
                 target = dynamic_targets.get(animal, 0)
                 info = ANIMALS[animal]
                 struct_kind = info["structure"]
-                free_struct = [pos for pos, k in structures_empty.items()
-                               if k == struct_kind]
+                free_struct = [pos for pos, k in structures_empty.items() if k == struct_kind]
                 
-                # If an empty structure of this kind exists on board, fill it
-                if free_struct and (counts.get(animal, 0) < target or n_animals + sum(buy_animal.values()) < max_herd):
+                while free_struct and (counts.get(animal, 0) + buy_animal.get(animal, 0) < target or (animal == "GOOSE" and free_struct)):
                     if cash_for_animals >= info["cost"]:
                         buy_animal[animal] = buy_animal.get(animal, 0) + 1
                         cash_for_animals -= info["cost"]
                         del structures_empty[free_struct[0]]
-                        continue
+                        free_struct.pop(0)
+                    else:
+                        break
 
-                deficit_a = target - counts.get(animal, 0)
-                if deficit_a <= 0:
-                    continue
-                if cash_for_animals < info["cost"]:
-                    continue
-
-                if empty_tiles:
-                    # Queue structure build on empty tile (up to 2 structures per day)
-                    existing_structs = sum(1 for t in farm.iter_tiles() if t.kind == struct_kind) + len(reserved_structure_tiles)
-                    target_structs = target if animal == "GOOSE" else (dynamic_targets.get("COW", 0) + dynamic_targets.get("SHEEP", 0))
-                    if existing_structs < target_structs and len(reserved_structure_tiles) < 2 and len(empty_tiles) > 5:
-                        tile = empty_tiles.pop(0)
-                        reserved_structure_tiles.append((tile, "BUILD_" + struct_kind))
+            # Queue PASTURE construction if needed to reach targets (strictly in SW_PASTURE_TILES, never build COOP)
+            target_pastures = dynamic_targets.get("COW", 0) + dynamic_targets.get("SHEEP", 0)
+            existing_structs = existing_pastures + len(reserved_structure_tiles)
+            while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and sw_pasture_cands:
+                cand = sw_pasture_cands.pop(0)
+                if cand in empty_tiles:
+                    empty_tiles.remove(cand)
+                reserved_structure_tiles.append((cand, "BUILD_PASTURE"))
+                existing_structs += 1
 
         # structure build queue: use specific build_op
         if reserved_structure_tiles:
-            plan.build_op = reserved_structure_tiles[0][1]
+            plan.build_op = "BUILD_PASTURE"
             plan.build_queue = [t for t, _ in reserved_structure_tiles[:2]]
 
         # ---------------- crop queue on remaining tiles ----------------
+        # Reserve remaining SW_PASTURE_TILES for pasture construction only — never plant crops on them
+        if "SW" in farm.unlocked:
+            empty_tiles = [t for t in empty_tiles if t not in SW_PASTURE_TILES]
+
         # endgame: no new planting — just harvest and sell
         plant_queue = []
         buy_seed = {}
@@ -10019,31 +10759,33 @@ class MacroPlanner:
 
         # Feed wheat buffer needed for existing + newly bought animals
         buy_wheat = 0
+        effective_reserve = 50 if (day in (3, 4, 5, 6) and "NE" in farm.unlocked) else self.reserve
+        post_hire_money = max(0.0, money - hire_cost)
+        available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost - animal_cost)
+
         if plan.feeding_enabled:
             wheat_buffer_target = 5 if day <= 5 and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
             wheat_needed = (n_animals + sum(buy_animal.values())) * wheat_buffer_target
             if trigger:
                 wheat_needed = max(wheat_needed, deficit)
 
-            post_hire_money = max(0.0, money - hire_cost)
-            available_before_seeds = max(0.0, post_hire_money - self.reserve - land_cost - animal_cost)
             if wheat_have < wheat_needed:
                 buy_wheat = min(wheat_needed - wheat_have, int(available_before_seeds // 25))
         wheat_feed_cost = buy_wheat * 25
 
-        post_hire_money = max(0.0, money - hire_cost)
-        available_before_seeds = max(0.0, post_hire_money - self.reserve - land_cost - animal_cost)
+        available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost - animal_cost)
 
         # v5.10: Protect SW treasury from discretionary spending
         # When expansion is urgent but not yet purchased, reserve the fund
+        # Do NOT hoard SW land fund before Day 11 when melons are in the ground — melon harvest provides $18k!
         discretionary_budget = available_before_seeds
-        if sw_urgency >= 0.5 and not buy_land and next_quadrant is not None:
+        if sw_urgency >= 0.5 and not buy_land and next_quadrant is not None and day >= 11:
             # v5.11: Use dynamic targets
             targets = expansion_seed_targets(next_quadrant, day, money)
             seed_reserve = sum(CROPS[c]["seed"] * n for c, n in targets.items())
             n_extra = len(farm.unlocked) - 1
             land_reserve = LAND_PRICES[n_extra] if n_extra < len(LAND_PRICES) else 0
-            sw_treasury_need = land_reserve + seed_reserve + self.reserve
+            sw_treasury_need = land_reserve + seed_reserve + effective_reserve
             discretionary_budget = max(0.0, available_before_seeds - sw_treasury_need)
 
         seed_budget = max(0.0, discretionary_budget - wheat_feed_cost)
@@ -10052,53 +10794,97 @@ class MacroPlanner:
         seeds = dict(private.seeds)
         if not is_endgame:
 
-            # ---- v5.10: Day-0 portfolio allocator ----
-            # Balance wheat/feed vs high-value cash crops vs treasury for expansion
+            # ---- v5.12: Leader-Calibrated Day-0 Melon Springboard ----
+            # 12 Melons ($960), 8 Wheat ($80), 4 fallow NW tiles (5 including shed (4,4)).
+            # Sells 72 melons on Day 10 for ~$15k-$18k cash surge; 48 wheat on Day 4 for NE fund.
             wheat_available = seeds.get("WHEAT", 0)
+            planned = {}
             if day == 0:
-                total_tiles = len(empty_tiles)
+                melon_tiles = 12
+                wheat_tiles = 8
 
-                # Minimum wheat: animal feed backbone + safety margin
-                min_wheat = min(total_tiles, max(8, n_animals * 3))
+                for _ in range(melon_tiles):
+                    if empty_tiles:
+                        pos = empty_tiles.pop(0)
+                        plant_queue.append((pos, "MELON"))
+                        seeds["MELON"] = max(0, seeds.get("MELON", 0) - 1)
+                        planned["MELON"] = planned.get("MELON", 0) + 1
 
-                # Treasury deduction: reserve for SW expansion if approaching
-                treasury_deduction = 0
-                if sw_urgency >= 0.3 and next_quadrant is not None:
-                    # v5.11: Use dynamic targets
-                    targets = expansion_seed_targets(next_quadrant, day, money)
-                    seed_reserve = sum(CROPS[c]["seed"] * n for c, n in targets.items())
-                    n_extra = len(farm.unlocked) - 1
-                    land_reserve = LAND_PRICES[n_extra] if n_extra < len(LAND_PRICES) else 0
-                    treasury_deduction = min(remaining_money * 0.3, land_reserve + seed_reserve)
+                for _ in range(wheat_tiles):
+                    if empty_tiles:
+                        pos = empty_tiles.pop(0)
+                        plant_queue.append((pos, "WHEAT"))
+                        seeds["WHEAT"] = max(0, seeds.get("WHEAT", 0) - 1)
+                        planned["WHEAT"] = planned.get("WHEAT", 0) + 1
 
-                available_for_seeds = max(0.0, remaining_money - treasury_deduction)
+                have_melon = private.seeds.get("MELON", 0)
+                if melon_tiles > have_melon:
+                    buy_seed["MELON"] = melon_tiles - have_melon
+                have_wheat = private.seeds.get("WHEAT", 0)
+                if wheat_tiles > have_wheat:
+                    buy_seed["WHEAT"] = wheat_tiles - have_wheat
 
-                # Phase 0a: Plant minimum wheat
-                wheat_to_plant = min_wheat
-                if wheat_to_plant > wheat_available:
-                    needed_seeds = wheat_to_plant - wheat_available
-                    wheat_seed_cost = needed_seeds * CROPS["WHEAT"]["seed"]
-                    if available_for_seeds >= wheat_seed_cost:
-                        buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + needed_seeds
-                        available_for_seeds -= wheat_seed_cost
-                        seeds["WHEAT"] = wheat_to_plant
-                    else:
-                        affordable = int(available_for_seeds // CROPS["WHEAT"]["seed"])
-                        wheat_to_plant = wheat_available + affordable
-                        if affordable > 0:
-                            buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + affordable
-                            available_for_seeds -= affordable * CROPS["WHEAT"]["seed"]
-                        seeds["WHEAT"] = wheat_to_plant
+                seed_spend = (buy_seed.get("MELON", 0) * CROPS["MELON"]["seed"] +
+                              buy_seed.get("WHEAT", 0) * CROPS["WHEAT"]["seed"])
+                remaining_money = max(0.0, remaining_money - seed_spend)
 
-                remaining_money = available_for_seeds
+                # Keep remaining NW tiles fallow (reserved for Strawberry wave / no cash leak)
+                empty_tiles.clear()
+            elif day < 3 and len(farm.unlocked) == 1:
+                # Days 1-2: plant any already-owned seeds (e.g. unplanted wheat from Day 0) into empty tiles,
+                # but do NOT buy new seeds, and keep remaining tiles fallow for NE expansion.
+                for crop in ("WHEAT", "MELON"):
+                    while seeds.get(crop, 0) > 0 and empty_tiles:
+                        pos = empty_tiles.pop(0)
+                        seeds[crop] -= 1
+                        plant_queue.append((pos, crop))
+                        planned[crop] = planned.get(crop, 0) + 1
+                empty_tiles.clear()
             else:
-                existing_wheat = sum(1 for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT")
+                # ---- SW Quadrant Dedicated Soil Planting Engine ----
+                # Whitelist: strictly WHEAT (D9-24) or CARROT (D25-27), 0 strawberries/melons/tomatoes
+                if "SW" in farm.unlocked:
+                    sw_soil_empty = [p for p in empty_tiles if p in SW_SOIL_TILES]
+                    empty_tiles = [p for p in empty_tiles if p not in SW_SOIL_TILES]
+                    if sw_soil_empty:
+                        sw_dec = sw_plant_decision(day, len(sw_soil_empty), wheat_have, n_animals)
+                        sw_wheat = sw_dec.get("WHEAT", 0)
+                        sw_carrot = sw_dec.get("CARROT", 0)
+
+                        # Plant SW wheat
+                        for pos in sw_soil_empty[:sw_wheat]:
+                            seed_cost = CROPS["WHEAT"]["seed"]
+                            if seeds.get("WHEAT", 0) > 0:
+                                seeds["WHEAT"] -= 1
+                            elif remaining_money >= seed_cost:
+                                buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + 1
+                                remaining_money -= seed_cost
+                            else:
+                                continue
+                            plant_queue.append((pos, "WHEAT"))
+                            planned["WHEAT"] = planned.get("WHEAT", 0) + 1
+
+                        # Plant SW carrot (Carrot Blitz)
+                        for pos in sw_soil_empty[sw_wheat:sw_wheat + sw_carrot]:
+                            seed_cost = CROPS["CARROT"]["seed"]
+                            if seeds.get("CARROT", 0) > 0:
+                                seeds["CARROT"] -= 1
+                            elif remaining_money >= seed_cost:
+                                buy_seed["CARROT"] = buy_seed.get("CARROT", 0) + 1
+                                remaining_money -= seed_cost
+                            else:
+                                continue
+                            plant_queue.append((pos, "CARROT"))
+                            planned["CARROT"] = planned.get("CARROT", 0) + 1
+
+                existing_wheat = sum(1 for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT") + planned.get("WHEAT", 0)
                 # Continuous wheat replanting engine (Leader-Calibrated: 8/20/30 active wheat tiles)
                 n_quads = len(farm.unlocked)
                 quadrant_wheat_target = 8 if n_quads == 1 else (20 if n_quads == 2 else 30)
                 wheat_cap = min(len(empty_tiles) + existing_wheat, quadrant_wheat_target)
                 wheat_needed = max(0, wheat_cap - existing_wheat)
                 wheat_to_plant = min(wheat_needed, len(empty_tiles))
+                wheat_available = seeds.get("WHEAT", 0)
                 if wheat_to_plant > wheat_available:
                     needed_seeds = wheat_to_plant - wheat_available
                     if remaining_money >= needed_seeds * CROPS["WHEAT"]["seed"]:
@@ -10114,14 +10900,36 @@ class MacroPlanner:
                             wheat_available += needed_seeds
                 wheat_to_plant = min(wheat_available, wheat_to_plant, len(empty_tiles))
 
-            for _ in range(wheat_to_plant):
-                if empty_tiles:
-                    pos = empty_tiles.pop(0)
-                    plant_queue.append((pos, "WHEAT"))
-                    seeds["WHEAT"] = max(0, seeds.get("WHEAT", 0) - 1)
+                for _ in range(wheat_to_plant):
+                    if empty_tiles:
+                        pos = empty_tiles.pop(0)
+                        plant_queue.append((pos, "WHEAT"))
+                        seeds["WHEAT"] = max(0, seeds.get("WHEAT", 0) - 1)
+                        planned["WHEAT"] = planned.get("WHEAT", 0) + 1
 
-            # Track planned counts for portfolio-aware scoring
-            planned = {"WHEAT": wheat_to_plant} if wheat_to_plant > 0 else {}
+            # Dedicated Strawberry Wave (Fable Leader Heuristic):
+            # Cap progression: 16 (Days 3-5) -> 18 (Days 6-8) -> 20 (Days 9-13) -> 0 (Day 14+)
+            # Placement: NE first, then NW fallow tiles. NEVER in SW!
+            if 3 <= day <= STRAWBERRY_PLANT_DEADLINE and "NE" in farm.unlocked:
+                s_cap = get_strawberry_cap(day, True)
+                current_strawberries = sum(1 for t in farm.iter_tiles() if getattr(t, "crop", None) == "STRAWBERRY") + planned.get("STRAWBERRY", 0)
+                want_s = max(0, s_cap - current_strawberries)
+                if want_s > 0:
+                    ne_empty = [p for p in empty_tiles if farm.quadrant_of(p) == "NE"]
+                    nw_empty = [p for p in empty_tiles if farm.quadrant_of(p) == "NW" and p not in ((4, 4), (4, 5))]
+                    s_tiles = (ne_empty + nw_empty)[:want_s]
+                    for pos in s_tiles:
+                        seed_cost = CROPS["STRAWBERRY"]["seed"]
+                        if seeds.get("STRAWBERRY", 0) > 0:
+                            seeds["STRAWBERRY"] -= 1
+                        elif remaining_money >= seed_cost:
+                            buy_seed["STRAWBERRY"] = buy_seed.get("STRAWBERRY", 0) + 1
+                            remaining_money -= seed_cost
+                        else:
+                            break
+                        empty_tiles.remove(pos)
+                        plant_queue.append((pos, "STRAWBERRY"))
+                        planned["STRAWBERRY"] = planned.get("STRAWBERRY", 0) + 1
 
             # v5.10: Expansion priority layer — bias scoring for deadline-critical crops
             # on expansion tiles. This injects into the existing Phase 2b loop,
@@ -10132,11 +10940,13 @@ class MacroPlanner:
 
             # Phase 2b: Fill remaining empty tiles with best-scoring crops
             for pos in list(empty_tiles):
+                if farm.quadrant_of(pos) == "SW":
+                    continue  # Hard barrier: SW never gets general/strawberry crops
                 best_score, best_crop = -1e9, None
                 quadrant = farm.quadrant_of(pos)
 
                 # v5.10: Expansion tranche — priority bias for new quadrant tiles
-                if exp_priorities and quadrant in ("SW", "NE") and pos in empty_tiles:
+                if exp_priorities and next_quadrant == 2 and quadrant == "NE" and pos in empty_tiles:
                     for forced_crop, bias in exp_priorities.items():
                         if not _crop_allowed_today(forced_crop, day):
                             continue
@@ -10145,7 +10955,7 @@ class MacroPlanner:
                             continue
                         # v5.11: Use dynamic strawberry cap
                         if forced_crop == "STRAWBERRY":
-                            cap = get_strawberry_cap(day, len(farm.unlocked) >= 1)
+                            cap = get_strawberry_cap(day, len(farm.unlocked) >= 2)
                         else:
                             cap = CROP_TILE_CAPS.get(forced_crop, 99)
                         if planned.get(forced_crop, 0) >= cap:
@@ -10168,7 +10978,7 @@ class MacroPlanner:
                             continue
                         # v5.11: Use dynamic strawberry cap
                         if crop == "STRAWBERRY":
-                            cap = get_strawberry_cap(day, len(farm.unlocked) >= 1)
+                            cap = get_strawberry_cap(day, len(farm.unlocked) >= 2)
                         else:
                             cap = CROP_TILE_CAPS.get(crop, 99)
                         if planned.get(crop, 0) >= cap:
@@ -10646,12 +11456,18 @@ class MarketBrain:
     def sell_orders(self, ctx, max_slots=None, opp_advice=None):
         """Returns (orders, details). orders: [["SELL", prod, qty], ...].
 
-        v5.9: Sell every hour (not just t%4==1) to fund mandatory hires.
-        Batch sizes follow spec:
-          Days 0-5:  10-20 units per product
-          Days 6-8:  5-10 units
-          Days 9+:   3-5 units
-        Carry/floor holds are relaxed — cash flow > price optimization.
+        v5.12 Leader-calibrated sell policy:
+          Two-tier shed relief:
+            - Midnight hard-guard (hour >= 22 and shed_total > 88): urgency 2, dump inventory
+            - Emergency relief (shed_total >= SHED_SOFT_CAP (65)): urgency 1, override 4h window,
+              sell until shed <= SHED_RESUME_CAP (55)
+            - Normal mode (hour in SELL_HOUR_SET): urgency 0, post-drain sell windows
+          Order budget:
+            - Decrement order_budget -= 1 per order slice (MAX_MARKET_ORDERS = 10 is order count)
+          Feed protection:
+            - Reserved wheat = animals * FEED_WHEAT_BUFFER_DAYS strictly protected from sale
+          Melon quadratic cliff protection:
+            - Cumulative season melons sold capped at MELON_SEASON_SALE_CAP (150)
         """
         if max_slots is None:
             max_slots = int(MAX_MARKET_ORDERS * SELL_SLOT_SHARE)
@@ -10665,13 +11481,19 @@ class MarketBrain:
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
-        if hour == 0 and not endgame:
+        # Hour 0 purchases block sells in normal mode (unless endgame, emergency relief, or midnight guard)
+        if hour == 0 and not endgame and not pressure and not (hour >= 22 and shed_total > 88):
             return [], {"reason": "hour0_purchases"}
 
-        # Strict sell timing: sell during post-drain windows (SELL_HOUR_SET = {1, 5, 9, 13, 17, 21})
-        # Override and sell on other hours ONLY if shed is under heavy pressure (>= SHED_SOFT_CAP) or endgame
-        is_sell_window = (hour in SELL_HOUR_SET)
-        if not is_sell_window and not pressure and not endgame:
+        # Two-tier urgency:
+        # 2 = midnight hard-guard, 1 = emergency relief, 0 = normal post-drain window
+        if hour >= 22 and shed_total > 88:
+            urgency = 2
+        elif pressure:
+            urgency = 1
+        elif (hour in SELL_HOUR_SET) or endgame:
+            urgency = 0
+        else:
             return [], {"reason": "waiting_for_sell_window"}
 
         # Phase 6: extract opp_advice sets for fast lookup
@@ -10679,28 +11501,26 @@ class MarketBrain:
         delay_set = set(opp_advice.delay_sell) if opp_advice else set()
 
         inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
-        candidates = []
-        
-        # v5.9: Spec batch sizes per phase
+
+        # Spec batch sizes per phase
         if day <= 5:
             batch_target = 15  # sell 10-20 units
         elif day <= 8:
             batch_target = 7   # sell 5-10 units
         else:
             batch_target = 4   # sell 3-5 units
-        
+
+        # Available stock per product respecting reserves & caps
+        available_stock = {}
         for prod in SELLABLE:
-            if prod in delay_set and not endgame:
+            if prod in delay_set and not endgame and urgency < 2:
                 continue
             stock = int(shed.get(prod, 0))
             if stock <= 0:
                 continue
             if prod == "WHEAT":
                 stock = max(0, stock - reserved_wheat)
-                if stock <= 0:
-                    continue
-            elif prod == "FERTILIZER" and not endgame:
-                # Reserve fertilizer needed for crops during daytime application hours (max 2 per day)
+            elif prod == "FERTILIZER" and not endgame and urgency < 2:
                 if hour <= 18:
                     fert_needed = sum(1 for t in ctx["farm"].iter_tiles()
                                       if t.is_plant and t.crop in ("STRAWBERRY", "TOMATO", "MELON")
@@ -10709,49 +11529,97 @@ class MarketBrain:
                 else:
                     fert_reserve = 0
                 stock = max(0, stock - fert_reserve)
-                if stock <= 0:
-                    continue
+            elif prod == "MELON" and urgency < 2:
+                season_melons_sold = 0
+                try:
+                    from state.state_tracker import get_state
+                    season_melons_sold = get_state().get("our_units_sold", {}).get("MELON", 0)
+                except Exception:
+                    try:
+                        from state_tracker import get_state
+                        season_melons_sold = get_state().get("our_units_sold", {}).get("MELON", 0)
+                    except Exception:
+                        pass
+                melon_budget = max(0, MELON_SEASON_SALE_CAP - season_melons_sold)
+                stock = min(stock, melon_budget)
+
+            if stock > 0:
+                available_stock[prod] = stock
+
+        if not available_stock:
+            return [], {"reason": "no_available_stock", "pressure": pressure}
+
+        # Order budget in order slots (engine cap is 10 orders per turn)
+        order_budget = MAX_MARKET_ORDERS if (urgency >= 1 or endgame) else max_slots
+
+        # Slicing target for emergency relief
+        to_shed = max(0, shed_total - SHED_RESUME_CAP) if urgency == 1 else shed_total
+
+        # Candidate product ordering
+        # In emergency mode (when not endgame), follow liquidation priority: WHEAT -> CARROT -> TOMATO -> EGG -> MILK -> WOOL -> STRAWBERRY -> MELON -> FERTILIZER
+        LIQUIDATION_PRIORITY = ("WHEAT", "CARROT", "TOMATO", "EGG", "MILK", "WOOL", "STRAWBERRY", "MELON", "FERTILIZER")
+
+        candidates = []
+        for prod in SELLABLE:
+            if prod not in available_stock:
+                continue
+            st = available_stock[prod]
             spot = market_price(prod, inv.get(prod, 10000))
-            
-            # v5.9: Never hold at floor — sell everything for cash flow
+            urgency_score = st / (shed_total or 1)
             if spot <= 1:
-                qty = stock if endgame else min(stock, batch_target)
-                if qty > 0:
-                    candidates.append({
-                        "product": prod, "qty": int(qty), "spot": spot,
-                        "avg_est": spot, "reason": "floor_sell",
-                        "urgency": 0.5,
-                    })
-                continue
-
-            # v5.9: In endgame/aggressive mode or for surplus fertilizer, dump stock; otherwise sell at spec batch size
-            aggressive = endgame or days_left <= ENDGAME_RISK_DAYS or pressure
-            qty = stock if (endgame or days_left <= 2 or prod == "FERTILIZER") else min(stock, batch_target)
-            
-            if qty <= 0:
-                continue
-
-            avg_est = total_revenue_estimate(prod, inv.get(prod, 10000),
-                                             qty) / qty
-            reason = "spec_batch_sell"
-            urgency = stock / (shed_total or 1)
-
-            # --- Phase 6: preempt sell urgency boost ----------------
+                urgency_score = 0.95
             if prod in preempt_set:
-                urgency = max(urgency, 0.99)
-                reason = "preempt_dump"
+                urgency_score = 0.99
+            candidates.append({"product": prod, "spot": spot, "urgency": urgency_score, "stock": st})
 
-            candidates.append({
-                "product": prod, "qty": int(qty), "spot": spot,
-                "avg_est": round(avg_est, 2), "reason": reason,
-                "urgency": urgency,
-            })
+        if urgency >= 1 and not endgame:
+            prio_map = {p: i for i, p in enumerate(LIQUIDATION_PRIORITY)}
+            candidates.sort(key=lambda c: (0 if c["product"] in preempt_set else 1, prio_map.get(c["product"], 99)))
+        else:
+            candidates.sort(key=lambda c: -c["urgency"])
 
-        candidates.sort(key=lambda c: -c["urgency"])
-        chosen = candidates[:max_slots]
-        orders = [["SELL", c["product"], c["qty"]] for c in chosen]
+        orders = []
+        for c in candidates:
+            if order_budget <= 0:
+                break
+            if not endgame and urgency == 1 and to_shed <= 0:
+                break
+            prod = c["product"]
+            st = available_stock[prod]
+            if st <= 0:
+                continue
+
+            bt = batch_target
+
+            if endgame or days_left <= 2 or urgency == 2 or prod == "FERTILIZER":
+                slice_qty = min(st, 20)
+            elif urgency == 1:
+                slice_qty = min(st, bt if bt > 10 else 10, to_shed)
+            else:
+                slice_qty = min(st, bt)
+
+            if slice_qty <= 0:
+                continue
+
+            orders.append(["SELL", prod, int(slice_qty)])
+            available_stock[prod] -= slice_qty
+            if urgency == 1:
+                to_shed -= slice_qty
+            order_budget -= 1
+
+            # In emergency mode, allow multiple slices of the overflowing product if to_shed remains
+            if not endgame and urgency == 1 and to_shed > 0 and order_budget > 0 and available_stock[prod] > 0:
+                while order_budget > 0 and to_shed > 0 and available_stock[prod] > 0:
+                    extra_qty = min(available_stock[prod], bt if bt > 10 else 10, to_shed)
+                    if extra_qty <= 0:
+                        break
+                    orders.append(["SELL", prod, int(extra_qty)])
+                    available_stock[prod] -= extra_qty
+                    to_shed -= extra_qty
+                    order_budget -= 1
+
         return orders, {"candidates": candidates, "days_left": days_left,
-                        "endgame": endgame, "pressure": pressure}
+                        "endgame": endgame, "pressure": pressure, "urgency": urgency}
 
     # ------------------------------------------------------------------
     def _drip_budget(self, prod, current_inv, keep_frac, spot):

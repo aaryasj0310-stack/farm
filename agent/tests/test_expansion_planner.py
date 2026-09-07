@@ -29,6 +29,7 @@ from config import (
     CROPS,
     QUADRANT_UNLOCK_DAYS,
     QUADRANT_HARD_BLOCK,
+    PRE_BUY_LEAD_DAYS,
 )
 
 
@@ -112,26 +113,22 @@ class TestLandUrgency:
 
     def test_high_urgency(self):
         farm = MockFarm(["NW", "NE"])
-        urgency, reason, info = compute_land_urgency(3, 9, 5000, farm)
+        urgency, reason, info = compute_land_urgency(2, 13, 5000, farm)
         assert urgency == 0.8
         assert "high_urgency" in reason
 
     def test_treasury_ready(self):
         farm = MockFarm(["NW", "NE"])
-        # Day 9 is unlock day, days_to_deadline = 13-9 = 4 → high_urgency
-        # Day 9 with days_left=4 still triggers high_urgency, not treasury_ready
-        # treasury_ready fires when days_to_deadline > 4 AND money >= requirement
-        # That's only possible for NE (Q2, deadline=17, unlock=6)
         urgency, reason, info = compute_land_urgency(2, 6, 10000, farm)
         assert urgency == 0.6
         assert "treasury_ready" in reason
 
     def test_sw_high_urgency_on_unlock_day(self):
         farm = MockFarm(["NW", "NE"])
-        # SW unlock day 9: days_to_deadline = 13-9 = 4 → high_urgency
+        # SW unlock day 9: days_to_deadline = 11-9 = 2 <= 2 → critical
         urgency, reason, info = compute_land_urgency(3, 9, 10000, farm)
-        assert urgency == 0.8
-        assert "high_urgency" in reason
+        assert urgency == 1.0
+        assert "critical" in reason
 
     def test_after_deadline(self):
         farm = MockFarm(["NW", "NE"])
@@ -143,7 +140,7 @@ class TestLandUrgency:
         farm = MockFarm(["NW", "NE"])
         _, _, info = compute_land_urgency(3, 8, 5000, farm)
         assert "deadline" in info
-        assert info["deadline"] == STRAWBERRY_PLANT_DEADLINE
+        assert info["deadline"] == 11
 
 
 # ---------------------------------------------------------------------------
@@ -215,7 +212,7 @@ class TestPreBuySeeds:
         farm = MockFarm(["NW", "NE"])
         # Day 8 is lead day for SW (unlock day 9)
         seeds = compute_pre_buy_seeds(3, 8, 5000)
-        assert "STRAWBERRY" in seeds
+        assert "WHEAT" in seeds
 
     def test_not_on_wrong_day(self):
         seeds = compute_pre_buy_seeds(3, 7, 5000)
@@ -233,14 +230,15 @@ class TestPreBuySeeds:
     def test_partial_funding(self):
         """With limited surplus, buy what we can."""
         seeds = compute_pre_buy_seeds(3, 8, 200)  # only $200 surplus
-        # Strawberry seed costs $100, tomato $50
-        assert seeds.get("STRAWBERRY", 0) + seeds.get("TOMATO", 0) > 0
+        # Wheat seed costs $10
+        assert seeds.get("WHEAT", 0) > 0
         total_cost = sum(CROPS[c]["seed"] * n for c, n in seeds.items())
         assert total_cost <= 200
 
     def test_ne_pre_buy(self):
         """NE pre-buy should include carrot and tomato."""
-        seeds = compute_pre_buy_seeds(2, 5, 5000)  # NE unlock day 6, lead day 5
+        lead_day = QUADRANT_UNLOCK_DAYS[2] - PRE_BUY_LEAD_DAYS
+        seeds = compute_pre_buy_seeds(2, lead_day, 5000)
         assert "CARROT" in seeds or "TOMATO" in seeds
 
 
@@ -250,24 +248,24 @@ class TestPreBuySeeds:
 class TestExpansionCropPriorities:
     def test_no_priority_after_deadline(self):
         farm = MockFarm(["NW", "NE"])
-        priorities = expansion_crop_priorities(3, 15)
+        priorities = expansion_crop_priorities(3, 28)
         assert priorities == {}
 
-    def test_critical_priority_near_deadline(self):
+    def test_sw_priority_wheat_early_mid(self):
         farm = MockFarm(["NW", "NE"])
         priorities = expansion_crop_priorities(3, 12)
-        assert "STRAWBERRY" in priorities
-        assert priorities["STRAWBERRY"] >= 50.0
+        assert "WHEAT" in priorities
+        assert priorities["WHEAT"] >= 50.0
 
-    def test_moderate_priority_early(self):
+    def test_sw_priority_carrot_blitz(self):
         farm = MockFarm(["NW", "NE"])
-        priorities = expansion_crop_priorities(3, 5)
-        assert "STRAWBERRY" in priorities
-        assert priorities["STRAWBERRY"] <= 20.0
+        priorities = expansion_crop_priorities(3, 26)
+        assert "CARROT" in priorities
+        assert priorities["CARROT"] >= 50.0
 
-    def test_sw_targets_strawberry(self):
+    def test_sw_targets_wheat(self):
         targets = expansion_seed_targets(3)
-        assert "STRAWBERRY" in targets
+        assert "WHEAT" in targets
 
     def test_ne_targets_carrot(self):
         targets = expansion_seed_targets(2)
@@ -600,46 +598,34 @@ class TestDynamicStrawberryCap:
 class TestSwSeedTargets:
     """Tests for get_sw_seed_targets() — dynamic seed targets."""
 
-    def test_early_day_full_mix(self):
-        """Day 0-8: 8 strawberry + 4 tomato."""
+    def test_wheat_phase_days_0_to_24(self):
+        """Day 0-24: 15 wheat for feed sustainability."""
         from config import get_sw_seed_targets
-        targets = get_sw_seed_targets(5, 5000)
-        assert targets == {"STRAWBERRY": 8, "TOMATO": 4}
+        assert get_sw_seed_targets(5) == {"WHEAT": 15}
+        assert get_sw_seed_targets(10) == {"WHEAT": 15}
+        assert get_sw_seed_targets(24) == {"WHEAT": 15}
 
-    def test_mid_day_strawberry_heavy(self):
-        """Day 9-12: 10 strawberry + 2 tomato."""
+    def test_carrot_blitz_days_25_to_27(self):
+        """Day 25-27: 15 carrot for endgame cash conversion."""
         from config import get_sw_seed_targets
-        targets = get_sw_seed_targets(10, 5000)
-        assert targets == {"STRAWBERRY": 10, "TOMATO": 2}
+        assert get_sw_seed_targets(25) == {"CARROT": 15}
+        assert get_sw_seed_targets(27) == {"CARROT": 15}
 
-    def test_late_day_strawberry_only(self):
-        """Day 13: 12 strawberry + 0 tomato."""
+    def test_fallow_days_28_plus(self):
+        """Day 28+: no seed targets (fallow/harvest only)."""
         from config import get_sw_seed_targets
-        targets = get_sw_seed_targets(13, 5000)
-        assert targets == {"STRAWBERRY": 12, "TOMATO": 0}
-
-    def test_very_late_no_strawberry(self):
-        """Day 14+: 0 strawberry + 6 tomato (no strawberry after deadline)."""
-        from config import get_sw_seed_targets
-        targets = get_sw_seed_targets(14, 5000)
-        assert targets == {"STRAWBERRY": 0, "TOMATO": 6}
-
-    def test_treasury_constraint(self):
-        """Low treasury reduces targets proportionally."""
-        from config import get_sw_seed_targets
-        targets = get_sw_seed_targets(5, 1500)  # Only $1500 after land
-        total_cost = targets.get("STRAWBERRY", 0) * 100 + targets.get("TOMATO", 0) * 50
-        assert total_cost <= 1200  # 1500 - 300 reserve
+        assert get_sw_seed_targets(28) == {}
+        assert get_sw_seed_targets(29) == {}
 
 
 class TestExpansionSeedTargetsDynamic:
     """Tests for expansion_seed_targets() with dynamic params."""
 
     def test_sw_with_dynamic_params(self):
-        """SW quadrant with day/money uses dynamic targets."""
+        """SW quadrant with day/money uses dynamic targets (Wheat D<=24, Carrot D25-27)."""
         from strategy.expansion_planner import expansion_seed_targets
-        targets = expansion_seed_targets(3, day=5, money=5000)
-        assert targets == {"STRAWBERRY": 8, "TOMATO": 4}
+        assert expansion_seed_targets(3, day=5, money=5000) == {"WHEAT": 15}
+        assert expansion_seed_targets(3, day=26, money=5000) == {"CARROT": 15}
 
     def test_sw_without_dynamic_params(self):
         """SW quadrant without day/money uses static targets."""

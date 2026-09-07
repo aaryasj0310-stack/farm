@@ -62,13 +62,10 @@ def days_to_crop_deadline(crop, current_day):
 def expansion_seed_targets(next_quadrant, day=None, money=None, land_cost=2000):
     """Return {crop: count} seed targets for the given quadrant.
 
-    v5.11: If day and money are provided, use dynamic targets for SW.
-    Otherwise, fall back to static targets for backward compatibility.
+    v6.0: For SW (Q3), strictly returns WHEAT (D9-24) or CARROT (D25-27).
     """
-    if next_quadrant == 3 and day is not None and money is not None:
-        return get_sw_seed_targets(day, money, land_cost)
     if next_quadrant == 3:
-        return dict(SW_SEED_TARGETS)
+        return get_sw_seed_targets(day if day is not None else 9, money, land_cost)
     if next_quadrant == 2:
         return dict(NE_SEED_TARGETS)
     return {}
@@ -388,9 +385,9 @@ def compute_land_urgency(next_quadrant, current_day, money, farm,
         return 0.0, "all_quadrants_unlocked", {}
     land_price = LAND_PRICES[n_extra]
 
-    # Static deadline for the quadrant's key crop
+    # Static deadline for the quadrant's key crop / payback window
     if next_quadrant == 3:
-        deadline = STRAWBERRY_PLANT_DEADLINE
+        deadline = 11  # Rule P2: pasture/fertilizer window requires unlock by Day 11
     elif next_quadrant == 2:
         deadline = MELON_PLANT_DEADLINE  # NE is less deadline-sensitive
     else:
@@ -399,7 +396,7 @@ def compute_land_urgency(next_quadrant, current_day, money, farm,
     days_to_deadline = deadline - current_day
 
     # Seed tranche cost for this quadrant
-    targets = expansion_seed_targets(next_quadrant)
+    targets = expansion_seed_targets(next_quadrant, current_day)
     seed_cost = sum(CROPS[c]["seed"] * n for c, n in targets.items())
 
     # Treasury requirement: land + seeds + feed + reserve
@@ -411,7 +408,7 @@ def compute_land_urgency(next_quadrant, current_day, money, farm,
     elif current_day < unlock_day:
         urgency = 0.1
         reason = f"before_unlock_day_{unlock_day}"
-    elif days_to_deadline <= 0:
+    elif days_to_deadline < 0:
         urgency = 0.0
         reason = "deadline_expired"
     elif days_to_deadline <= 2:
@@ -468,6 +465,8 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
     if current_day < unlock_day:
         return False, f"before_day_{unlock_day}", {}
+    if next_quadrant == 3 and current_day > 13:
+        return False, "sw_window_closed_after_day_13", {}
 
     n_extra = len(farm.unlocked) - 1
     if n_extra >= len(LAND_PRICES):
@@ -507,6 +506,10 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         "delay_value": round(delay_val, 1),
         "sw_timing": sw_timing_info,
     }
+
+    # Leader heuristic: Early NE land unlock on Days 3-5 when cash >= $1,400
+    if next_quadrant == 2 and 3 <= current_day <= 5 and money >= 1400:
+        return True, "early_ne_leader_unlock", diag_base
 
     # v5.11: STRICT GATE — adjusted_roi must be positive to buy
     if adjusted_roi <= 0:
@@ -559,14 +562,21 @@ def compute_pre_buy_seeds(next_quadrant, current_day, surplus_money):
 def expansion_crop_priorities(next_quadrant, current_day):
     """Return {crop: priority_bias} for the expansion tranche.
 
+    v6.0: For SW (Q3), strictly biases WHEAT (D9-24) and CARROT (D25-27).
     Higher priority_bias means this crop should be preferred on
-    expansion tiles. The existing _crop_score still runs — this just
-    biases the scoring in favor of deadline-critical crops.
+    expansion tiles.
     """
+    if next_quadrant == 3:
+        if current_day <= 24:
+            return {"WHEAT": 100.0}
+        elif current_day <= 27:
+            return {"CARROT": 100.0}
+        return {}
+
     if current_day > STRAWBERRY_PLANT_DEADLINE:
         return {}  # no priority after deadline
 
-    targets = expansion_seed_targets(next_quadrant)
+    targets = expansion_seed_targets(next_quadrant, current_day)
     priorities = {}
     for crop, count in targets.items():
         dt = days_to_crop_deadline(crop, current_day)

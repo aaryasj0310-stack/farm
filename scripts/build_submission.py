@@ -62,6 +62,8 @@ def build_single_file_submission(sub_dir: str, dist_dir: str) -> str:
         "strategy/shop_adapter.py",
         "strategy/price_forecast.py",
         "strategy/opponent_advisor.py",
+        "strategy/expansion_planner.py",
+        "strategy/animal_planner.py",
         "execution/pathfinding.py",
         "execution/unit_controller.py",
         "execution/task_scheduler.py",
@@ -88,7 +90,8 @@ def build_single_file_submission(sub_dir: str, dist_dir: str) -> str:
     internal_mods = [
         "config", "observation_parser", "state_tracker", "opponent_model",
         "shop_adapter", "price_forecast", "baked_price_table", "baked_economics",
-        "opponent_advisor", "pathfinding", "unit_controller", "task_scheduler",
+        "opponent_advisor", "expansion_planner", "animal_planner",
+        "pathfinding", "unit_controller", "task_scheduler",
         "macro_planner", "price_math", "order_builder", "market_brain", "endgame_liquidator",
     ]
 
@@ -187,4 +190,7 @@ if __name__ == "__main__":
     package_submission(sub_dir, dist_dir)
     single_file = build_single_file_submission(sub_dir, dist_dir)
     validate_submission(single_file)
-    print("\nAll submission packages (dist/submission.py, dist/submission.zip, dist/submission.tar.gz) verified and ready!")
+    root_sub = os.path.join(pkg_root, "submission.py")
+    shutil.copy2(single_file, root_sub)
+    print(f"Synced standalone bundle to root: {root_sub}")
+    print("\nAll submission packages (dist/submission.py, dist/submission.zip, dist/submission.tar.gz, submission.py) verified and ready!")

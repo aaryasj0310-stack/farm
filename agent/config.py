@@ -33,7 +33,7 @@ PRODUCTS = ["WHEAT", "CARROT", "TOMATO", "STRAWBERRY", "MELON",
 ANIMAL_LIST = list(ANIMALS)
 
 MARKET_I0 = 10000
-STARTING_MONEY = 1000
+STARTING_MONEY = 3000
 PRICE_FLOOR = 1
 MARKET_PARAMS = {
     "WHEAT":      {"base": 25,  "T": 400, "bf": "sqrt",  "bt": 0.80, "af": "log",    "at": 0.20},
@@ -64,14 +64,14 @@ PRIORITY_URGENT_SURVIVAL = 100
 PRIORITY_DECAY_HARVEST = 90
 PRIORITY_FEED_STAGING = 86       # PICKUP wheat so upcoming FEEDs can execute
 PRIORITY_PROD_DAY_FEED = 85
+PRIORITY_FERT_COLLECT = 75       # daily $100 cash per animal; elevated priority
 PRIORITY_PLANT_AND_WATER = 75    # plant seeds early so crops get full-day growth
 PRIORITY_BONUS_WATER = 70
+PRIORITY_CARE_ANIMAL = 65        # multiplies cow/sheep yield to 6/3 and 6/4; daily care essential
 PRIORITY_STANDARD_HARVEST = 65
+PRIORITY_PLACE_ANIMAL = 84       # immediate pickup and placement of purchased livestock
+PRIORITY_BUILD_STRUCTURE = 78     # build planned pastures so animals can be placed without delay
 PRIORITY_FERTILIZE_CROP = 60
-PRIORITY_FERT_COLLECT = 55       # fertilizer doesn't decay; collect across day
-PRIORITY_CARE_ANIMAL = 50
-PRIORITY_PLACE_ANIMAL = 45
-PRIORITY_BUILD_STRUCTURE = 40
 PRIORITY_WEED_DIG = 20
 
 # ------------------------------------------------------------- policy -------
@@ -93,13 +93,13 @@ DRIP_PRICE_KEEP_FRAC = {           # per-product keep-fraction while slicing
 }
 HOLD_AT_FLOOR_PRODUCTS = {"MELON", "STRAWBERRY", "MILK", "WOOL"}
 
-FEED_WHEAT_BUFFER_DAYS = 2        # keep >= animals * N days of feed wheat
-BUY_WHEAT_TRIGGER_DAYS = 1.5
+FEED_WHEAT_BUFFER_DAYS = 4        # keep >= animals * 4 days of feed wheat (bridges 4-day wheat cycle)
+BUY_WHEAT_TRIGGER_DAYS = 2.0
 
 # Phase knobs
-PHASE1_WHEAT_TILES = 2            # NW wheat for day-4 cash + animal feed
-PHASE1_MELON_TILES_NW = 4
-PHASE1_GEESE_DAY0_2 = 6
+PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
+PHASE1_MELON_TILES_NW = 12        # NW melons for day-10 cash surge (Leader springboard)
+PHASE1_GEESE_DAY0_2 = 0            # Zero Geese policy: geese produce low-margin eggs
 MELON_PLANT_LAST_DAY_FERT = 17    # last planting that still harvests by 29
 MELON_PLANT_LAST_DAY = 19
 
@@ -115,22 +115,20 @@ LAND_ROI_THRESHOLD = 1.5       # minimum lifetime_profit / price ratio
 LAND_BUY_LAST_DAY = 20         # hard cutoff — land bought after Day 20 can't pay back
 
 # Static crop caps — safety net to prevent monoculture if scoring has bugs.
-# Portfolio-aware scoring (Fix 3) is the primary diversification mechanism.
-# Static crop caps — safety net to prevent monoculture if scoring has bugs.
 # Portfolio-aware scoring is the primary diversification mechanism.
 CROP_TILE_CAPS = {
     "WHEAT": 99,        # no cap — wheat is the backbone
     "CARROT": 16,       # diversified cash crop
     "TOMATO": 16,       # high value ongoing
     "STRAWBERRY": 20,   # high value ongoing (expanded for leader-style production)
-    "MELON": 10,        # max 10 tiles (leader-style early high-value harvest)
+    "MELON": 12,        # max 12 tiles (leader-style early high-value harvest)
 }
 FINAL_DUMP_DAYS = {28: 0.75, 29: 0.25}   # min-price fractions loosen at end
 
 # Animal expansion targets (tiles), adjusted dynamically by land/feed/labor/money.
-TARGET_GEESE = 2
+TARGET_GEESE = 0
 TARGET_COWS = 6
-TARGET_SHEEP = 4
+TARGET_SHEEP = 12
 ANIMAL_EXPANSION_HORIZON_DAYS = 14   # ramp projection window
 MAX_ANIMAL_BUYS_PER_DAY = 2          # max new animals placed per day
 
@@ -144,7 +142,9 @@ CROP_DIVERSIFICATION_FACTOR = {
 # --- market layer (order_builder / market_brain / endgame_liquidator) ------
 MIN_CARRY_GAIN = 0.02          # hold only if E[P|+H] exceeds spot by >2%
 CARRY_HORIZON_DAYS = 3         # recovery look-ahead for hold decisions
-SHED_SOFT_CAP = 80             # start liquidating when shed nears 100 cap
+SHED_SOFT_CAP = 65             # start emergency liquidation when shed reaches 65 (Leader heuristic)
+SHED_RESUME_CAP = 55           # resume normal sell windows once shed falls <= 55
+MELON_SEASON_SALE_CAP = 150    # maximum cumulative melons to sell before quadratic price cliff
 ENDGAME_RISK_DAYS = 3          # days_left below this => aggressive dumping
 FLOOR_HOLD_MIN_DAYS_LEFT = 5   # hold $1-floored stock only if recovery time
 MIN_SLICE_QTY = 1              # smallest sell slice per product per window
@@ -171,8 +171,9 @@ def log(msg):
 DAY_TO_HANDS = {
     0: 4,    # Days 0-5: 4 hands (120 actions/day)
     6: 8,    # Days 6-8: 8 hands (216 actions/day)
-    9: 10,   # Day 9: 10 hands (264 actions/day)
-    10: 12,  # Days 10-29: 12 hands (312 actions/day)
+    9: 8,    # Day 9: 8 hands ($54/day) - saves $89 on SW unlock day
+    10: 10,  # Day 10: 10 hands ($143/day)
+    11: 12,  # Days 11-29: 12 hands ($376/day)
     30: 0,   # Day 30: 0 hands (main farmer only)
 }
 
@@ -194,12 +195,12 @@ def get_actions_available(day):
 # Quadrant numbering: NW=1 (starting), NE=2 ($1k), SW=3 ($2k), SE=4 ($4k)
 # Strategy: Only buy quadrants 1-3 (75 tiles). NEVER buy quadrant 4.
 QUADRANT_UNLOCK_DAYS = {
-    2: 6,    # Quadrant 2 (NE): buy on day 6 (pre-buy day 5)
+    2: 3,    # Quadrant 2 (NE): buy on days 3-5 (Leader heuristic: cash >= 1400)
     3: 9,    # Quadrant 3 (SW): buy on day 9 (pre-buy day 8)
 }
 QUADRANT_MONEY_THRESHOLDS = {
-    2: 1500,  # Need >= $1,500 to buy Q2 ($1,000 land + $500 buffer)
-    3: 2450,  # Need >= $2,450 to buy Q3 ($2,000 land + $143 hires + $300 buffer)
+    2: 1400,  # Need >= $1,400 to buy Q2 ($1,000 land + $400 seed/ops float)
+    3: 2204,  # Need >= $2,204 to buy Q3 ($2,000 land + $150 escrow + $54 hires)
 }
 QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
 
@@ -214,22 +215,22 @@ MELON_PLANT_DEADLINE = 17        # max_yield_day=12; 29-12=17
 # Seed pre-purchase lead days (buy seeds N days before land unlock)
 PRE_BUY_LEAD_DAYS = 1
 
-# SW expansion seed targets (tunable for A/B testing)
+# SW expansion seed targets & geometry constants
+SW_ESCROW_AMOUNT = 150           # 15 wheat seeds * $10 (Rule P1)
+PORT_SW = (4, 5)                 # Shed-access tile inside SW; squad anchor
+SW_SOIL_TILES = {(x, y) for x in range(5) for y in range(7, 10)}  # 15 tiles (rows 7,8,9)
+SW_PASTURE_TILES = {(x, 5) for x in range(4)} | {(x, 6) for x in range(5)}  # 9 tiles (rows 5,6)
+
 SW_SEED_TARGETS = {
-    "STRAWBERRY": 8,   # primary high-value crop for SW
-    "TOMATO": 4,       # secondary ongoing crop
+    "WHEAT": 15,                 # strictly WHEAT for animal feed engine (Rule P5)
 }
 NE_SEED_TARGETS = {
-    "CARROT": 8,       # fast cash crop for NE
-    "TOMATO": 4,       # secondary ongoing crop
+    "CARROT": 8,                 # fast cash crop for NE
+    "TOMATO": 4,                 # secondary ongoing crop
 }
 
-# SW treasury minimum: land + seeds + feed + reserve
-# This is the MINIMUM cash required before buying SW — non-negotiable
-SW_TREASURY_SEED_COST = (
-    SW_SEED_TARGETS.get("STRAWBERRY", 8) * 100 +   # strawberry seeds
-    SW_SEED_TARGETS.get("TOMATO", 4) * 50           # tomato seeds
-)
+# SW treasury seed cost: exactly the $150 escrow
+SW_TREASURY_SEED_COST = 150
 
 # ====================================================================
 # v5.11: Dynamic strawberry cap — deadline-consistent
@@ -257,55 +258,51 @@ def get_strawberry_cap(day, land_purchased=False):
 
 
 # ====================================================================
-# v5.11: Dynamic SW seed tranche — deadline-aware
+# v5.11 / v6.0: SW seed targets — Whitelist & Transition
 # ====================================================================
 
-def get_sw_seed_targets(day, money, land_cost=2000):
-    """Dynamic SW seed targets — never recommend strawberry after Day 13.
+def get_sw_seed_targets(day, money=0, land_cost=2000):
+    """SW seed targets: strictly WHEAT (D9-24) and CARROT (D25-27).
 
-    Rationale:
-    - Day 0-8: Full mix (8 strawberry + 4 tomato = 12 tiles)
-    - Day 9-12: Strawberry-heavy (10 strawberry + 2 tomato = 12 tiles)
-    - Day 13: Strawberry-only (12 strawberry = 12 tiles) — last day
-    - Day 14+: Tomato-only (6 tomato = 6 tiles) — no strawberry after deadline
-
-    Treasury constraint: Only buy what we can afford after land cost.
+    Rule P5: Eliminates strawberry/tomato capital trap and Day 13 lockout.
     """
-    seed_budget = max(0, money - land_cost - 300)  # 300 = reserve
-
-    if day <= 8:
-        targets = {"STRAWBERRY": 8, "TOMATO": 4}
-    elif day <= 12:
-        targets = {"STRAWBERRY": 10, "TOMATO": 2}
-    elif day == 13:
-        targets = {"STRAWBERRY": 12, "TOMATO": 0}
+    if day <= 24:
+        return {"WHEAT": 15}
+    elif day <= 27:
+        return {"CARROT": 15}
     else:
-        targets = {"STRAWBERRY": 0, "TOMATO": 6}
+        return {}
 
-    # Treasury constraint: reduce if can't afford
-    total_cost = sum(CROPS[c]["seed"] * n for c, n in targets.items())
-    if total_cost > seed_budget and seed_budget >= 0:
-        scale = seed_budget / max(1, total_cost)
-        targets = {c: max(0, int(n * scale)) for c, n in targets.items()}
-
-    return targets
-
+# Animal scaling targets by workforce size (hands count)
+# Maps hands_count -> (target_geese, target_cows, target_sheep)
 # Animal scaling targets by workforce size (hands count)
 # Maps hands_count -> (target_geese, target_cows, target_sheep)
 ANIMAL_SCALING = {
     4:  (0, 2, 2),    # Days 0-5: 2 cows + 2 sheep (leader opening)
-    8:  (2, 4, 4),    # Days 6-8: 2 geese + 4 cows + 4 sheep = 10 animals
-    10: (3, 6, 6),    # Day 9: 3 geese + 6 cows + 6 sheep = 15 animals
-    12: (4, 8, 8),    # Days 10-29: 4 geese + 8 cows + 8 sheep = 20 animals
+    8:  (0, 4, 4),    # Days 6-8: 4 cows + 4 sheep = 8 animals
+    10: (0, 5, 8),    # Day 9: 5 cows + 8 sheep = 13 animals
+    12: (0, 6, 12),   # Days 10-29: 6 cows + 12 sheep = 18 animals
 }
 
-def get_animal_targets(hands):
-    """Return (geese, cows, sheep) targets based on current hands count."""
-    result = (0, 0, 0)
-    for h in sorted(ANIMAL_SCALING.keys()):
-        if hands >= h:
-            result = ANIMAL_SCALING[h]
-    return result
+def get_animal_targets(day=None, money=None, shed_wheat=None, current_animals=None, max_pastures=20, hands=None):
+    """Return animal targets. Supports both legacy hands count signature and full Astra heuristic."""
+    if hands is not None:
+        result = (0, 0, 0)
+        for h in sorted(ANIMAL_SCALING.keys()):
+            if hands >= h:
+                result = ANIMAL_SCALING[h]
+        return result
+    if money is not None:
+        from strategy.animal_planner import get_animal_targets as _astra_targets
+        return _astra_targets(day, money, shed_wheat, current_animals, max_pastures=max_pastures)
+    if day is not None and isinstance(day, int) and day in ANIMAL_SCALING:
+        result = (0, 0, 0)
+        for h in sorted(ANIMAL_SCALING.keys()):
+            if day >= h:
+                result = ANIMAL_SCALING[h]
+        return result
+    from strategy.animal_planner import get_animal_targets as _astra_targets
+    return _astra_targets(day or 0, money or 0, shed_wheat or 0, current_animals or {}, max_pastures=max_pastures)
 
 # Sell batch sizes by phase
 SELL_BATCH_SIZES = {
