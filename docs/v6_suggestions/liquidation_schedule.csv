@@ -1,0 +1,78 @@
+product,day,qty_sold,first_quote,last_quote,day_revenue,overshoot_after,town_drain_per_day,note
+WOOL,12,21,200,177,4033,8,13,flow-sell=supply; scarcity premium regime
+WOOL,13,21,196,154,3760,16,13,flow-sell=supply; scarcity premium regime
+WOOL,14,21,185,125,3332,24,13,flow-sell=supply; scarcity premium regime
+WOOL,15,21,167,88,2749,32,13,flow-sell=supply; scarcity premium regime
+WOOL,16,21,141,43,2007,40,13,flow-sell=supply; scarcity premium regime
+WOOL,17,21,113,20,1417,48,13,flow-sell=supply; scarcity premium regime
+WOOL,18,21,80,11,977,56,13,flow-sell=supply; scarcity premium regime
+WOOL,19,21,56,10,693,64,13,flow-sell=supply; scarcity premium regime
+WOOL,20,21,43,10,541,72,13,flow-sell=supply; scarcity premium regime
+WOOL,21,21,35,10,455,80,13,flow-sell=supply; scarcity premium regime
+WOOL,22,21,30,10,392,88,13,flow-sell=supply; scarcity premium regime
+WOOL,23,21,26,10,344,96,13,flow-sell=supply; scarcity premium regime
+WOOL,24,21,23,10,306,104,13,flow-sell=supply; scarcity premium regime
+WOOL,25,21,21,10,276,112,13,flow-sell=supply; scarcity premium regime
+WOOL,26,21,19,10,252,120,13,flow-sell=supply; scarcity premium regime
+WOOL,27,21,17,10,232,128,13,flow-sell=supply; scarcity premium regime
+WOOL,28,21,16,10,215,136,13,flow-sell=supply; scarcity premium regime
+WOOL,29,21,15,10,200,144,13,flow-sell=supply; scarcity premium regime
+WOOL,TOTAL,378,,,22182,,,
+MILK,10,12,160,145,1822,-8,19,flow-sell; x stays negative all season
+MILK,11,12,190,169,2146,-16,19,flow-sell; x stays negative all season
+MILK,12,12,199,186,2317,-24,19,flow-sell; x stays negative all season
+MILK,13,12,206,196,2412,-32,19,flow-sell; x stays negative all season
+MILK,14,12,212,203,2492,-40,19,flow-sell; x stays negative all season
+MILK,15,12,218,210,2562,-48,19,flow-sell; x stays negative all season
+MILK,16,12,223,216,2621,-56,19,flow-sell; x stays negative all season
+MILK,17,12,228,222,2673,-64,19,flow-sell; x stays negative all season
+MILK,18,12,233,227,2721,-72,19,flow-sell; x stays negative all season
+MILK,19,12,237,232,2764,-80,19,flow-sell; x stays negative all season
+MILK,20,12,241,237,2804,-88,19,flow-sell; x stays negative all season
+MILK,21,12,245,241,2842,-96,19,flow-sell; x stays negative all season
+MILK,22,12,249,245,2877,-104,19,flow-sell; x stays negative all season
+MILK,23,12,252,249,2911,-112,19,flow-sell; x stays negative all season
+MILK,24,12,256,252,2943,-120,19,flow-sell; x stays negative all season
+MILK,25,12,259,256,2973,-128,19,flow-sell; x stays negative all season
+MILK,26,12,262,259,3002,-136,19,flow-sell; x stays negative all season
+MILK,27,12,265,262,3030,-144,19,flow-sell; x stays negative all season
+MILK,28,12,268,265,3057,-152,19,flow-sell; x stays negative all season
+MILK,29,12,271,268,3084,-160,19,flow-sell; x stays negative all season
+MILK,TOTAL,240,,,54454,,,
+STRAWBERRY,16,40,288,280,11455,15,25,same-day pulse dump <= drain window
+STRAWBERRY,18,40,290,282,11537,10,25,same-day pulse dump <= drain window
+STRAWBERRY,20,40,292,284,11619,5,25,same-day pulse dump <= drain window
+STRAWBERRY,22,40,294,286,11701,0,25,same-day pulse dump <= drain window
+STRAWBERRY,24,40,296,288,11783,-5,25,same-day pulse dump <= drain window
+STRAWBERRY,26,40,298,290,11865,-10,25,same-day pulse dump <= drain window
+STRAWBERRY,TOTAL,240,,,69960,,,
+MELON,12,78,271,205,18631,77,1,single-day dump at harvest d12 (sq gentle near 0)
+MELON,TOTAL,78,,,18631,,,
+CARROT,26,40,76,70,2913,21,19,late liquidation into scarcity x~-350
+CARROT,27,40,73,69,2831,42,19,late liquidation into scarcity x~-350
+CARROT,28,40,70,67,2751,63,19,late liquidation into scarcity x~-350
+CARROT,29,40,69,65,2666,84,19,late liquidation into scarcity x~-350
+CARROT,TOTAL,160,,,11161,,,
+FERTILIZER,8,14,100,93,1358,14,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,9,14,93,86,1253,28,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,10,14,86,79,1155,42,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,11,14,79,72,1064,56,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,12,14,72,65,980,70,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,13,14,65,58,903,84,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,14,14,58,51,833,98,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,15,14,51,44,770,112,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,16,14,44,37,714,126,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,17,14,37,30,665,140,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,18,14,30,23,623,154,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,19,14,23,16,588,168,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,20,14,16,9,560,182,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,21,14,9,2,546,196,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,22,14,2,1,539,210,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,23,14,1,1,532,224,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,24,14,1,1,525,238,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,25,14,1,1,518,252,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,26,14,1,1,511,266,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,27,14,1,1,504,280,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,28,14,1,1,497,294,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,29,14,1,1,490,308,0,residual after FERTILIZE-on-strawberry split
+FERTILIZER,TOTAL,308,,,16574,,,
