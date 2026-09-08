@@ -7765,6 +7765,13 @@ def record_our_sale(product, units):
         mem.get("our_units_sold_last_step", {}).get(product, 0) + units
 
 
+def get_our_units_sold(product=None):
+    """Return total cumulative units sold for a product, or a copy of all products."""
+    if product is not None:
+        return _STATE.get("our_units_sold", {}).get(product, 0)
+    return dict(_STATE.get("our_units_sold", {}))
+
+
 def noop_penalty():
     _STATE["noop_attempts"] += 1
 
@@ -11652,15 +11659,65 @@ SELLABLE = ("WHEAT", "CARROT", "TOMATO", "STRAWBERRY",
             "MELON", "EGG", "MILK", "WOOL", "FERTILIZER")
 
 
+def _get_season_units_sold(product):
+    try:
+        from state.state_tracker import get_our_units_sold
+        return get_our_units_sold(product)
+    except Exception:
+        try:
+            from state_tracker import get_our_units_sold
+            return get_our_units_sold(product)
+        except Exception:
+            return 0
+
+
 class MarketBrain:
     def __init__(self, forecast):
         self.fc = forecast
 
     # ------------------------------------------------------------------
+    def _build_melon_diagnostics(self, ctx, melon_market_inv, shed, season_melons_sold,
+                                 melon_sold_this_turn, is_floor_exception,
+                                 melon_turn_drip_budget, melon_hold_reason_override=None,
+                                 delay_set=None):
+        melon_spot = market_price("MELON", melon_market_inv)
+        melon_shed_inv = int(shed.get("MELON", 0))
+        melon_cap_remaining = max(0, MELON_SEASON_SALE_CAP - season_melons_sold)
+        safe_qty = melon_turn_drip_budget if not is_floor_exception else melon_shed_inv
+
+        if melon_hold_reason_override is not None:
+            hold_reason = melon_hold_reason_override
+        elif melon_sold_this_turn > 0:
+            hold_reason = None
+        elif melon_spot <= 1 and not is_floor_exception:
+            hold_reason = "floor_price_hold"
+        elif melon_shed_inv <= 0:
+            hold_reason = "no_shed_inventory"
+        elif melon_cap_remaining <= 0:
+            hold_reason = "season_cap_reached"
+        elif safe_qty <= 0 and not is_floor_exception:
+            hold_reason = "marginal_price_drop"
+        elif delay_set and "MELON" in delay_set and not is_floor_exception:
+            hold_reason = "opp_advice_delay"
+        else:
+            hold_reason = "held"
+
+        return {
+            "melon_spot": melon_spot,
+            "melon_market_inventory": melon_market_inv,
+            "melon_shed_inventory": melon_shed_inv,
+            "melon_safe_quantity": safe_qty,
+            "melon_sell_quantity": melon_sold_this_turn,
+            "melon_units_sold_this_season": season_melons_sold,
+            "melon_sale_cap_remaining": melon_cap_remaining,
+            "melon_hold_reason": hold_reason,
+        }
+
+    # ------------------------------------------------------------------
     def sell_orders(self, ctx, max_slots=None, opp_advice=None):
         """Returns (orders, details). orders: [["SELL", prod, qty], ...].
 
-        v5.12 Leader-calibrated sell policy:
+        v5.12 Leader-calibrated sell policy with MELON marginal drip selling:
           Two-tier shed relief:
             - Midnight hard-guard (hour >= 22 and shed_total > 88): urgency 2, dump inventory
             - Emergency relief (shed_total >= SHED_SOFT_CAP (65)): urgency 1, override 4h window,
@@ -11670,8 +11727,10 @@ class MarketBrain:
             - Decrement order_budget -= 1 per order slice (MAX_MARKET_ORDERS = 10 is order count)
           Feed protection:
             - Reserved wheat = animals * FEED_WHEAT_BUFFER_DAYS strictly protected from sale
-          Melon quadratic cliff protection:
+          Melon quadratic cliff & marginal drip protection:
             - Cumulative season melons sold capped at MELON_SEASON_SALE_CAP (150)
+            - Normal & shed-relief sales strictly bounded by marginal price keep-fraction (0.90)
+            - Floor price ($1) held in normal & shed-relief mode; liquidated only in endgame or urgency 2
         """
         if max_slots is None:
             max_slots = int(MAX_MARKET_ORDERS * SELL_SLOT_SHARE)
@@ -11685,10 +11744,6 @@ class MarketBrain:
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP
 
-        # Hour 0 purchases block sells in normal mode (unless endgame, emergency relief, or midnight guard)
-        if hour == 0 and not endgame and not pressure and not (hour >= 22 and shed_total > 88):
-            return [], {"reason": "hour0_purchases"}
-
         # Two-tier urgency:
         # 2 = midnight hard-guard, 1 = emergency relief, 0 = normal post-drain window
         if hour >= 22 and shed_total > 88:
@@ -11698,13 +11753,41 @@ class MarketBrain:
         elif (hour in SELL_HOUR_SET) or endgame:
             urgency = 0
         else:
-            return [], {"reason": "waiting_for_sell_window"}
+            urgency = -1
 
-        # Phase 6: extract opp_advice sets for fast lookup
+        inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
+
+        # Extract opp_advice sets for fast lookup
         preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()
         delay_set = set(opp_advice.delay_sell) if opp_advice else set()
 
-        inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
+        # MELON parameters & price protection initialization
+        melon_market_inv_init = float(inv.get("MELON", 10000.0))
+        melon_spot_init = market_price("MELON", melon_market_inv_init)
+        season_melons_sold = _get_season_units_sold("MELON")
+        melon_cap_remaining = max(0, MELON_SEASON_SALE_CAP - season_melons_sold)
+        is_floor_exception = endgame or (urgency == 2)
+
+        keep_frac = DRIP_PRICE_KEEP_FRAC.get("MELON", 0.90)
+        if melon_spot_init <= 1 and not is_floor_exception:
+            melon_turn_drip_budget = 0
+        else:
+            melon_turn_drip_budget = self._drip_budget("MELON", melon_market_inv_init, keep_frac, melon_spot_init)
+
+        # Hour 0 purchases block sells in normal mode (unless endgame, emergency relief, or midnight guard)
+        if hour == 0 and not endgame and not pressure and not (hour >= 22 and shed_total > 88):
+            diag = self._build_melon_diagnostics(ctx, melon_market_inv_init, shed, season_melons_sold, 0,
+                                                 is_floor_exception, melon_turn_drip_budget,
+                                                 melon_hold_reason_override="hour0_purchases",
+                                                 delay_set=delay_set)
+            return [], {"reason": "hour0_purchases", "melon_diagnostics": diag, **diag}
+
+        if urgency < 0:
+            diag = self._build_melon_diagnostics(ctx, melon_market_inv_init, shed, season_melons_sold, 0,
+                                                 is_floor_exception, melon_turn_drip_budget,
+                                                 melon_hold_reason_override="waiting_for_sell_window",
+                                                 delay_set=delay_set)
+            return [], {"reason": "waiting_for_sell_window", "melon_diagnostics": diag, **diag}
 
         # Spec batch sizes per phase
         if day <= 5:
@@ -11733,25 +11816,21 @@ class MarketBrain:
                 else:
                     fert_reserve = 0
                 stock = max(0, stock - fert_reserve)
-            elif prod == "MELON" and urgency < 2:
-                season_melons_sold = 0
-                try:
-                    from state.state_tracker import get_state
-                    season_melons_sold = get_state().get("our_units_sold", {}).get("MELON", 0)
-                except Exception:
-                    try:
-                        from state_tracker import get_state
-                        season_melons_sold = get_state().get("our_units_sold", {}).get("MELON", 0)
-                    except Exception:
-                        pass
-                melon_budget = max(0, MELON_SEASON_SALE_CAP - season_melons_sold)
-                stock = min(stock, melon_budget)
+            elif prod == "MELON":
+                if not is_floor_exception and melon_spot_init <= 1:
+                    stock = 0  # Hold $1 MELON at price floor in normal and shed relief modes
+                elif urgency < 2 and not endgame:
+                    stock = min(stock, melon_cap_remaining)
 
             if stock > 0:
                 available_stock[prod] = stock
 
         if not available_stock:
-            return [], {"reason": "no_available_stock", "pressure": pressure}
+            diag = self._build_melon_diagnostics(ctx, melon_market_inv_init, shed, season_melons_sold, 0,
+                                                 is_floor_exception, melon_turn_drip_budget,
+                                                 delay_set=delay_set)
+            return [], {"reason": "no_available_stock", "pressure": pressure,
+                        "melon_diagnostics": diag, **diag}
 
         # Order budget in order slots (engine cap is 10 orders per turn)
         order_budget = MAX_MARKET_ORDERS if (urgency >= 1 or endgame) else max_slots
@@ -11771,7 +11850,10 @@ class MarketBrain:
             spot = market_price(prod, inv.get(prod, 10000))
             urgency_score = st / (shed_total or 1)
             if spot <= 1:
-                urgency_score = 0.95
+                if prod == "MELON" and not is_floor_exception:
+                    urgency_score = 0.0  # Do not elevate urgency for MELON at floor
+                else:
+                    urgency_score = 0.95
             if prod in preempt_set:
                 urgency_score = 0.99
             candidates.append({"product": prod, "spot": spot, "urgency": urgency_score, "stock": st})
@@ -11783,6 +11865,8 @@ class MarketBrain:
             candidates.sort(key=lambda c: -c["urgency"])
 
         orders = []
+        melon_sold_this_turn = 0
+
         for c in candidates:
             if order_budget <= 0:
                 break
@@ -11795,18 +11879,34 @@ class MarketBrain:
 
             bt = batch_target
 
-            if endgame or days_left <= 2 or urgency == 2 or prod == "FERTILIZER":
-                slice_qty = min(st, 20)
-            elif urgency == 1:
-                slice_qty = min(st, bt if bt > 10 else 10, to_shed)
+            if prod == "MELON":
+                if is_floor_exception:
+                    slice_qty = min(st, 20)
+                else:
+                    safe_qty = max(0, melon_turn_drip_budget - melon_sold_this_turn)
+                    safe_qty = min(safe_qty, max(0, melon_cap_remaining - melon_sold_this_turn))
+                    if safe_qty <= 0:
+                        continue
+                    if urgency == 1:
+                        slice_qty = min(st, bt if bt > 10 else 10, to_shed, safe_qty)
+                    else:
+                        slice_qty = min(st, bt, safe_qty)
             else:
-                slice_qty = min(st, bt)
+                if endgame or days_left <= 2 or urgency == 2 or prod == "FERTILIZER":
+                    slice_qty = min(st, 20)
+                elif urgency == 1:
+                    slice_qty = min(st, bt if bt > 10 else 10, to_shed)
+                else:
+                    slice_qty = min(st, bt)
 
             if slice_qty <= 0:
                 continue
 
             orders.append(["SELL", prod, int(slice_qty)])
             available_stock[prod] -= slice_qty
+            inv[prod] = inv.get(prod, 10000.0) + slice_qty
+            if prod == "MELON":
+                melon_sold_this_turn += slice_qty
             if urgency == 1:
                 to_shed -= slice_qty
             order_budget -= 1
@@ -11814,16 +11914,30 @@ class MarketBrain:
             # In emergency mode, allow multiple slices of the overflowing product if to_shed remains
             if not endgame and urgency == 1 and to_shed > 0 and order_budget > 0 and available_stock[prod] > 0:
                 while order_budget > 0 and to_shed > 0 and available_stock[prod] > 0:
-                    extra_qty = min(available_stock[prod], bt if bt > 10 else 10, to_shed)
+                    if prod == "MELON":
+                        safe_qty = max(0, melon_turn_drip_budget - melon_sold_this_turn)
+                        safe_qty = min(safe_qty, max(0, melon_cap_remaining - melon_sold_this_turn))
+                        if safe_qty <= 0:
+                            break
+                        extra_qty = min(available_stock[prod], bt if bt > 10 else 10, to_shed, safe_qty)
+                    else:
+                        extra_qty = min(available_stock[prod], bt if bt > 10 else 10, to_shed)
                     if extra_qty <= 0:
                         break
                     orders.append(["SELL", prod, int(extra_qty)])
                     available_stock[prod] -= extra_qty
+                    inv[prod] = inv.get(prod, 10000.0) + extra_qty
+                    if prod == "MELON":
+                        melon_sold_this_turn += extra_qty
                     to_shed -= extra_qty
                     order_budget -= 1
 
+        diag = self._build_melon_diagnostics(ctx, melon_market_inv_init, shed, season_melons_sold, melon_sold_this_turn,
+                                             is_floor_exception, melon_turn_drip_budget,
+                                             delay_set=delay_set)
         return orders, {"candidates": candidates, "days_left": days_left,
-                        "endgame": endgame, "pressure": pressure, "urgency": urgency}
+                        "endgame": endgame, "pressure": pressure, "urgency": urgency,
+                        "melon_diagnostics": diag, **diag}
 
     # ------------------------------------------------------------------
     def _drip_budget(self, prod, current_inv, keep_frac, spot):

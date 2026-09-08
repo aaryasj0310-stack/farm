@@ -160,6 +160,13 @@ def record_our_sale(product, units):
         mem.get("our_units_sold_last_step", {}).get(product, 0) + units
 
 
+def get_our_units_sold(product=None):
+    """Return total cumulative units sold for a product, or a copy of all products."""
+    if product is not None:
+        return _STATE.get("our_units_sold", {}).get(product, 0)
+    return dict(_STATE.get("our_units_sold", {}))
+
+
 def noop_penalty():
     _STATE["noop_attempts"] += 1
 
