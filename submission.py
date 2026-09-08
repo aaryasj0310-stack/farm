@@ -7628,6 +7628,15 @@ _STATE = {
 }
 
 
+_RESET_HOOKS = []
+
+
+def register_reset_hook(hook):
+    """Register a callback to be called whenever reset_memory executes."""
+    if hook not in _RESET_HOOKS:
+        _RESET_HOOKS.append(hook)
+
+
 def get_state(obs):
     """Parse + update persistent state. Returns (ctx, memory)."""
     mem = _STATE
@@ -7636,9 +7645,12 @@ def get_state(obs):
         return None, mem
 
     marker = (ctx["day"], id(ctx))
-    # New-episode detection: day went backwards or we saw a future day reset.
+    # New-episode detection: day went backwards or new episode started at Day 0
     reset_this_turn = False
-    if mem["episode"] is not None and ctx["day"] < mem["episode"].get("last_day", 0):
+    if mem["episode"] is not None and (
+        ctx["day"] < mem["episode"].get("last_day", 0)
+        or (ctx["day"] == 0 and (ctx.get("hour", 0) == 0 or ctx.get("step", 0) == 0) and bool(mem.get("days_seen")))
+    ):
         log("new episode detected; resetting memory")
         reset_memory(mem)
         reset_this_turn = True
@@ -7655,7 +7667,10 @@ def get_state(obs):
     return ctx, mem
 
 
-def reset_memory(mem):
+def reset_memory(mem=None):
+    if mem is None:
+        mem = _STATE
+    mem["episode"] = None
     mem["prev_inventory"] = None
     mem["prev_shed"] = None
     mem["known_shops"] = []
@@ -7668,6 +7683,11 @@ def reset_memory(mem):
     mem["noop_attempts"] = 0
     mem["invalid_guard"] = 0
     mem["days_seen"] = set()
+    for hook in _RESET_HOOKS:
+        try:
+            hook()
+        except Exception:
+            pass
 
 
 def _update_drain_ledger(ctx, mem):
@@ -9933,12 +9953,13 @@ def build_tasks(ctx, macro):
                 elif t.yield_units >= cd["max_yield"]:
                     add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_cap")
 
-        if not t.watered_today and hour < 23:
-            dying_tomorrow = t.consecutive_unwatered >= 1
+        if not t.watered_today:
+            dying_tomorrow = (t.consecutive_unwatered >= 1) or (t.planted_day == day)
             if dying_tomorrow:
-                # Guardrail 2: mandatory survival watering
+                # Mandatory survival watering: ALWAYS eligible at any hour (including Hour 23)
                 need_water.append((PRIORITY_URGENT_SURVIVAL, t))
-            elif needs_water_today(t, day):
+            elif hour < 23 and needs_water_today(t, day):
+                # Normal / bonus watering: only eligible before Hour 23 (existing behavior preserved)
                 is_newly_planted = (t.planted_day == day)
                 if is_newly_planted:
                     prio = PRIORITY_BONUS_WATER + 5  # Urgent paired water for new plants
@@ -11951,6 +11972,26 @@ _prev_opp_snapshot = None
 _estimated_shed = None
 
 
+def reset_opponent_model_state():
+    """Reset module-level opponent-model state across episodes."""
+    global _prev_opp_snapshot, _estimated_shed
+    _prev_opp_snapshot = None
+    _estimated_shed = None
+
+
+try:
+    from state.state_tracker import register_reset_hook as _rrh_pkg
+    _rrh_pkg(reset_opponent_model_state)
+except Exception:
+    pass
+
+try:
+    from state_tracker import register_reset_hook as _rrh_flat
+    _rrh_flat(reset_opponent_model_state)
+except Exception:
+    pass
+
+
 def _get_components():
     global _FC, _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR
     if _FC is None:
@@ -12028,9 +12069,10 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     planner, builder, brain, liquidator = _get_components()
 
-    # v5.9: Reset daily log at start of day 0
+    # v5.9: Reset daily log and opponent state at start of day 0
     if ctx["day"] == 0 and ctx["hour"] == 0:
         reset_daily_log()
+        reset_opponent_model_state()
 
     # Dynamic shop boosts from observed town unlocks
     known_shops = obs.get("town", {}).get("unlocked_shops", [])
@@ -12090,15 +12132,70 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+_LAST_FALLBACK_DIAGNOSTIC: Optional[Dict[str, Any]] = None
+
+
+def get_last_fallback_diagnostic() -> Optional[Dict[str, Any]]:
+    """Return diagnostic telemetry from the most recent emergency fallback, if any."""
+    return _LAST_FALLBACK_DIAGNOSTIC
+
+
+def _emergency_fallback(obs: Dict[str, Any], exc: Exception) -> Dict[str, Any]:
+    """Safe, deterministic emergency fallback returning a valid conservative engine action."""
+    global _LAST_FALLBACK_DIAGNOSTIC
+    import traceback
+    tb_str = traceback.format_exc()
+
+    day = obs.get("day", 0) if isinstance(obs, dict) else 0
+    hour = obs.get("hour", 0) if isinstance(obs, dict) else 0
+    step = obs.get("step", 0) if isinstance(obs, dict) else 0
+
+    _LAST_FALLBACK_DIAGNOSTIC = {
+        "step": step,
+        "day": day,
+        "hour": hour,
+        "exception_type": type(exc).__name__,
+        "exception_message": str(exc),
+        "traceback": tb_str,
+        "is_fallback": True,
+    }
+
+    try:
+        from config import DEBUG
+        if DEBUG:
+            sys.stderr.write(f"[EMERGENCY_FALLBACK] Step {step} (D{day} H{hour:02d}): {exc}\n{tb_str}\n")
+    except Exception:
+        pass
+
+    # Safely extract observed workforce count from raw observation
+    player_id = obs.get("player", 0) if isinstance(obs, dict) else 0
+    farms = obs.get("farms", []) if isinstance(obs, dict) else []
+    our_farm = (
+        farms[player_id]
+        if isinstance(farms, list) and len(farms) > player_id and isinstance(farms[player_id], dict)
+        else {}
+    )
+    n_hands = len(our_farm.get("hands", [])) if isinstance(our_farm, dict) else 0
+
+    return {
+        "farmer": ["PASS"],
+        "hands": [["PASS"] for _ in range(n_hands)],
+        "market": [],
+        "_emergency_fallback": True,
+    }
+
+
 # ==============================================================================
 # KAGGLE ENTRY POINT (LAST 'def')
 # ==============================================================================
 def agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Official competition entry point with top-level fail-safe."""
+    """Official competition entry point with safe deterministic fallback."""
+    global _LAST_FALLBACK_DIAGNOSTIC
     try:
+        _LAST_FALLBACK_DIAGNOSTIC = None
         return _agent_decision(obs)
-    except Exception:
-        return dict(PASS_ACTION)
+    except Exception as exc:
+        return _emergency_fallback(obs, exc)
 
 # ===========================================================================
 # END MODULE: main.py

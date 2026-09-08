@@ -188,12 +188,13 @@ def build_tasks(ctx, macro):
                 elif t.yield_units >= cd["max_yield"]:
                     add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_cap")
 
-        if not t.watered_today and hour < 23:
-            dying_tomorrow = t.consecutive_unwatered >= 1
+        if not t.watered_today:
+            dying_tomorrow = (t.consecutive_unwatered >= 1) or (t.planted_day == day)
             if dying_tomorrow:
-                # Guardrail 2: mandatory survival watering
+                # Mandatory survival watering: ALWAYS eligible at any hour (including Hour 23)
                 need_water.append((PRIORITY_URGENT_SURVIVAL, t))
-            elif needs_water_today(t, day):
+            elif hour < 23 and needs_water_today(t, day):
+                # Normal / bonus watering: only eligible before Hour 23 (existing behavior preserved)
                 is_newly_planted = (t.planted_day == day)
                 if is_newly_planted:
                     prio = PRIORITY_BONUS_WATER + 5  # Urgent paired water for new plants

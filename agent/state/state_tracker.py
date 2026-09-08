@@ -23,6 +23,15 @@ _STATE = {
 }
 
 
+_RESET_HOOKS = []
+
+
+def register_reset_hook(hook):
+    """Register a callback to be called whenever reset_memory executes."""
+    if hook not in _RESET_HOOKS:
+        _RESET_HOOKS.append(hook)
+
+
 def get_state(obs):
     """Parse + update persistent state. Returns (ctx, memory)."""
     mem = _STATE
@@ -31,9 +40,12 @@ def get_state(obs):
         return None, mem
 
     marker = (ctx["day"], id(ctx))
-    # New-episode detection: day went backwards or we saw a future day reset.
+    # New-episode detection: day went backwards or new episode started at Day 0
     reset_this_turn = False
-    if mem["episode"] is not None and ctx["day"] < mem["episode"].get("last_day", 0):
+    if mem["episode"] is not None and (
+        ctx["day"] < mem["episode"].get("last_day", 0)
+        or (ctx["day"] == 0 and (ctx.get("hour", 0) == 0 or ctx.get("step", 0) == 0) and bool(mem.get("days_seen")))
+    ):
         log("new episode detected; resetting memory")
         reset_memory(mem)
         reset_this_turn = True
@@ -50,7 +62,10 @@ def get_state(obs):
     return ctx, mem
 
 
-def reset_memory(mem):
+def reset_memory(mem=None):
+    if mem is None:
+        mem = _STATE
+    mem["episode"] = None
     mem["prev_inventory"] = None
     mem["prev_shed"] = None
     mem["known_shops"] = []
@@ -63,6 +78,11 @@ def reset_memory(mem):
     mem["noop_attempts"] = 0
     mem["invalid_guard"] = 0
     mem["days_seen"] = set()
+    for hook in _RESET_HOOKS:
+        try:
+            hook()
+        except Exception:
+            pass
 
 
 def _update_drain_ledger(ctx, mem):

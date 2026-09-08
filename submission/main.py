@@ -23,21 +23,24 @@ from collections import Counter
 
 # Safe path injection for Kaggle execution environment (where __file__ is undefined)
 _CWD = os.getcwd()
+_OWN_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else None
 _DIR_CANDIDATES = [
-    "/kaggle_simulations/agent",
+    _OWN_DIR,
     os.path.join(_CWD, "agent"),
-    os.path.join(_CWD, "submission"),
+    "/kaggle_simulations/agent",
     _CWD,
-    os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else None,
 ]
 
-for _base in _DIR_CANDIDATES:
+for _base in reversed(_DIR_CANDIDATES):
     if _base and os.path.exists(_base):
-        if _base not in sys.path:
-            sys.path.insert(0, _base)
-        for _sub in ("state", "strategy", "execution", "market"):
+        if _base in sys.path:
+            sys.path.remove(_base)
+        sys.path.insert(0, _base)
+        for _sub in reversed(("state", "strategy", "execution", "market")):
             _sub_path = os.path.join(_base, _sub)
-            if os.path.exists(_sub_path) and _sub_path not in sys.path:
+            if os.path.exists(_sub_path):
+                if _sub_path in sys.path:
+                    sys.path.remove(_sub_path)
                 sys.path.insert(0, _sub_path)
 
 try:
@@ -92,6 +95,26 @@ _LIQUIDATOR = None
 # Persistent opponent modeling state (survives across turns within one process)
 _prev_opp_snapshot = None
 _estimated_shed = None
+
+
+def reset_opponent_model_state():
+    """Reset module-level opponent-model state across episodes."""
+    global _prev_opp_snapshot, _estimated_shed
+    _prev_opp_snapshot = None
+    _estimated_shed = None
+
+
+try:
+    from state.state_tracker import register_reset_hook as _rrh_pkg
+    _rrh_pkg(reset_opponent_model_state)
+except Exception:
+    pass
+
+try:
+    from state_tracker import register_reset_hook as _rrh_flat
+    _rrh_flat(reset_opponent_model_state)
+except Exception:
+    pass
 
 
 def _get_components():
@@ -171,9 +194,10 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     planner, builder, brain, liquidator = _get_components()
 
-    # v5.9: Reset daily log at start of day 0
+    # v5.9: Reset daily log and opponent state at start of day 0
     if ctx["day"] == 0 and ctx["hour"] == 0:
         reset_daily_log()
+        reset_opponent_model_state()
 
     # Dynamic shop boosts from observed town unlocks
     known_shops = obs.get("town", {}).get("unlocked_shops", [])
@@ -233,12 +257,67 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+_LAST_FALLBACK_DIAGNOSTIC: Optional[Dict[str, Any]] = None
+
+
+def get_last_fallback_diagnostic() -> Optional[Dict[str, Any]]:
+    """Return diagnostic telemetry from the most recent emergency fallback, if any."""
+    return _LAST_FALLBACK_DIAGNOSTIC
+
+
+def _emergency_fallback(obs: Dict[str, Any], exc: Exception) -> Dict[str, Any]:
+    """Safe, deterministic emergency fallback returning a valid conservative engine action."""
+    global _LAST_FALLBACK_DIAGNOSTIC
+    import traceback
+    tb_str = traceback.format_exc()
+
+    day = obs.get("day", 0) if isinstance(obs, dict) else 0
+    hour = obs.get("hour", 0) if isinstance(obs, dict) else 0
+    step = obs.get("step", 0) if isinstance(obs, dict) else 0
+
+    _LAST_FALLBACK_DIAGNOSTIC = {
+        "step": step,
+        "day": day,
+        "hour": hour,
+        "exception_type": type(exc).__name__,
+        "exception_message": str(exc),
+        "traceback": tb_str,
+        "is_fallback": True,
+    }
+
+    try:
+        from config import DEBUG
+        if DEBUG:
+            sys.stderr.write(f"[EMERGENCY_FALLBACK] Step {step} (D{day} H{hour:02d}): {exc}\n{tb_str}\n")
+    except Exception:
+        pass
+
+    # Safely extract observed workforce count from raw observation
+    player_id = obs.get("player", 0) if isinstance(obs, dict) else 0
+    farms = obs.get("farms", []) if isinstance(obs, dict) else []
+    our_farm = (
+        farms[player_id]
+        if isinstance(farms, list) and len(farms) > player_id and isinstance(farms[player_id], dict)
+        else {}
+    )
+    n_hands = len(our_farm.get("hands", [])) if isinstance(our_farm, dict) else 0
+
+    return {
+        "farmer": ["PASS"],
+        "hands": [["PASS"] for _ in range(n_hands)],
+        "market": [],
+        "_emergency_fallback": True,
+    }
+
+
 # ==============================================================================
 # KAGGLE ENTRY POINT (LAST 'def')
 # ==============================================================================
 def agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Official competition entry point with top-level fail-safe."""
+    """Official competition entry point with safe deterministic fallback."""
+    global _LAST_FALLBACK_DIAGNOSTIC
     try:
+        _LAST_FALLBACK_DIAGNOSTIC = None
         return _agent_decision(obs)
-    except Exception:
-        return dict(PASS_ACTION)
+    except Exception as exc:
+        return _emergency_fallback(obs, exc)
