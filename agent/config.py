@@ -228,6 +228,7 @@ SW_ESCROW_AMOUNT = 150           # 15 wheat seeds * $10 (Rule P1)
 PORT_SW = (4, 5)                 # Shed-access tile inside SW; squad anchor
 SW_SOIL_TILES = {(x, y) for x in range(5) for y in range(7, 10)}  # 15 tiles (rows 7,8,9)
 SW_PASTURE_TILES = {(x, 5) for x in range(4)} | {(x, 6) for x in range(5)}  # 9 tiles (rows 5,6)
+EARLY_PASTURE_TILES = [(3, 4), (2, 4)]  # NW fallow tiles adjacent to shed for early livestock bootstrap
 
 SW_SEED_TARGETS = {
     "WHEAT": 15,                 # strictly WHEAT for animal feed engine (Rule P5)

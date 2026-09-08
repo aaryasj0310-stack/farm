@@ -123,3 +123,123 @@ def test_feed_buffer_constraint():
 
     res_with_wheat = get_animal_targets(0, 450, 5, {'COW': 0, 'SHEEP': 0, 'GOOSE': 0})
     assert res_with_wheat['COW'] == 1
+
+
+def make_test_ctx(day=0, money=3000.0, unlocked=("NW",), shed=None):
+    from state.observation_parser import parse_observation
+    board = 10
+    tiles = [[None for _ in range(board)] for _ in range(board)]
+    half = 5
+    quads = {("N", "W"): "NW", ("N", "E"): "NE",
+             ("S", "W"): "SW", ("S", "E"): "SE"}
+    for y in range(board):
+        for x in range(board):
+            q = quads[("N" if y < half else "S", "W" if x < half else "E")]
+            if q not in unlocked:
+                tiles[y][x] = "LOCKED"
+    farm = {
+        "money": money,
+        "tiles": tiles,
+        "farmer": [4, 4],
+        "hands": [[4, 4]] * 4,
+        "unlocked_quadrants": list(unlocked),
+        "hires_today": 0,
+    }
+    obs = {
+        "player": 0, "day": day, "hour": 0,
+        "farms": [farm, farm],
+        "market": {"inventory": {"WHEAT": 10000}, "prices": {"WHEAT": 25}},
+        "town": {"unlocked_shops": []},
+        "private": {"shed": dict(shed or {}), "seeds": {}, "inventories": [{}]},
+    }
+    return parse_observation(obs)
+
+
+def test_early_pasture_planned_before_sw():
+    """Test 1: Early pasture can be planned before SW expansion."""
+    from strategy.macro_planner import MacroPlanner
+    from strategy.price_forecast import PriceForecast
+    from config import EARLY_PASTURE_TILES
+    
+    fc = PriceForecast.load()
+    ctx = make_test_ctx(day=0, money=3000.0, unlocked=("NW",))
+    planner = MacroPlanner(fc)
+    plan = planner.build(ctx)
+    assert plan.build_op == "BUILD_PASTURE"
+    assert len(plan.build_queue) > 0
+    assert all(pos in EARLY_PASTURE_TILES for pos in plan.build_queue)
+
+
+def test_circular_dependency_broken_animal_buy_order_emitted():
+    """Test 2: Circular dependency broken: animal buy order emitted when pasture is being built."""
+    from market.order_builder import OrderBuilder
+    class MockTile:
+        def __init__(self, x, y):
+            self.pos = (x, y); self.kind = None; self.is_animal = False
+    class MockFarm:
+        money = 3000.0; hands = [(4, 4)] * 4; unlocked = {"NW"}; farmer = (4, 4)
+        def iter_tiles(self):
+            return [MockTile(x, y) for x in range(5) for y in range(5)]
+    ctx = {
+        "day": 0, "hour": 0, "farm": MockFarm(),
+        "private": type("MockPrivate", (), {"shed": {}, "seeds": {}, "inventories": [{}]})(),
+        "market": type("MockMarket", (), {"inventory": {"WHEAT": 10000}, "prices": {"WHEAT": 25}})(),
+        "town": type("MockTown", (), {"unlocked_shops": []})(),
+    }
+    intents = {
+        "hire": 0,
+        "buy_animal": {"COW": 2},
+        "pending_structures": {"PASTURE": 2},
+    }
+    builder = OrderBuilder()
+    orders, ledger = builder.build(ctx, intents)
+    animal_orders = [o for o in orders if o[0] == "BUY_ANIMAL"]
+    assert len(animal_orders) > 0
+    assert animal_orders[0][1] == "COW"
+    assert animal_orders[0][2] == 2
+
+
+def test_c4_cutoff_strictly_preserved():
+    """Test 3: C4 cutoff strictly preserved: 0 new animals on/after Day 12."""
+    for d in (12, 13, 20, 28):
+        res = get_animal_targets(d, 50000, 100, {"COW": 1, "SHEEP": 1, "GOOSE": 0}, max_pastures=10)
+        assert res["COW"] == 1
+        assert res["SHEEP"] == 1
+        assert res["GOOSE"] == 0
+
+
+def test_feed_safety_invariant():
+    """Test 4: Feed safety invariant: animal not bought if feed buffer cannot be maintained."""
+    # Cash only enough for animal but not for feed reserve
+    res_unsafe = get_animal_targets(0, 420, 0, {"COW": 0, "SHEEP": 0, "GOOSE": 0}, max_pastures=2)
+    assert res_unsafe["COW"] == 0
+    assert res_unsafe["SHEEP"] == 0
+
+
+def test_no_displacement_of_day0_melon_tiles():
+    """Test 5: No displacement of Day 0 melon tiles."""
+    from strategy.macro_planner import MacroPlanner
+    from strategy.price_forecast import PriceForecast
+    fc = PriceForecast.load()
+    ctx = make_test_ctx(day=0, money=3000.0, unlocked=("NW",))
+    planner = MacroPlanner(fc)
+    plan = planner.build(ctx)
+    melons_planned = sum(1 for pos, crop in plan.plant_queue if crop == "MELON")
+    assert melons_planned == 12, f"Expected 12 melons, got {melons_planned}"
+    # Verify pasture tiles and melon tiles are disjoint
+    build_set = set(plan.build_queue)
+    plant_set = {pos for pos, _ in plan.plant_queue}
+    assert not (build_set & plant_set), "Pasture and plant tiles must be disjoint"
+
+
+def test_preservation_of_ne_land_purchase_fund():
+    """Test 6: Preservation of NE land purchase fund ($1,000 reserve on Days 3–5)."""
+    from strategy.macro_planner import MacroPlanner
+    from strategy.price_forecast import PriceForecast
+    fc = PriceForecast.load()
+    ctx = make_test_ctx(day=3, money=1200.0, unlocked=("NW",), shed={"WHEAT": 10})
+    planner = MacroPlanner(fc)
+    plan = planner.build(ctx)
+    assert plan.intents.get("buy_animal", {}) == {}
+
+

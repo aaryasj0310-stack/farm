@@ -238,6 +238,7 @@ SW_ESCROW_AMOUNT = 150           # 15 wheat seeds * $10 (Rule P1)
 PORT_SW = (4, 5)                 # Shed-access tile inside SW; squad anchor
 SW_SOIL_TILES = {(x, y) for x in range(5) for y in range(7, 10)}  # 15 tiles (rows 7,8,9)
 SW_PASTURE_TILES = {(x, 5) for x in range(4)} | {(x, 6) for x in range(5)}  # 9 tiles (rows 5,6)
+EARLY_PASTURE_TILES = [(3, 4), (2, 4)]  # NW fallow tiles adjacent to shed for early livestock bootstrap
 
 SW_SEED_TARGETS = {
     "WHEAT": 15,                 # strictly WHEAT for animal feed engine (Rule P5)
@@ -10765,6 +10766,11 @@ class MacroPlanner:
         counts = {}
         for t in animals:
             counts[t.animal] = counts.get(t.animal, 0) + 1
+        for a in ANIMAL_LIST:
+            counts[a] = counts.get(a, 0) + int(private.shed.get(a, 0))
+        for inv in private.inventories:
+            for a in ANIMAL_LIST:
+                counts[a] = counts.get(a, 0) + int(inv.get(a, 0))
         structures_empty = {t.pos: t.kind for t in farm.iter_tiles()
                             if t.kind in ("COOP", "PASTURE") and not t.is_animal}
 
@@ -10779,15 +10785,16 @@ class MacroPlanner:
         hires = max(0, target_hands - current_hands)
 
         # Dynamic animal targets computation (Leader-Calibrated Astra heuristic)
-        # Blocker 4: Pastures strictly in SW quadrant (9 designated tiles). Zero pastures in NW or NE.
+        existing_pastures = sum(1 for t in farm.iter_tiles() if t.kind == "PASTURE")
         if "SW" in farm.unlocked:
-            existing_pastures = sum(1 for t in farm.iter_tiles() if t.kind == "PASTURE")
             sw_pasture_cands = [t for t in empty_tiles if t in SW_PASTURE_TILES]
-            max_pastures = min(9, existing_pastures + len(sw_pasture_cands))
+            early_pasture_cands = [t for t in empty_tiles if t in EARLY_PASTURE_TILES]
+            pasture_cands = sw_pasture_cands + early_pasture_cands
+            max_pastures = min(9, existing_pastures + len(pasture_cands))
         else:
-            existing_pastures = 0
-            sw_pasture_cands = []
-            max_pastures = 0
+            early_pasture_cands = [t for t in empty_tiles if t in EARLY_PASTURE_TILES]
+            pasture_cands = early_pasture_cands
+            max_pastures = min(len(EARLY_PASTURE_TILES), existing_pastures + len(early_pasture_cands))
 
         # Discretionary cash reservation: wages, base reserve, and upcoming land/seed escrow
         future_hire_cost = sum(hire_total_cost(get_target_hands(d))
@@ -10796,15 +10803,16 @@ class MacroPlanner:
         land_reserve = 2000 if "SW" not in farm.unlocked and day in (8, 9) and ctx["farm"].money >= 2000 else (
             1000 if "NE" not in farm.unlocked and day in (3, 4) and ctx["farm"].money >= 1000 else 0
         )
-        cash_for_animals = max(0.0, ctx["farm"].money - future_hire_cost - self.reserve - seed_reserve - land_reserve)
+        day_0_seed_reserve = 1040 if day == 0 else 0
+        ne_fund_reserve = 600 if "NE" not in farm.unlocked and day < 3 else 0
+        cash_for_animals = max(0.0, ctx["farm"].money - future_hire_cost - self.reserve - seed_reserve - land_reserve - day_0_seed_reserve - ne_fund_reserve)
 
         # Dynamic animal targets via corrected Astra heuristic
-        # Days 0-5: Zero livestock ramp (protects Day 3-5 NE land unlock fund of $1,000 and strawberry seeds).
-        # Livestock ramp begins Day 6+ when workforce reaches 8 hands and Day 4 wheat has matured for feed.
         # Stage 8B C4: Cease new livestock investment on or after C4_LIVESTOCK_CUTOFF_DAY (Day 12).
-        if is_endgame or day >= C4_LIVESTOCK_CUTOFF_DAY or day < 6:
-            dynamic_targets = {"COW": 0 if day < 6 else counts.get("COW", 0),
-                               "SHEEP": 0 if day < 6 else counts.get("SHEEP", 0),
+        # Days 3-5: Protect NE land fund ($1,000) and workforce ramp.
+        if is_endgame or day >= C4_LIVESTOCK_CUTOFF_DAY or day in (3, 4, 5):
+            dynamic_targets = {"COW": counts.get("COW", 0),
+                               "SHEEP": counts.get("SHEEP", 0),
                                "GOOSE": 0}
         else:
             dynamic_targets = get_animal_targets(
@@ -10815,34 +10823,50 @@ class MacroPlanner:
                 max_pastures=max_pastures,
             )
 
-        # Purchase affordable animals if empty pasture exists
+        # Purchase affordable animals if empty pasture exists or is being built
         # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
         # Stage 8B C4: Cap animal purchases and pasture construction on or after C4_LIVESTOCK_CUTOFF_DAY
         if not is_endgame and day < C4_LIVESTOCK_CUTOFF_DAY:
+            # Queue PASTURE construction if needed to reach targets or house owned animals
+            target_pastures = max(
+                dynamic_targets.get("COW", 0) + dynamic_targets.get("SHEEP", 0),
+                counts.get("COW", 0) + counts.get("SHEEP", 0)
+            )
+            existing_structs = existing_pastures + len(reserved_structure_tiles)
+            while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and pasture_cands:
+                cand = pasture_cands.pop(0)
+                if cand in empty_tiles:
+                    empty_tiles.remove(cand)
+                reserved_structure_tiles.append((cand, "BUILD_PASTURE"))
+                existing_structs += 1
+
+            # Purchase affordable animals up to total available housing (existing + queued today)
+            total_pastures = existing_pastures + len(reserved_structure_tiles)
+            animals_owned_or_buying = sum(counts.values()) + sum(buy_animal.values())
+            housing_available = max(0, total_pastures - animals_owned_or_buying)
+
             for animal in ("SHEEP", "COW", "GOOSE"):
                 target = dynamic_targets.get(animal, 0)
                 info = ANIMALS[animal]
                 struct_kind = info["structure"]
                 free_struct = [pos for pos, k in structures_empty.items() if k == struct_kind]
-                
-                while free_struct and (counts.get(animal, 0) + buy_animal.get(animal, 0) < target or (animal == "GOOSE" and free_struct)):
+                while (housing_available > 0 and (counts.get(animal, 0) + buy_animal.get(animal, 0) < target)) or (animal == "GOOSE" and free_struct):
                     if cash_for_animals >= info["cost"]:
                         buy_animal[animal] = buy_animal.get(animal, 0) + 1
                         cash_for_animals -= info["cost"]
-                        del structures_empty[free_struct[0]]
-                        free_struct.pop(0)
+                        if free_struct:
+                            del structures_empty[free_struct[0]]
+                            free_struct.pop(0)
+                        housing_available = max(0, housing_available - 1)
                     else:
                         break
 
-            # Queue PASTURE construction if needed to reach targets (strictly in SW_PASTURE_TILES, never build COOP)
-            target_pastures = dynamic_targets.get("COW", 0) + dynamic_targets.get("SHEEP", 0)
-            existing_structs = existing_pastures + len(reserved_structure_tiles)
-            while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and sw_pasture_cands:
-                cand = sw_pasture_cands.pop(0)
-                if cand in empty_tiles:
-                    empty_tiles.remove(cand)
-                reserved_structure_tiles.append((cand, "BUILD_PASTURE"))
-                existing_structs += 1
+            # Maintain feed wheat buffer
+            total_animals_planned = sum(counts.values()) + sum(buy_animal.values())
+            if total_animals_planned > 0:
+                needed_wheat = total_animals_planned * min(FEED_WHEAT_BUFFER_DAYS, days_left)
+                if needed_wheat > wheat_have:
+                    buy_wheat = needed_wheat - wheat_have
 
         # structure build queue: use specific build_op
         if reserved_structure_tiles:
@@ -10850,9 +10874,11 @@ class MacroPlanner:
             plan.build_queue = [t for t, _ in reserved_structure_tiles[:2]]
 
         # ---------------- crop queue on remaining tiles ----------------
-        # Reserve remaining SW_PASTURE_TILES for pasture construction only — never plant crops on them
+        # Reserve remaining SW_PASTURE_TILES and EARLY_PASTURE_TILES for pasture construction only — never plant crops on them
         if "SW" in farm.unlocked:
             empty_tiles = [t for t in empty_tiles if t not in SW_PASTURE_TILES]
+        elif day < 3:
+            empty_tiles = [t for t in empty_tiles if t not in EARLY_PASTURE_TILES]
 
         # endgame: no new planting — just harvest and sell
         plant_queue = []
@@ -11214,6 +11240,7 @@ class MacroPlanner:
             "buy_seed": buy_seed,
             "buy_animal": buy_animal,
             "buy_wheat": int(buy_wheat),
+            "pending_structures": {"PASTURE": len(reserved_structure_tiles)},
         }
 
         # SW diagnostics and metrics
@@ -11400,10 +11427,11 @@ class OrderBuilder:
             k = int(k)
             if k > 0 and animal in ANIMALS:
                 struct_type = ANIMALS[animal]["structure"]
+                pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
                 free_structures = sum(
                     1 for t in farm.iter_tiles()
                     if t.kind == struct_type and not t.is_animal
-                )
+                ) + pending_structures
                 matching_animals = [a for a, info in ANIMALS.items() if info["structure"] == struct_type]
                 animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
                 claimed = claimed_structures.get(struct_type, 0)

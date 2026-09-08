@@ -103,10 +103,11 @@ class OrderBuilder:
             k = int(k)
             if k > 0 and animal in ANIMALS:
                 struct_type = ANIMALS[animal]["structure"]
+                pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
                 free_structures = sum(
                     1 for t in farm.iter_tiles()
                     if t.kind == struct_type and not t.is_animal
-                )
+                ) + pending_structures
                 matching_animals = [a for a, info in ANIMALS.items() if info["structure"] == struct_type]
                 animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
                 claimed = claimed_structures.get(struct_type, 0)
