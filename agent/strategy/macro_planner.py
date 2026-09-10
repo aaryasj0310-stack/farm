@@ -93,6 +93,11 @@ from strategy.expansion_planner import (
 from market.price_math import inventory_at_price, market_price
 from market.order_builder import hire_total_cost
 
+try:
+    from execution.task_scheduler import get_sw_tile_breakdown
+except ImportError:
+    from task_scheduler import get_sw_tile_breakdown
+
 # ---------------------------------------------------------------------------
 # Asset economics — imported from authoritative baked_economics artifact.
 # ---------------------------------------------------------------------------
@@ -226,6 +231,27 @@ def _cum_own_production(crop, own_tiles, harvest_index, feed_wheat_per_day=0,
         days_elapsed = max(0, harvest_day - plant_day)
         cum_raw = max(0.0, cum_raw - avg_herd * days_elapsed)
     return cum_raw
+
+
+def get_committed_crop_counts(farm, planned=None):
+    """Farm-wide count of crops committed across the farm.
+
+    Evaluates live tiles (is_plant is True, crop in CROPS, consecutive_unwatered < 2)
+    plus crops already planned for planting during this turn.
+    Dead crops, harvested tiles, or replaced tiles are not counted.
+    """
+    counts = {crop: 0 for crop in CROPS}
+    if farm is not None and hasattr(farm, "iter_tiles"):
+        for t in farm.iter_tiles():
+            if (getattr(t, "is_plant", False) and
+                getattr(t, "crop", None) in counts and
+                getattr(t, "consecutive_unwatered", 0) < 2):
+                counts[t.crop] += 1
+    if planned:
+        for crop, cnt in planned.items():
+            if crop in counts:
+                counts[crop] += cnt
+    return counts
 
 
 def _crop_score(crop, day, forecast, boosts, own_tiles=0,
@@ -641,6 +667,7 @@ class MacroPlanner:
             # Sells 72 melons on Day 10 for ~$15k-$18k cash surge; 48 wheat on Day 4 for NE fund.
             wheat_available = seeds.get("WHEAT", 0)
             planned = {}
+            committed_counts = get_committed_crop_counts(farm)
             if day == 0:
                 melon_tiles = 12
                 wheat_tiles = 8
@@ -651,6 +678,7 @@ class MacroPlanner:
                         plant_queue.append((pos, "MELON"))
                         seeds["MELON"] = max(0, seeds.get("MELON", 0) - 1)
                         planned["MELON"] = planned.get("MELON", 0) + 1
+                        committed_counts["MELON"] = committed_counts.get("MELON", 0) + 1
 
                 for _ in range(wheat_tiles):
                     if empty_tiles:
@@ -658,6 +686,7 @@ class MacroPlanner:
                         plant_queue.append((pos, "WHEAT"))
                         seeds["WHEAT"] = max(0, seeds.get("WHEAT", 0) - 1)
                         planned["WHEAT"] = planned.get("WHEAT", 0) + 1
+                        committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
                 have_melon = private.seeds.get("MELON", 0)
                 if melon_tiles > have_melon:
@@ -681,6 +710,7 @@ class MacroPlanner:
                         seeds[crop] -= 1
                         plant_queue.append((pos, crop))
                         planned[crop] = planned.get(crop, 0) + 1
+                        committed_counts[crop] = committed_counts.get(crop, 0) + 1
                 empty_tiles.clear()
             else:
                 # ---- SW Quadrant Dedicated Soil Planting Engine ----
@@ -705,6 +735,7 @@ class MacroPlanner:
                                 continue
                             plant_queue.append((pos, "WHEAT"))
                             planned["WHEAT"] = planned.get("WHEAT", 0) + 1
+                            committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
                         # Plant SW carrot (Carrot Blitz)
                         for pos in sw_soil_empty[sw_wheat:sw_wheat + sw_carrot]:
@@ -718,8 +749,9 @@ class MacroPlanner:
                                 continue
                             plant_queue.append((pos, "CARROT"))
                             planned["CARROT"] = planned.get("CARROT", 0) + 1
+                            committed_counts["CARROT"] = committed_counts.get("CARROT", 0) + 1
 
-                existing_wheat = sum(1 for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT") + planned.get("WHEAT", 0)
+                existing_wheat = committed_counts.get("WHEAT", 0)
                 # Continuous wheat replanting engine (Leader-Calibrated: 8/20/30 active wheat tiles)
                 # Days 6-9: Retain wheat target at 8 even if NE is unlocked
                 # Days 10-13: Retain wheat target at 20 even if SW is unlocked (n_quads=3), preserving tiles for Strawberry and Melon waves
@@ -753,13 +785,14 @@ class MacroPlanner:
                         plant_queue.append((pos, "WHEAT"))
                         seeds["WHEAT"] = max(0, seeds.get("WHEAT", 0) - 1)
                         planned["WHEAT"] = planned.get("WHEAT", 0) + 1
+                        committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
             # Dedicated Strawberry Wave (Fable Leader Heuristic):
             # Cap progression: 16 (Days 3-5) -> 18 (Days 6-8) -> 20 (Days 9-13) -> 0 (Day 14+)
             # Placement: NE first, then NW fallow tiles. NEVER in SW!
             if 3 <= day <= STRAWBERRY_PLANT_DEADLINE and "NE" in farm.unlocked:
                 s_cap = get_strawberry_cap(day, True)
-                current_strawberries = sum(1 for t in farm.iter_tiles() if getattr(t, "crop", None) == "STRAWBERRY") + planned.get("STRAWBERRY", 0)
+                current_strawberries = committed_counts.get("STRAWBERRY", 0)
                 want_s = max(0, s_cap - current_strawberries)
                 if want_s > 0:
                     ne_empty = [p for p in empty_tiles if farm.quadrant_of(p) == "NE"]
@@ -777,6 +810,7 @@ class MacroPlanner:
                         empty_tiles.remove(pos)
                         plant_queue.append((pos, "STRAWBERRY"))
                         planned["STRAWBERRY"] = planned.get("STRAWBERRY", 0) + 1
+                        committed_counts["STRAWBERRY"] = committed_counts.get("STRAWBERRY", 0) + 1
 
             # v5.10: Expansion priority layer — bias scoring for deadline-critical crops
             # on expansion tiles. This injects into the existing Phase 2b loop,
@@ -805,9 +839,9 @@ class MacroPlanner:
                             cap = get_strawberry_cap(day, len(farm.unlocked) >= 2)
                         else:
                             cap = CROP_TILE_CAPS.get(forced_crop, 99)
-                        if planned.get(forced_crop, 0) >= cap:
+                        if committed_counts.get(forced_crop, 0) >= cap:
                             continue
-                        own_for_this = planned.get(forced_crop, 0) + 1
+                        own_for_this = committed_counts.get(forced_crop, 0) + 1
                         base_score, _ = _crop_score(forced_crop, day, self.fc, boosts,
                                                     own_for_this, n_animals, n_animals,
                                                     opp_advice=opp_advice)
@@ -828,9 +862,9 @@ class MacroPlanner:
                             cap = get_strawberry_cap(day, len(farm.unlocked) >= 2)
                         else:
                             cap = CROP_TILE_CAPS.get(crop, 99)
-                        if planned.get(crop, 0) >= cap:
+                        if committed_counts.get(crop, 0) >= cap:
                             continue
-                        own_for_this = planned.get(crop, 0) + 1
+                        own_for_this = committed_counts.get(crop, 0) + 1
                         score, _ = _crop_score(crop, day, self.fc, boosts,
                                                own_for_this, n_animals, n_animals,
                                                opp_advice=opp_advice)
@@ -849,6 +883,7 @@ class MacroPlanner:
                     continue
                 plant_queue.append((pos, best_crop))
                 planned[best_crop] = planned.get(best_crop, 0) + 1
+                committed_counts[best_crop] = committed_counts.get(best_crop, 0) + 1
                 empty_tiles.remove(pos)
         else:
             remaining_money = ctx["farm"].money - self.reserve
@@ -911,21 +946,33 @@ class MacroPlanner:
 
         # SW diagnostics and metrics
         sw_is_unlocked = "SW" in farm.unlocked
-        sw_tiles = [t for t in farm.iter_tiles() if farm.quadrant_of(t.pos) == "SW"] if hasattr(farm, "iter_tiles") else []
-        sw_strawberry = sum(1 for t in sw_tiles if getattr(t, "crop", None) == "STRAWBERRY")
-        sw_other_crops = sum(1 for t in sw_tiles if getattr(t, "is_plant", False) and getattr(t, "crop", None) != "STRAWBERRY")
-        sw_animals = sum(1 for t in sw_tiles if getattr(t, "is_animal", False) or getattr(t, "kind", None) in ("COOP", "PASTURE"))
-        sw_active = sw_strawberry + sw_other_crops + sw_animals
-        sw_empty = max(0, 25 - sw_active) if sw_is_unlocked else 25
-        sw_utilization = (sw_active / 25.0) if sw_is_unlocked else 0.0
-        sw_planned_sw = sum(1 for pos, _ in plant_queue if farm.quadrant_of(pos) == "SW")
-        projected_sw_util = min(1.0, (sw_active + sw_planned_sw) / 25.0) if sw_is_unlocked else 0.0
+        if get_sw_tile_breakdown is not None:
+            sw_breakdown = get_sw_tile_breakdown(farm)
+            sw_strawberry = sw_breakdown["crops_strawberry"]
+            sw_other_crops = sw_breakdown["crops_other"]
+            sw_active = sw_breakdown["active"]
+            sw_empty = sw_breakdown["empty"] if sw_is_unlocked else None
+            sw_utilization = sw_breakdown["utilization"] if sw_is_unlocked else None
+        else:
+            sw_tiles = [t for t in farm.iter_tiles() if farm.quadrant_of(t.pos) == "SW"] if hasattr(farm, "iter_tiles") else []
+            sw_strawberry = sum(1 for t in sw_tiles if getattr(t, "crop", None) == "STRAWBERRY")
+            sw_other_crops = sum(1 for t in sw_tiles if getattr(t, "is_plant", False) and getattr(t, "crop", None) != "STRAWBERRY")
+            sw_animals = sum(1 for t in sw_tiles if getattr(t, "is_animal", False))
+            sw_structures = sum(1 for t in sw_tiles if getattr(t, "kind", None) in ("PASTURE", "COOP") and not getattr(t, "is_animal", False))
+            sw_active = sw_strawberry + sw_other_crops + sw_animals + sw_structures if sw_is_unlocked else 0
+            sw_empty = sum(1 for t in sw_tiles if getattr(t, "kind", None) == "EMPTY") if sw_is_unlocked else None
+            sw_utilization = round(sw_active / 25.0, 4) if sw_is_unlocked else None
+
+        sw_planned_sw = sum(1 for pos, _ in plant_queue if farm.quadrant_of(pos) == "SW") if hasattr(farm, "quadrant_of") else 0
+        projected_sw_util = min(1.0, (sw_active + sw_planned_sw) / 25.0) if sw_is_unlocked else None
 
         # Memory tracking for cumulative empty tile days
         mem = ctx.get("memory", {}) if isinstance(ctx, dict) else {}
-        if sw_is_unlocked:
+        if sw_is_unlocked and sw_empty is not None:
             mem["sw_empty_tile_days"] = mem.get("sw_empty_tile_days", 0) + sw_empty
-        sw_empty_tile_days = mem.get("sw_empty_tile_days", 0) if sw_is_unlocked else 0
+            sw_empty_tile_days = mem.get("sw_empty_tile_days", 0)
+        else:
+            sw_empty_tile_days = None
 
         sw_buy_wait = "BUY" if (buy_land and next_quadrant == 3) else ("ALREADY_OWNED" if sw_is_unlocked else "WAIT")
         sw_reason_text = sw_reason if next_quadrant == 3 else ("already_owned" if sw_is_unlocked else "locked")
@@ -938,10 +985,10 @@ class MacroPlanner:
             "buy_today_value": round(land_roi_info.get("buy_today_value", 0.0), 1),
             "wait_1_day_value": round(land_roi_info.get("wait_1_day_value", 0.0), 1),
             "delay_value": round(land_roi_info.get("delay_value", 0.0), 1),
-            "SW utilization": round(sw_utilization, 3),
+            "SW utilization": round(sw_utilization, 3) if sw_utilization is not None else None,
             "SW empty tiles": sw_empty,
             "SW empty tile-days": sw_empty_tile_days,
-            "projected utilization": round(projected_sw_util, 3),
+            "projected utilization": round(projected_sw_util, 3) if projected_sw_util is not None else None,
             "strawberry tiles": sw_strawberry,
             "other crop tiles": sw_other_crops,
             "reason": sw_reason_text,
@@ -986,8 +1033,81 @@ def _mean_over(forecast, product, days):
 
 
 def estimate_daily_load(ctx):
-    """Rough action-count needed today."""
-    farm = ctx["farm"]
-    plants = sum(1 for t in farm.iter_tiles() if t.is_plant)
-    animals = sum(1 for t in farm.iter_tiles() if t.is_animal)
-    return plants * 2 + animals * 3
+    """Travel-aware daily action-count load estimation.
+
+    Incorporates:
+      - Base service load (watering, feeding, caring, fertilizing, harvesting, planting)
+      - Spatial dispersion across unlocked quadrants
+      - Quadrant transitions and diagonal penalties
+      - Shed transit overhead for pickups and drop-offs
+      - SW quadrant distance burden (long-distance transit from (4,4))
+    """
+    farm = ctx.get("farm")
+    if farm is None or not hasattr(farm, "iter_tiles"):
+        return 0
+    day = ctx.get("day", 0)
+    private = ctx.get("private")
+
+    base_load = 0
+    active_quads = set()
+    sw_tile_count = 0
+
+    # 1. Base tile load + spatial distribution
+    for t in farm.iter_tiles():
+        q = farm.quadrant_of(t.pos)
+        if q not in farm.unlocked:
+            continue
+        if t.is_plant:
+            active_quads.add(q)
+            if q == "SW":
+                sw_tile_count += 1
+            base_load += 1 if not getattr(t, "watered_today", False) else 0
+            if getattr(t, "yield_units", 0) > 0:
+                base_load += 1
+        elif t.is_animal:
+            active_quads.add(q)
+            if q == "SW":
+                sw_tile_count += 1
+            base_load += 1 if not getattr(t, "fed_today", False) else 0
+            if getattr(t, "fertilizer_available", False):
+                base_load += 1
+            if not getattr(t, "cared_today", False):
+                base_load += 1
+            info = ANIMALS.get(t.animal)
+            if info and getattr(t, "placed_day", None) is not None:
+                if (day + 1 - t.placed_day - info["first_yield_day"]) % info["interval"] == 0:
+                    base_load += 1
+
+    # Empty unlocked tiles ready for planting
+    seed_units = sum(private.seeds.values()) if private and hasattr(private, "seeds") else 0
+    empty_unlocked = sum(
+        1 for t in farm.iter_tiles()
+        if t.kind == "EMPTY" and farm.quadrant_of(t.pos) in farm.unlocked
+    )
+    plants_to_do = min(seed_units, empty_unlocked)
+    base_load += plants_to_do
+
+    # 2. Shed trips overhead (pickups of feed, fertilizer, or placing animals)
+    shed_trips = 0
+    if private and hasattr(private, "shed"):
+        shed = private.shed
+        shed_animals = sum(int(shed.get(a, 0)) for a in ANIMAL_LIST)
+        shed_trips += shed_animals * 3
+        if int(shed.get("WHEAT", 0)) > 0:
+            shed_trips += 3
+        if int(shed.get("FERTILIZER", 0)) > 0:
+            shed_trips += 3
+
+    # 3. Spatial dispersion & quadrant transitions
+    dispersion_burden = 0
+    if len(active_quads) > 1:
+        dispersion_burden = (len(active_quads) - 1) * 4
+        if "SW" in active_quads and "NE" in active_quads:
+            dispersion_burden += 4
+
+    # 4. SW distance burden: one-time quadrant setup + clustered intra-quadrant dispersion
+    # Clustered tiles do not incur round-trip overhead per tile; dispersion within SW is sub-linear.
+    sw_burden = (6 + min(8, sw_tile_count // 3)) if sw_tile_count > 0 else 0
+
+    return base_load + shed_trips + dispersion_burden + sw_burden
+

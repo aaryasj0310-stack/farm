@@ -22,6 +22,7 @@ from config import (
     LAND_ORDER,
     LAND_PRICES,
     MAX_MARKET_ORDERS,
+    MIN_HANDS_BASE,
     MONEY_RESERVE_DEFAULT,
     WHEAT_BUY_PRICE_BUFFER,
     C4_LIVESTOCK_CUTOFF_DAY,
@@ -42,11 +43,11 @@ def hire_total_cost(k_hands, mult=1):
 
 
 # Priority tiers (lower = executed earlier when order slots / cash run short).
-TIER_LAND = 0
+TIER_HIRES = 0
 TIER_FEED_WHEAT = 1
-TIER_SEEDS = 2
-TIER_ANIMALS = 3
-TIER_HIRES = 4
+TIER_LAND = 2
+TIER_SEEDS = 3
+TIER_ANIMALS = 4
 
 
 class OrderBuilder:
@@ -75,9 +76,12 @@ class OrderBuilder:
     def build(self, ctx, intents):
         """intents: MacroPlan.intents dict. Returns (orders, ledger).
         
-        v5.9: Hires are NON-NEGOTIABLE. They get first claim on money,
-        regardless of budget/reserve. Seeds, animals, land are bought
-        only with what remains after hire cost.
+        Mandatory hire budgeting:
+          - Mandatory hires calculate exact hire cost first and reserve that amount.
+          - Never let land/seeds/animals/non-survival purchases consume reserved hire money.
+          - Survival feed wheat is budgeted before discretionary spending.
+          - Discretionary purchases (land, seeds, animals) only draw from remaining discretionary budget.
+          - Orders are emitted strictly in priority tier order (hires first, then survival wheat, then land, seeds, animals).
         """
         farm = ctx["farm"]
         money = float(farm.money)
@@ -85,42 +89,108 @@ class OrderBuilder:
 
         inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
         wheat_px = market_price("WHEAT", inv.get("WHEAT", 10000))
-        shed_room = max(0, 100 - sum(ctx["private"].shed.values()))
+        remaining_shed_room = max(0, 100 - sum(ctx["private"].shed.values())) if ctx.get("private") and hasattr(ctx["private"], "shed") else 100
 
-        ledger = {"budget": round(budget, 2), "queued": [],
-                  "dropped": [], "spent_estimate": 0.0}
-
-        # ---- v5.9: Hires get absolute priority (full money) -----------
-        tiers = []
+        # ---- 1. Mandatory hires: exact cost calculated and reserved first ----
         k = int(intents.get("hire", 0))
+        start_hires = getattr(farm, "hires_today", 0)
         hire_cost = 0.0
-        if k > 0:
-            hire_cost = float(hire_total_cost(k))
-            tiers.append((TIER_HIRES, "hire",
-                          {"count": k}, hire_cost))
+        affordable_hires = 0
+        for i in range(k):
+            c = float(_fib(start_hires + i))
+            if hire_cost + c <= money:
+                hire_cost += c
+                affordable_hires += 1
+            else:
+                break
+        mandatory_hire_budget = hire_cost
 
-        # ---- Remaining budget after mandatory hires (protecting reserve) ----
-        post_hire_budget = max(0.0, budget - hire_cost)
+        # ---- 2. Survival feed wheat: reserved before discretionary spending ----
+        available_for_purchases = max(0.0, money - mandatory_hire_budget - self.reserve)
+        w_req = int(intents.get("buy_wheat", 0))
+        unit_wheat_px = math_ceil(wheat_px * WHEAT_BUY_PRICE_BUFFER)
+        w_buyable = 0
+        if w_req > 0 and unit_wheat_px > 0:
+            w_buyable = min(w_req, int(available_for_purchases // unit_wheat_px), remaining_shed_room)
+        survival_feed_budget = float(w_buyable * unit_wheat_px)
+        remaining_shed_room = max(0, remaining_shed_room - w_buyable)
 
-        # ---- tier 1: seeds -------------------------------------------
+        # ---- 3. Discretionary budget: land, seeds, animals ----
+        discretionary_budget = max(0.0, available_for_purchases - survival_feed_budget)
+
+        ledger = {
+            "budget": round(budget, 2),
+            "mandatory_hire_budget": round(mandatory_hire_budget, 2),
+            "survival_feed_budget": round(survival_feed_budget, 2),
+            "discretionary_budget": round(discretionary_budget, 2),
+            "spent_estimate": 0.0,
+            "queued": [],
+            "dropped": [],
+            "orders": [],
+        }
+
+        if affordable_hires < k:
+            ledger["dropped"].append({
+                "kind": "hire_budget",
+                "requested": k,
+                "affordable": affordable_hires,
+            })
+
+        if w_req > w_buyable:
+            if w_buyable > 0:
+                ledger["dropped"].append({
+                    "kind": "wheat",
+                    "trimmed_from": w_req,
+                    "to": w_buyable,
+                })
+            else:
+                reason = "shed_full" if remaining_shed_room == 0 and int(available_for_purchases // unit_wheat_px) > 0 else "budget"
+                ledger["dropped"].append({"kind": "wheat", "reason": reason})
+
+        # Collect tiers
+        kept = []
+        if affordable_hires > 0:
+            kept.append((TIER_HIRES, "hire", {"count": affordable_hires}, mandatory_hire_budget))
+
+        if w_buyable > 0:
+            kept.append((TIER_FEED_WHEAT, "wheat", {"n": w_buyable}, survival_feed_budget))
+
+        remaining_discretionary = discretionary_budget
+
+        # Discretionary Tier: Land
+        n_extra = len(farm.unlocked) - 1
+        if intents.get("buy_land") and n_extra < len(LAND_ORDER):
+            land_price = float(LAND_PRICES[n_extra])
+            if land_price <= remaining_discretionary + 1e-9:
+                kept.append((TIER_LAND, "land", {}, land_price))
+                remaining_discretionary -= land_price
+            else:
+                ledger["dropped"].append({"kind": "land", "reason": "budget"})
+
+        # Discretionary Tier: Seeds
         for crop, n in sorted(intents.get("buy_seed", {}).items()):
             n = int(n)
             if n > 0 and crop in CROPS:
                 unit = CROPS[crop]["seed"]
-                tiers.append((TIER_SEEDS, "seed",
-                              {"crop": crop, "n": n}, unit * n))
+                n_max = int(remaining_discretionary // unit)
+                if n_max >= n:
+                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
+                    remaining_discretionary -= unit * n
+                elif n_max > 0:
+                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n_max}, float(unit * n_max)))
+                    remaining_discretionary -= unit * n_max
+                    ledger["dropped"].append({
+                        "kind": "seed", "crop": crop,
+                        "trimmed_from": n, "to": n_max,
+                    })
+                else:
+                    ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": "budget"})
 
-        # ---- tier 2: feed wheat --------------------------------------
-        w = int(intents.get("buy_wheat", 0))
-        if w > 0:
-            est = math_ceil(wheat_px * WHEAT_BUY_PRICE_BUFFER) * w
-            tiers.append((TIER_FEED_WHEAT, "wheat", {"n": w}, est))
-
-        # ---- tier 3: animals -----------------------------------------
+        # Discretionary Tier: Animals
         claimed_structures = {}
-        for animal, k in sorted(intents.get("buy_animal", {}).items()):
-            k = int(k)
-            if k > 0 and animal in ANIMALS:
+        for animal, k_anim in sorted(intents.get("buy_animal", {}).items()):
+            k_anim = int(k_anim)
+            if k_anim > 0 and animal in ANIMALS:
                 struct_type = ANIMALS[animal]["structure"]
                 pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
                 free_structures = sum(
@@ -131,87 +201,30 @@ class OrderBuilder:
                 animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
                 claimed = claimed_structures.get(struct_type, 0)
                 max_buyable = max(0, free_structures - animals_in_shed - claimed)
-                room_limited = min(k, max_buyable, shed_room)
+                room_limited = min(k_anim, max_buyable, remaining_shed_room)
                 if room_limited <= 0:
-                    ledger["dropped"].append({"kind": "animal",
-                                              "animal": animal,
-                                              "reason": "no_empty_structure" if max_buyable <= 0 else "shed_full"})
+                    ledger["dropped"].append({
+                        "kind": "animal",
+                        "animal": animal,
+                        "reason": "shed_full" if remaining_shed_room <= 0 else "no_empty_structure",
+                    })
                     continue
-                claimed_structures[struct_type] = claimed + room_limited
+
                 unit = ANIMALS[animal]["cost"]
-                tiers.append((TIER_ANIMALS, "animal",
-                              {"animal": animal, "n": room_limited},
-                              unit * room_limited))
-
-        # ---- tier 4: land --------------------------------------------
-        n_extra = len(farm.unlocked) - 1
-        land_price = None
-        if intents.get("buy_land") and n_extra < len(LAND_ORDER):
-            land_price = LAND_PRICES[n_extra]
-            tiers.append((TIER_LAND, "land", {}, float(land_price)))
-
-        # ---- fill tiers: hires first (non-negotiable), then rest ------
-        spent = 0.0
-        kept = []
-        for tier, kind, payload, est in sorted(tiers, key=lambda t: t[0]):
-            if kind == "hire":
-                # Hires use full money — always fit
-                kept.append((tier, kind, payload, est))
-                spent += est
-                continue
-            # Everything else uses post-hire budget
-            remaining = max(0.0, post_hire_budget - (spent - hire_cost))
-            if est <= remaining + 1e-9:
-                kept.append((tier, kind, payload, est))
-                spent += est
-                continue
-            # partial trim for count-based kinds
-            if kind == "seed":
-                unit = CROPS[payload["crop"]]["seed"]
-                n_max = int(remaining // unit)
-                if n_max > 0:
-                    kept.append((tier, "seed",
-                                 {"crop": payload["crop"], "n": n_max},
-                                 unit * n_max))
-                    spent += unit * n_max
-                    ledger["dropped"].append(
-                        {"kind": "seed", "crop": payload["crop"],
-                         "trimmed_from": payload["n"], "to": n_max})
+                n_max = int(remaining_discretionary // unit)
+                actual_buy = min(room_limited, n_max)
+                if actual_buy > 0:
+                    claimed_structures[struct_type] = claimed + actual_buy
+                    remaining_shed_room = max(0, remaining_shed_room - actual_buy)
+                    kept.append((TIER_ANIMALS, "animal", {"animal": animal, "n": actual_buy}, float(unit * actual_buy)))
+                    remaining_discretionary -= unit * actual_buy
+                    if actual_buy < room_limited:
+                        ledger["dropped"].append({
+                            "kind": "animal", "animal": animal,
+                            "trimmed_from": room_limited, "to": actual_buy,
+                        })
                 else:
-                    ledger["dropped"].append({"kind": "seed",
-                                              "crop": payload["crop"],
-                                              "reason": "budget"})
-            elif kind == "animal":
-                unit = ANIMALS[payload["animal"]]["cost"]
-                n_max = int(remaining // unit)
-                if n_max > 0:
-                    kept.append((tier, "animal",
-                                 {"animal": payload["animal"], "n": n_max},
-                                 unit * n_max))
-                    spent += unit * n_max
-                    ledger["dropped"].append(
-                        {"kind": "animal", "animal": payload["animal"],
-                         "trimmed_from": payload["n"], "to": n_max})
-                else:
-                    ledger["dropped"].append({"kind": "animal",
-                                              "animal": payload["animal"],
-                                              "reason": "budget"})
-            elif kind == "wheat":
-                unit_px = math_ceil(wheat_px * WHEAT_BUY_PRICE_BUFFER)
-                n_max = int(remaining // unit_px)
-                if n_max > 0:
-                    kept.append((tier, "wheat", {"n": n_max},
-                                 unit_px * n_max))
-                    spent += unit_px * n_max
-                    ledger["dropped"].append({"kind": "wheat",
-                                               "trimmed_from": payload["n"],
-                                               "to": n_max})
-                else:
-                    ledger["dropped"].append({"kind": "wheat",
-                                              "reason": "budget"})
-            elif kind == "land":
-                ledger["dropped"].append({"kind": "land",
-                                          "reason": "budget"})
+                    ledger["dropped"].append({"kind": "animal", "animal": animal, "reason": "budget"})
 
         # ---- emit engine-format orders, honoring the 10-order cap -----
         orders = []
@@ -225,38 +238,31 @@ class OrderBuilder:
             slots -= 1
             return True
 
+        spent = mandatory_hire_budget + survival_feed_budget + (discretionary_budget - remaining_discretionary)
+
+        # Determine slot budget for hires at hour 0.
+        # Reserve slots for non-hire items in kept (wheat, land, seeds) so crucial
+        # capital expansion, survival feed, and planting orders are not starved
+        # by excess hires that can be deferred to hour 1.
+        non_hire_slots_needed = sum(1 for t in kept if t[1] in ("wheat", "land", "seed"))
+        max_hire_slots = max(MIN_HANDS_BASE, slots - non_hire_slots_needed)
+
         for tier, kind, payload, est in sorted(kept, key=lambda t: t[0]):
             if kind == "hire":
                 emitted = 0
-                while payload["count"] - emitted > 0 and slots > 0:
+                while payload["count"] - emitted > 0 and slots > 0 and emitted < max_hire_slots:
                     orders.append(["HIRE"])
                     slots -= 1
                     emitted += 1
                 queued["hire"] = emitted
                 if emitted < payload["count"]:
                     ledger["dropped"].append({"kind": "hire_slots"})
-            elif kind == "seed":
-                if take(None):
-                    orders.append(["BUY_SEED", payload["crop"],
-                                   int(payload["n"])])
-                    queued["seed"][payload["crop"]] = int(payload["n"])
-                else:
-                    ledger["dropped"].append({"kind": "seed_slots",
-                                              "crop": payload["crop"]})
             elif kind == "wheat":
                 if take(None):
                     orders.append(["BUY_PRODUCT", "WHEAT", int(payload["n"])])
                     queued["wheat"] = int(payload["n"])
                 else:
                     ledger["dropped"].append({"kind": "wheat_slots"})
-            elif kind == "animal":
-                if take(None):
-                    orders.append(["BUY_ANIMAL", payload["animal"],
-                                   int(payload["n"])])
-                    queued["animal"][payload["animal"]] = int(payload["n"])
-                else:
-                    ledger["dropped"].append({"kind": "animal_slots",
-                                              "animal": payload["animal"]})
             elif kind == "land":
                 next_quadrant = len(farm.unlocked) + 1
                 assert next_quadrant != 4, "Quadrant 4 (SE) is permanently hard-blocked and must NEVER be purchased!"
@@ -265,6 +271,18 @@ class OrderBuilder:
                     queued["land"] = True
                 else:
                     ledger["dropped"].append({"kind": "land_slots"})
+            elif kind == "seed":
+                if take(None):
+                    orders.append(["BUY_SEED", payload["crop"], int(payload["n"])])
+                    queued["seed"][payload["crop"]] = int(payload["n"])
+                else:
+                    ledger["dropped"].append({"kind": "seed_slots", "crop": payload["crop"]})
+            elif kind == "animal":
+                if take(None):
+                    orders.append(["BUY_ANIMAL", payload["animal"], int(payload["n"])])
+                    queued["animal"][payload["animal"]] = int(payload["n"])
+                else:
+                    ledger["dropped"].append({"kind": "animal_slots", "animal": payload["animal"]})
 
         ledger["queued"] = queued
         ledger["orders"] = [list(o) for o in orders]

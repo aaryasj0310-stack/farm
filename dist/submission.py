@@ -4,7 +4,8 @@ import sys
 import math
 import json
 import random
-from collections import defaultdict, deque
+import traceback
+from collections import defaultdict, deque, Counter
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Set
 
@@ -9856,37 +9857,336 @@ Engine facts encoded here:
 # v5.9: Daily utilization tracking (accumulated across all 24 hours of each day)
 _daily_log = {}
 _daily_accum = {}
+_ACTIVE_MISSIONS = {}
+_BLOCKED_TASK_TRACKER = {}
 
 def get_daily_log():
     """Return the utilization log for the current episode."""
     return _daily_log
 
+def get_active_missions():
+    """Return copy of currently active sticky missions."""
+    return dict(_ACTIVE_MISSIONS)
+
+def reset_sticky_missions():
+    """Reset active sticky missions."""
+    global _ACTIVE_MISSIONS
+    _ACTIVE_MISSIONS = {}
+
+def get_blocked_task_tracker():
+    """Return copy of active blocked task tracker."""
+    return dict(_BLOCKED_TASK_TRACKER)
+
+def reset_blocked_task_tracker():
+    """Reset blocked task tracker."""
+    global _BLOCKED_TASK_TRACKER
+    _BLOCKED_TASK_TRACKER = {}
+
+_SW_SEASONAL_TRACKER = {
+    "first_sw_unlock_day": None,
+    "first_sw_active_day": None,
+    "daily_active_tiles": {},
+    "daily_utilization": {},
+    "daily_empty_tiles": {},
+    "sw_tasks_created": 0,
+    "sw_tasks_assigned": 0,
+    "sw_tasks_completed": 0,
+    "sw_movement_actions": 0,
+    "sw_operation_actions": 0,
+}
+
+def get_sw_tile_breakdown(farm):
+    """Compute an authoritative, mutually exclusive breakdown of all 25 SW tiles.
+
+    SW is defined as cols 0-4 (x in [0, 4]), rows 5-9 (y in [5, 9]) on the 10x10 board.
+    Categories:
+      - crops: live plant tiles (is_plant or kind == 'PLANT')
+      - animals: live animal tiles (is_animal or kind == 'ANIMAL')
+      - structures: empty animal structures (kind in ('PASTURE', 'COOP') and not is_animal)
+      - weeds: weed tiles (kind == 'WEED')
+      - empty: unlocked unplanted/unbuilt ground (kind == 'EMPTY')
+      - active: crops + animals + structures (no double-counting)
+      - sw_owned: 'SW' in farm.unlocked (or 'SW' in farm['unlocked_quadrants'])
+
+    When sw_owned is True:
+      active + weeds + empty == 25
+      utilization = round(active / 25.0, 4)
+    When sw_owned is False:
+      active = 0
+      utilization = None
+      empty = None
+    """
+    if farm is None:
+        return {
+            "sw_owned": False, "crops": 0, "crops_strawberry": 0, "crops_other": 0,
+            "animals": 0, "structures": 0, "weeds": 0, "empty": None,
+            "active": 0, "total_tiles": 25, "utilization": None,
+        }
+
+    if hasattr(farm, "unlocked"):
+        sw_owned = "SW" in farm.unlocked
+    elif isinstance(farm, dict):
+        sw_owned = "SW" in farm.get("unlocked_quadrants", ["NW"])
+    else:
+        sw_owned = False
+
+    crops = 0
+    crops_strawberry = 0
+    crops_other = 0
+    animals = 0
+    structures = 0
+    weeds = 0
+    empty = 0
+
+    if hasattr(farm, "iter_tiles") and hasattr(farm, "quadrant_of"):
+        for t in farm.iter_tiles():
+            if farm.quadrant_of(t.pos) != "SW":
+                continue
+            is_plant = getattr(t, "is_plant", False) or getattr(t, "kind", "") == "PLANT"
+            is_animal = getattr(t, "is_animal", False) or getattr(t, "kind", "") == "ANIMAL"
+            kind = getattr(t, "kind", "")
+
+            if is_plant:
+                crops += 1
+                if getattr(t, "crop", None) == "STRAWBERRY":
+                    crops_strawberry += 1
+                else:
+                    crops_other += 1
+            elif is_animal:
+                animals += 1
+            elif kind in ("PASTURE", "COOP"):
+                structures += 1
+            elif kind == "WEED":
+                weeds += 1
+            elif kind == "EMPTY":
+                empty += 1
+    elif isinstance(farm, dict) and "tiles" in farm:
+        raw_tiles = farm["tiles"]
+        for r in range(5, min(10, len(raw_tiles))):
+            row = raw_tiles[r]
+            for c in range(0, min(5, len(row))):
+                t = row[c]
+                if not isinstance(t, dict):
+                    continue
+                kind = t.get("kind", "")
+                if kind == "PLANT":
+                    crops += 1
+                    if t.get("crop") == "STRAWBERRY":
+                        crops_strawberry += 1
+                    else:
+                        crops_other += 1
+                elif kind == "ANIMAL":
+                    animals += 1
+                elif kind in ("PASTURE", "COOP"):
+                    structures += 1
+                elif kind == "WEED":
+                    weeds += 1
+                elif kind == "EMPTY":
+                    empty += 1
+
+    active = crops + animals + structures
+
+    if sw_owned:
+        utilization = round(active / 25.0, 4)
+    else:
+        active = 0
+        crops = 0
+        crops_strawberry = 0
+        crops_other = 0
+        animals = 0
+        structures = 0
+        weeds = 0
+        empty = None
+        utilization = None
+
+    return {
+        "sw_owned": sw_owned,
+        "crops": crops,
+        "crops_strawberry": crops_strawberry,
+        "crops_other": crops_other,
+        "animals": animals,
+        "structures": structures,
+        "weeds": weeds,
+        "empty": empty,
+        "active": active,
+        "total_tiles": 25,
+        "utilization": utilization,
+    }
+
+def get_sw_season_summary():
+    """Return comprehensive seasonal summary of SW telemetry across the entire episode."""
+    tracker = _SW_SEASONAL_TRACKER
+    unlock_day = tracker.get("first_sw_unlock_day")
+    first_active_day = tracker.get("first_sw_active_day")
+    daily_active = dict(tracker.get("daily_active_tiles", {}))
+    daily_util = dict(tracker.get("daily_utilization", {}))
+    daily_empty = dict(tracker.get("daily_empty_tiles", {}))
+
+    if unlock_day is not None:
+        valid_post_unlock_utils = [
+            util for d, util in daily_util.items()
+            if d >= unlock_day and util is not None
+        ]
+        avg_util = (
+            round(sum(valid_post_unlock_utils) / len(valid_post_unlock_utils), 4)
+            if valid_post_unlock_utils else None
+        )
+    else:
+        avg_util = None
+
+    all_valid_utils = [u for u in daily_util.values() if u is not None]
+    peak_util = max(all_valid_utils) if all_valid_utils else None
+
+    cum_empty_days = sum(e for e in daily_empty.values() if e is not None) if unlock_day is not None else None
+
+    days_zero_active = sum(
+        1 for d, act in daily_active.items()
+        if unlock_day is not None and d >= unlock_day and act == 0
+    ) if unlock_day is not None else 0
+
+    created = tracker.get("sw_tasks_created", 0)
+    assigned = tracker.get("sw_tasks_assigned", 0)
+    completed = tracker.get("sw_tasks_completed", 0)
+    moves = tracker.get("sw_movement_actions", 0)
+    ops = tracker.get("sw_operation_actions", 0)
+
+    asgn_rate = round(assigned / created, 4) if created > 0 else None
+    comp_rate = round(completed / assigned, 4) if assigned > 0 else None
+
+    return {
+        "sw_owned": (unlock_day is not None),
+        "first_sw_unlock_day": unlock_day,
+        "first_sw_active_day": first_active_day,
+        "daily_active_tiles": daily_active,
+        "daily_utilization": daily_util,
+        "avg_sw_util_after_unlock": avg_util,
+        "peak_sw_util": peak_util,
+        "cumulative_sw_empty_tile_days": cum_empty_days,
+        "days_sw_owned_zero_active": days_zero_active,
+        "sw_tasks_created": created,
+        "sw_tasks_assigned": assigned,
+        "sw_tasks_completed": completed,
+        "sw_movement_actions": moves,
+        "sw_operation_actions": ops,
+        "sw_assignment_rate": asgn_rate,
+        "sw_completion_rate": comp_rate,
+    }
+
 def reset_daily_log():
     """Reset utilization log at start of new episode."""
-    global _daily_log, _daily_accum
+    global _daily_log, _daily_accum, _SW_SEASONAL_TRACKER
     _daily_log = {}
     _daily_accum = {}
+    _SW_SEASONAL_TRACKER = {
+        "first_sw_unlock_day": None,
+        "first_sw_active_day": None,
+        "daily_active_tiles": {},
+        "daily_utilization": {},
+        "daily_empty_tiles": {},
+        "sw_tasks_created": 0,
+        "sw_tasks_assigned": 0,
+        "sw_tasks_completed": 0,
+        "sw_movement_actions": 0,
+        "sw_operation_actions": 0,
+    }
+    reset_sticky_missions()
+    reset_blocked_task_tracker()
 
-def _record_turn_utilization(ctx, n_units, actions_taken):
+def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_blocked=None, turn_sw=None):
     """Accumulate hourly utilization and finalize daily log at hour 23."""
     day, hour = ctx["day"], ctx["hour"]
     if day not in _daily_accum:
-        _daily_accum[day] = {"available": 0, "used": 0, "idle": 0, "idle_causes": []}
+        _daily_accum[day] = {
+            "available": 0,
+            "used": 0,
+            "idle": 0,
+            "moves": 0,
+            "completions": 0,
+            "urgent_assigned": 0,
+            "urgent_completions": 0,
+            "quad_attempts": {"NW": 0, "NE": 0, "SW": 0, "SE": 0},
+            "quad_completions": {"NW": 0, "NE": 0, "SW": 0, "SE": 0},
+            "sw_tasks_created": 0,
+            "sw_tasks_assigned": 0,
+            "sw_tasks_completed": 0,
+            "sw_movement_actions": 0,
+            "sw_operation_actions": 0,
+            "idle_causes": [],
+            "blocked_diagnostics": {
+                "blocked_due_inventory": 0,
+                "blocked_due_zone": 0,
+                "blocked_due_no_carrier": 0,
+                "blocked_due_capacity": 0,
+                "blocked_task_turns": 0,
+                "urgent_blocked_turns": 0,
+                "max_blocked_duration": 0,
+            },
+        }
     
     used = sum(1 for a in actions_taken.values() if a != ["PASS"])
     avail = n_units
     idle = max(0, avail - used)
+    moves = sum(1 for a in actions_taken.values() if a and a[0] in ("NORTH", "SOUTH", "EAST", "WEST"))
+    completions = sum(1 for a in actions_taken.values() if a != ["PASS"] and a and a[0] not in ("NORTH", "SOUTH", "EAST", "WEST"))
     
     _daily_accum[day]["available"] += avail
     _daily_accum[day]["used"] += used
     _daily_accum[day]["idle"] += idle
+    _daily_accum[day]["moves"] += moves
+    _daily_accum[day]["completions"] += completions
     if idle > 0:
         _daily_accum[day]["idle_causes"].append("no_tasks" if used == 0 else "partial_idle")
+
+    if assignment:
+        for u_idx, task in assignment.items():
+            act = actions_taken.get(u_idx, ["PASS"])
+            is_comp = (act != ["PASS"] and act and act[0] not in ("NORTH", "SOUTH", "EAST", "WEST"))
+            prio = task.get("priority", 0)
+            is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or task.get("kind") in ("feed_rescue", "harvest_decay", "feed_prod") or (task.get("op") == "PLACE" and (task.get("args") or [None])[0] in ANIMALS))
+            if is_urgent:
+                _daily_accum[day]["urgent_assigned"] += 1
+                if is_comp:
+                    _daily_accum[day]["urgent_completions"] += 1
+            tgt = task.get("target")
+            if tgt and ctx.get("farm") and hasattr(ctx["farm"], "quadrant_of"):
+                q = ctx["farm"].quadrant_of(tgt)
+                if q in _daily_accum[day]["quad_attempts"]:
+                    _daily_accum[day]["quad_attempts"][q] += 1
+                    if is_comp:
+                        _daily_accum[day]["quad_completions"][q] += 1
+
+    if turn_sw:
+        _daily_accum[day]["sw_tasks_created"] += turn_sw.get("created", 0)
+        _daily_accum[day]["sw_tasks_assigned"] += turn_sw.get("assigned", 0)
+        _daily_accum[day]["sw_tasks_completed"] += turn_sw.get("completed", 0)
+        _daily_accum[day]["sw_movement_actions"] += turn_sw.get("moves", 0)
+        _daily_accum[day]["sw_operation_actions"] += turn_sw.get("ops", 0)
+        _SW_SEASONAL_TRACKER["sw_tasks_created"] += turn_sw.get("created", 0)
+        _SW_SEASONAL_TRACKER["sw_tasks_assigned"] += turn_sw.get("assigned", 0)
+        _SW_SEASONAL_TRACKER["sw_tasks_completed"] += turn_sw.get("completed", 0)
+        _SW_SEASONAL_TRACKER["sw_movement_actions"] += turn_sw.get("moves", 0)
+        _SW_SEASONAL_TRACKER["sw_operation_actions"] += turn_sw.get("ops", 0)
+
+    if turn_blocked:
+        for k, v in turn_blocked.items():
+            if k == "max_blocked_duration":
+                _daily_accum[day]["blocked_diagnostics"][k] = max(
+                    _daily_accum[day]["blocked_diagnostics"].get(k, 0), v
+                )
+            elif k in _daily_accum[day]["blocked_diagnostics"]:
+                _daily_accum[day]["blocked_diagnostics"][k] += v
         
     if hour == 23 or ctx.get("step", 0) % TURNS_PER_DAY == 23:
         tot_avail = _daily_accum[day]["available"]
         tot_used = _daily_accum[day]["used"]
         tot_idle = _daily_accum[day]["idle"]
+        tot_moves = _daily_accum[day]["moves"]
+        tot_comp = _daily_accum[day]["completions"]
+        tot_urg_att = _daily_accum[day]["urgent_assigned"]
+        tot_urg_comp = _daily_accum[day]["urgent_completions"]
+        q_att = _daily_accum[day]["quad_attempts"]
+        q_comp = _daily_accum[day]["quad_completions"]
+
         shed_cnt = sum(ctx["private"].shed.values()) if ctx.get("private") else 0
         unlocked_cnt = len(ctx["farm"].unlocked) if ctx.get("farm") else 1
         n_hands = len(ctx["farm"].hands) if ctx.get("farm") else 0
@@ -9900,17 +10200,65 @@ def _record_turn_utilization(ctx, n_units, actions_taken):
                     a, b = b, a + b
                 return a
             h_cost = sum(_f(i) for i in range(n_hands))
+
+        farm = ctx.get("farm")
+        sw_breakdown = get_sw_tile_breakdown(farm)
+        sw_owned = sw_breakdown["sw_owned"]
+        if sw_owned:
+            if _SW_SEASONAL_TRACKER["first_sw_unlock_day"] is None:
+                _SW_SEASONAL_TRACKER["first_sw_unlock_day"] = day
+            act_tiles = sw_breakdown["active"]
+            if act_tiles > 0 and _SW_SEASONAL_TRACKER["first_sw_active_day"] is None:
+                _SW_SEASONAL_TRACKER["first_sw_active_day"] = day
+            _SW_SEASONAL_TRACKER["daily_active_tiles"][day] = act_tiles
+            _SW_SEASONAL_TRACKER["daily_utilization"][day] = sw_breakdown["utilization"]
+            _SW_SEASONAL_TRACKER["daily_empty_tiles"][day] = sw_breakdown["empty"]
+        else:
+            _SW_SEASONAL_TRACKER["daily_active_tiles"][day] = 0
+            _SW_SEASONAL_TRACKER["daily_utilization"][day] = None
+            _SW_SEASONAL_TRACKER["daily_empty_tiles"][day] = None
+
+        d_created = _daily_accum[day]["sw_tasks_created"]
+        d_assigned = _daily_accum[day]["sw_tasks_assigned"]
+        d_completed = _daily_accum[day]["sw_tasks_completed"]
+        d_moves = _daily_accum[day]["sw_movement_actions"]
+        d_ops = _daily_accum[day]["sw_operation_actions"]
+
+        sw_comp_rate = round(d_completed / d_assigned, 4) if d_assigned > 0 else None
+        sw_asgn_rate = round(d_assigned / d_created, 4) if d_created > 0 else None
         
         _daily_log[day] = {
             "actions_available": tot_avail,
             "actions_used": tot_used,
             "idle_actions": tot_idle,
             "utilization_pct": round(100.0 * tot_used / max(1, tot_avail), 1),
+            "action_utilization": round(tot_used / max(1, tot_avail), 4),
+            "completion_rate": round(tot_comp / max(1, tot_used), 4) if tot_used > 0 else 0.0,
+            "travel_share": round(tot_moves / max(1, tot_used), 4) if tot_used > 0 else 0.0,
+            "urgent_completion_rate": round(tot_urg_comp / max(1, tot_urg_att), 4) if tot_urg_att > 0 else None,
+            "quadrant_completion_rates": {
+                q: (round(q_comp[q] / max(1, q_att[q]), 4) if q_att[q] > 0 else None)
+                for q in ("NW", "NE", "SW", "SE")
+            },
             "shed_occupancy": shed_cnt,
             "quadrant_ownership": unlocked_cnt,
             "daily_hires": n_hands,
             "hire_cost": h_cost,
             "idle_cause": "queue_empty" if tot_idle > 0 else None,
+            "blocked_diagnostics": dict(_daily_accum[day]["blocked_diagnostics"]),
+            "sw_telemetry": {
+                "sw_owned": sw_owned,
+                "active_tiles": sw_breakdown["active"],
+                "empty_tiles": sw_breakdown["empty"],
+                "utilization": sw_breakdown["utilization"],
+                "sw_tasks_created": d_created,
+                "sw_tasks_assigned": d_assigned,
+                "sw_tasks_completed": d_completed,
+                "sw_movement_actions": d_moves,
+                "sw_operation_actions": d_ops,
+                "sw_assignment_rate": sw_asgn_rate,
+                "sw_completion_rate": sw_comp_rate,
+            },
         }
 
 
@@ -10162,6 +10510,89 @@ def get_home_quadrant(u_idx, n_units, unlocked):
         return "NW"
 
 
+def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
+    """Check if a previously assigned mission is still active and valid."""
+    farm = ctx.get("farm")
+    if farm is None:
+        return False
+    op = mission["op"]
+    target = mission.get("target")
+    if target is None:
+        return False
+    target = tuple(target)
+
+    t_quad = farm.quadrant_of(target)
+    if t_quad not in farm.unlocked and op != "PICKUP":
+        return False
+
+    # Generous upper cap as absolute deadlock/pathing failure guard
+    if mission.get("mission_age", mission.get("steps_active", 0)) > 40:
+        return False
+
+    # Progress-aware timeout: if stuck without progress for 4 consecutive turns
+    if mission.get("consecutive_no_progress", 0) >= 4:
+        return False
+
+    if tasks is not None:
+        matching = any(
+            t.get("op") == op and tuple(t.get("target") or (-1, -1)) == target
+            for t in tasks
+        )
+        if not matching:
+            # Keep livestock delivery sticky until PLACE succeeds or is invalidated
+            if op == "PLACE":
+                item = (mission.get("args") or [None])[0]
+                if item and u_idx in holders.get(item, []):
+                    # Target tile must still be unlocked and empty
+                    pass
+                else:
+                    return False
+            else:
+                return False
+
+    if op == "FEED":
+        if u_idx not in holders.get("WHEAT", []):
+            return False
+    elif op == "FERTILIZE":
+        if u_idx not in holders.get("FERTILIZER", []):
+            return False
+    elif op == "PLACE":
+        item = (mission.get("args") or [None])[0]
+        if item and u_idx not in holders.get(item, []):
+            return False
+
+    tile = None
+    if hasattr(farm, "tile_at"):
+        tile = farm.tile_at(target)
+    elif hasattr(farm, "iter_tiles"):
+        for t in farm.iter_tiles():
+            if tuple(t.pos) == target:
+                tile = t
+                break
+
+    if tile is not None:
+        if op == "WATER":
+            if not getattr(tile, "is_plant", False) or getattr(tile, "watered_today", False) or getattr(tile, "consecutive_unwatered", 0) >= 2:
+                return False
+        elif op == "FEED":
+            if not getattr(tile, "is_animal", False) or getattr(tile, "fed_today", False):
+                return False
+        elif op == "HARVEST":
+            if getattr(tile, "yield_units", 0) <= 0:
+                return False
+        elif op == "FERTILIZE":
+            if getattr(tile, "fertilized_until_day", -1) >= ctx.get("day", 0):
+                return False
+        elif op == "DIG":
+            if getattr(tile, "kind", "") != "WEED":
+                return False
+        elif op == "PLACE":
+            if getattr(tile, "is_animal", False):
+                return False
+
+    return True
+
+
 def assign_tasks(tasks, ctx, extra_units=()):
     """C2 Adaptive Zonal Dispatch + Greedy closest-unit assignment.
     
@@ -10171,6 +10602,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
     - Enforces travel distance threshold and prohibits diagonal jumps (SW <-> NE).
     - Preserves Rule W1/W2 SW squad partitioning, PORT_SW anchors, and shortest path routing.
     - Tracks daily utilization and logs idle actions.
+    - Sticky multi-turn mission ownership preserves workers on travel routes.
     """
     farm = ctx["farm"]
     units = [(0, tuple(farm.farmer))]
@@ -10219,8 +10651,12 @@ def assign_tasks(tasks, ctx, extra_units=()):
         prio = t.get("priority", 0)
         # Livestock belongs to its carrier until PLACE completes. A carrier's
         # home-zone backlog must not strand purchased animals indefinitely.
+        # Production-day feeding (feed_prod) is globally dispatchable to prevent
+        # stranding animals when the only wheat holder is in another quadrant.
         is_delivery = t["op"] == "PLACE" and (t.get("args") or [None])[0] in ANIMALS
+        is_prod_feed = t.get("kind") == "feed_prod"
         is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or is_delivery
+                     or is_prod_feed
                      or t.get("kind") in ("feed_rescue", "harvest_decay"))
         if is_urgent:
             urgent_tasks.append(t)
@@ -10231,6 +10667,27 @@ def assign_tasks(tasks, ctx, extra_units=()):
     assignment = {}          # unit_idx -> task
     deferred_place = []
 
+    # Step 0: Validate active sticky missions
+    global _ACTIVE_MISSIONS
+    for u, m in list(_ACTIVE_MISSIONS.items()):
+        if u >= n_units:
+            del _ACTIVE_MISSIONS[u]
+            continue
+        curr_pos = pos_by_idx[u]
+        tgt = m.get("target") or curr_pos
+        curr_d = abs(curr_pos[0] - tgt[0]) + abs(curr_pos[1] - tgt[1])
+        prev_d = m.get("prev_distance", curr_d)
+        m["mission_age"] = m.get("mission_age", 0) + 1
+        m["steps_active"] = m.get("steps_active", 0) + 1
+        if curr_d < prev_d:
+            m["consecutive_no_progress"] = 0
+            m["prev_distance"] = curr_d
+        else:
+            m["consecutive_no_progress"] = m.get("consecutive_no_progress", 0) + 1
+
+        if not _is_mission_valid(m, u, ctx, pos_by_idx, holders, tasks=tasks):
+            del _ACTIVE_MISSIONS[u]
+
     # 1. Tier 1: Urgent survival tasks dispatched immediately to closest capable worker
     for task in sorted(urgent_tasks, key=lambda t: -t.get("priority", 0)):
         eligible = _eligible(task)
@@ -10240,10 +10697,47 @@ def assign_tasks(tasks, ctx, extra_units=()):
         if not free_units:
             continue
         target = task.get("target") or tuple(farm.farmer)
-        best = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        # Prefer free units without an active mission
+        non_mission = [u for u in free_units if u not in _ACTIVE_MISSIONS]
+        pool = non_mission if non_mission else free_units
+        best = min(pool, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        if best in _ACTIVE_MISSIONS:
+            del _ACTIVE_MISSIONS[best]  # Preempted by urgent survival task!
         busy.add(best)
         task["unit_pos"] = pos_by_idx[best]
         assignment[best] = task
+
+        # Keep livestock delivery sticky until PLACE succeeds or is invalidated
+        if (task.get("op") == "PLACE" and
+            task.get("args") and task["args"][0] in ANIMALS and
+            pos_by_idx[best] != tuple(task.get("target", (-1, -1)))):
+            tgt_pos = task.get("target") or pos_by_idx[best]
+            init_d = abs(pos_by_idx[best][0] - tgt_pos[0]) + abs(pos_by_idx[best][1] - tgt_pos[1])
+            _ACTIVE_MISSIONS[best] = {
+                "task": dict(task),
+                "target": task.get("target"),
+                "op": task["op"],
+                "kind": task.get("kind", ""),
+                "args": task.get("args", []),
+                "priority": task.get("priority", 0),
+                "prev_distance": init_d,
+                "consecutive_no_progress": 0,
+                "mission_age": 0,
+                "steps_active": 0,
+            }
+
+    # 1b. Re-assign surviving active missions to their sticky workers
+    for u in list(_ACTIVE_MISSIONS.keys()):
+        if u not in busy:
+            m = _ACTIVE_MISSIONS[u]
+            m_task = dict(m["task"])
+            m_task["unit_pos"] = pos_by_idx[u]
+            assignment[u] = m_task
+            busy.add(u)
+            for rt in list(regular_tasks):
+                if rt.get("op") == m["op"] and tuple(rt.get("target", (-1, -1))) == tuple(m["target"]):
+                    regular_tasks.remove(rt)
+                    break
 
     # 2. Tier 2: Regular tasks with C2 Zonal Hierarchy + C6 Clustered Dispatch
     tasks_by_quad = {"NW": 0, "NE": 0, "SW": 0, "SE": 0}
@@ -10325,6 +10819,119 @@ def assign_tasks(tasks, ctx, extra_units=()):
         chosen_task["unit_pos"] = pos_by_idx[chosen_u]
         assignment[chosen_u] = chosen_task
 
+        # Record sticky mission if task requires multi-turn travel
+        if (chosen_task.get("op") != "PASS" and
+            chosen_task.get("kind") not in ("sw_anchor", "fallback_fert", "fallback_water", "fallback_dig") and
+            pos_by_idx[chosen_u] != tuple(chosen_task.get("target", (-1, -1)))):
+            tgt_pos = chosen_task.get("target") or pos_by_idx[chosen_u]
+            init_d = abs(pos_by_idx[chosen_u][0] - tgt_pos[0]) + abs(pos_by_idx[chosen_u][1] - tgt_pos[1])
+            _ACTIVE_MISSIONS[chosen_u] = {
+                "task": dict(chosen_task),
+                "target": chosen_task.get("target"),
+                "op": chosen_task["op"],
+                "kind": chosen_task.get("kind", ""),
+                "args": chosen_task.get("args", []),
+                "priority": chosen_task.get("priority", 0),
+                "prev_distance": init_d,
+                "consecutive_no_progress": 0,
+                "mission_age": 0,
+                "steps_active": 0,
+            }
+
+    # Blocked-task diagnostics: detect tasks blocked before assigning fallback idle work
+    turn_blocked_diagnostics = {
+        "blocked_due_inventory": 0,
+        "blocked_due_zone": 0,
+        "blocked_due_no_carrier": 0,
+        "blocked_due_capacity": 0,
+        "blocked_task_turns": 0,
+        "urgent_blocked_turns": 0,
+        "max_blocked_duration": 0,
+    }
+    unassigned_urgent = [t for t in urgent_tasks if t not in assignment.values()]
+    unassigned_regular = list(remaining_tasks)
+    free_units_count = len(units) - len(busy)
+
+    global _BLOCKED_TASK_TRACKER
+    current_turn_blocked_keys = set()
+    step = ctx.get("step", 0)
+
+    for t in unassigned_urgent + unassigned_regular:
+        op = t.get("op")
+        tgt = tuple(t.get("target") or farm.farmer)
+        t_quad = farm.quadrant_of(tgt)
+        args = tuple(t.get("args") or ())
+        prio = t.get("priority", 0)
+        kind = t.get("kind", "")
+
+        reason = "zone"
+        if op == "PLACE" and args and args[0] in ANIMALS and not holders.get(args[0]):
+            reason = "no_carrier"
+            turn_blocked_diagnostics["blocked_due_no_carrier"] += 1
+        elif op == "FEED" and not holders.get("WHEAT"):
+            reason = "inventory"
+            turn_blocked_diagnostics["blocked_due_inventory"] += 1
+        elif op == "FERTILIZE" and not holders.get("FERTILIZER"):
+            reason = "inventory"
+            turn_blocked_diagnostics["blocked_due_inventory"] += 1
+        elif t_quad not in farm.unlocked:
+            reason = "zone"
+            turn_blocked_diagnostics["blocked_due_zone"] += 1
+        elif free_units_count == 0:
+            reason = "capacity"
+            turn_blocked_diagnostics["blocked_due_capacity"] += 1
+        else:
+            reason = "zone"
+            turn_blocked_diagnostics["blocked_due_zone"] += 1
+
+        is_urgent = (
+            prio >= PRIORITY_URGENT_SURVIVAL or
+            kind in ("feed_rescue", "feed_prod", "harvest_decay") or
+            (op == "WATER" and (prio >= 80 or t.get("meta", {}).get("urgent", False))) or
+            (op == "PLACE" and args and args[0] in ANIMALS)
+        )
+
+        task_key = (op, tgt, args)
+        current_turn_blocked_keys.add(task_key)
+
+        if task_key not in _BLOCKED_TASK_TRACKER:
+            _BLOCKED_TASK_TRACKER[task_key] = {
+                "first_blocked_step": step,
+                "consecutive_duration": 1,
+                "max_blocked_duration": 1,
+                "reason": reason,
+                "kind": kind,
+                "priority": prio,
+                "quadrant": t_quad,
+                "is_urgent": is_urgent,
+            }
+        else:
+            info = _BLOCKED_TASK_TRACKER[task_key]
+            info["consecutive_duration"] += 1
+            info["max_blocked_duration"] = max(info["max_blocked_duration"], info["consecutive_duration"])
+            info["reason"] = reason
+            info["priority"] = max(info["priority"], prio)
+            if is_urgent:
+                info["is_urgent"] = True
+
+    # Auto-clear tasks that were completed, assigned, or disappeared
+    for k in list(_BLOCKED_TASK_TRACKER.keys()):
+        if k not in current_turn_blocked_keys:
+            del _BLOCKED_TASK_TRACKER[k]
+
+    turn_blocked_diagnostics["blocked_task_turns"] = sum(
+        info["consecutive_duration"] for info in _BLOCKED_TASK_TRACKER.values()
+    )
+    turn_blocked_diagnostics["max_blocked_duration"] = max(
+        (info["consecutive_duration"] for info in _BLOCKED_TASK_TRACKER.values()),
+        default=0
+    )
+    turn_blocked_diagnostics["urgent_blocked_turns"] = sum(
+        info["consecutive_duration"]
+        for info in _BLOCKED_TASK_TRACKER.values()
+        if info.get("is_urgent")
+    )
+
     # v5.9: Fallback assignment for idle units to guarantee zero wasted actions
     # Default fallback priority: COLLECT_FERTILIZER -> WATER_MATURE/UNWATERED -> DIG_WEED
     unassigned_units = [idx for idx, _ in units if idx not in busy]
@@ -10389,7 +10996,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
                     pos = pos_by_idx[u]
                     if pos != PORT_SW:
                         task = {"priority": 1, "op": "PASS", "target": PORT_SW,
-                                "args": [], "kind": "sw_anchor", "meta": {}, "unit_pos": pos}
+                                 "args": [], "kind": "sw_anchor", "meta": {}, "unit_pos": pos}
                         assignment[u] = task
                         busy.add(u)
                         unassigned_units.remove(u)
@@ -10398,8 +11005,44 @@ def assign_tasks(tasks, ctx, extra_units=()):
     for idx, task in assignment.items():
         actions[idx] = emit(task)
 
+    turn_sw_tasks_created = 0
+    if farm and hasattr(farm, "quadrant_of"):
+        for t in tasks:
+            tgt = t.get("target")
+            if tgt and farm.quadrant_of(tgt) == "SW":
+                turn_sw_tasks_created += 1
+
+    turn_sw_tasks_assigned = 0
+    turn_sw_tasks_completed = 0
+    turn_sw_moves = 0
+    turn_sw_ops = 0
+    if farm and hasattr(farm, "quadrant_of"):
+        for u_idx, task in assignment.items():
+            tgt = task.get("target")
+            if tgt and farm.quadrant_of(tgt) == "SW":
+                turn_sw_tasks_assigned += 1
+                act = actions.get(u_idx, ["PASS"])
+                if act and act[0] in ("NORTH", "SOUTH", "EAST", "WEST"):
+                    turn_sw_moves += 1
+                elif act != ["PASS"] and act:
+                    turn_sw_ops += 1
+                    turn_sw_tasks_completed += 1
+
+    turn_sw_telemetry = {
+        "created": turn_sw_tasks_created,
+        "assigned": turn_sw_tasks_assigned,
+        "completed": turn_sw_tasks_completed,
+        "moves": turn_sw_moves,
+        "ops": turn_sw_ops,
+    }
+
     # v5.9: Track utilization across all 24 hours of the day
-    _record_turn_utilization(ctx, len(units), actions)
+    _record_turn_utilization(
+        ctx, len(units), actions,
+        assignment=assignment,
+        turn_blocked=turn_blocked_diagnostics,
+        turn_sw=turn_sw_telemetry,
+    )
 
     # Bookkeeping: PLANT intents count as seed reservations whether or not the
     # unit is standing on the tile yet (seeds are consumed only on execution,
@@ -10429,6 +11072,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         "harvested": harvested,
         "fed": fed_animals,
         "deferred_place": [(t.get("args") or [None])[0] for t in deferred_place],
+        "blocked_diagnostics": turn_blocked_diagnostics,
     }
 
 
@@ -10454,24 +11098,83 @@ def emit(task):
 
 
 def estimate_daily_load(ctx):
-    """Rough action-count needed today (used by hiring_manager)."""
-    day = ctx["day"]
-    load = 0
-    for t in ctx["farm"].iter_tiles():
-        if t.is_plant and not t.watered_today:
-            load += 1
-        if t.is_animal:
-            load += 1 + (1 if t.fertilizer_available else 0)
+    """Travel-aware daily action-count load estimation.
+
+    Incorporates:
+      - Base service load (watering, feeding, caring, fertilizing, harvesting, planting)
+      - Spatial dispersion across unlocked quadrants
+      - Quadrant transitions and diagonal penalties
+      - Shed transit overhead for pickups and drop-offs
+      - SW quadrant distance burden (long-distance transit from (4,4))
+    """
+    farm = ctx.get("farm")
+    if farm is None or not hasattr(farm, "iter_tiles"):
+        return 0
+    day = ctx.get("day", 0)
+    private = ctx.get("private")
+
+    base_load = 0
+    active_quads = set()
+    sw_tile_count = 0
+
+    # 1. Base tile load + spatial distribution
+    for t in farm.iter_tiles():
+        q = farm.quadrant_of(t.pos)
+        if q not in farm.unlocked:
+            continue
+        if t.is_plant:
+            active_quads.add(q)
+            if q == "SW":
+                sw_tile_count += 1
+            base_load += 1 if not getattr(t, "watered_today", False) else 0
+            if getattr(t, "yield_units", 0) > 0:
+                base_load += 1
+        elif t.is_animal:
+            active_quads.add(q)
+            if q == "SW":
+                sw_tile_count += 1
+            base_load += 1 if not getattr(t, "fed_today", False) else 0
+            if getattr(t, "fertilizer_available", False):
+                base_load += 1
+            if not getattr(t, "cared_today", False):
+                base_load += 1
             info = ANIMALS.get(t.animal)
-            if info and (day + 1 - t.placed_day - info["first_yield_day"]) % info["interval"] == 0:
-                load += 1  # production-day feed + harvest next morning
-    seed_units = sum(ctx["private"].seeds.values())
+            if info and getattr(t, "placed_day", None) is not None:
+                if (day + 1 - t.placed_day - info["first_yield_day"]) % info["interval"] == 0:
+                    base_load += 1
+
+    # Empty unlocked tiles ready for planting
+    seed_units = sum(private.seeds.values()) if private and hasattr(private, "seeds") else 0
     empty_unlocked = sum(
-        1 for t in ctx["farm"].iter_tiles()
-        if t.kind == "EMPTY" and ctx["farm"].quadrant_of(t.pos) in ctx["farm"].unlocked
+        1 for t in farm.iter_tiles()
+        if t.kind == "EMPTY" and farm.quadrant_of(t.pos) in farm.unlocked
     )
-    load += min(seed_units, empty_unlocked)
-    return load
+    plants_to_do = min(seed_units, empty_unlocked)
+    base_load += plants_to_do
+
+    # 2. Shed trips overhead (pickups of feed, fertilizer, or placing animals)
+    shed_trips = 0
+    if private and hasattr(private, "shed"):
+        shed = private.shed
+        shed_animals = sum(int(shed.get(a, 0)) for a in ANIMAL_LIST)
+        shed_trips += shed_animals * 3
+        if int(shed.get("WHEAT", 0)) > 0:
+            shed_trips += 3
+        if int(shed.get("FERTILIZER", 0)) > 0:
+            shed_trips += 3
+
+    # 3. Spatial dispersion & quadrant transitions
+    dispersion_burden = 0
+    if len(active_quads) > 1:
+        dispersion_burden = (len(active_quads) - 1) * 4
+        if "SW" in active_quads and "NE" in active_quads:
+            dispersion_burden += 4
+
+    # 4. SW distance burden: one-time quadrant setup + clustered intra-quadrant dispersion
+    # Clustered tiles do not incur round-trip overhead per tile; dispersion within SW is sub-linear.
+    sw_burden = (6 + min(8, sw_tile_count // 3)) if sw_tile_count > 0 else 0
+
+    return base_load + shed_trips + dispersion_burden + sw_burden
 
 # ===========================================================================
 # END MODULE: execution/task_scheduler.py
@@ -10634,6 +11337,27 @@ def _cum_own_production(crop, own_tiles, harvest_index, feed_wheat_per_day=0,
         days_elapsed = max(0, harvest_day - plant_day)
         cum_raw = max(0.0, cum_raw - avg_herd * days_elapsed)
     return cum_raw
+
+
+def get_committed_crop_counts(farm, planned=None):
+    """Farm-wide count of crops committed across the farm.
+
+    Evaluates live tiles (is_plant is True, crop in CROPS, consecutive_unwatered < 2)
+    plus crops already planned for planting during this turn.
+    Dead crops, harvested tiles, or replaced tiles are not counted.
+    """
+    counts = {crop: 0 for crop in CROPS}
+    if farm is not None and hasattr(farm, "iter_tiles"):
+        for t in farm.iter_tiles():
+            if (getattr(t, "is_plant", False) and
+                getattr(t, "crop", None) in counts and
+                getattr(t, "consecutive_unwatered", 0) < 2):
+                counts[t.crop] += 1
+    if planned:
+        for crop, cnt in planned.items():
+            if crop in counts:
+                counts[crop] += cnt
+    return counts
 
 
 def _crop_score(crop, day, forecast, boosts, own_tiles=0,
@@ -11049,6 +11773,7 @@ class MacroPlanner:
             # Sells 72 melons on Day 10 for ~$15k-$18k cash surge; 48 wheat on Day 4 for NE fund.
             wheat_available = seeds.get("WHEAT", 0)
             planned = {}
+            committed_counts = get_committed_crop_counts(farm)
             if day == 0:
                 melon_tiles = 12
                 wheat_tiles = 8
@@ -11059,6 +11784,7 @@ class MacroPlanner:
                         plant_queue.append((pos, "MELON"))
                         seeds["MELON"] = max(0, seeds.get("MELON", 0) - 1)
                         planned["MELON"] = planned.get("MELON", 0) + 1
+                        committed_counts["MELON"] = committed_counts.get("MELON", 0) + 1
 
                 for _ in range(wheat_tiles):
                     if empty_tiles:
@@ -11066,6 +11792,7 @@ class MacroPlanner:
                         plant_queue.append((pos, "WHEAT"))
                         seeds["WHEAT"] = max(0, seeds.get("WHEAT", 0) - 1)
                         planned["WHEAT"] = planned.get("WHEAT", 0) + 1
+                        committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
                 have_melon = private.seeds.get("MELON", 0)
                 if melon_tiles > have_melon:
@@ -11089,6 +11816,7 @@ class MacroPlanner:
                         seeds[crop] -= 1
                         plant_queue.append((pos, crop))
                         planned[crop] = planned.get(crop, 0) + 1
+                        committed_counts[crop] = committed_counts.get(crop, 0) + 1
                 empty_tiles.clear()
             else:
                 # ---- SW Quadrant Dedicated Soil Planting Engine ----
@@ -11113,6 +11841,7 @@ class MacroPlanner:
                                 continue
                             plant_queue.append((pos, "WHEAT"))
                             planned["WHEAT"] = planned.get("WHEAT", 0) + 1
+                            committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
                         # Plant SW carrot (Carrot Blitz)
                         for pos in sw_soil_empty[sw_wheat:sw_wheat + sw_carrot]:
@@ -11126,8 +11855,9 @@ class MacroPlanner:
                                 continue
                             plant_queue.append((pos, "CARROT"))
                             planned["CARROT"] = planned.get("CARROT", 0) + 1
+                            committed_counts["CARROT"] = committed_counts.get("CARROT", 0) + 1
 
-                existing_wheat = sum(1 for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT") + planned.get("WHEAT", 0)
+                existing_wheat = committed_counts.get("WHEAT", 0)
                 # Continuous wheat replanting engine (Leader-Calibrated: 8/20/30 active wheat tiles)
                 # Days 6-9: Retain wheat target at 8 even if NE is unlocked
                 # Days 10-13: Retain wheat target at 20 even if SW is unlocked (n_quads=3), preserving tiles for Strawberry and Melon waves
@@ -11161,13 +11891,14 @@ class MacroPlanner:
                         plant_queue.append((pos, "WHEAT"))
                         seeds["WHEAT"] = max(0, seeds.get("WHEAT", 0) - 1)
                         planned["WHEAT"] = planned.get("WHEAT", 0) + 1
+                        committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
             # Dedicated Strawberry Wave (Fable Leader Heuristic):
             # Cap progression: 16 (Days 3-5) -> 18 (Days 6-8) -> 20 (Days 9-13) -> 0 (Day 14+)
             # Placement: NE first, then NW fallow tiles. NEVER in SW!
             if 3 <= day <= STRAWBERRY_PLANT_DEADLINE and "NE" in farm.unlocked:
                 s_cap = get_strawberry_cap(day, True)
-                current_strawberries = sum(1 for t in farm.iter_tiles() if getattr(t, "crop", None) == "STRAWBERRY") + planned.get("STRAWBERRY", 0)
+                current_strawberries = committed_counts.get("STRAWBERRY", 0)
                 want_s = max(0, s_cap - current_strawberries)
                 if want_s > 0:
                     ne_empty = [p for p in empty_tiles if farm.quadrant_of(p) == "NE"]
@@ -11185,6 +11916,7 @@ class MacroPlanner:
                         empty_tiles.remove(pos)
                         plant_queue.append((pos, "STRAWBERRY"))
                         planned["STRAWBERRY"] = planned.get("STRAWBERRY", 0) + 1
+                        committed_counts["STRAWBERRY"] = committed_counts.get("STRAWBERRY", 0) + 1
 
             # v5.10: Expansion priority layer — bias scoring for deadline-critical crops
             # on expansion tiles. This injects into the existing Phase 2b loop,
@@ -11213,9 +11945,9 @@ class MacroPlanner:
                             cap = get_strawberry_cap(day, len(farm.unlocked) >= 2)
                         else:
                             cap = CROP_TILE_CAPS.get(forced_crop, 99)
-                        if planned.get(forced_crop, 0) >= cap:
+                        if committed_counts.get(forced_crop, 0) >= cap:
                             continue
-                        own_for_this = planned.get(forced_crop, 0) + 1
+                        own_for_this = committed_counts.get(forced_crop, 0) + 1
                         base_score, _ = _crop_score(forced_crop, day, self.fc, boosts,
                                                     own_for_this, n_animals, n_animals,
                                                     opp_advice=opp_advice)
@@ -11236,9 +11968,9 @@ class MacroPlanner:
                             cap = get_strawberry_cap(day, len(farm.unlocked) >= 2)
                         else:
                             cap = CROP_TILE_CAPS.get(crop, 99)
-                        if planned.get(crop, 0) >= cap:
+                        if committed_counts.get(crop, 0) >= cap:
                             continue
-                        own_for_this = planned.get(crop, 0) + 1
+                        own_for_this = committed_counts.get(crop, 0) + 1
                         score, _ = _crop_score(crop, day, self.fc, boosts,
                                                own_for_this, n_animals, n_animals,
                                                opp_advice=opp_advice)
@@ -11257,6 +11989,7 @@ class MacroPlanner:
                     continue
                 plant_queue.append((pos, best_crop))
                 planned[best_crop] = planned.get(best_crop, 0) + 1
+                committed_counts[best_crop] = committed_counts.get(best_crop, 0) + 1
                 empty_tiles.remove(pos)
         else:
             remaining_money = ctx["farm"].money - self.reserve
@@ -11319,21 +12052,33 @@ class MacroPlanner:
 
         # SW diagnostics and metrics
         sw_is_unlocked = "SW" in farm.unlocked
-        sw_tiles = [t for t in farm.iter_tiles() if farm.quadrant_of(t.pos) == "SW"] if hasattr(farm, "iter_tiles") else []
-        sw_strawberry = sum(1 for t in sw_tiles if getattr(t, "crop", None) == "STRAWBERRY")
-        sw_other_crops = sum(1 for t in sw_tiles if getattr(t, "is_plant", False) and getattr(t, "crop", None) != "STRAWBERRY")
-        sw_animals = sum(1 for t in sw_tiles if getattr(t, "is_animal", False) or getattr(t, "kind", None) in ("COOP", "PASTURE"))
-        sw_active = sw_strawberry + sw_other_crops + sw_animals
-        sw_empty = max(0, 25 - sw_active) if sw_is_unlocked else 25
-        sw_utilization = (sw_active / 25.0) if sw_is_unlocked else 0.0
-        sw_planned_sw = sum(1 for pos, _ in plant_queue if farm.quadrant_of(pos) == "SW")
-        projected_sw_util = min(1.0, (sw_active + sw_planned_sw) / 25.0) if sw_is_unlocked else 0.0
+        if get_sw_tile_breakdown is not None:
+            sw_breakdown = get_sw_tile_breakdown(farm)
+            sw_strawberry = sw_breakdown["crops_strawberry"]
+            sw_other_crops = sw_breakdown["crops_other"]
+            sw_active = sw_breakdown["active"]
+            sw_empty = sw_breakdown["empty"] if sw_is_unlocked else None
+            sw_utilization = sw_breakdown["utilization"] if sw_is_unlocked else None
+        else:
+            sw_tiles = [t for t in farm.iter_tiles() if farm.quadrant_of(t.pos) == "SW"] if hasattr(farm, "iter_tiles") else []
+            sw_strawberry = sum(1 for t in sw_tiles if getattr(t, "crop", None) == "STRAWBERRY")
+            sw_other_crops = sum(1 for t in sw_tiles if getattr(t, "is_plant", False) and getattr(t, "crop", None) != "STRAWBERRY")
+            sw_animals = sum(1 for t in sw_tiles if getattr(t, "is_animal", False))
+            sw_structures = sum(1 for t in sw_tiles if getattr(t, "kind", None) in ("PASTURE", "COOP") and not getattr(t, "is_animal", False))
+            sw_active = sw_strawberry + sw_other_crops + sw_animals + sw_structures if sw_is_unlocked else 0
+            sw_empty = sum(1 for t in sw_tiles if getattr(t, "kind", None) == "EMPTY") if sw_is_unlocked else None
+            sw_utilization = round(sw_active / 25.0, 4) if sw_is_unlocked else None
+
+        sw_planned_sw = sum(1 for pos, _ in plant_queue if farm.quadrant_of(pos) == "SW") if hasattr(farm, "quadrant_of") else 0
+        projected_sw_util = min(1.0, (sw_active + sw_planned_sw) / 25.0) if sw_is_unlocked else None
 
         # Memory tracking for cumulative empty tile days
         mem = ctx.get("memory", {}) if isinstance(ctx, dict) else {}
-        if sw_is_unlocked:
+        if sw_is_unlocked and sw_empty is not None:
             mem["sw_empty_tile_days"] = mem.get("sw_empty_tile_days", 0) + sw_empty
-        sw_empty_tile_days = mem.get("sw_empty_tile_days", 0) if sw_is_unlocked else 0
+            sw_empty_tile_days = mem.get("sw_empty_tile_days", 0)
+        else:
+            sw_empty_tile_days = None
 
         sw_buy_wait = "BUY" if (buy_land and next_quadrant == 3) else ("ALREADY_OWNED" if sw_is_unlocked else "WAIT")
         sw_reason_text = sw_reason if next_quadrant == 3 else ("already_owned" if sw_is_unlocked else "locked")
@@ -11346,10 +12091,10 @@ class MacroPlanner:
             "buy_today_value": round(land_roi_info.get("buy_today_value", 0.0), 1),
             "wait_1_day_value": round(land_roi_info.get("wait_1_day_value", 0.0), 1),
             "delay_value": round(land_roi_info.get("delay_value", 0.0), 1),
-            "SW utilization": round(sw_utilization, 3),
+            "SW utilization": round(sw_utilization, 3) if sw_utilization is not None else None,
             "SW empty tiles": sw_empty,
             "SW empty tile-days": sw_empty_tile_days,
-            "projected utilization": round(projected_sw_util, 3),
+            "projected utilization": round(projected_sw_util, 3) if projected_sw_util is not None else None,
             "strawberry tiles": sw_strawberry,
             "other crop tiles": sw_other_crops,
             "reason": sw_reason_text,
@@ -11394,11 +12139,83 @@ def _mean_over(forecast, product, days):
 
 
 def estimate_daily_load(ctx):
-    """Rough action-count needed today."""
-    farm = ctx["farm"]
-    plants = sum(1 for t in farm.iter_tiles() if t.is_plant)
-    animals = sum(1 for t in farm.iter_tiles() if t.is_animal)
-    return plants * 2 + animals * 3
+    """Travel-aware daily action-count load estimation.
+
+    Incorporates:
+      - Base service load (watering, feeding, caring, fertilizing, harvesting, planting)
+      - Spatial dispersion across unlocked quadrants
+      - Quadrant transitions and diagonal penalties
+      - Shed transit overhead for pickups and drop-offs
+      - SW quadrant distance burden (long-distance transit from (4,4))
+    """
+    farm = ctx.get("farm")
+    if farm is None or not hasattr(farm, "iter_tiles"):
+        return 0
+    day = ctx.get("day", 0)
+    private = ctx.get("private")
+
+    base_load = 0
+    active_quads = set()
+    sw_tile_count = 0
+
+    # 1. Base tile load + spatial distribution
+    for t in farm.iter_tiles():
+        q = farm.quadrant_of(t.pos)
+        if q not in farm.unlocked:
+            continue
+        if t.is_plant:
+            active_quads.add(q)
+            if q == "SW":
+                sw_tile_count += 1
+            base_load += 1 if not getattr(t, "watered_today", False) else 0
+            if getattr(t, "yield_units", 0) > 0:
+                base_load += 1
+        elif t.is_animal:
+            active_quads.add(q)
+            if q == "SW":
+                sw_tile_count += 1
+            base_load += 1 if not getattr(t, "fed_today", False) else 0
+            if getattr(t, "fertilizer_available", False):
+                base_load += 1
+            if not getattr(t, "cared_today", False):
+                base_load += 1
+            info = ANIMALS.get(t.animal)
+            if info and getattr(t, "placed_day", None) is not None:
+                if (day + 1 - t.placed_day - info["first_yield_day"]) % info["interval"] == 0:
+                    base_load += 1
+
+    # Empty unlocked tiles ready for planting
+    seed_units = sum(private.seeds.values()) if private and hasattr(private, "seeds") else 0
+    empty_unlocked = sum(
+        1 for t in farm.iter_tiles()
+        if t.kind == "EMPTY" and farm.quadrant_of(t.pos) in farm.unlocked
+    )
+    plants_to_do = min(seed_units, empty_unlocked)
+    base_load += plants_to_do
+
+    # 2. Shed trips overhead (pickups of feed, fertilizer, or placing animals)
+    shed_trips = 0
+    if private and hasattr(private, "shed"):
+        shed = private.shed
+        shed_animals = sum(int(shed.get(a, 0)) for a in ANIMAL_LIST)
+        shed_trips += shed_animals * 3
+        if int(shed.get("WHEAT", 0)) > 0:
+            shed_trips += 3
+        if int(shed.get("FERTILIZER", 0)) > 0:
+            shed_trips += 3
+
+    # 3. Spatial dispersion & quadrant transitions
+    dispersion_burden = 0
+    if len(active_quads) > 1:
+        dispersion_burden = (len(active_quads) - 1) * 4
+        if "SW" in active_quads and "NE" in active_quads:
+            dispersion_burden += 4
+
+    # 4. SW distance burden: one-time quadrant setup + clustered intra-quadrant dispersion
+    # Clustered tiles do not incur round-trip overhead per tile; dispersion within SW is sub-linear.
+    sw_burden = (6 + min(8, sw_tile_count // 3)) if sw_tile_count > 0 else 0
+
+    return base_load + shed_trips + dispersion_burden + sw_burden
 
 # ===========================================================================
 # END MODULE: strategy/macro_planner.py
@@ -11439,11 +12256,11 @@ def hire_total_cost(k_hands, mult=1):
 
 
 # Priority tiers (lower = executed earlier when order slots / cash run short).
-TIER_LAND = 0
+TIER_HIRES = 0
 TIER_FEED_WHEAT = 1
-TIER_SEEDS = 2
-TIER_ANIMALS = 3
-TIER_HIRES = 4
+TIER_LAND = 2
+TIER_SEEDS = 3
+TIER_ANIMALS = 4
 
 
 class OrderBuilder:
@@ -11472,9 +12289,12 @@ class OrderBuilder:
     def build(self, ctx, intents):
         """intents: MacroPlan.intents dict. Returns (orders, ledger).
         
-        v5.9: Hires are NON-NEGOTIABLE. They get first claim on money,
-        regardless of budget/reserve. Seeds, animals, land are bought
-        only with what remains after hire cost.
+        Mandatory hire budgeting:
+          - Mandatory hires calculate exact hire cost first and reserve that amount.
+          - Never let land/seeds/animals/non-survival purchases consume reserved hire money.
+          - Survival feed wheat is budgeted before discretionary spending.
+          - Discretionary purchases (land, seeds, animals) only draw from remaining discretionary budget.
+          - Orders are emitted strictly in priority tier order (hires first, then survival wheat, then land, seeds, animals).
         """
         farm = ctx["farm"]
         money = float(farm.money)
@@ -11482,42 +12302,108 @@ class OrderBuilder:
 
         inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
         wheat_px = market_price("WHEAT", inv.get("WHEAT", 10000))
-        shed_room = max(0, 100 - sum(ctx["private"].shed.values()))
+        remaining_shed_room = max(0, 100 - sum(ctx["private"].shed.values())) if ctx.get("private") and hasattr(ctx["private"], "shed") else 100
 
-        ledger = {"budget": round(budget, 2), "queued": [],
-                  "dropped": [], "spent_estimate": 0.0}
-
-        # ---- v5.9: Hires get absolute priority (full money) -----------
-        tiers = []
+        # ---- 1. Mandatory hires: exact cost calculated and reserved first ----
         k = int(intents.get("hire", 0))
+        start_hires = getattr(farm, "hires_today", 0)
         hire_cost = 0.0
-        if k > 0:
-            hire_cost = float(hire_total_cost(k))
-            tiers.append((TIER_HIRES, "hire",
-                          {"count": k}, hire_cost))
+        affordable_hires = 0
+        for i in range(k):
+            c = float(_fib(start_hires + i))
+            if hire_cost + c <= money:
+                hire_cost += c
+                affordable_hires += 1
+            else:
+                break
+        mandatory_hire_budget = hire_cost
 
-        # ---- Remaining budget after mandatory hires (protecting reserve) ----
-        post_hire_budget = max(0.0, budget - hire_cost)
+        # ---- 2. Survival feed wheat: reserved before discretionary spending ----
+        available_for_purchases = max(0.0, money - mandatory_hire_budget - self.reserve)
+        w_req = int(intents.get("buy_wheat", 0))
+        unit_wheat_px = math_ceil(wheat_px * WHEAT_BUY_PRICE_BUFFER)
+        w_buyable = 0
+        if w_req > 0 and unit_wheat_px > 0:
+            w_buyable = min(w_req, int(available_for_purchases // unit_wheat_px), remaining_shed_room)
+        survival_feed_budget = float(w_buyable * unit_wheat_px)
+        remaining_shed_room = max(0, remaining_shed_room - w_buyable)
 
-        # ---- tier 1: seeds -------------------------------------------
+        # ---- 3. Discretionary budget: land, seeds, animals ----
+        discretionary_budget = max(0.0, available_for_purchases - survival_feed_budget)
+
+        ledger = {
+            "budget": round(budget, 2),
+            "mandatory_hire_budget": round(mandatory_hire_budget, 2),
+            "survival_feed_budget": round(survival_feed_budget, 2),
+            "discretionary_budget": round(discretionary_budget, 2),
+            "spent_estimate": 0.0,
+            "queued": [],
+            "dropped": [],
+            "orders": [],
+        }
+
+        if affordable_hires < k:
+            ledger["dropped"].append({
+                "kind": "hire_budget",
+                "requested": k,
+                "affordable": affordable_hires,
+            })
+
+        if w_req > w_buyable:
+            if w_buyable > 0:
+                ledger["dropped"].append({
+                    "kind": "wheat",
+                    "trimmed_from": w_req,
+                    "to": w_buyable,
+                })
+            else:
+                reason = "shed_full" if remaining_shed_room == 0 and int(available_for_purchases // unit_wheat_px) > 0 else "budget"
+                ledger["dropped"].append({"kind": "wheat", "reason": reason})
+
+        # Collect tiers
+        kept = []
+        if affordable_hires > 0:
+            kept.append((TIER_HIRES, "hire", {"count": affordable_hires}, mandatory_hire_budget))
+
+        if w_buyable > 0:
+            kept.append((TIER_FEED_WHEAT, "wheat", {"n": w_buyable}, survival_feed_budget))
+
+        remaining_discretionary = discretionary_budget
+
+        # Discretionary Tier: Land
+        n_extra = len(farm.unlocked) - 1
+        if intents.get("buy_land") and n_extra < len(LAND_ORDER):
+            land_price = float(LAND_PRICES[n_extra])
+            if land_price <= remaining_discretionary + 1e-9:
+                kept.append((TIER_LAND, "land", {}, land_price))
+                remaining_discretionary -= land_price
+            else:
+                ledger["dropped"].append({"kind": "land", "reason": "budget"})
+
+        # Discretionary Tier: Seeds
         for crop, n in sorted(intents.get("buy_seed", {}).items()):
             n = int(n)
             if n > 0 and crop in CROPS:
                 unit = CROPS[crop]["seed"]
-                tiers.append((TIER_SEEDS, "seed",
-                              {"crop": crop, "n": n}, unit * n))
+                n_max = int(remaining_discretionary // unit)
+                if n_max >= n:
+                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
+                    remaining_discretionary -= unit * n
+                elif n_max > 0:
+                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n_max}, float(unit * n_max)))
+                    remaining_discretionary -= unit * n_max
+                    ledger["dropped"].append({
+                        "kind": "seed", "crop": crop,
+                        "trimmed_from": n, "to": n_max,
+                    })
+                else:
+                    ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": "budget"})
 
-        # ---- tier 2: feed wheat --------------------------------------
-        w = int(intents.get("buy_wheat", 0))
-        if w > 0:
-            est = math_ceil(wheat_px * WHEAT_BUY_PRICE_BUFFER) * w
-            tiers.append((TIER_FEED_WHEAT, "wheat", {"n": w}, est))
-
-        # ---- tier 3: animals -----------------------------------------
+        # Discretionary Tier: Animals
         claimed_structures = {}
-        for animal, k in sorted(intents.get("buy_animal", {}).items()):
-            k = int(k)
-            if k > 0 and animal in ANIMALS:
+        for animal, k_anim in sorted(intents.get("buy_animal", {}).items()):
+            k_anim = int(k_anim)
+            if k_anim > 0 and animal in ANIMALS:
                 struct_type = ANIMALS[animal]["structure"]
                 pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
                 free_structures = sum(
@@ -11528,87 +12414,30 @@ class OrderBuilder:
                 animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
                 claimed = claimed_structures.get(struct_type, 0)
                 max_buyable = max(0, free_structures - animals_in_shed - claimed)
-                room_limited = min(k, max_buyable, shed_room)
+                room_limited = min(k_anim, max_buyable, remaining_shed_room)
                 if room_limited <= 0:
-                    ledger["dropped"].append({"kind": "animal",
-                                              "animal": animal,
-                                              "reason": "no_empty_structure" if max_buyable <= 0 else "shed_full"})
+                    ledger["dropped"].append({
+                        "kind": "animal",
+                        "animal": animal,
+                        "reason": "shed_full" if remaining_shed_room <= 0 else "no_empty_structure",
+                    })
                     continue
-                claimed_structures[struct_type] = claimed + room_limited
+
                 unit = ANIMALS[animal]["cost"]
-                tiers.append((TIER_ANIMALS, "animal",
-                              {"animal": animal, "n": room_limited},
-                              unit * room_limited))
-
-        # ---- tier 4: land --------------------------------------------
-        n_extra = len(farm.unlocked) - 1
-        land_price = None
-        if intents.get("buy_land") and n_extra < len(LAND_ORDER):
-            land_price = LAND_PRICES[n_extra]
-            tiers.append((TIER_LAND, "land", {}, float(land_price)))
-
-        # ---- fill tiers: hires first (non-negotiable), then rest ------
-        spent = 0.0
-        kept = []
-        for tier, kind, payload, est in sorted(tiers, key=lambda t: t[0]):
-            if kind == "hire":
-                # Hires use full money — always fit
-                kept.append((tier, kind, payload, est))
-                spent += est
-                continue
-            # Everything else uses post-hire budget
-            remaining = max(0.0, post_hire_budget - (spent - hire_cost))
-            if est <= remaining + 1e-9:
-                kept.append((tier, kind, payload, est))
-                spent += est
-                continue
-            # partial trim for count-based kinds
-            if kind == "seed":
-                unit = CROPS[payload["crop"]]["seed"]
-                n_max = int(remaining // unit)
-                if n_max > 0:
-                    kept.append((tier, "seed",
-                                 {"crop": payload["crop"], "n": n_max},
-                                 unit * n_max))
-                    spent += unit * n_max
-                    ledger["dropped"].append(
-                        {"kind": "seed", "crop": payload["crop"],
-                         "trimmed_from": payload["n"], "to": n_max})
+                n_max = int(remaining_discretionary // unit)
+                actual_buy = min(room_limited, n_max)
+                if actual_buy > 0:
+                    claimed_structures[struct_type] = claimed + actual_buy
+                    remaining_shed_room = max(0, remaining_shed_room - actual_buy)
+                    kept.append((TIER_ANIMALS, "animal", {"animal": animal, "n": actual_buy}, float(unit * actual_buy)))
+                    remaining_discretionary -= unit * actual_buy
+                    if actual_buy < room_limited:
+                        ledger["dropped"].append({
+                            "kind": "animal", "animal": animal,
+                            "trimmed_from": room_limited, "to": actual_buy,
+                        })
                 else:
-                    ledger["dropped"].append({"kind": "seed",
-                                              "crop": payload["crop"],
-                                              "reason": "budget"})
-            elif kind == "animal":
-                unit = ANIMALS[payload["animal"]]["cost"]
-                n_max = int(remaining // unit)
-                if n_max > 0:
-                    kept.append((tier, "animal",
-                                 {"animal": payload["animal"], "n": n_max},
-                                 unit * n_max))
-                    spent += unit * n_max
-                    ledger["dropped"].append(
-                        {"kind": "animal", "animal": payload["animal"],
-                         "trimmed_from": payload["n"], "to": n_max})
-                else:
-                    ledger["dropped"].append({"kind": "animal",
-                                              "animal": payload["animal"],
-                                              "reason": "budget"})
-            elif kind == "wheat":
-                unit_px = math_ceil(wheat_px * WHEAT_BUY_PRICE_BUFFER)
-                n_max = int(remaining // unit_px)
-                if n_max > 0:
-                    kept.append((tier, "wheat", {"n": n_max},
-                                 unit_px * n_max))
-                    spent += unit_px * n_max
-                    ledger["dropped"].append({"kind": "wheat",
-                                               "trimmed_from": payload["n"],
-                                               "to": n_max})
-                else:
-                    ledger["dropped"].append({"kind": "wheat",
-                                              "reason": "budget"})
-            elif kind == "land":
-                ledger["dropped"].append({"kind": "land",
-                                          "reason": "budget"})
+                    ledger["dropped"].append({"kind": "animal", "animal": animal, "reason": "budget"})
 
         # ---- emit engine-format orders, honoring the 10-order cap -----
         orders = []
@@ -11622,38 +12451,31 @@ class OrderBuilder:
             slots -= 1
             return True
 
+        spent = mandatory_hire_budget + survival_feed_budget + (discretionary_budget - remaining_discretionary)
+
+        # Determine slot budget for hires at hour 0.
+        # Reserve slots for non-hire items in kept (wheat, land, seeds) so crucial
+        # capital expansion, survival feed, and planting orders are not starved
+        # by excess hires that can be deferred to hour 1.
+        non_hire_slots_needed = sum(1 for t in kept if t[1] in ("wheat", "land", "seed"))
+        max_hire_slots = max(MIN_HANDS_BASE, slots - non_hire_slots_needed)
+
         for tier, kind, payload, est in sorted(kept, key=lambda t: t[0]):
             if kind == "hire":
                 emitted = 0
-                while payload["count"] - emitted > 0 and slots > 0:
+                while payload["count"] - emitted > 0 and slots > 0 and emitted < max_hire_slots:
                     orders.append(["HIRE"])
                     slots -= 1
                     emitted += 1
                 queued["hire"] = emitted
                 if emitted < payload["count"]:
                     ledger["dropped"].append({"kind": "hire_slots"})
-            elif kind == "seed":
-                if take(None):
-                    orders.append(["BUY_SEED", payload["crop"],
-                                   int(payload["n"])])
-                    queued["seed"][payload["crop"]] = int(payload["n"])
-                else:
-                    ledger["dropped"].append({"kind": "seed_slots",
-                                              "crop": payload["crop"]})
             elif kind == "wheat":
                 if take(None):
                     orders.append(["BUY_PRODUCT", "WHEAT", int(payload["n"])])
                     queued["wheat"] = int(payload["n"])
                 else:
                     ledger["dropped"].append({"kind": "wheat_slots"})
-            elif kind == "animal":
-                if take(None):
-                    orders.append(["BUY_ANIMAL", payload["animal"],
-                                   int(payload["n"])])
-                    queued["animal"][payload["animal"]] = int(payload["n"])
-                else:
-                    ledger["dropped"].append({"kind": "animal_slots",
-                                              "animal": payload["animal"]})
             elif kind == "land":
                 next_quadrant = len(farm.unlocked) + 1
                 assert next_quadrant != 4, "Quadrant 4 (SE) is permanently hard-blocked and must NEVER be purchased!"
@@ -11662,6 +12484,18 @@ class OrderBuilder:
                     queued["land"] = True
                 else:
                     ledger["dropped"].append({"kind": "land_slots"})
+            elif kind == "seed":
+                if take(None):
+                    orders.append(["BUY_SEED", payload["crop"], int(payload["n"])])
+                    queued["seed"][payload["crop"]] = int(payload["n"])
+                else:
+                    ledger["dropped"].append({"kind": "seed_slots", "crop": payload["crop"]})
+            elif kind == "animal":
+                if take(None):
+                    orders.append(["BUY_ANIMAL", payload["animal"], int(payload["n"])])
+                    queued["animal"][payload["animal"]] = int(payload["n"])
+                else:
+                    ledger["dropped"].append({"kind": "animal_slots", "animal": payload["animal"]})
 
         ledger["queued"] = queued
         ledger["orders"] = [list(o) for o in orders]
@@ -12148,13 +12982,32 @@ _LIQUIDATOR = None
 # Persistent opponent modeling state (survives across turns within one process)
 _prev_opp_snapshot = None
 _estimated_shed = None
+_OPPONENT_MODEL_DIAGNOSTICS = {
+    "failure_count": 0,
+    "last_exception_type": None,
+    "last_exception_message": None,
+    "last_failure_step": None,
+    "is_degraded": False,
+}
+
+
+def get_opponent_model_diagnostics():
+    """Return a copy of the opponent-model diagnostics."""
+    return dict(_OPPONENT_MODEL_DIAGNOSTICS)
 
 
 def reset_opponent_model_state():
     """Reset module-level opponent-model state across episodes."""
-    global _prev_opp_snapshot, _estimated_shed
+    global _prev_opp_snapshot, _estimated_shed, _OPPONENT_MODEL_DIAGNOSTICS
     _prev_opp_snapshot = None
     _estimated_shed = None
+    _OPPONENT_MODEL_DIAGNOSTICS = {
+        "failure_count": 0,
+        "last_exception_type": None,
+        "last_exception_message": None,
+        "last_failure_step": None,
+        "is_degraded": False,
+    }
 
 
 try:
@@ -12234,82 +13087,349 @@ def _build_opp_advice(ctx, mem):
             opp_state_for_probs, ctx, forecast, boosts=boosts,
         )
         return advice
-    except Exception:
+    except Exception as e:
         # Never let opponent modeling crash the main agent
+        global _OPPONENT_MODEL_DIAGNOSTICS
+        _OPPONENT_MODEL_DIAGNOSTICS["failure_count"] += 1
+        _OPPONENT_MODEL_DIAGNOSTICS["last_exception_type"] = type(e).__name__
+        _OPPONENT_MODEL_DIAGNOSTICS["last_exception_message"] = str(e)
+        _OPPONENT_MODEL_DIAGNOSTICS["last_failure_step"] = ctx.get("step") if isinstance(ctx, dict) else getattr(ctx, "step", None)
+        _OPPONENT_MODEL_DIAGNOSTICS["is_degraded"] = True
         return OpponentAdvice()
+
+
+def _survival_fallback_from_ctx(ctx: Dict[str, Any]) -> Dict[str, Any]:
+    """Survival-capable fallback task generator using parsed context.
+
+    Priority:
+      1. Feed animal in immediate survival danger if eligible unit already holds wheat
+      2. Water crops that will die today (consecutive_unwatered >= 1 or survival)
+      3. Harvest crops at immediate decay risk (turns_until_decay <= 1)
+      4. Harvest animal output if safe (yield_units > 0)
+      5. Otherwise PASS
+    """
+    farm = ctx["farm"]
+    private = ctx.get("private")
+    inventories = private.inventories if private is not None else []
+
+    units = [(0, tuple(farm.farmer))]
+    for i, h in enumerate(farm.hands):
+        units.append((i + 1, tuple(h)))
+    pos_by_idx = dict(units)
+
+    wheat_counts = {
+        u: (inventories[u].get("WHEAT", 0) if u < len(inventories) and isinstance(inventories[u], dict) else 0)
+        for u, _ in units
+    }
+
+    free_units = set(pos_by_idx.keys())
+    actions = {u: ["PASS"] for u in free_units}
+    assignment = {}
+
+    starving_animals = []
+    dying_crops = []
+    decaying_crops = []
+    harvestable_animals = []
+
+    for t in farm.iter_tiles():
+        if t.is_animal:
+            if getattr(t, "consecutive_unfed", 0) >= 1 and not getattr(t, "fed_today", False):
+                starving_animals.append(t.pos)
+            if getattr(t, "yield_units", 0) > 0:
+                harvestable_animals.append(t.pos)
+        elif getattr(t, "kind", None) == "PLANT":
+            if getattr(t, "consecutive_unwatered", 0) >= 1 and not getattr(t, "watered_today", False):
+                dying_crops.append(t.pos)
+            if getattr(t, "yield_units", 0) > 0 and getattr(t, "turns_until_decay", 99) <= 1:
+                decaying_crops.append(t.pos)
+
+    # 1. feed animal in immediate survival danger if eligible unit already holds wheat
+    for target in starving_animals:
+        if not free_units:
+            break
+        eligible = [u for u in free_units if wheat_counts.get(u, 0) > 0]
+        if not eligible:
+            continue
+        best_u = min(eligible, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        wheat_counts[best_u] -= 1
+        assignment[best_u] = {"op": "FEED", "target": tuple(target), "kind": "feed_rescue"}
+        if pos_by_idx[best_u] == tuple(target):
+            actions[best_u] = ["FEED"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], tuple(target), 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 2. water crops that will die today
+    for target in dying_crops:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        assignment[best_u] = {"op": "WATER", "target": tuple(target), "kind": "water_emergency"}
+        if pos_by_idx[best_u] == tuple(target):
+            actions[best_u] = ["WATER"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], tuple(target), 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 3. harvest crops at immediate decay risk
+    for target in decaying_crops:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        assignment[best_u] = {"op": "HARVEST", "target": tuple(target), "kind": "harvest_decay"}
+        if pos_by_idx[best_u] == tuple(target):
+            actions[best_u] = ["HARVEST"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], tuple(target), 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 4. harvest animal output if safe
+    for target in harvestable_animals:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        assignment[best_u] = {"op": "HARVEST", "target": tuple(target), "kind": "harvest_animal"}
+        if pos_by_idx[best_u] == tuple(target):
+            actions[best_u] = ["HARVEST"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], tuple(target), 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    return {"actions": actions, "assignment": assignment}
+
+
+def _survival_fallback_raw(obs: Dict[str, Any]) -> Dict[str, Any]:
+    """Safe fallback operating directly on unparsed observation dictionary."""
+    player_id = obs.get("player", 0) if isinstance(obs, dict) else 0
+    farms = obs.get("farms", []) if isinstance(obs, dict) else []
+    our_farm = (
+        farms[player_id]
+        if isinstance(farms, list) and len(farms) > player_id and isinstance(farms[player_id], dict)
+        else {}
+    )
+    farmer = tuple(our_farm.get("farmer", [4, 4]))
+    hands = [tuple(h) for h in our_farm.get("hands", [])]
+    tiles = our_farm.get("tiles", [])
+
+    private = obs.get("private", {}) if isinstance(obs, dict) else {}
+    inventories = private.get("inventories", []) if isinstance(private, dict) else []
+
+    units = [(0, farmer)] + [(i + 1, h) for i, h in enumerate(hands)]
+    pos_by_idx = dict(units)
+    wheat_counts = {
+        u: (inventories[u].get("WHEAT", 0) if u < len(inventories) and isinstance(inventories[u], dict) else 0)
+        for u, _ in units
+    }
+
+    free_units = set(pos_by_idx.keys())
+    actions = {u: ["PASS"] for u in free_units}
+
+    starving_animals = []
+    dying_crops = []
+    decaying_crops = []
+    harvestable_animals = []
+
+    if isinstance(tiles, list):
+        for y, row in enumerate(tiles):
+            if not isinstance(row, list):
+                continue
+            for x, tile in enumerate(row):
+                if not isinstance(tile, dict):
+                    continue
+                pos = (x, y)
+                if "animal" in tile:
+                    if tile.get("consecutive_unfed", 0) >= 1 and not tile.get("fed_today", False):
+                        starving_animals.append(pos)
+                    if tile.get("yield_units", 0) > 0:
+                        harvestable_animals.append(pos)
+                elif tile.get("kind") == "PLANT" or "crop" in tile:
+                    if tile.get("consecutive_unwatered", 0) >= 1 and not tile.get("watered_today", False):
+                        dying_crops.append(pos)
+                    if tile.get("yield_units", 0) > 0 and tile.get("turns_until_decay", 99) <= 1:
+                        decaying_crops.append(pos)
+
+    # 1. feed animal in immediate survival danger if eligible unit already holds wheat
+    for target in starving_animals:
+        if not free_units:
+            break
+        eligible = [u for u in free_units if wheat_counts.get(u, 0) > 0]
+        if not eligible:
+            continue
+        best_u = min(eligible, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        wheat_counts[best_u] -= 1
+        if pos_by_idx[best_u] == target:
+            actions[best_u] = ["FEED"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], target, 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 2. water crops that will die today
+    for target in dying_crops:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        if pos_by_idx[best_u] == target:
+            actions[best_u] = ["WATER"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], target, 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 3. harvest crops at immediate decay risk
+    for target in decaying_crops:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        if pos_by_idx[best_u] == target:
+            actions[best_u] = ["HARVEST"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], target, 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 4. harvest animal output if safe
+    for target in harvestable_animals:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        if pos_by_idx[best_u] == target:
+            actions[best_u] = ["HARVEST"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], target, 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    return {
+        "farmer": list(actions.get(0, ["PASS"])),
+        "hands": [list(actions.get(i + 1, ["PASS"])) for i in range(len(hands))],
+        "market": [],
+        "_emergency_fallback": True,
+    }
 
 
 def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     # Phase 6: use get_state for persistent memory + episode detection
-    ctx, mem = get_state(obs)
+    try:
+        ctx, mem = get_state(obs)
+    except Exception as exc:
+        return _emergency_fallback(obs, exc)
+
     if ctx is None:
-        return dict(PASS_ACTION)
+        return _emergency_fallback(obs, RuntimeError("ctx is None"))
 
     planner, builder, brain, liquidator = _get_components()
 
     # v5.9: Reset daily log and opponent state at start of day 0
     if ctx["day"] == 0 and ctx["hour"] == 0:
-        reset_daily_log()
-        reset_opponent_model_state()
+        try:
+            reset_daily_log()
+            reset_opponent_model_state()
+        except Exception:
+            pass
 
     # Dynamic shop boosts from observed town unlocks
-    known_shops = obs.get("town", {}).get("unlocked_shops", [])
+    known_shops = obs.get("town", {}).get("unlocked_shops", []) if isinstance(obs, dict) else []
     boosts = demand_boosts(known_shops)
 
-    # Phase 6: build opponent advice
+    # Phase 6: build opponent advice (domain isolated)
     opp_advice = _build_opp_advice(ctx, mem)
 
-    # 1. Macro strategic planning (with opponent supply/counter-pick)
-    plan = planner.build(ctx, boosts=boosts, opp_advice=opp_advice)
+    # 1. Macro strategic planning & 2. Task execution (domain isolated)
+    asg = None
+    plan = None
+    is_strategy_fallback = False
+    try:
+        plan = planner.build(ctx, boosts=boosts, opp_advice=opp_advice)
+        if plan.intents.get("buy_land"):
+            n_extra = len(ctx["farm"].unlocked) - 1
+            next_q = n_extra + 2
+            if next_q in QUADRANT_HARD_BLOCK:
+                plan.intents["buy_land"] = False  # force block
+        tasks = build_tasks(ctx, plan)
+        asg = assign_tasks(tasks, ctx)
+    except Exception as exc:
+        # Fallback to survival tasks when planner or task scheduler fails
+        global _LAST_FALLBACK_DIAGNOSTIC
+        import traceback
+        tb_str = traceback.format_exc()
+        _LAST_FALLBACK_DIAGNOSTIC = {
+            "step": ctx.get("step", 0),
+            "day": ctx.get("day", 0),
+            "hour": ctx.get("hour", 0),
+            "exception_type": type(exc).__name__,
+            "exception_message": str(exc),
+            "traceback": tb_str,
+            "is_fallback": True,
+        }
+        try:
+            from config import DEBUG
+            if DEBUG:
+                sys.stderr.write(f"[STRATEGY_TASK_FALLBACK] D{ctx['day']} H{ctx['hour']:02d}: {exc}\n")
+        except Exception:
+            pass
+        asg = _survival_fallback_from_ctx(ctx)
+        is_strategy_fallback = True
 
-    # v5.9: Hard guard — NEVER allow quadrant 4 purchase
-    if plan.intents.get("buy_land"):
-        n_extra = len(ctx["farm"].unlocked) - 1
-        next_q = n_extra + 2
-        if next_q in QUADRANT_HARD_BLOCK:
-            plan.intents["buy_land"] = False  # force block
-
-    # 2. Execution layer: unit tasks and greedy spatial assignment
-    tasks = build_tasks(ctx, plan)
-    asg = assign_tasks(tasks, ctx)
-
-    # 3. Market layer: purchase intent compilation (morning market at hour 0 + deferred hires at hour 1)
+    # 3. Market layer: purchase intent compilation (domain isolated)
     purchase_orders = []
-    if ctx["hour"] == 0:
-        purchase_orders, _ledger = builder.build(ctx, plan.intents)
-    elif ctx["hour"] == 1:
-        # Check if any target hires from today's plan were deferred from Hour 0
-        target_h = get_target_hands(ctx["day"])
-        hires_so_far = ctx["farm"].hires_today
-        hires_needed = max(0, target_h - hires_so_far)
-        if hires_needed > 0:
-            for _ in range(min(hires_needed, 10)):
-                purchase_orders.append(["HIRE"])
-    else:
-        purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents)
-        
-    if ctx["day"] >= 28:
-        sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
-    else:
-        sell_orders, _d = brain.sell_orders(ctx, opp_advice=opp_advice)
+    try:
+        if ctx["hour"] == 0:
+            if plan is not None:
+                purchase_orders, _ledger = builder.build(ctx, plan.intents)
+        elif ctx["hour"] == 1:
+            target_h = get_target_hands(ctx["day"])
+            hires_so_far = ctx["farm"].hires_today
+            hires_needed = max(0, target_h - hires_so_far)
+            if hires_needed > 0:
+                for _ in range(min(hires_needed, 10)):
+                    purchase_orders.append(["HIRE"])
+        else:
+            if plan is not None:
+                purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents)
+    except Exception:
+        purchase_orders = []
 
-    market = MarketBrain.compose(
-        purchase_orders, sell_orders,
-        purchases_first=(ctx["hour"] in (0, 1))
-    )
+    # 4. Market layer: sell-side intent compilation (domain isolated)
+    sell_orders = []
+    try:
+        if ctx["day"] >= 28:
+            sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
+        else:
+            sell_orders, _d = brain.sell_orders(ctx, opp_advice=opp_advice)
+    except Exception:
+        sell_orders = []
 
-    # Phase 6: record our sales for drain ledger accuracy
-    for order in market:
-        if order[0] == "SELL":
-            record_our_sale(order[1], order[2])
+    # 5. Market composition
+    market = []
+    try:
+        market = MarketBrain.compose(
+            purchase_orders, sell_orders,
+            purchases_first=(ctx["hour"] in (0, 1))
+        )
+        for order in market:
+            if order[0] == "SELL":
+                try:
+                    record_our_sale(order[1], order[2])
+                except Exception:
+                    pass
+    except Exception:
+        market = [list(o) for o in (purchase_orders + sell_orders)[:10]]
 
-    # 4. Action dict assembly
+    # 6. Action dict assembly
     n_units = 1 + len(ctx["farm"].hands)
-    return {
+    res = {
         "farmer": list(asg["actions"].get(0, ["PASS"])),
         "hands": [list(asg["actions"].get(i, ["PASS"])) for i in range(1, n_units)],
         "market": market,
     }
+    if is_strategy_fallback:
+        res["_emergency_fallback"] = True
+    return res
 
 
 _LAST_FALLBACK_DIAGNOSTIC: Optional[Dict[str, Any]] = None
@@ -12321,7 +13441,7 @@ def get_last_fallback_diagnostic() -> Optional[Dict[str, Any]]:
 
 
 def _emergency_fallback(obs: Dict[str, Any], exc: Exception) -> Dict[str, Any]:
-    """Safe, deterministic emergency fallback returning a valid conservative engine action."""
+    """Safe, deterministic emergency fallback returning a survival-capable action."""
     global _LAST_FALLBACK_DIAGNOSTIC
     import traceback
     tb_str = traceback.format_exc()
@@ -12347,22 +13467,36 @@ def _emergency_fallback(obs: Dict[str, Any], exc: Exception) -> Dict[str, Any]:
     except Exception:
         pass
 
-    # Safely extract observed workforce count from raw observation
-    player_id = obs.get("player", 0) if isinstance(obs, dict) else 0
-    farms = obs.get("farms", []) if isinstance(obs, dict) else []
-    our_farm = (
-        farms[player_id]
-        if isinstance(farms, list) and len(farms) > player_id and isinstance(farms[player_id], dict)
-        else {}
-    )
-    n_hands = len(our_farm.get("hands", [])) if isinstance(our_farm, dict) else 0
+    try:
+        ctx = parse_observation(obs)
+        if ctx is not None:
+            asg = _survival_fallback_from_ctx(ctx)
+            n_hands = len(ctx["farm"].hands)
+            return {
+                "farmer": list(asg["actions"].get(0, ["PASS"])),
+                "hands": [list(asg["actions"].get(i + 1, ["PASS"])) for i in range(n_hands)],
+                "market": [],
+                "_emergency_fallback": True,
+            }
+    except Exception:
+        pass
 
-    return {
-        "farmer": ["PASS"],
-        "hands": [["PASS"] for _ in range(n_hands)],
-        "market": [],
-        "_emergency_fallback": True,
-    }
+    return _survival_fallback_raw(obs)
+
+
+def get_daily_telemetry() -> Dict[int, Dict[str, Any]]:
+    """Return complete daily telemetry log."""
+    return get_daily_log()
+
+
+def reset_daily_telemetry() -> None:
+    """Reset daily telemetry log and seasonal trackers."""
+    reset_daily_log()
+
+
+def get_sw_telemetry() -> Dict[str, Any]:
+    """Return seasonal SW telemetry summary."""
+    return get_sw_season_summary()
 
 
 # ==============================================================================

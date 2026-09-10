@@ -186,15 +186,17 @@ class TestBug2EmergencyFallback:
         assert action["_emergency_fallback"] is True
 
     def test_market_planning_failure_returns_safe_fallback(self):
-        """Failure in MarketBrain does not crash."""
+        """Failure in OrderBuilder does not crash and does not suppress unit actions."""
         obs = _make_minimal_obs(day=2, hour=0, step=48, num_hands=0)
         with patch("market.order_builder.OrderBuilder.build", side_effect=TypeError("Order failure")):
             action = agent(obs)
 
-        assert action["farmer"] == ["PASS"]
+        # Domain isolation: purchase failure empties market orders but does not suppress unit actions
+        assert isinstance(action["farmer"], list) and len(action["farmer"]) > 0
+        assert action["farmer"] != ["PASS"], "Market failure must not suppress unit actions"
         assert action["hands"] == []
         assert action["market"] == []
-        assert action["_emergency_fallback"] is True
+        assert action.get("_emergency_fallback") is None
 
     def test_emergency_fallback_distinguishable_from_intentional_pass(self):
         """Emergency fallback has distinct diagnostics while normal decision does not."""

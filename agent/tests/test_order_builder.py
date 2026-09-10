@@ -86,7 +86,7 @@ def test_land_fits_when_budget_allows():
 
 
 def test_budget_trim_prioritizes_land_and_clamps_counts():
-    ctx = make_ctx(money=1500)              # budget 1200
+    ctx = make_ctx(money=1900)              # budget 1600 >= hires (4) + survival wheat (560) + land (1000)
     orders, ledger = OrderBuilder().build(ctx, INTENTS_FULL)
     kinds = [o[0] for o in orders]
     assert kinds.count("HIRE") == 3
@@ -138,3 +138,129 @@ def test_shed_room_limits_animal_buys():
     orders, ledger = OrderBuilder().build(ctx, intents)
     goose = [o for o in orders if o[0] == "BUY_ANIMAL" and o[1] == "GOOSE"]
     assert goose[0][2] <= 5
+
+
+def test_land_cannot_steal_hire_money():
+    # Reserve 0: money 1002, 3 hires cost 4, land costs 1000.
+    # If land were bought, only 2 would remain for hires -> starving mandatory hires.
+    # Land must be dropped so mandatory hires are protected.
+    builder = OrderBuilder(money_reserve=0)
+    ctx = make_ctx(money=1002)
+    intents = {"hire": 3, "buy_land": True, "buy_seed": {}, "buy_animal": {}, "buy_wheat": 0}
+    orders, ledger = builder.build(ctx, intents)
+    hires = [o for o in orders if o[0] == "HIRE"]
+    assert len(hires) == 3
+    assert not any(o[0] == "BUY_LAND" for o in orders)
+    assert ledger["mandatory_hire_budget"] == 4.0
+    assert ledger["discretionary_budget"] == 998.0
+    assert ledger["spent_estimate"] == 4.0
+
+
+def test_seeds_cannot_steal_hire_money():
+    # Reserve 0: money 23, 3 hires cost 4, carrot seed costs 20.
+    # If seed consumed money without reserving hire cost, seed might buy 1 and leave 3, starving 3rd hire.
+    builder = OrderBuilder(money_reserve=0)
+    ctx = make_ctx(money=23)
+    intents = {"hire": 3, "buy_land": False, "buy_seed": {"CARROT": 2}, "buy_animal": {}, "buy_wheat": 0}
+    orders, ledger = builder.build(ctx, intents)
+    hires = [o for o in orders if o[0] == "HIRE"]
+    assert len(hires) == 3
+    # 23 - 4 = 19 < 20, so 0 carrot seeds fit
+    assert not any(o[0] == "BUY_SEED" for o in orders)
+    assert ledger["mandatory_hire_budget"] == 4.0
+    assert ledger["discretionary_budget"] == 19.0
+    assert ledger["spent_estimate"] == 4.0
+
+
+def test_animals_cannot_steal_hire_money():
+    # Reserve 0: money 302, 3 hires cost 4, goose costs 300.
+    # If goose were bought, only 2 would remain for hires.
+    builder = OrderBuilder(money_reserve=0)
+    structures = [(0, 0, {"kind": "COOP"})]
+    ctx = make_ctx(money=302, structures=structures)
+    intents = {"hire": 3, "buy_land": False, "buy_seed": {}, "buy_animal": {"GOOSE": 1}, "buy_wheat": 0}
+    orders, ledger = builder.build(ctx, intents)
+    hires = [o for o in orders if o[0] == "HIRE"]
+    assert len(hires) == 3
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert ledger["mandatory_hire_budget"] == 4.0
+    assert ledger["discretionary_budget"] == 298.0
+    assert ledger["spent_estimate"] == 4.0
+
+
+def test_mandatory_hires_still_execute_when_intents_exceed_budget():
+    builder = OrderBuilder(money_reserve=100)
+    ctx = make_ctx(money=500)
+    # Total requested cost is thousands of dollars, far exceeding money
+    intents = {
+        "hire": 4,  # cost 1 + 1 + 2 + 3 = 7
+        "buy_land": True,  # 1000
+        "buy_seed": {"MELON": 50},  # 4000
+        "buy_animal": {"COW": 5},  # 2000
+        "buy_wheat": 100,  # 2800
+    }
+    orders, ledger = builder.build(ctx, intents)
+    hires = [o for o in orders if o[0] == "HIRE"]
+    assert len(hires) == 4
+    assert ledger["mandatory_hire_budget"] == 7.0
+    assert ledger["spent_estimate"] <= 500
+
+
+def test_total_queued_spend_never_exceeds_available_money():
+    builder = OrderBuilder(money_reserve=50)
+    intents = {
+        "hire": 5,
+        "buy_land": True,
+        "buy_seed": {"MELON": 20, "CARROT": 30},
+        "buy_animal": {"GOOSE": 2},
+        "buy_wheat": 15,
+    }
+    for m in [5, 20, 55, 100, 300, 1000, 5000]:
+        ctx = make_ctx(money=m)
+        orders, ledger = builder.build(ctx, intents)
+        assert ledger["spent_estimate"] <= m + 1e-6
+        assert ledger["mandatory_hire_budget"] <= m + 1e-6
+        assert ledger["discretionary_budget"] <= max(0.0, m - ledger["mandatory_hire_budget"] - 50) + 1e-6
+
+
+def test_market_order_cap_trimming_preserves_mandatory_priorities():
+    ctx = make_ctx(money=100000)
+    intents = {
+        "hire": 4,
+        "buy_wheat": 10,
+        "buy_land": True,
+        "buy_seed": {"CARROT": 1, "MELON": 1, "STRAWBERRY": 1, "TOMATO": 1, "WHEAT": 1},
+        "buy_animal": {"GOOSE": 1, "COW": 1, "SHEEP": 1},
+    }
+    orders, ledger = OrderBuilder().build(ctx, intents)
+    assert len(orders) == MAX_MARKET_ORDERS  # 10
+    # First 4 must be HIRE
+    for i in range(4):
+        assert orders[i] == ["HIRE"]
+    # 5th must be BUY_PRODUCT WHEAT
+    assert orders[4][0] == "BUY_PRODUCT" and orders[4][1] == "WHEAT"
+    # 6th must be BUY_LAND
+    assert orders[5] == ["BUY_LAND"]
+    # 7th-10th must be BUY_SEED
+    for i in range(6, 10):
+        assert orders[i][0] == "BUY_SEED"
+    # Animals were trimmed due to slot limit
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+
+
+def test_land_order_not_starved_by_high_hire_count():
+    """Verify that when 10+ hires are requested, BUY_LAND is not starved by hire slots."""
+    ctx = make_ctx(money=100000, unlocked=("NW", "NE"))
+    intents = {
+        "hire": 12,
+        "buy_land": True,
+        "buy_wheat": 10,
+        "buy_seed": {"WHEAT": 10},
+    }
+    orders, ledger = OrderBuilder().build(ctx, intents)
+    assert len(orders) <= MAX_MARKET_ORDERS
+    assert ["BUY_LAND"] in [list(o) for o in orders], "BUY_LAND must be emitted and not starved by HIRE slots"
+    # Ensure dropped does not contain land_slots
+    assert not any(d.get("kind") == "land_slots" for d in ledger.get("dropped", []))
+
+

@@ -1,0 +1,83 @@
+{
+  "candidate": "dist/submission.py",
+  "opponent": "baseline",
+  "n_matches": 3,
+  "seeds": [
+    11,
+    101,
+    202
+  ],
+  "mean_score": 31740.67,
+  "std_dev": 1852.59,
+  "min_score": 29815.0,
+  "max_score": 34242.0,
+  "total_fallbacks": 0,
+  "total_crop_deaths": 0,
+  "total_animal_deaths": 0,
+  "total_missed_feeds": 0,
+  "avg_travel_share": 0.6816,
+  "avg_completion_rate": 0.2839,
+  "avg_sw_completion_rate": 1.0,
+  "matches": [
+    {
+      "seed": 11,
+      "seat": 0,
+      "candidate_score": 31165.0,
+      "opponent_score": 30088.0,
+      "margin": 1077.0,
+      "fallbacks": 0,
+      "crop_deaths": 0,
+      "animal_deaths": 0,
+      "missed_feeds": 0,
+      "mean_travel_share": 0.6702,
+      "mean_completion_rate": 0.2608,
+      "mean_sw_completion_rate": 1.0,
+      "mean_urgent_completion_rate": 0.8407,
+      "final_sw_active_tiles": 0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ]
+    },
+    {
+      "seed": 101,
+      "seat": 0,
+      "candidate_score": 29815.0,
+      "opponent_score": 29694.0,
+      "margin": 121.0,
+      "fallbacks": 0,
+      "crop_deaths": 0,
+      "animal_deaths": 0,
+      "missed_feeds": 0,
+      "mean_travel_share": 0.6717,
+      "mean_completion_rate": 0.2938,
+      "mean_sw_completion_rate": 1.0,
+      "mean_urgent_completion_rate": 0.826,
+      "final_sw_active_tiles": 0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ]
+    },
+    {
+      "seed": 202,
+      "seat": 0,
+      "candidate_score": 34242.0,
+      "opponent_score": 34242.0,
+      "margin": 0.0,
+      "fallbacks": 0,
+      "crop_deaths": 0,
+      "animal_deaths": 0,
+      "missed_feeds": 0,
+      "mean_travel_share": 0.7029,
+      "mean_completion_rate": 0.2971,
+      "mean_sw_completion_rate": 1.0,
+      "mean_urgent_completion_rate": 0.8384,
+      "final_sw_active_tiles": 0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ]
+    }
+  ]
+}
