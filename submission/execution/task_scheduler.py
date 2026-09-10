@@ -44,6 +44,8 @@ from config import (
     C2_SPILLOVER_PRIORITY_FLOOR,
     C6_CLUSTER_RADIUS,
     C6_CLUSTER_BONUS,
+    C6_PRIORITY_BAND,
+    C6_TRAVEL_WEIGHT,
     log,
 )
 try:
@@ -420,7 +422,11 @@ def assign_tasks(tasks, ctx, extra_units=()):
         if t["op"] not in ("PICKUP", "PASS") and t_quad not in farm.unlocked:
             continue
         prio = t.get("priority", 0)
-        is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or t.get("kind") in ("feed_rescue", "harvest_decay"))
+        # Livestock belongs to its carrier until PLACE completes. A carrier's
+        # home-zone backlog must not strand purchased animals indefinitely.
+        is_delivery = t["op"] == "PLACE" and (t.get("args") or [None])[0] in ANIMALS
+        is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or is_delivery
+                     or t.get("kind") in ("feed_rescue", "harvest_decay"))
         if is_urgent:
             urgent_tasks.append(t)
         else:
@@ -460,7 +466,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
             break
 
         max_prio = max(t.get("priority", 0) for t in remaining_tasks)
-        band_tasks = [t for t in remaining_tasks if t.get("priority", 0) >= max_prio - 2]
+        band_tasks = [t for t in remaining_tasks if t.get("priority", 0) >= max_prio - C6_PRIORITY_BAND]
 
         best_match = None  # (score, d, target, u, task, target_quad)
 
@@ -500,7 +506,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 if d == 0:
                     cluster_bonus += C6_CLUSTER_BONUS
                 spill_penalty = 10 if is_spillover else 0
-                effective_score = (-prio * 10) + spill_penalty + (d - cluster_bonus)
+                effective_score = -prio + spill_penalty + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
 
                 match_key = (effective_score, d, target, u)
                 if best_match is None or match_key < best_match[0]:

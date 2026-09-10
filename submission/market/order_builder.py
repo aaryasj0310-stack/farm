@@ -24,6 +24,7 @@ from config import (
     MAX_MARKET_ORDERS,
     MONEY_RESERVE_DEFAULT,
     WHEAT_BUY_PRICE_BUFFER,
+    C4_LIVESTOCK_CUTOFF_DAY,
 )
 from market.price_math import market_price
 
@@ -51,6 +52,24 @@ TIER_HIRES = 4
 class OrderBuilder:
     def __init__(self, money_reserve=MONEY_RESERVE_DEFAULT):
         self.reserve = money_reserve
+
+    def reinvest_livestock(self, ctx, intents):
+        """Invest harvest proceeds while there is still time to place animals.
+
+        Recomputed planner intents count animals in transit and reserve future
+        wages. Require owned SW land to protect the expansion fund; retain the
+        normal affordability, housing and shed checks without repeating hires.
+        """
+        if (ctx["day"] >= C4_LIVESTOCK_CUTOFF_DAY
+                or not 2 <= ctx["hour"] <= 18
+                or "SW" not in ctx["farm"].unlocked
+                or not intents.get("buy_animal")):
+            return [], {}
+        return self.build(ctx, {
+            "buy_animal": intents["buy_animal"],
+            "buy_wheat": intents.get("buy_wheat", 0),
+            "pending_structures": intents.get("pending_structures", {}),
+        })
 
     # ------------------------------------------------------------------
     def build(self, ctx, intents):

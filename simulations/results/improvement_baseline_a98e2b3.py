@@ -120,8 +120,6 @@ C2_SPILLOVER_PRIORITY_FLOOR = 20   # Minimum task priority eligible for cross-qu
 # Stage 8B Phase 1F: C6 Clustered Dispatch / Logistics Efficiency
 C6_CLUSTER_RADIUS = 1              # Manhattan radius to qualify as adjacent/clustered task
 C6_CLUSTER_BONUS = 2               # Distance discount for adjacent tasks; double discount for co-located tasks (d=0)
-C6_PRIORITY_BAND = 20              # Compare routine work with nearby service tasks
-C6_TRAVEL_WEIGHT = 3               # Charge priority points for each movement turn
 
 EFFECTIVE_ACTIONS_PER_UNIT = 12
 MIN_HANDS_BASE = 4
@@ -10217,11 +10215,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         if t["op"] not in ("PICKUP", "PASS") and t_quad not in farm.unlocked:
             continue
         prio = t.get("priority", 0)
-        # Livestock belongs to its carrier until PLACE completes. A carrier's
-        # home-zone backlog must not strand purchased animals indefinitely.
-        is_delivery = t["op"] == "PLACE" and (t.get("args") or [None])[0] in ANIMALS
-        is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or is_delivery
-                     or t.get("kind") in ("feed_rescue", "harvest_decay"))
+        is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or t.get("kind") in ("feed_rescue", "harvest_decay"))
         if is_urgent:
             urgent_tasks.append(t)
         else:
@@ -10261,7 +10255,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
             break
 
         max_prio = max(t.get("priority", 0) for t in remaining_tasks)
-        band_tasks = [t for t in remaining_tasks if t.get("priority", 0) >= max_prio - C6_PRIORITY_BAND]
+        band_tasks = [t for t in remaining_tasks if t.get("priority", 0) >= max_prio - 2]
 
         best_match = None  # (score, d, target, u, task, target_quad)
 
@@ -10301,7 +10295,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 if d == 0:
                     cluster_bonus += C6_CLUSTER_BONUS
                 spill_penalty = 10 if is_spillover else 0
-                effective_score = -prio + spill_penalty + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
+                effective_score = (-prio * 10) + spill_penalty + (d - cluster_bonus)
 
                 match_key = (effective_score, d, target, u)
                 if best_match is None or match_key < best_match[0]:
@@ -11450,24 +11444,6 @@ class OrderBuilder:
     def __init__(self, money_reserve=MONEY_RESERVE_DEFAULT):
         self.reserve = money_reserve
 
-    def reinvest_livestock(self, ctx, intents):
-        """Invest harvest proceeds while there is still time to place animals.
-
-        Recomputed planner intents count animals in transit and reserve future
-        wages. Require owned SW land to protect the expansion fund; retain the
-        normal affordability, housing and shed checks without repeating hires.
-        """
-        if (ctx["day"] >= C4_LIVESTOCK_CUTOFF_DAY
-                or not 2 <= ctx["hour"] <= 18
-                or "SW" not in ctx["farm"].unlocked
-                or not intents.get("buy_animal")):
-            return [], {}
-        return self.build(ctx, {
-            "buy_animal": intents["buy_animal"],
-            "buy_wheat": intents.get("buy_wheat", 0),
-            "pending_structures": intents.get("pending_structures", {}),
-        })
-
     # ------------------------------------------------------------------
     def build(self, ctx, intents):
         """intents: MacroPlan.intents dict. Returns (orders, ledger).
@@ -12285,8 +12261,6 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         if hires_needed > 0:
             for _ in range(min(hires_needed, 10)):
                 purchase_orders.append(["HIRE"])
-    else:
-        purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents)
         
     if ctx["day"] >= 28:
         sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
