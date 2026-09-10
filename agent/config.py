@@ -203,13 +203,16 @@ def get_actions_available(day):
 # Quadrant numbering: NW=1 (starting), NE=2 ($1k), SW=3 ($2k), SE=4 ($4k)
 # Strategy: Only buy quadrants 1-3 (75 tiles). NEVER buy quadrant 4.
 QUADRANT_UNLOCK_DAYS = {
-    2: 3,    # Quadrant 2 (NE): buy on days 3-5 (Leader heuristic: cash >= 1400)
+    2: 3,    # Quadrant 2 (NE): buy on days 3-6 (Leader heuristic: cash >= 1200 on D6, 1400 on D3-5)
     3: 9,    # Quadrant 3 (SW): buy on day 9 (pre-buy day 8)
 }
 QUADRANT_MONEY_THRESHOLDS = {
-    2: 1400,  # Need >= $1,400 to buy Q2 ($1,000 land + $400 seed/ops float)
+    2: 1400,  # Need >= $1,400 to buy Q2 on D3-5 ($1,000 land + $400 seed/ops float)
     3: 2204,  # Need >= $2,204 to buy Q3 ($2,000 land + $150 escrow + $54 hires)
 }
+NE_EARLY_UNLOCK_MAX_DAY = 6
+NE_EARLY_UNLOCK_THRESHOLD_DAY3_5 = 1400
+NE_EARLY_UNLOCK_THRESHOLD_DAY6 = 1200
 QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
 
 # ====================================================================

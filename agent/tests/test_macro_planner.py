@@ -401,10 +401,10 @@ def test_land_expansion_roi_positive_when_profitable():
 def test_land_expansion_skipped_when_below_threshold():
     """Land not bought if money < threshold."""
     fc = make_forecast(BASE_PRICES)
-    ctx = make_ctx(day=6, money=1400, unlocked=("NW",))
+    ctx = make_ctx(day=6, money=1100, unlocked=("NW",))
     plan = MacroPlanner(fc).build(ctx)
     assert plan.intents["buy_land"] is False, \
-        "Day 6 with < $1500 -> no Q2 buy"
+        "Day 6 with < $1200 -> no Q2 buy"
 
 
 def test_land_expansion_quadrant4_hard_blocked():

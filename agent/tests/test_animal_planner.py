@@ -243,3 +243,4 @@ def test_preservation_of_ne_land_purchase_fund():
     assert plan.intents.get("buy_animal", {}) == {}
 
 
+

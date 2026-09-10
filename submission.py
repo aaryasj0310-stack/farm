@@ -213,13 +213,16 @@ def get_actions_available(day):
 # Quadrant numbering: NW=1 (starting), NE=2 ($1k), SW=3 ($2k), SE=4 ($4k)
 # Strategy: Only buy quadrants 1-3 (75 tiles). NEVER buy quadrant 4.
 QUADRANT_UNLOCK_DAYS = {
-    2: 3,    # Quadrant 2 (NE): buy on days 3-5 (Leader heuristic: cash >= 1400)
+    2: 3,    # Quadrant 2 (NE): buy on days 3-6 (Leader heuristic: cash >= 1200 on D6, 1400 on D3-5)
     3: 9,    # Quadrant 3 (SW): buy on day 9 (pre-buy day 8)
 }
 QUADRANT_MONEY_THRESHOLDS = {
-    2: 1400,  # Need >= $1,400 to buy Q2 ($1,000 land + $400 seed/ops float)
+    2: 1400,  # Need >= $1,400 to buy Q2 on D3-5 ($1,000 land + $400 seed/ops float)
     3: 2204,  # Need >= $2,204 to buy Q3 ($2,000 land + $150 escrow + $54 hires)
 }
+NE_EARLY_UNLOCK_MAX_DAY = 6
+NE_EARLY_UNLOCK_THRESHOLD_DAY3_5 = 1400
+NE_EARLY_UNLOCK_THRESHOLD_DAY6 = 1200
 QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
 
 # ====================================================================
@@ -9426,7 +9429,8 @@ def should_buy_land(next_quadrant, current_day, money, farm,
                     hire_cost=0, feed_cost=0, animal_cost=0,
                     reserve=MONEY_RESERVE_DEFAULT, roi=0.0,
                     ow_factor=1.0,
-                    forecast=None, n_own_tiles=0, n_opp_tiles=0):
+                    forecast=None, n_own_tiles=0, n_opp_tiles=0,
+                    seeds_owned=None):
     """Determine if land should be purchased TODAY.
 
     The gate requires:
@@ -9456,9 +9460,25 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         return False, "all_unlocked", {}
     land_price = LAND_PRICES[n_extra]
 
-    # Seed tranche cost — use dynamic targets if available
+    # Seed tranche cost — use dynamic targets if available, accounting for seeds already owned
     targets = expansion_seed_targets(next_quadrant, current_day, money)
-    seed_cost = sum(CROPS[c]["seed"] * n for c, n in targets.items())
+    if seeds_owned is None:
+        if hasattr(farm, "seeds"):
+            seeds_owned = farm.seeds
+        elif hasattr(farm, "private") and hasattr(farm.private, "seeds"):
+            seeds_owned = farm.private.seeds
+        else:
+            seeds_owned = {}
+
+    seed_cost = 0.0
+    for c, n in targets.items():
+        have = 0
+        if isinstance(seeds_owned, dict):
+            have = seeds_owned.get(c, 0)
+        elif hasattr(seeds_owned, "get"):
+            have = seeds_owned.get(c, 0)
+        needed = max(0, n - have)
+        seed_cost += CROPS[c]["seed"] * needed
 
     # Mandatory commitments: hires + feed + seeds for current production
     mandatory = hire_cost + feed_cost + animal_cost
@@ -9490,9 +9510,12 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         "sw_timing": sw_timing_info,
     }
 
-    # Leader heuristic: Early NE land unlock on Days 3-5 when cash >= $1,400
-    if next_quadrant == 2 and 3 <= current_day <= 5 and money >= 1400:
-        return True, "early_ne_leader_unlock", diag_base
+    # Leader heuristic: Early NE land unlock on Days 3-6 when cash >= threshold
+    # Validates that land + mandatory commitments can still be satisfied.
+    thresh = NE_EARLY_UNLOCK_THRESHOLD_DAY6 if current_day == 6 else NE_EARLY_UNLOCK_THRESHOLD_DAY3_5
+    if next_quadrant == 2 and 3 <= current_day <= NE_EARLY_UNLOCK_MAX_DAY and money >= thresh:
+        if money >= land_price + mandatory:
+            return True, "early_ne_leader_unlock", diag_base
 
     # v5.11: STRICT GATE — adjusted_roi must be positive to buy
     if adjusted_roi <= 0:
@@ -10956,6 +10979,7 @@ class MacroPlanner:
                     reserve=self.reserve, roi=land_roi,
                     ow_factor=ow_factor,
                     forecast=self.fc,
+                    seeds_owned=private.seeds,
                 )
                 if buy_land:
                     land_cost = LAND_PRICES[n_extra_unlocked]
@@ -10973,13 +10997,21 @@ class MacroPlanner:
         available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost - animal_cost)
 
         if plan.feeding_enabled:
-            wheat_buffer_target = 5 if day <= 5 and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
+            # While NE is pending, maintain a safe 5-day survival buffer rather than 20-day expansion
+            wheat_buffer_target = 5 if (day <= 5 or (next_quadrant == 2 and day <= 8)) and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
             wheat_needed = (n_animals + sum(buy_animal.values())) * wheat_buffer_target
             if trigger:
                 wheat_needed = max(wheat_needed, deficit)
 
             if wheat_have < wheat_needed:
-                buy_wheat = min(wheat_needed - wheat_have, int(available_before_seeds // 25))
+                # Protect $1,000 NE land capital from non-survival feed buffering on Days 5-6
+                ne_protect = 1000.0 if (next_quadrant == 2 and 5 <= day <= 6 and not buy_land) else 0.0
+                max_wheat_budget = max(0.0, available_before_seeds - ne_protect)
+                # Survival floor: always guarantee at least 2 days emergency feed
+                survival_floor = max(0, (n_animals * 2) - wheat_have) * 25.0
+                max_wheat_budget = max(max_wheat_budget, min(available_before_seeds, survival_floor))
+
+                buy_wheat = min(wheat_needed - wheat_have, int(max_wheat_budget // 25))
         wheat_feed_cost = buy_wheat * 25
 
         available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost - animal_cost)
@@ -10996,6 +11028,9 @@ class MacroPlanner:
             land_reserve = LAND_PRICES[n_extra] if n_extra < len(LAND_PRICES) else 0
             sw_treasury_need = land_reserve + seed_reserve + effective_reserve
             discretionary_budget = max(0.0, available_before_seeds - sw_treasury_need)
+        elif next_quadrant == 2 and 5 <= day <= 6 and not buy_land:
+            # Protect $1,000 NE land capital from discretionary spending
+            discretionary_budget = max(0.0, available_before_seeds - 1000.0)
 
         seed_budget = max(0.0, discretionary_budget - wheat_feed_cost)
         remaining_money = seed_budget
@@ -11088,8 +11123,13 @@ class MacroPlanner:
 
                 existing_wheat = sum(1 for t in farm.iter_tiles() if t.is_plant and t.crop == "WHEAT") + planned.get("WHEAT", 0)
                 # Continuous wheat replanting engine (Leader-Calibrated: 8/20/30 active wheat tiles)
+                # Days 6-9: Retain wheat target at 8 even if NE is unlocked
+                # Days 10-13: Retain wheat target at 20 even if SW is unlocked (n_quads=3), preserving tiles for Strawberry and Melon waves
                 n_quads = len(farm.unlocked)
-                quadrant_wheat_target = 8 if n_quads == 1 else (20 if n_quads == 2 else 30)
+                quadrant_wheat_target = (
+                    8 if (n_quads == 1 or day <= 9)
+                    else (20 if (n_quads == 2 or day <= 13) else 30)
+                )
                 wheat_cap = min(len(empty_tiles) + existing_wheat, quadrant_wheat_target)
                 wheat_needed = max(0, wheat_cap - existing_wheat)
                 wheat_to_plant = min(wheat_needed, len(empty_tiles))

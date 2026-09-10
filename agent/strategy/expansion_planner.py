@@ -33,6 +33,9 @@ from config import (
     CROP_TILE_CAPS,
     get_sw_seed_targets,
     get_strawberry_cap,
+    NE_EARLY_UNLOCK_MAX_DAY,
+    NE_EARLY_UNLOCK_THRESHOLD_DAY3_5,
+    NE_EARLY_UNLOCK_THRESHOLD_DAY6,
 )
 from strategy.baked_economics import CROP_ECONOMICS, CROP_CYCLE_LEN
 
@@ -442,7 +445,8 @@ def should_buy_land(next_quadrant, current_day, money, farm,
                     hire_cost=0, feed_cost=0, animal_cost=0,
                     reserve=MONEY_RESERVE_DEFAULT, roi=0.0,
                     ow_factor=1.0,
-                    forecast=None, n_own_tiles=0, n_opp_tiles=0):
+                    forecast=None, n_own_tiles=0, n_opp_tiles=0,
+                    seeds_owned=None):
     """Determine if land should be purchased TODAY.
 
     The gate requires:
@@ -472,9 +476,25 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         return False, "all_unlocked", {}
     land_price = LAND_PRICES[n_extra]
 
-    # Seed tranche cost — use dynamic targets if available
+    # Seed tranche cost — use dynamic targets if available, accounting for seeds already owned
     targets = expansion_seed_targets(next_quadrant, current_day, money)
-    seed_cost = sum(CROPS[c]["seed"] * n for c, n in targets.items())
+    if seeds_owned is None:
+        if hasattr(farm, "seeds"):
+            seeds_owned = farm.seeds
+        elif hasattr(farm, "private") and hasattr(farm.private, "seeds"):
+            seeds_owned = farm.private.seeds
+        else:
+            seeds_owned = {}
+
+    seed_cost = 0.0
+    for c, n in targets.items():
+        have = 0
+        if isinstance(seeds_owned, dict):
+            have = seeds_owned.get(c, 0)
+        elif hasattr(seeds_owned, "get"):
+            have = seeds_owned.get(c, 0)
+        needed = max(0, n - have)
+        seed_cost += CROPS[c]["seed"] * needed
 
     # Mandatory commitments: hires + feed + seeds for current production
     mandatory = hire_cost + feed_cost + animal_cost
@@ -506,9 +526,12 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         "sw_timing": sw_timing_info,
     }
 
-    # Leader heuristic: Early NE land unlock on Days 3-5 when cash >= $1,400
-    if next_quadrant == 2 and 3 <= current_day <= 5 and money >= 1400:
-        return True, "early_ne_leader_unlock", diag_base
+    # Leader heuristic: Early NE land unlock on Days 3-6 when cash >= threshold
+    # Validates that land + mandatory commitments can still be satisfied.
+    thresh = NE_EARLY_UNLOCK_THRESHOLD_DAY6 if current_day == 6 else NE_EARLY_UNLOCK_THRESHOLD_DAY3_5
+    if next_quadrant == 2 and 3 <= current_day <= NE_EARLY_UNLOCK_MAX_DAY and money >= thresh:
+        if money >= land_price + mandatory:
+            return True, "early_ne_leader_unlock", diag_base
 
     # v5.11: STRICT GATE — adjusted_roi must be positive to buy
     if adjusted_roi <= 0:
