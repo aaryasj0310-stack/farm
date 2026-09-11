@@ -56,7 +56,7 @@ try:
     from strategy.endgame_liquidator import EndgameLiquidator
     from strategy.shop_adapter import demand_boosts
     from strategy.opponent_advisor import build_opponent_advice, OpponentAdvice
-    from strategy.central_planner import CentralPlanner
+    from strategy.central_planner import CentralPlanner, legacy_compose_market
     from execution.task_scheduler import (
         assign_tasks, build_tasks, get_daily_log, reset_daily_log,
         get_sw_tile_breakdown, get_sw_season_summary,
@@ -78,7 +78,7 @@ except ImportError:
     from endgame_liquidator import EndgameLiquidator
     from shop_adapter import demand_boosts
     from opponent_advisor import build_opponent_advice, OpponentAdvice
-    from central_planner import CentralPlanner
+    from central_planner import CentralPlanner, legacy_compose_market
     from task_scheduler import (
         assign_tasks, build_tasks, get_daily_log, reset_daily_log,
         get_sw_tile_breakdown, get_sw_season_summary,
@@ -144,11 +144,11 @@ _RUNTIME_ARBITRATION_MODE: str = str(_CONFIG_ARBITRATION_MODE).strip().lower()
 
 
 def set_arbitration_mode(mode: str) -> None:
-    """Set arbitration mode ('central' or 'legacy'). Intended for benchmarks/tests."""
+    """Set arbitration mode ('central', 'legacy', or 'historical_stack'). Intended for benchmarks/tests."""
     global _RUNTIME_ARBITRATION_MODE
     mode_str = str(mode).strip().lower()
-    if mode_str not in ("central", "legacy"):
-        raise ValueError(f"Invalid arbitration mode '{mode}'. Must be 'central' or 'legacy'.")
+    if mode_str not in ("central", "legacy", "historical_stack"):
+        raise ValueError(f"Invalid arbitration mode '{mode}'. Must be 'central', 'legacy', or 'historical_stack'.")
     _RUNTIME_ARBITRATION_MODE = mode_str
 
 
@@ -575,22 +575,28 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         is_strategy_fallback = True
 
     # 3. Market layer: purchase intent compilation (domain isolated)
+    active_mode = get_arbitration_mode()
+    is_historical = (active_mode == "historical_stack")
+    builder_max_slots = 10 if is_historical else None
+    sell_max_slots = (10 if ctx["day"] >= 28 else 6) if is_historical else None
+
     purchase_orders = []
     _ledger = None
     try:
         if ctx["hour"] == 0:
             if plan is not None:
-                purchase_orders, _ledger = builder.build(ctx, plan.intents, max_slots=None)
+                purchase_orders, _ledger = builder.build(ctx, plan.intents, max_slots=builder_max_slots)
         elif ctx["hour"] == 1:
             target_h = get_target_hands(ctx["day"])
             hires_so_far = ctx["farm"].hires_today
             hires_needed = max(0, target_h - hires_so_far)
             if hires_needed > 0:
-                for _ in range(hires_needed):
+                limit = builder_max_slots if builder_max_slots is not None else hires_needed
+                for _ in range(min(hires_needed, limit)):
                     purchase_orders.append(["HIRE"])
         else:
             if plan is not None:
-                purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents, max_slots=None)
+                purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents, max_slots=builder_max_slots)
     except Exception:
         purchase_orders = []
         _ledger = None
@@ -600,9 +606,9 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     _d = None
     try:
         if ctx["day"] >= 28:
-            sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
+            sell_orders, _d = liquidator.plan(ctx, max_slots=sell_max_slots, opp_advice=opp_advice)
         else:
-            sell_orders, _d = brain.sell_orders(ctx, opp_advice=opp_advice)
+            sell_orders, _d = brain.sell_orders(ctx, max_slots=sell_max_slots, opp_advice=opp_advice)
     except Exception:
         sell_orders = []
         _d = None
@@ -611,17 +617,14 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     global _LAST_CENTRAL_PLANNER_DIAGNOSTIC, _LAST_TURN_TELEMETRY
     market = []
     _cp_diag = None
-    active_mode = get_arbitration_mode()
-    purchases_first = (ctx["hour"] == 0)
 
-    if active_mode == "legacy":
+    if active_mode in ("legacy", "historical_stack"):
         try:
-            market = MarketBrain.compose(
-                purchase_orders, sell_orders,
-                cap=10,
-                purchases_first=purchases_first,
+            market = legacy_compose_market(
+                purchase_orders, sell_orders, ctx, cap=10
             )
         except Exception:
+            purchases_first = (ctx["hour"] in (0, 1))
             first, second = ((purchase_orders, sell_orders) if purchases_first
                              else (sell_orders, purchase_orders))
             market = [list(o) for o in (first + second)[:10]]
@@ -640,12 +643,12 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             _LAST_CENTRAL_PLANNER_DIAGNOSTIC = _cp_diag
         except Exception:
             try:
-                market = MarketBrain.compose(
-                    purchase_orders, sell_orders,
-                    purchases_first=purchases_first,
+                market = legacy_compose_market(
+                    purchase_orders, sell_orders, ctx, cap=10
                 )
             except Exception:
-                market = [list(o) for o in (purchase_orders + sell_orders)[:10]]
+                purchases_first = (ctx["hour"] in (0, 1))
+                market = [list(o) for o in ((purchase_orders + sell_orders) if purchases_first else (sell_orders + purchase_orders))[:10]]
 
     for order in market:
         if order[0] == "SELL":

@@ -61,6 +61,48 @@ PRIORITY_NAMES: Dict[int, str] = {
 }
 
 
+# ----------------------------------------------------------------------
+# Authoritative Historical Legacy Composition Helper
+# ----------------------------------------------------------------------
+def legacy_compose_market(
+    purchase_orders: Optional[List[List[Any]]],
+    sell_orders: Optional[List[List[Any]]],
+    ctx: Any,
+    cap: int = MAX_MARKET_ORDERS,
+) -> List[List[Any]]:
+    """Authoritative historical legacy market composition.
+
+    Historical rule:
+      Hour 0 and Hour 1: purchases first, then sells
+      Hour 2+: sells first, then purchases
+      Enforces cap without reordering within queues or dropping based on priority.
+    """
+    hour = 0
+    if ctx is not None:
+        if isinstance(ctx, dict):
+            hour = int(ctx.get("hour", 0))
+        else:
+            hour = int(getattr(ctx, "hour", 0))
+
+    purchases_first = (hour in (0, 1))
+    buys = [list(o) for o in (purchase_orders or [])]
+    sells = [list(o) for o in (sell_orders or [])]
+
+    if MarketBrain is not None:
+        return MarketBrain.compose(
+            buys,
+            sells,
+            cap=cap,
+            purchases_first=purchases_first,
+        )
+
+    first, second = (buys, sells) if purchases_first else (sells, buys)
+    out = [list(o) for o in first][:cap]
+    out += [list(o) for o in second][:cap - len(out)]
+    return out
+
+
+
 @dataclass
 class ProposalCandidate:
     proposal_id: str  # e.g. "purchase:0", "sell:1"
@@ -174,56 +216,56 @@ class CentralPlanner:
             return False, "invalid_opcode_type"
 
         if op == "HIRE":
-            if len(order) > 1:
-                cnt = order[1]
-                if not isinstance(cnt, int) or cnt <= 0:
-                    return False, "invalid_hire_count"
+            if len(order) != 1:
+                return False, "hire_exact_shape_violation"
             return True, None
 
         elif op == "BUY_LAND":
+            if len(order) != 1:
+                return False, "buy_land_exact_shape_violation"
             return True, None
 
         elif op == "BUY_SEED":
-            if len(order) < 3:
-                return False, "missing_seed_args"
+            if len(order) != 3:
+                return False, "buy_seed_exact_shape_violation"
             crop, qty = order[1], order[2]
             if not isinstance(crop, str) or crop not in CROPS:
                 return False, "unknown_crop"
-            if not isinstance(qty, int) or qty <= 0:
+            if isinstance(qty, bool) or not isinstance(qty, int) or qty <= 0:
                 return False, "invalid_seed_qty"
             return True, None
 
         elif op == "BUY_ANIMAL":
-            if len(order) < 3:
-                return False, "missing_animal_args"
+            if len(order) != 3:
+                return False, "buy_animal_exact_shape_violation"
             animal, qty = order[1], order[2]
             if not isinstance(animal, str) or animal not in ANIMALS:
                 return False, "unknown_animal"
-            if not isinstance(qty, int) or qty <= 0:
+            if isinstance(qty, bool) or not isinstance(qty, int) or qty <= 0:
                 return False, "invalid_animal_qty"
             return True, None
 
         elif op == "BUY_PRODUCT":
-            if len(order) < 3:
-                return False, "missing_product_args"
+            if len(order) != 3:
+                return False, "buy_product_exact_shape_violation"
             product, qty = order[1], order[2]
             if product not in ("WHEAT", "FERTILIZER"):
                 return False, "unsupported_buy_product"
-            if not isinstance(qty, int) or qty <= 0:
+            if isinstance(qty, bool) or not isinstance(qty, int) or qty <= 0:
                 return False, "invalid_product_qty"
             return True, None
 
         elif op == "SELL":
-            if len(order) < 3:
-                return False, "missing_sell_args"
+            if len(order) != 3:
+                return False, "sell_exact_shape_violation"
             product, qty = order[1], order[2]
             if not isinstance(product, str) or product not in PRODUCTS:
                 return False, "unknown_sell_product"
-            if not isinstance(qty, int) or qty <= 0:
+            if isinstance(qty, bool) or not isinstance(qty, int) or qty <= 0:
                 return False, "invalid_sell_qty"
             return True, None
 
-        return False, "unknown_opcode"
+        return False, f"unknown_opcode_{op}"
 
     # ------------------------------------------------------------------
     # Proposal Classification
@@ -596,23 +638,37 @@ class CentralPlanner:
             )
         except Exception as exc:
             # Resilient fallback: ensure turn never default-fails on unexpected error
-            if MarketBrain is not None:
-                fallback_orders = MarketBrain.compose(
-                    purchases, sells, cap=effective_cap, purchases_first=purchases_first
-                )
-            else:
-                combined = (purchases + sells) if purchases_first else (sells + purchases)
-                fallback_orders = combined[:effective_cap]
+            fallback_orders = legacy_compose_market(purchases, sells, ctx, cap=effective_cap)
+            ordered_candidates = (purchases + sells) if (hour in (0, 1)) else (sells + purchases)
+            rejected_orders = ordered_candidates[len(fallback_orders):]
+            total_candidates = len(purchases) + len(sells)
+
+            rejected_details = [
+                {
+                    "proposal_id": f"fallback_rejected:{idx}",
+                    "order": list(o),
+                    "rejection_reason": "fallback_slot_cap",
+                }
+                for idx, o in enumerate(rejected_orders)
+            ]
 
             fallback_diag = {
                 "error": str(exc),
+                "planner_error": str(exc),
                 "fallback_used": True,
-                "total_candidates": len(purchases) + len(sells),
+                "fallback_reason": "central_planner_exception",
+                "total_candidates": total_candidates,
                 "accepted_orders": [list(o) for o in fallback_orders],
-                "rejected_orders": [],
-                "rejection_reasons": {"unexpected_exception": 1},
+                "rejected_orders": [list(o) for o in rejected_orders],
+                "rejected_details": rejected_details,
+                "rejection_reasons": {"fallback_slot_cap": len(rejected_orders)} if rejected_orders else {},
                 "changed_from_legacy": False,
+                "selection_changed_from_legacy": False,
+                "execution_order_only_changed": False,
+                "changed_selection": False,
+                "execution_reorder_only": False,
             }
+            assert len(fallback_diag["accepted_orders"]) + len(fallback_diag["rejected_orders"]) == total_candidates
             return fallback_orders, fallback_diag
 
     def _plan_market_core(
@@ -810,13 +866,7 @@ class CentralPlanner:
         assert len(all_accounted_ids) == len(set(all_accounted_ids)) == total_candidates
 
         # Step 8: Telemetry & Diagnostics
-        if MarketBrain is not None:
-            legacy_orders = MarketBrain.compose(
-                purchases, sells, cap=cap, purchases_first=purchases_first
-            )
-        else:
-            combined = (purchases + sells) if purchases_first else (sells + purchases)
-            legacy_orders = combined[:cap]
+        legacy_orders = legacy_compose_market(purchases, sells, ctx, cap=cap)
 
         changed_from_legacy = (final_orders != legacy_orders)
 
@@ -938,7 +988,9 @@ class CentralPlanner:
             "legacy_orders": [list(o) for o in legacy_orders],
             "changed_from_legacy": changed_from_legacy,
             "changed_selection": changed_selection,
+            "selection_changed_from_legacy": changed_selection,
             "execution_reorder_only": execution_reorder_only,
+            "execution_order_only_changed": execution_reorder_only,
             "change_reasons": change_reasons,
             "p0_priority_inversion_count": len(p0_inversions),
             "p0_priority_inversions": p0_inversions,

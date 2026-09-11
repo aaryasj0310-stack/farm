@@ -40,6 +40,7 @@ from market.market_brain import MarketBrain
 from market.order_builder import OrderBuilder
 from strategy.central_planner import (
     CentralPlanner,
+    legacy_compose_market,
     P0_CRITICAL,
     P1_URGENT,
     P2_STRATEGIC,
@@ -600,3 +601,88 @@ class TestCentralPlannerPhase3:
         assert "purchase_candidates" in diag
         assert "sell_candidates" in diag
         assert "slot_pressure" in diag
+
+    # ------------------------------------------------------------------
+    # 21. Historical Legacy Compose Semantics
+    # ------------------------------------------------------------------
+    def test_legacy_compose_market_semantics(self):
+        """Verify authoritative historical legacy semantics across hours 0, 1, and 2+."""
+        buys = [["BUY_SEED", "WHEAT", 5], ["BUY_LAND"]]
+        sells = [["SELL", "MELON", 10], ["SELL", "CARROT", 4]]
+
+        # Hour 0: purchases first
+        res_h0 = legacy_compose_market(buys, sells, {"hour": 0}, cap=3)
+        assert res_h0 == [["BUY_SEED", "WHEAT", 5], ["BUY_LAND"], ["SELL", "MELON", 10]]
+
+        # Hour 1: purchases first (critical historical parity)
+        res_h1 = legacy_compose_market(buys, sells, {"hour": 1}, cap=3)
+        assert res_h1 == [["BUY_SEED", "WHEAT", 5], ["BUY_LAND"], ["SELL", "MELON", 10]]
+
+        # Hour 2: sells first
+        res_h2 = legacy_compose_market(buys, sells, {"hour": 2}, cap=3)
+        assert res_h2 == [["SELL", "MELON", 10], ["SELL", "CARROT", 4], ["BUY_SEED", "WHEAT", 5]]
+
+        # Hour 23: sells first
+        res_h23 = legacy_compose_market(buys, sells, {"hour": 23}, cap=3)
+        assert res_h23 == [["SELL", "MELON", 10], ["SELL", "CARROT", 4], ["BUY_SEED", "WHEAT", 5]]
+
+    # ------------------------------------------------------------------
+    # 22. Strict Proposal Structural Validation
+    # ------------------------------------------------------------------
+    def test_strict_proposal_validation_shapes(self):
+        """Reject malformed candidate shapes fail-closed while valid proposals proceed."""
+        ctx = {"hour": 0, "day": 10, "farm": MockFarm(0), "private": MockPrivate()}
+        malformed_buys = [
+            ["HIRE", 1],                          # invalid: HIRE must have len 1
+            ["BUY_LAND", "SW"],                   # invalid: BUY_LAND must have len 1
+            ["BUY_SEED"],                         # invalid: BUY_SEED must have len 3
+            ["BUY_SEED", "WHEAT"],                # invalid: BUY_SEED missing qty
+            ["BUY_SEED", "WHEAT", 5, "extra"],    # invalid: extra args
+            ["BUY_SEED", "WHEAT", -2],            # invalid: negative qty
+            ["BUY_SEED", "WHEAT", True],          # invalid: boolean qty
+            ["BUY_ANIMAL", "COW"],                # invalid: missing qty
+            ["BUY_PRODUCT", "WHEAT"],             # invalid: missing qty
+            ["BUY_SEED", "WHEAT", 4],             # VALID
+        ]
+        malformed_sells = [
+            ["SELL", "CARROT"],                   # invalid: missing qty
+            ["SELL", "CARROT", "all"],            # invalid: non-int qty
+            ["SELL", "CARROT", 0],                # invalid: non-positive qty
+            ["SELL", "CARROT", False],            # invalid: boolean qty
+            ["SELL", "CARROT", 3],                # VALID
+        ]
+
+        orders, diag = self.cp.plan_market(ctx, None, malformed_buys, None, malformed_sells, None, cap=10)
+        assert len(orders) == 2
+        assert ["BUY_SEED", "WHEAT", 4] in orders
+        assert ["SELL", "CARROT", 3] in orders
+        assert diag["total_candidates"] == len(malformed_buys) + len(malformed_sells)
+        assert diag["rejection_reasons"].get("invalid_order") == 13
+
+    # ------------------------------------------------------------------
+    # 23. Fallback Conservation & Accounting
+    # ------------------------------------------------------------------
+    def test_fallback_exception_accounting(self, monkeypatch):
+        """When arbitration raises, fallback strictly accounts for all candidates."""
+        ctx = {"hour": 1, "day": 5, "farm": MockFarm(0), "private": MockPrivate()}
+        buys = [["BUY_SEED", f"CROP_{i}", 1] for i in range(6)]
+        sells = [["SELL", f"PROD_{i}", 1] for i in range(6)]
+        total = len(buys) + len(sells)
+
+        def bad_plan(*args, **kwargs):
+            raise RuntimeError("Arbitration exploded")
+
+        monkeypatch.setattr(self.cp, "_plan_market_core", bad_plan)
+
+        orders, diag = self.cp.plan_market(ctx, None, buys, None, sells, None, cap=10)
+        assert diag["fallback_used"] is True
+        assert diag["fallback_reason"] == "central_planner_exception"
+        assert diag["planner_error"] == "Arbitration exploded"
+        assert len(orders) == 10
+        assert len(diag["accepted_orders"]) == 10
+        assert len(diag["rejected_orders"]) == 2
+        assert len(diag["accepted_orders"]) + len(diag["rejected_orders"]) == total
+        assert diag["rejection_reasons"] == {"fallback_slot_cap": 2}
+        assert diag["selection_changed_from_legacy"] is False
+        assert diag["execution_order_only_changed"] is False
+

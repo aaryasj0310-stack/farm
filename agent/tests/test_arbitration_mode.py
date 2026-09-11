@@ -192,3 +192,23 @@ def test_reset_agent_state_clears_globals():
     reset_agent_state()
     assert get_last_turn_telemetry() is None
     assert get_central_planner_diagnostics() == {}
+
+
+def test_historical_stack_mode_routing():
+    """Verify historical_stack mode activates pre-CentralPlanner limits and legacy compose."""
+    reset_agent_state()
+    set_arbitration_mode("historical_stack")
+    assert get_arbitration_mode() == "historical_stack"
+
+    obs = make_test_obs(day=0, hour=0)
+    res = agent(obs)
+    assert "market" in res
+    diag = get_central_planner_diagnostics()
+    assert diag == {}
+    tel = get_last_turn_telemetry()
+    assert tel["mode"] == "historical_stack"
+    assert tel["central_planner_diagnostic"] is None
+
+    # Reset back to central
+    set_arbitration_mode("central")
+

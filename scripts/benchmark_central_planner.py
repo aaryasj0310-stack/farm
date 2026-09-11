@@ -305,18 +305,19 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 class CentralPlannerBenchmark:
-    def __init__(self, seeds: List[int], opponents: List[str], max_workers: int = 4):
+    def __init__(self, seeds: List[int], opponents: List[str], baseline_mode: str = "legacy", max_workers: int = 4):
         self.seeds = seeds
         self.opponents = opponents
+        self.baseline_mode = baseline_mode
         self.max_workers = max_workers
 
     def run(self) -> Dict[str, Any]:
         tasks = []
         for opp in self.opponents:
             for s in self.seeds:
-                # Pair: Run A (legacy) and Run B (central)
+                # Pair: Run A (baseline) and Run B (central)
                 tasks.append({
-                    "seed": s, "opponent": opp, "mode": "legacy",
+                    "seed": s, "opponent": opp, "mode": self.baseline_mode,
                     "agent_dir": AGENT_DIR, "repo_root": REPO_ROOT
                 })
                 tasks.append({
@@ -324,7 +325,7 @@ class CentralPlannerBenchmark:
                     "agent_dir": AGENT_DIR, "repo_root": REPO_ROOT
                 })
 
-        print(f"Starting Paired A/B Benchmark: {len(self.seeds)} seeds x {len(self.opponents)} opponents = {len(tasks)} runs...")
+        print(f"Starting Paired A/B Benchmark [{self.baseline_mode} vs central]: {len(self.seeds)} seeds x {len(self.opponents)} opponents = {len(tasks)} runs...")
         start_time = time.time()
 
         raw_results = {}
@@ -336,7 +337,7 @@ class CentralPlannerBenchmark:
                 res = future.result()
                 key = (res["seed"], res["opponent"], res["mode"])
                 raw_results[key] = res
-                print(f"[{completed:02d}/{len(tasks):02d}] Seed {res['seed']:02d} | {res['opponent']} | {res['mode']:<7} => ${res['final_money']:,.2f}")
+                print(f"[{completed:02d}/{len(tasks):02d}] Seed {res['seed']:02d} | {res['opponent']} | {res['mode']:<16} => ${res['final_money']:,.2f}")
 
         elapsed = time.time() - start_time
         print(f"Benchmark finished in {elapsed:.1f}s.")
@@ -345,7 +346,7 @@ class CentralPlannerBenchmark:
         pairs = []
         for opp in self.opponents:
             for s in self.seeds:
-                leg = raw_results.get((s, opp, "legacy"))
+                leg = raw_results.get((s, opp, self.baseline_mode))
                 cen = raw_results.get((s, opp, "central"))
                 if leg and cen:
                     delta = cen["final_money"] - leg["final_money"]
@@ -531,18 +532,31 @@ def compute_statistics(pairs: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Kaggriculture Central Planner A/B Benchmark")
-    parser.add_argument("--seeds", type=int, default=20, help="Number of seeds to evaluate (default 20)")
+    parser.add_argument("--benchmark", type=str, choices=["arbitration_only", "full_stack"], default="arbitration_only",
+                        help="Benchmark type: 'arbitration_only' (legacy compose vs central) or 'full_stack' (historical limits+legacy vs central)")
+    parser.add_argument("--seeds", type=int, default=25, help="Number of seeds to evaluate (default 25)")
     parser.add_argument("--start-seed", type=int, default=101, help="Starting seed number (default 101)")
     parser.add_argument("--opponents", nargs="+", default=["random", "starter"], help="Opponent policies to test")
     parser.add_argument("--workers", type=int, default=min(4, max(1, mp.cpu_count() - 1)), help="Number of parallel workers")
-    parser.add_argument("--csv", type=str, default=os.path.join(REPO_ROOT, "artifacts", "central_planner_ab.csv"))
-    parser.add_argument("--json", type=str, default=os.path.join(REPO_ROOT, "artifacts", "central_planner_ab.json"))
+    parser.add_argument("--csv", type=str, default=None, help="Output CSV path")
+    parser.add_argument("--json", type=str, default=None, help="Output JSON path")
     args = parser.parse_args()
 
+    baseline_mode = "legacy" if args.benchmark == "arbitration_only" else "historical_stack"
+    default_csv_name = "central_planner_ab.csv" if args.benchmark == "arbitration_only" else "central_planner_full_stack_ab.csv"
+    default_json_name = "central_planner_ab.json" if args.benchmark == "arbitration_only" else "central_planner_full_stack_ab.json"
+    csv_path = args.csv or os.path.join(REPO_ROOT, "artifacts", default_csv_name)
+    json_path = args.json or os.path.join(REPO_ROOT, "artifacts", default_json_name)
+
     seed_list = list(range(args.start_seed, args.start_seed + args.seeds))
-    benchmark = CentralPlannerBenchmark(seeds=seed_list, opponents=args.opponents, max_workers=args.workers)
+    benchmark = CentralPlannerBenchmark(
+        seeds=seed_list,
+        opponents=args.opponents,
+        baseline_mode=baseline_mode,
+        max_workers=args.workers,
+    )
     results = benchmark.run()
-    save_benchmark_artifacts(results, args.csv, args.json)
+    save_benchmark_artifacts(results, csv_path, json_path)
 
     stats = compute_statistics(results["pairs"])
     print("\n======================================================================")
