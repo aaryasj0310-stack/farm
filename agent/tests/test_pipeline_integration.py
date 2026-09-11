@@ -26,6 +26,7 @@ from strategy.opponent_advisor import build_opponent_advice, OpponentAdvice
 from execution.task_scheduler import assign_tasks, build_tasks
 from market.order_builder import OrderBuilder
 from market.market_brain import MarketBrain
+from strategy.central_planner import CentralPlanner
 from state.state_tracker import get_state, reset_memory, _STATE
 from state.opponent_model import (
     snapshot_opponent_farm, detect_tile_deltas,
@@ -123,7 +124,7 @@ def test_full_pipeline_walk_planner_scheduler_real_engine():
 # ---------------------------------------------------------------------------
 
 class TurnDriver:
-    """Wires obs -> (planner, builder, brain/liquidator) -> action dict."""
+    """Wires obs -> (planner, builder, brain/liquidator, central_planner) -> action dict."""
 
     def __init__(self, fc, extra_market_script=None):
         self.fc = fc
@@ -131,6 +132,7 @@ class TurnDriver:
         self.builder = OrderBuilder()
         self.brain = MarketBrain(fc)
         self.liquidator = EndgameLiquidator(fc, self.brain)
+        self.central_planner = CentralPlanner()
         self.scripted = dict(extra_market_script or {})
         self.max_orders_seen = 0
         self.exceptions = 0
@@ -151,9 +153,9 @@ class TurnDriver:
             sell_orders, _d = self.liquidator.plan(ctx)
         else:
             sell_orders, _d = self.brain.sell_orders(ctx)
-        market = MarketBrain.compose(
-            purchase_orders, sell_orders,
-            purchases_first=(ctx["hour"] == 0))
+        market, _cp_diag = self.central_planner.plan_market(
+            ctx, plan, purchase_orders, _ledger, sell_orders, _d
+        )
         self.max_orders_seen = max(self.max_orders_seen, len(market))
 
         n_units = 1 + len(ctx["farm"].hands)
@@ -219,8 +221,9 @@ def test_market_brain_sell_loop_executes_in_real_engine():
             asg = assign_tasks(tasks, ctx)
             purchases, _ = driver.builder.build(ctx, plan.intents)
             sells, _ = driver.brain.sell_orders(ctx)
-            market = MarketBrain.compose(purchases + market, sells,
-                                         purchases_first=(ctx["hour"] == 0))
+            market, _ = driver.central_planner.plan_market(
+                ctx, plan, purchases + market, None, sells, _
+            )
             driver.max_orders_seen = max(driver.max_orders_seen, len(market))
             n_units = 1 + len(ctx["farm"].hands)
             act = {"farmer": list(asg["actions"].get(0, ["PASS"])),
@@ -283,6 +286,7 @@ class OpponentTurnDriver:
         self.builder = OrderBuilder()
         self.brain = MarketBrain(fc)
         self.liquidator = EndgameLiquidator(fc, self.brain)
+        self.central_planner = CentralPlanner()
         self.max_orders_seen = 0
         self.exceptions = 0
         self.snapshots = []
@@ -335,9 +339,9 @@ class OpponentTurnDriver:
             sell_orders, _d = self.liquidator.plan(ctx)
         else:
             sell_orders, _d = self.brain.sell_orders(ctx, opp_advice=opp_advice)
-        market = MarketBrain.compose(
-            purchase_orders, sell_orders,
-            purchases_first=(ctx["hour"] == 0))
+        market, _ = self.central_planner.plan_market(
+            ctx, plan, purchase_orders, _ledger, sell_orders, _d
+        )
         self.max_orders_seen = max(self.max_orders_seen, len(market))
 
         n_units = 1 + len(ctx["farm"].hands)

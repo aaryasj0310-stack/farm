@@ -329,3 +329,8 @@ SELL_BATCH_SIZES = {
     "phase2": 5,   # Days 6-8: sell in batches of 5-10
     "phase3": 3,   # Days 9+: sell in batches of 3-5
 }
+
+# ---------------------------------------------------------------- arbitration ----
+# Authoritative arbitration mode: "central" (Phase 3 CentralPlanner) or "legacy" (MarketBrain.compose)
+ARBITRATION_MODE = "central"
+USE_CENTRAL_PLANNER = (ARBITRATION_MODE == "central")

@@ -42,7 +42,7 @@ class EndgameLiquidator:
         return uplift < 0.02 or p_floor_end > 0.30
 
     # ------------------------------------------------------------------
-    def plan(self, ctx, max_slots=MAX_MARKET_ORDERS, opp_advice=None):
+    def plan(self, ctx, max_slots=None, opp_advice=None):
         """Aggressive endgame sells for THIS turn.
 
         Uses MarketBrain in its naturally aggressive endgame mode and then

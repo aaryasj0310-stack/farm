@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 import sys
+import copy
 from typing import Any, Dict, Optional
 from collections import Counter
 
@@ -55,6 +56,7 @@ try:
     from strategy.endgame_liquidator import EndgameLiquidator
     from strategy.shop_adapter import demand_boosts
     from strategy.opponent_advisor import build_opponent_advice, OpponentAdvice
+    from strategy.central_planner import CentralPlanner
     from execution.task_scheduler import (
         assign_tasks, build_tasks, get_daily_log, reset_daily_log,
         get_sw_tile_breakdown, get_sw_season_summary,
@@ -76,6 +78,7 @@ except ImportError:
     from endgame_liquidator import EndgameLiquidator
     from shop_adapter import demand_boosts
     from opponent_advisor import build_opponent_advice, OpponentAdvice
+    from central_planner import CentralPlanner
     from task_scheduler import (
         assign_tasks, build_tasks, get_daily_log, reset_daily_log,
         get_sw_tile_breakdown, get_sw_season_summary,
@@ -99,6 +102,7 @@ _PLANNER = None
 _BUILDER = None
 _BRAIN = None
 _LIQUIDATOR = None
+_CENTRAL_PLANNER = None
 
 # Persistent opponent modeling state (survives across turns within one process)
 _prev_opp_snapshot = None
@@ -132,6 +136,75 @@ def reset_opponent_model_state():
 
 
 try:
+    from config import ARBITRATION_MODE as _CONFIG_ARBITRATION_MODE
+except Exception:
+    _CONFIG_ARBITRATION_MODE = "central"
+
+_RUNTIME_ARBITRATION_MODE: str = str(_CONFIG_ARBITRATION_MODE).strip().lower()
+
+
+def set_arbitration_mode(mode: str) -> None:
+    """Set arbitration mode ('central' or 'legacy'). Intended for benchmarks/tests."""
+    global _RUNTIME_ARBITRATION_MODE
+    mode_str = str(mode).strip().lower()
+    if mode_str not in ("central", "legacy"):
+        raise ValueError(f"Invalid arbitration mode '{mode}'. Must be 'central' or 'legacy'.")
+    _RUNTIME_ARBITRATION_MODE = mode_str
+
+
+def get_arbitration_mode() -> str:
+    """Return the currently active arbitration mode ('central' or 'legacy')."""
+    return _RUNTIME_ARBITRATION_MODE
+
+
+_LAST_CENTRAL_PLANNER_DIAGNOSTIC = None
+_LAST_TURN_TELEMETRY: Optional[Dict[str, Any]] = None
+
+
+def get_central_planner_diagnostics() -> Dict[str, Any]:
+    """Return an immutable deep copy of the latest Central Planner diagnostics."""
+    if _LAST_CENTRAL_PLANNER_DIAGNOSTIC is None:
+        return {}
+    return copy.deepcopy(_LAST_CENTRAL_PLANNER_DIAGNOSTIC)
+
+
+def get_last_turn_telemetry() -> Optional[Dict[str, Any]]:
+    """Return an immutable deep copy of the most recent turn's telemetry."""
+    if _LAST_TURN_TELEMETRY is None:
+        return None
+    return copy.deepcopy(_LAST_TURN_TELEMETRY)
+
+
+def reset_agent_state() -> None:
+    """Hard-reset all module singletons and persistent state across episodes."""
+    global _FC, _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR, _CENTRAL_PLANNER
+    global _LAST_CENTRAL_PLANNER_DIAGNOSTIC, _LAST_TURN_TELEMETRY, _LAST_FALLBACK_DIAGNOSTIC
+    _FC = None
+    _PLANNER = None
+    _BUILDER = None
+    _BRAIN = None
+    _LIQUIDATOR = None
+    _CENTRAL_PLANNER = None
+    _LAST_CENTRAL_PLANNER_DIAGNOSTIC = None
+    _LAST_TURN_TELEMETRY = None
+    _LAST_FALLBACK_DIAGNOSTIC = None
+    reset_opponent_model_state()
+    try:
+        from state.state_tracker import reset_memory
+        reset_memory()
+    except Exception:
+        try:
+            from state_tracker import reset_memory
+            reset_memory()
+        except Exception:
+            pass
+    try:
+        reset_daily_log()
+    except Exception:
+        pass
+
+
+try:
     from state.state_tracker import register_reset_hook as _rrh_pkg
     _rrh_pkg(reset_opponent_model_state)
 except Exception:
@@ -145,14 +218,15 @@ except Exception:
 
 
 def _get_components():
-    global _FC, _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR
+    global _FC, _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR, _CENTRAL_PLANNER
     if _FC is None:
         _FC = PriceForecast.load()
         _PLANNER = MacroPlanner(_FC)
         _BUILDER = OrderBuilder()
         _BRAIN = MarketBrain(_FC)
         _LIQUIDATOR = EndgameLiquidator(_FC, _BRAIN)
-    return _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR
+        _CENTRAL_PLANNER = CentralPlanner()
+    return _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR, _CENTRAL_PLANNER
 
 
 def _build_opp_advice(ctx, mem):
@@ -447,7 +521,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     if ctx is None:
         return _emergency_fallback(obs, RuntimeError("ctx is None"))
 
-    planner, builder, brain, liquidator = _get_components()
+    planner, builder, brain, liquidator, central_planner = _get_components()
 
     # v5.9: Reset daily log and opponent state at start of day 0
     if ctx["day"] == 0 and ctx["hour"] == 0:
@@ -502,25 +576,28 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     # 3. Market layer: purchase intent compilation (domain isolated)
     purchase_orders = []
+    _ledger = None
     try:
         if ctx["hour"] == 0:
             if plan is not None:
-                purchase_orders, _ledger = builder.build(ctx, plan.intents)
+                purchase_orders, _ledger = builder.build(ctx, plan.intents, max_slots=None)
         elif ctx["hour"] == 1:
             target_h = get_target_hands(ctx["day"])
             hires_so_far = ctx["farm"].hires_today
             hires_needed = max(0, target_h - hires_so_far)
             if hires_needed > 0:
-                for _ in range(min(hires_needed, 10)):
+                for _ in range(hires_needed):
                     purchase_orders.append(["HIRE"])
         else:
             if plan is not None:
-                purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents)
+                purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents, max_slots=None)
     except Exception:
         purchase_orders = []
+        _ledger = None
 
     # 4. Market layer: sell-side intent compilation (domain isolated)
     sell_orders = []
+    _d = None
     try:
         if ctx["day"] >= 28:
             sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
@@ -528,16 +605,47 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             sell_orders, _d = brain.sell_orders(ctx, opp_advice=opp_advice)
     except Exception:
         sell_orders = []
+        _d = None
 
-    # 5. Market composition
+    # 5. Market composition / arbitration
+    global _LAST_CENTRAL_PLANNER_DIAGNOSTIC, _LAST_TURN_TELEMETRY
     market = []
-    try:
-        market = MarketBrain.compose(
-            purchase_orders, sell_orders,
-            purchases_first=(ctx["hour"] in (0, 1))
-        )
-    except Exception:
-        market = [list(o) for o in (purchase_orders + sell_orders)[:10]]
+    _cp_diag = None
+    active_mode = get_arbitration_mode()
+    purchases_first = (ctx["hour"] == 0)
+
+    if active_mode == "legacy":
+        try:
+            market = MarketBrain.compose(
+                purchase_orders, sell_orders,
+                cap=10,
+                purchases_first=purchases_first,
+            )
+        except Exception:
+            first, second = ((purchase_orders, sell_orders) if purchases_first
+                             else (sell_orders, purchase_orders))
+            market = [list(o) for o in (first + second)[:10]]
+        _LAST_CENTRAL_PLANNER_DIAGNOSTIC = None
+    else:
+        try:
+            market, _cp_diag = central_planner.plan_market(
+                ctx,
+                macro_plan=plan,
+                purchase_orders=purchase_orders,
+                purchase_ledger=_ledger,
+                sell_orders=sell_orders,
+                sell_details=_d,
+                opp_advice=opp_advice,
+            )
+            _LAST_CENTRAL_PLANNER_DIAGNOSTIC = _cp_diag
+        except Exception:
+            try:
+                market = MarketBrain.compose(
+                    purchase_orders, sell_orders,
+                    purchases_first=purchases_first,
+                )
+            except Exception:
+                market = [list(o) for o in (purchase_orders + sell_orders)[:10]]
 
     for order in market:
         if order[0] == "SELL":
@@ -550,6 +658,41 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
                 record_our_buy(order[1], order[2])
             except Exception:
                 pass
+
+    # Pipeline progression tracking for Land and Critical Feed Wheat
+    land_proposed = any(o[0] == "BUY_LAND" for o in purchase_orders)
+    land_selected = any(o[0] == "BUY_LAND" for o in market)
+
+    animals_count = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal)
+    shed_wheat = ctx["private"].shed.get("WHEAT", 0) if ctx.get("private") else 0
+    is_critical_wheat_deficit = (animals_count > 0 and shed_wheat < animals_count)
+    critical_wheat_proposed = is_critical_wheat_deficit and any(
+        o[0] == "BUY_PRODUCT" and len(o) > 1 and o[1] == "WHEAT" for o in purchase_orders
+    )
+    critical_wheat_selected = is_critical_wheat_deficit and any(
+        o[0] == "BUY_PRODUCT" and len(o) > 1 and o[1] == "WHEAT" for o in market
+    )
+
+    _LAST_TURN_TELEMETRY = {
+        "step": ctx.get("step", 0),
+        "day": ctx.get("day", 0),
+        "hour": ctx.get("hour", 0),
+        "mode": active_mode,
+        "money_before": float(ctx["farm"].money),
+        "shed_before": sum(ctx["private"].shed.values()) if ctx.get("private") else 0,
+        "market_inventory_before": dict(ctx["market"].inventory) if ctx.get("market") else {},
+        "unlocked_land": sorted(list(ctx["farm"].unlocked)),
+        "animal_count": animals_count,
+        "wheat_on_hand": shed_wheat,
+        "purchase_orders": [list(o) for o in purchase_orders],
+        "sell_orders": [list(o) for o in sell_orders],
+        "market": [list(o) for o in market],
+        "land_proposed": land_proposed,
+        "land_selected": land_selected,
+        "critical_wheat_proposed": critical_wheat_proposed,
+        "critical_wheat_selected": critical_wheat_selected,
+        "central_planner_diagnostic": copy.deepcopy(_cp_diag) if _cp_diag else None,
+    }
 
     # 6. Action dict assembly
     n_units = 1 + len(ctx["farm"].hands)

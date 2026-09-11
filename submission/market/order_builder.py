@@ -54,7 +54,7 @@ class OrderBuilder:
     def __init__(self, money_reserve=MONEY_RESERVE_DEFAULT):
         self.reserve = money_reserve
 
-    def reinvest_livestock(self, ctx, intents):
+    def reinvest_livestock(self, ctx, intents, max_slots=MAX_MARKET_ORDERS):
         """Invest harvest proceeds while there is still time to place animals.
 
         Recomputed planner intents count animals in transit and reserve future
@@ -70,10 +70,10 @@ class OrderBuilder:
             "buy_animal": intents["buy_animal"],
             "buy_wheat": intents.get("buy_wheat", 0),
             "pending_structures": intents.get("pending_structures", {}),
-        })
+        }, max_slots=max_slots)
 
     # ------------------------------------------------------------------
-    def build(self, ctx, intents):
+    def build(self, ctx, intents, max_slots=MAX_MARKET_ORDERS):
         """intents: MacroPlan.intents dict. Returns (orders, ledger).
         
         Mandatory hire budgeting:
@@ -226,33 +226,39 @@ class OrderBuilder:
                 else:
                     ledger["dropped"].append({"kind": "animal", "animal": animal, "reason": "budget"})
 
-        # ---- emit engine-format orders, honoring the 10-order cap -----
+        # ---- emit engine-format orders, honoring optional max_slots cap -----
         orders = []
         queued = {"hire": 0, "seed": {}, "animal": {}, "wheat": 0, "land": False}
-        slots = MAX_MARKET_ORDERS
+        slots = max_slots
 
         def take(slot_item):
             nonlocal slots
-            if slots <= 0:
-                return False
-            slots -= 1
+            if slots is not None:
+                if slots <= 0:
+                    return False
+                slots -= 1
             return True
 
         spent = mandatory_hire_budget + survival_feed_budget + (discretionary_budget - remaining_discretionary)
 
         # Determine slot budget for hires at hour 0.
-        # Reserve slots for non-hire items in kept (wheat, land, seeds) so crucial
-        # capital expansion, survival feed, and planting orders are not starved
-        # by excess hires that can be deferred to hour 1.
-        non_hire_slots_needed = sum(1 for t in kept if t[1] in ("wheat", "land", "seed"))
-        max_hire_slots = max(MIN_HANDS_BASE, slots - non_hire_slots_needed)
+        # If slots is constrained, reserve slots for non-hire items in kept (wheat, land, seeds)
+        # so crucial capital expansion and planting orders are not starved by excess hires.
+        if slots is not None:
+            non_hire_slots_needed = sum(1 for t in kept if t[1] in ("wheat", "land", "seed"))
+            max_hire_slots = max(MIN_HANDS_BASE, slots - non_hire_slots_needed)
+        else:
+            max_hire_slots = None
 
         for tier, kind, payload, est in sorted(kept, key=lambda t: t[0]):
             if kind == "hire":
                 emitted = 0
-                while payload["count"] - emitted > 0 and slots > 0 and emitted < max_hire_slots:
+                while (payload["count"] - emitted > 0 and
+                       (slots is None or slots > 0) and
+                       (max_hire_slots is None or emitted < max_hire_slots)):
                     orders.append(["HIRE"])
-                    slots -= 1
+                    if slots is not None:
+                        slots -= 1
                     emitted += 1
                 queued["hire"] = emitted
                 if emitted < payload["count"]:
@@ -287,6 +293,7 @@ class OrderBuilder:
         ledger["queued"] = queued
         ledger["orders"] = [list(o) for o in orders]
         ledger["spent_estimate"] = round(spent, 2)
+        ledger["upstream_slots_limited"] = any(d.get("kind", "").endswith("_slots") for d in ledger["dropped"])
         return orders, ledger
 
 

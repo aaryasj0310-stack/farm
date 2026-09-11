@@ -1,0 +1,949 @@
+"""Centralized Market Arbitration Layer — Phase 3.
+
+Cross-engine market arbitrator coordinating purchase and sell orders under the
+engine's shared per-turn cap (MAX_MARKET_ORDERS = 10).
+
+Phase 3 Architecture:
+  Upstream engines generate full useful proposal sets; CentralPlanner arbitrates.
+  - Deterministic proposal identity (proposal_id: "purchase:i", "sell:i")
+  - Lightweight structural proposal validator (fails closed per candidate)
+  - Hard conflict resolution (feed starvation wheat buy vs wheat sell)
+  - Day 29 non-payoff purchase blocking
+  - Accidental duplicate land purchase filtering
+  - Global priority-dominated ranking (P0_CRITICAL .. P4_DISCRETIONARY)
+  - Explicit selection freeze and multiset-verified execution sequencing
+  - Authoritative shed capacity & incoming purchase load awareness
+  - Strict preservation of OrderBuilder atomic purchase ordering
+  - Candidate starvation and upstream truncation diagnostics
+  - Guaranteed fallback to legacy compose on any unexpected exception
+"""
+from __future__ import annotations
+
+from collections import Counter
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
+
+from config import (
+    ANIMALS,
+    CROPS,
+    ENDGAME_START_DAY,
+    FEED_WHEAT_BUFFER_DAYS,
+    LAND_BUY_LAST_DAY,
+    MAX_MARKET_ORDERS,
+    PRODUCTS,
+    SELL_HOUR_SET,
+    SHED_CAPACITY,
+    SHED_SOFT_CAP,
+)
+
+try:
+    from market.market_brain import MarketBrain
+except ImportError:
+    try:
+        from market_brain import MarketBrain
+    except ImportError:
+        MarketBrain = None  # type: ignore
+
+
+# Deterministic priority hierarchy (lower int = higher priority)
+P0_CRITICAL = 0
+P1_URGENT = 1
+P2_STRATEGIC = 2
+P3_NORMAL = 3
+P4_DISCRETIONARY = 4
+
+PRIORITY_NAMES: Dict[int, str] = {
+    P0_CRITICAL: "P0_CRITICAL",
+    P1_URGENT: "P1_URGENT",
+    P2_STRATEGIC: "P2_STRATEGIC",
+    P3_NORMAL: "P3_NORMAL",
+    P4_DISCRETIONARY: "P4_DISCRETIONARY",
+}
+
+
+@dataclass
+class ProposalCandidate:
+    proposal_id: str  # e.g. "purchase:0", "sell:1"
+    order: List[Any]
+    source: str  # "purchase" or "sell"
+    kind: str  # "hire", "feed_wheat", "seed", "land", "animal", "fertilizer", "sell", "other", "invalid"
+    priority_class: int  # 0..4
+    urgency: float  # float score for secondary tiebreak
+    original_index: int  # order within original proposal stream
+    selection_rank: Optional[int] = None
+    execution_index: Optional[int] = None
+    rejection_reason: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+class CentralPlanner:
+    """Stateless market arbitrator coordinating purchase and sell orders."""
+
+    def __init__(self) -> None:
+        pass
+
+    # ------------------------------------------------------------------
+    # Context inspection helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _get_hour(ctx: Any) -> int:
+        if ctx is None:
+            return 0
+        if isinstance(ctx, dict):
+            return int(ctx.get("hour", 0))
+        return int(getattr(ctx, "hour", 0))
+
+    @staticmethod
+    def _get_day(ctx: Any) -> int:
+        if ctx is None:
+            return 0
+        if isinstance(ctx, dict):
+            return int(ctx.get("day", 0))
+        return int(getattr(ctx, "day", 0))
+
+    @staticmethod
+    def _get_existing_animals_count(ctx: Any) -> int:
+        if ctx is None:
+            return 0
+        farm = ctx.get("farm") if isinstance(ctx, dict) else getattr(ctx, "farm", None)
+        if farm is None:
+            return 0
+        if hasattr(farm, "iter_tiles"):
+            return sum(1 for t in farm.iter_tiles() if getattr(t, "is_animal", False))
+        if isinstance(farm, dict) and "tiles" in farm:
+            return sum(1 for t in farm["tiles"] if t.get("is_animal"))
+        if hasattr(farm, "animals"):
+            return len(farm.animals)
+        return 0
+
+    @staticmethod
+    def _get_wheat_in_shed(ctx: Any) -> int:
+        if ctx is None:
+            return 0
+        private = ctx.get("private") if isinstance(ctx, dict) else getattr(ctx, "private", None)
+        if private is None:
+            return 0
+        shed = private.get("shed", {}) if isinstance(private, dict) else getattr(private, "shed", {})
+        if isinstance(shed, dict):
+            return int(shed.get("WHEAT", 0))
+        return 0
+
+    @staticmethod
+    def _get_shed_total(ctx: Any) -> int:
+        if ctx is None:
+            return 0
+        private = ctx.get("private") if isinstance(ctx, dict) else getattr(ctx, "private", None)
+        if private is None:
+            return 0
+        shed = private.get("shed", {}) if isinstance(private, dict) else getattr(private, "shed", {})
+        if isinstance(shed, dict):
+            return sum(int(v) for v in shed.values())
+        return 0
+
+    @staticmethod
+    def _get_seeds_on_hand(ctx: Any, crop: str) -> int:
+        if ctx is None:
+            return 0
+        private = ctx.get("private") if isinstance(ctx, dict) else getattr(ctx, "private", None)
+        if private is None:
+            return 0
+        seeds = private.get("seeds", {}) if isinstance(private, dict) else getattr(private, "seeds", {})
+        if isinstance(seeds, dict):
+            return int(seeds.get(crop, 0))
+        return 0
+
+    # ------------------------------------------------------------------
+    # Lightweight structural proposal validator
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _validate_proposal(order: Any) -> Tuple[bool, Optional[str]]:
+        """Lightweight structural proposal validator.
+
+        Fails closed per candidate for malformed proposals without crashing the planner.
+        Validates:
+          - order is a non-empty list
+          - known opcode
+          - correct arguments count
+          - positive integer quantities where applicable
+          - known product / animal identifiers where applicable
+        """
+        if not isinstance(order, (list, tuple)) or len(order) == 0:
+            return False, "malformed_order_structure"
+        op = order[0]
+        if not isinstance(op, str):
+            return False, "invalid_opcode_type"
+
+        if op == "HIRE":
+            if len(order) > 1:
+                cnt = order[1]
+                if not isinstance(cnt, int) or cnt <= 0:
+                    return False, "invalid_hire_count"
+            return True, None
+
+        elif op == "BUY_LAND":
+            return True, None
+
+        elif op == "BUY_SEED":
+            if len(order) < 3:
+                return False, "missing_seed_args"
+            crop, qty = order[1], order[2]
+            if not isinstance(crop, str) or crop not in CROPS:
+                return False, "unknown_crop"
+            if not isinstance(qty, int) or qty <= 0:
+                return False, "invalid_seed_qty"
+            return True, None
+
+        elif op == "BUY_ANIMAL":
+            if len(order) < 3:
+                return False, "missing_animal_args"
+            animal, qty = order[1], order[2]
+            if not isinstance(animal, str) or animal not in ANIMALS:
+                return False, "unknown_animal"
+            if not isinstance(qty, int) or qty <= 0:
+                return False, "invalid_animal_qty"
+            return True, None
+
+        elif op == "BUY_PRODUCT":
+            if len(order) < 3:
+                return False, "missing_product_args"
+            product, qty = order[1], order[2]
+            if product not in ("WHEAT", "FERTILIZER"):
+                return False, "unsupported_buy_product"
+            if not isinstance(qty, int) or qty <= 0:
+                return False, "invalid_product_qty"
+            return True, None
+
+        elif op == "SELL":
+            if len(order) < 3:
+                return False, "missing_sell_args"
+            product, qty = order[1], order[2]
+            if not isinstance(product, str) or product not in PRODUCTS:
+                return False, "unknown_sell_product"
+            if not isinstance(qty, int) or qty <= 0:
+                return False, "invalid_sell_qty"
+            return True, None
+
+        return False, "unknown_opcode"
+
+    # ------------------------------------------------------------------
+    # Proposal Classification
+    # ------------------------------------------------------------------
+    def _classify_purchase(
+        self,
+        order: List[Any],
+        idx: int,
+        ctx: Any,
+        macro_plan: Any,
+        purchase_ledger: Any,
+    ) -> ProposalCandidate:
+        order_copy = list(order)
+        op = order_copy[0] if order_copy else "UNKNOWN"
+        hour = self._get_hour(ctx)
+        day = self._get_day(ctx)
+        proposal_id = f"purchase:{idx}"
+
+        if op == "HIRE":
+            if hour == 0:
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="hire",
+                    priority_class=P1_URGENT,
+                    urgency=1.0,
+                    original_index=idx,
+                )
+            else:
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="hire",
+                    priority_class=P2_STRATEGIC,
+                    urgency=0.5,
+                    original_index=idx,
+                )
+
+        if op == "BUY_PRODUCT":
+            prod = order_copy[1] if len(order_copy) > 1 else ""
+            if prod == "WHEAT":
+                n_animals = self._get_existing_animals_count(ctx)
+                wheat_have = self._get_wheat_in_shed(ctx)
+                if n_animals > 0 and wheat_have < n_animals:
+                    return ProposalCandidate(
+                        proposal_id=proposal_id,
+                        order=order_copy,
+                        source="purchase",
+                        kind="feed_wheat",
+                        priority_class=P0_CRITICAL,
+                        urgency=2.0,
+                        original_index=idx,
+                    )
+                elif n_animals > 0 and wheat_have < n_animals * FEED_WHEAT_BUFFER_DAYS:
+                    return ProposalCandidate(
+                        proposal_id=proposal_id,
+                        order=order_copy,
+                        source="purchase",
+                        kind="feed_wheat",
+                        priority_class=P1_URGENT,
+                        urgency=1.0,
+                        original_index=idx,
+                    )
+                elif macro_plan and hasattr(macro_plan, "intents") and macro_plan.intents.get("buy_wheat", 0) > 0:
+                    return ProposalCandidate(
+                        proposal_id=proposal_id,
+                        order=order_copy,
+                        source="purchase",
+                        kind="feed_wheat",
+                        priority_class=P1_URGENT,
+                        urgency=1.0,
+                        original_index=idx,
+                    )
+                else:
+                    return ProposalCandidate(
+                        proposal_id=proposal_id,
+                        order=order_copy,
+                        source="purchase",
+                        kind="feed_wheat",
+                        priority_class=P2_STRATEGIC,
+                        urgency=0.5,
+                        original_index=idx,
+                    )
+            elif prod == "FERTILIZER":
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="fertilizer",
+                    priority_class=P3_NORMAL,
+                    urgency=0.0,
+                    original_index=idx,
+                )
+            else:
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="product",
+                    priority_class=P3_NORMAL,
+                    urgency=0.0,
+                    original_index=idx,
+                )
+
+        if op == "BUY_SEED":
+            crop = order_copy[1] if len(order_copy) > 1 else ""
+            planned_today = 0
+            if macro_plan and hasattr(macro_plan, "plant_queue") and macro_plan.plant_queue:
+                planned_today = sum(1 for pos, c in macro_plan.plant_queue if c == crop)
+
+            seeds_on_hand = self._get_seeds_on_hand(ctx, crop)
+            needed_today = max(0, planned_today - seeds_on_hand)
+
+            if needed_today > 0:
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="seed",
+                    priority_class=P1_URGENT,
+                    urgency=1.0,
+                    original_index=idx,
+                )
+            else:
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="seed",
+                    priority_class=P2_STRATEGIC,
+                    urgency=0.5,
+                    original_index=idx,
+                )
+
+        if op == "BUY_LAND":
+            sw_urgency = 0.0
+            if macro_plan and hasattr(macro_plan, "diagnostics") and isinstance(macro_plan.diagnostics, dict):
+                sw_urgency = float(macro_plan.diagnostics.get("sw_urgency", 0.0))
+
+            if sw_urgency >= 0.8 or day >= LAND_BUY_LAST_DAY - 2:
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="land",
+                    priority_class=P1_URGENT,
+                    urgency=1.0,
+                    original_index=idx,
+                )
+            else:
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="land",
+                    priority_class=P2_STRATEGIC,
+                    urgency=0.5,
+                    original_index=idx,
+                )
+
+        if op == "BUY_ANIMAL":
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="purchase",
+                kind="animal",
+                priority_class=P2_STRATEGIC,
+                urgency=0.5,
+                original_index=idx,
+            )
+
+        return ProposalCandidate(
+            proposal_id=proposal_id,
+            order=order_copy,
+            source="purchase",
+            kind="purchase_other",
+            priority_class=P3_NORMAL,
+            urgency=0.0,
+            original_index=idx,
+        )
+
+    def _classify_sell(
+        self,
+        order: List[Any],
+        idx: int,
+        ctx: Any,
+        sell_details: Any,
+        opp_advice: Any,
+    ) -> ProposalCandidate:
+        order_copy = list(order)
+        prod = order_copy[1] if len(order_copy) > 1 else ""
+        day = self._get_day(ctx)
+        hour = self._get_hour(ctx)
+        proposal_id = f"sell:{idx}"
+
+        # 1. Day 29 final liquidation (unsold inventory worth $0)
+        is_day_29 = (day >= 29) or (
+            isinstance(sell_details, dict) and sell_details.get("reason") in ("final_day", "day29_liquidation")
+        )
+        if is_day_29:
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="sell",
+                kind="sell",
+                priority_class=P0_CRITICAL,
+                urgency=2.0,
+                original_index=idx,
+            )
+
+        # 2. Midnight hard-guard (hour >= 22 and high shed total)
+        is_midnight_guard = isinstance(sell_details, dict) and (
+            sell_details.get("urgency") == 2 or sell_details.get("reason") == "midnight_guard"
+        )
+        if is_midnight_guard:
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="sell",
+                kind="sell",
+                priority_class=P0_CRITICAL,
+                urgency=2.0,
+                original_index=idx,
+            )
+
+        # 3. Severe shed pressure / overflow
+        shed_pressure = False
+        if isinstance(sell_details, dict):
+            if sell_details.get("pressure") is True:
+                shed_pressure = True
+            elif sell_details.get("reason") in ("shed_pressure", "overflow"):
+                shed_pressure = True
+        if not shed_pressure:
+            if self._get_shed_total(ctx) >= SHED_SOFT_CAP:
+                shed_pressure = True
+
+        if shed_pressure:
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="sell",
+                kind="sell",
+                priority_class=P0_CRITICAL,
+                urgency=2.0,
+                original_index=idx,
+            )
+
+        # 4. Endgame liquidation before final day (e.g. Day 28)
+        is_endgame = (day >= ENDGAME_START_DAY) or (
+            isinstance(sell_details, dict) and (
+                sell_details.get("endgame") is True or sell_details.get("reason") == "endgame_dump"
+            )
+        )
+        if is_endgame:
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="sell",
+                kind="sell",
+                priority_class=P1_URGENT,
+                urgency=1.0,
+                original_index=idx,
+            )
+
+        # 5. Opponent preemptive sell
+        is_preempt = False
+        if isinstance(sell_details, dict) and isinstance(sell_details.get("candidates"), list):
+            for c in sell_details["candidates"]:
+                if isinstance(c, dict) and c.get("product") == prod:
+                    if c.get("urgency") == 0.99:
+                        is_preempt = True
+                        break
+        if not is_preempt and opp_advice is not None:
+            preempt_list = getattr(opp_advice, "preempt_sell", [])
+            if prod in preempt_list:
+                is_preempt = True
+
+        if is_preempt:
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="sell",
+                kind="sell",
+                priority_class=P1_URGENT,
+                urgency=1.0,
+                original_index=idx,
+            )
+
+        # 6. Normal scheduled sell window
+        cand_urgency_score = 0.0
+        if isinstance(sell_details, dict) and isinstance(sell_details.get("candidates"), list):
+            for c in sell_details["candidates"]:
+                if isinstance(c, dict) and c.get("product") == prod:
+                    cand_urgency_score = float(c.get("urgency", 0.0))
+                    break
+
+        is_normal_window = (hour in SELL_HOUR_SET) or (
+            isinstance(sell_details, dict) and sell_details.get("urgency") == 0
+        )
+        if is_normal_window:
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="sell",
+                kind="sell",
+                priority_class=P3_NORMAL,
+                urgency=min(0.49, cand_urgency_score * 0.1),
+                original_index=idx,
+            )
+
+        # 7. Discretionary off-window sell
+        return ProposalCandidate(
+            proposal_id=proposal_id,
+            order=order_copy,
+            source="sell",
+            kind="sell",
+            priority_class=P4_DISCRETIONARY,
+            urgency=0.0,
+            original_index=idx,
+        )
+
+    # ------------------------------------------------------------------
+    # Core Arbitration Entrypoint
+    # ------------------------------------------------------------------
+    def plan_market(
+        self,
+        ctx: Any,
+        macro_plan: Any = None,
+        purchase_orders: Optional[List[List[Any]]] = None,
+        purchase_ledger: Any = None,
+        sell_orders: Optional[List[List[Any]]] = None,
+        sell_details: Any = None,
+        cap: int = MAX_MARKET_ORDERS,
+        opp_advice: Any = None,
+    ) -> Tuple[List[List[Any]], Dict[str, Any]]:
+        """Arbitrate market orders between purchase and sell queues under per-turn cap.
+
+        Phase 3 Pipeline:
+          1. Validate and Normalize proposals (with deterministic proposal_ids)
+          2. Early Filter (invalid orders fail closed per candidate, deduplicate land, Day 29 block)
+          3. Resolve hard conflicts (starvation feed wheat buy vs wheat sell)
+          4. Assign P0..P4 priority classes & urgency
+          5. Rank globally (priority class strictly dominates)
+          6. Select <= cap and freeze selected set
+          7. Safely sequence selected orders (shed capacity, emergency, Day 29, atomic purchase order)
+          8. Enforce mathematical invariants & compile diagnostics
+        """
+        purchases = [list(o) for o in (purchase_orders or [])]
+        sells = [list(o) for o in (sell_orders or [])]
+        hour = self._get_hour(ctx)
+        day = self._get_day(ctx)
+        effective_cap = max(0, cap)
+        purchases_first = (hour == 0)
+
+        try:
+            return self._plan_market_core(
+                ctx=ctx,
+                macro_plan=macro_plan,
+                purchases=purchases,
+                purchase_ledger=purchase_ledger,
+                sells=sells,
+                sell_details=sell_details,
+                cap=effective_cap,
+                opp_advice=opp_advice,
+                hour=hour,
+                day=day,
+                purchases_first=purchases_first,
+            )
+        except Exception as exc:
+            # Resilient fallback: ensure turn never default-fails on unexpected error
+            if MarketBrain is not None:
+                fallback_orders = MarketBrain.compose(
+                    purchases, sells, cap=effective_cap, purchases_first=purchases_first
+                )
+            else:
+                combined = (purchases + sells) if purchases_first else (sells + purchases)
+                fallback_orders = combined[:effective_cap]
+
+            fallback_diag = {
+                "error": str(exc),
+                "fallback_used": True,
+                "total_candidates": len(purchases) + len(sells),
+                "accepted_orders": [list(o) for o in fallback_orders],
+                "rejected_orders": [],
+                "rejection_reasons": {"unexpected_exception": 1},
+                "changed_from_legacy": False,
+            }
+            return fallback_orders, fallback_diag
+
+    def _plan_market_core(
+        self,
+        ctx: Any,
+        macro_plan: Any,
+        purchases: List[List[Any]],
+        purchase_ledger: Any,
+        sells: List[List[Any]],
+        sell_details: Any,
+        cap: int,
+        opp_advice: Any,
+        hour: int,
+        day: int,
+        purchases_first: bool,
+    ) -> Tuple[List[List[Any]], Dict[str, Any]]:
+        total_candidates = len(purchases) + len(sells)
+        all_rejected: List[ProposalCandidate] = []
+
+        # Step 1: Lightweight structural validation & candidate classification
+        purchase_candidates: List[ProposalCandidate] = []
+        for i, o in enumerate(purchases):
+            is_valid, err = self._validate_proposal(o)
+            if not is_valid:
+                c = ProposalCandidate(
+                    proposal_id=f"purchase:{i}",
+                    order=list(o) if isinstance(o, (list, tuple)) else [o],
+                    source="purchase",
+                    kind="invalid",
+                    priority_class=P4_DISCRETIONARY,
+                    urgency=0.0,
+                    original_index=i,
+                    rejection_reason="invalid_order",
+                    metadata={"validation_error": err},
+                )
+                all_rejected.append(c)
+            else:
+                c = self._classify_purchase(o, i, ctx, macro_plan, purchase_ledger)
+                purchase_candidates.append(c)
+
+        sell_candidates: List[ProposalCandidate] = []
+        for i, o in enumerate(sells):
+            is_valid, err = self._validate_proposal(o)
+            if not is_valid:
+                c = ProposalCandidate(
+                    proposal_id=f"sell:{i}",
+                    order=list(o) if isinstance(o, (list, tuple)) else [o],
+                    source="sell",
+                    kind="invalid",
+                    priority_class=P4_DISCRETIONARY,
+                    urgency=0.0,
+                    original_index=i,
+                    rejection_reason="invalid_order",
+                    metadata={"validation_error": err},
+                )
+                all_rejected.append(c)
+            else:
+                c = self._classify_sell(o, i, ctx, sell_details, opp_advice)
+                sell_candidates.append(c)
+
+        # Step 2: Early Validation & Filtering
+        # 2a. Accidental Duplicate Land Protection (only BUY_LAND is deduplicated)
+        filtered_purchases: List[ProposalCandidate] = []
+        seen_buy_land = False
+        for c in purchase_candidates:
+            if c.kind == "land":
+                if seen_buy_land:
+                    c.rejection_reason = "duplicate"
+                    all_rejected.append(c)
+                    continue
+                seen_buy_land = True
+            filtered_purchases.append(c)
+
+        # 2b. Day 29 Non-Payoff Purchase Block
+        active_purchases: List[ProposalCandidate] = []
+        if day >= 29:
+            for c in filtered_purchases:
+                op = c.order[0] if c.order else ""
+                prod = c.order[1] if len(c.order) > 1 else ""
+                if op in ("BUY_SEED", "BUY_LAND", "BUY_ANIMAL") or (op == "BUY_PRODUCT" and prod == "FERTILIZER"):
+                    c.rejection_reason = "endgame_purchase_block"
+                    all_rejected.append(c)
+                else:
+                    active_purchases.append(c)
+        else:
+            active_purchases = filtered_purchases
+
+        # 2c. Hard Conflict Resolution: Critical Feed Wheat Buy vs Sell Wheat
+        has_critical_wheat_buy = any(
+            c.kind == "feed_wheat" and c.priority_class == P0_CRITICAL
+            for c in active_purchases
+        )
+        active_sells: List[ProposalCandidate] = []
+        for c in sell_candidates:
+            prod = c.order[1] if len(c.order) > 1 else ""
+            if prod == "WHEAT" and has_critical_wheat_buy:
+                c.rejection_reason = "conflict_with_feed_requirement"
+                all_rejected.append(c)
+            else:
+                active_sells.append(c)
+
+        # Step 4: Rank Globally
+        def ranking_key(c: ProposalCandidate) -> Tuple[int, int, float, int]:
+            if purchases_first:
+                source_tiebreak = 0 if c.source == "purchase" else 1
+            else:
+                source_tiebreak = 0 if c.source == "sell" else 1
+
+            return (
+                c.priority_class,
+                source_tiebreak,
+                -c.urgency,
+                c.original_index,
+            )
+
+        active_candidates = active_purchases + active_sells
+        ranked_candidates = sorted(active_candidates, key=ranking_key)
+
+        # Step 5: Select <= cap
+        selected_candidates = ranked_candidates[:cap]
+        excess_candidates = ranked_candidates[cap:]
+
+        for rank, c in enumerate(selected_candidates):
+            c.selection_rank = rank
+
+        for excess_rank, c in enumerate(excess_candidates):
+            c.selection_rank = cap + excess_rank
+            c.rejection_reason = "slot_cap"
+            all_rejected.append(c)
+
+        # Step 6: Explicitly Freeze Selected Set
+        frozen_selected: List[ProposalCandidate] = list(selected_candidates)
+
+        # Step 7: Reorder Selected Set for Safe Execution
+        # Calculate incoming shed load from selected purchases
+        incoming_shed_units = 0
+        for c in frozen_selected:
+            if c.source == "purchase":
+                op = c.order[0] if c.order else ""
+                if op == "BUY_ANIMAL":
+                    incoming_shed_units += int(c.order[2]) if len(c.order) > 2 else 1
+                elif op == "BUY_PRODUCT":
+                    prod = c.order[1] if len(c.order) > 1 else ""
+                    if prod in ("WHEAT", "FERTILIZER"):
+                        incoming_shed_units += int(c.order[2]) if len(c.order) > 2 else 1
+
+        freed_shed_units = 0
+        for c in frozen_selected:
+            if c.source == "sell":
+                op = c.order[0] if c.order else ""
+                if op == "SELL":
+                    freed_shed_units += int(c.order[2]) if len(c.order) > 2 else 1
+
+        current_shed = self._get_shed_total(ctx)
+        shed_overflow_risk = (current_shed + incoming_shed_units > SHED_CAPACITY) and (freed_shed_units > 0)
+
+        shed_pressure = False
+        if isinstance(sell_details, dict):
+            shed_pressure = bool(sell_details.get("pressure") or sell_details.get("urgency") == 2)
+        if not shed_pressure:
+            shed_pressure = (current_shed >= SHED_SOFT_CAP)
+
+        sells_first = shed_pressure or (day >= 29) or shed_overflow_risk
+
+        # Subsets with OrderBuilder purchase relative ordering preserved
+        selected_sells = [c for c in frozen_selected if c.source == "sell"]
+        # Retain OrderBuilder's upstream purchase order (stable sort by original_index)
+        selected_purchases = sorted([c for c in frozen_selected if c.source == "purchase"], key=lambda c: c.original_index)
+
+        if sells_first:
+            execution_candidates = selected_sells + selected_purchases
+        elif purchases_first:
+            execution_candidates = selected_purchases + selected_sells
+        else:
+            execution_candidates = selected_sells + selected_purchases
+
+        for exec_idx, c in enumerate(execution_candidates):
+            c.execution_index = exec_idx
+
+        # Invariant 1: exact payload preservation
+        final_orders = [list(c.order) for c in execution_candidates]
+        assert all(final_orders[i] == execution_candidates[i].order for i in range(len(final_orders)))
+
+        # Invariant 2: proposal IDs exact conservation (no proposal lost or invented during execution reordering)
+        assert sorted(c.proposal_id for c in execution_candidates) == sorted(c.proposal_id for c in frozen_selected)
+
+        # Invariant 3: multiset payload equality (never collapses repeated orders like ["HIRE"], ["HIRE"])
+        assert Counter(tuple(o) for o in final_orders) == Counter(tuple(c.order) for c in frozen_selected)
+
+        # Invariant 4: total conservation
+        assert len(final_orders) + len(all_rejected) == total_candidates
+
+        # Invariant 5: unique proposal ID accounting
+        all_accounted_ids = [c.proposal_id for c in execution_candidates] + [c.proposal_id for c in all_rejected]
+        assert len(all_accounted_ids) == len(set(all_accounted_ids)) == total_candidates
+
+        # Step 8: Telemetry & Diagnostics
+        if MarketBrain is not None:
+            legacy_orders = MarketBrain.compose(
+                purchases, sells, cap=cap, purchases_first=purchases_first
+            )
+        else:
+            combined = (purchases + sells) if purchases_first else (sells + purchases)
+            legacy_orders = combined[:cap]
+
+        changed_from_legacy = (final_orders != legacy_orders)
+
+        # Compute structured change_reasons
+        change_reasons: List[str] = []
+        if any(c.rejection_reason == "conflict_with_feed_requirement" for c in all_rejected):
+            change_reasons.append("conflict_resolution")
+        if any(c.rejection_reason == "endgame_purchase_block" for c in all_rejected):
+            change_reasons.append("endgame_block")
+        if any(c.rejection_reason == "duplicate" for c in all_rejected):
+            change_reasons.append("duplicate_filter")
+        if any(c.rejection_reason == "invalid_order" for c in all_rejected):
+            change_reasons.append("invalid_order_filter")
+
+        legacy_counter = Counter(tuple(o) for o in legacy_orders)
+        final_counter = Counter(tuple(o) for o in final_orders)
+        if legacy_counter != final_counter:
+            p0_p1_present = any(c.priority_class in (P0_CRITICAL, P1_URGENT) for c in execution_candidates)
+            if p0_p1_present:
+                change_reasons.append("priority_override")
+            else:
+                change_reasons.append("slot_reallocation")
+        elif final_orders != legacy_orders:
+            change_reasons.append("execution_reorder")
+
+        # Upstream truncation detection
+        purchase_truncation = bool(purchase_ledger.get("upstream_slots_limited")) if isinstance(purchase_ledger, dict) else False
+        sell_truncation = bool(sell_details.get("upstream_truncation")) if isinstance(sell_details, dict) else False
+        upstream_truncation_detected = purchase_truncation or sell_truncation
+
+        accepted_by_priority = {name: 0 for name in PRIORITY_NAMES.values()}
+        for c in execution_candidates:
+            accepted_by_priority[PRIORITY_NAMES[c.priority_class]] += 1
+
+        rejected_by_priority = {name: 0 for name in PRIORITY_NAMES.values()}
+        for c in all_rejected:
+            rejected_by_priority[PRIORITY_NAMES[c.priority_class]] += 1
+
+        rejection_reasons = dict(Counter(c.rejection_reason for c in all_rejected if c.rejection_reason))
+
+        accepted_details = [
+            {
+                "proposal_id": c.proposal_id,
+                "order": list(c.order),
+                "source": c.source,
+                "kind": c.kind,
+                "priority_class": c.priority_class,
+                "urgency": c.urgency,
+                "selection_rank": c.selection_rank,
+                "execution_index": c.execution_index,
+                "metadata": dict(c.metadata),
+            }
+            for c in execution_candidates
+        ]
+
+        rejected_details = [
+            {
+                "proposal_id": c.proposal_id,
+                "order": list(c.order),
+                "source": c.source,
+                "kind": c.kind,
+                "priority_class": c.priority_class,
+                "urgency": c.urgency,
+                "selection_rank": c.selection_rank,
+                "rejection_reason": c.rejection_reason,
+                "metadata": dict(c.metadata),
+            }
+            for c in all_rejected
+        ]
+
+        order_sources = [
+            {"proposal_id": c.proposal_id, "order": list(c.order), "source": c.source}
+            for c in (purchase_candidates + sell_candidates)
+        ]
+        accepted_sources = [c.source for c in execution_candidates]
+        rejected_sources = [c.source for c in all_rejected]
+
+        # Distinguish changed selection vs execution reorder only
+        legacy_multiset = Counter(tuple(o) for o in legacy_orders)
+        final_multiset = Counter(tuple(o) for o in final_orders)
+        changed_selection = (legacy_multiset != final_multiset)
+        execution_reorder_only = (not changed_selection) and (final_orders != legacy_orders)
+
+        # Check for P0 priority inversions: P0 rejected with slot_cap while lower priority accepted
+        p0_inversions = []
+        accepted_lower = [c for c in execution_candidates if c.priority_class > P0_CRITICAL]
+        for c in all_rejected:
+            if c.priority_class == P0_CRITICAL and c.rejection_reason == "slot_cap":
+                for acc in accepted_lower:
+                    p0_inversions.append({
+                        "rejected_p0": c.proposal_id,
+                        "rejected_order": list(c.order),
+                        "accepted_lower": acc.proposal_id,
+                        "accepted_order": list(acc.order),
+                        "accepted_priority": acc.priority_class,
+                    })
+
+        diagnostics: Dict[str, Any] = {
+            "total_candidates": total_candidates,
+            "purchase_candidates": len(purchases),
+            "sell_candidates": len(sells),
+            "final_selected": len(final_orders),
+            "slot_pressure": (total_candidates > cap),
+            "upstream_truncation_detected": upstream_truncation_detected,
+            "accepted_orders": [list(o) for o in final_orders],
+            "rejected_orders": [list(c.order) for c in all_rejected],
+            "accepted_by_priority": accepted_by_priority,
+            "rejected_by_priority": rejected_by_priority,
+            "rejection_reasons": rejection_reasons,
+            "order_sources": order_sources,
+            "accepted_sources": accepted_sources,
+            "rejected_sources": rejected_sources,
+            "accepted_details": accepted_details,
+            "rejected_details": rejected_details,
+            "slots_used": len(final_orders),
+            "slots_available": cap,
+            "purchases_first": purchases_first,
+            "first_priority": "purchase" if purchases_first else "sell",
+            "legacy_orders": [list(o) for o in legacy_orders],
+            "changed_from_legacy": changed_from_legacy,
+            "changed_selection": changed_selection,
+            "execution_reorder_only": execution_reorder_only,
+            "change_reasons": change_reasons,
+            "p0_priority_inversion_count": len(p0_inversions),
+            "p0_priority_inversions": p0_inversions,
+            "emergency_execution": sells_first,
+            "shed_overflow_risk": shed_overflow_risk,
+        }
+
+        return final_orders, diagnostics

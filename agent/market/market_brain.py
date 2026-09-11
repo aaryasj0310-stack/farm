@@ -139,9 +139,11 @@ class MarketBrain:
             - Normal & shed-relief sales strictly bounded by marginal price keep-fraction (0.90)
             - Floor price ($1) held in normal & shed-relief mode; liquidated only in endgame or urgency 2
         """
-        if max_slots is None:
-            max_slots = int(MAX_MARKET_ORDERS * SELL_SLOT_SHARE)
-        day, hour = ctx["day"], ctx["hour"]
+        # In Phase 3: max_slots=None allows full candidate exposure to CentralPlanner
+        order_budget = max_slots
+        day = ctx["day"]
+        hour = ctx["hour"]
+
         days_left = 29 - day
         endgame = day >= ENDGAME_START_DAY
 
@@ -239,8 +241,9 @@ class MarketBrain:
             return [], {"reason": "no_available_stock", "pressure": pressure,
                         "melon_diagnostics": diag, **diag}
 
-        # Order budget in order slots (engine cap is 10 orders per turn)
-        order_budget = MAX_MARKET_ORDERS if (urgency >= 1 or endgame) else max_slots
+        # Order budget in order slots (engine cap is 10 orders per turn; None = unlimited)
+        if order_budget is not None and (urgency >= 1 or endgame):
+            order_budget = max(order_budget, MAX_MARKET_ORDERS)
 
         # Slicing target for emergency relief
         to_shed = max(0, shed_total - SHED_RESUME_CAP) if urgency == 1 else shed_total
@@ -273,9 +276,11 @@ class MarketBrain:
 
         orders = []
         melon_sold_this_turn = 0
+        truncated_by_slots = False
 
         for c in candidates:
-            if order_budget <= 0:
+            if order_budget is not None and order_budget <= 0:
+                truncated_by_slots = True
                 break
             if not endgame and urgency == 1 and to_shed <= 0:
                 break
@@ -317,11 +322,12 @@ class MarketBrain:
                 melon_sold_this_turn += slice_qty
             if urgency == 1:
                 to_shed -= slice_qty
-            order_budget -= 1
+            if order_budget is not None:
+                order_budget -= 1
 
             # In emergency mode, allow multiple slices of the overflowing product if to_shed remains
-            if not endgame and urgency == 1 and to_shed > 0 and order_budget > 0 and available_stock[prod] > 0:
-                while order_budget > 0 and to_shed > 0 and available_stock[prod] > 0:
+            if not endgame and urgency == 1 and to_shed > 0 and (order_budget is None or order_budget > 0) and available_stock[prod] > 0:
+                while (order_budget is None or order_budget > 0) and to_shed > 0 and available_stock[prod] > 0:
                     if prod in DRIP_PROTECTED_PRODUCTS and not is_floor_exception:
                         keep_f = DRIP_PRICE_KEEP_FRAC.get(prod, 0.90)
                         spot_i = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000.0)))
@@ -342,13 +348,16 @@ class MarketBrain:
                     if prod == "MELON":
                         melon_sold_this_turn += extra_qty
                     to_shed -= extra_qty
-                    order_budget -= 1
+                    if order_budget is not None:
+                        order_budget -= 1
 
         diag = self._build_melon_diagnostics(ctx, melon_market_inv_init, shed, season_melons_sold, melon_sold_this_turn,
                                              is_floor_exception, melon_turn_drip_budget,
                                              delay_set=delay_set)
         return orders, {"candidates": candidates, "days_left": days_left,
                         "endgame": endgame, "pressure": pressure, "urgency": urgency,
+                        "upstream_truncation": truncated_by_slots,
+                        "max_slots": max_slots,
                         "melon_diagnostics": diag, **diag}
 
     # ------------------------------------------------------------------
