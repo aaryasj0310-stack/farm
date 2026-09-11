@@ -122,24 +122,25 @@ def test_arbitration_mode_routing():
 
 
 def test_telemetry_on_equals_telemetry_off_action_determinism():
-    """Verify reading telemetry has zero effect on resulting actions."""
-    reset_agent_state()
-    set_arbitration_mode("central")
-    obs = make_test_obs(day=1, hour=1)
+    """Verify reading telemetry has zero effect on resulting actions in both modes."""
+    for mode in ("historical_stack", "historical_candidates_central"):
+        reset_agent_state()
+        set_arbitration_mode(mode)
+        obs = make_test_obs(day=1, hour=1)
 
-    # Run without reading telemetry
-    res1 = agent(obs)
+        # Run without reading telemetry
+        res1 = agent(obs)
 
-    # Run with reading telemetry in between
-    reset_agent_state()
-    set_arbitration_mode("central")
-    res2 = agent(obs)
-    _ = get_last_turn_telemetry()
-    _ = get_central_planner_diagnostics()
+        # Run with reading telemetry in between
+        reset_agent_state()
+        set_arbitration_mode(mode)
+        res2 = agent(obs)
+        _ = get_last_turn_telemetry()
+        _ = get_central_planner_diagnostics()
 
-    assert res1["market"] == res2["market"]
-    assert res1["farmer"] == res2["farmer"]
-    assert res1["hands"] == res2["hands"]
+        assert res1["market"] == res2["market"]
+        assert res1["farmer"] == res2["farmer"]
+        assert res1["hands"] == res2["hands"]
 
 
 class MockTile:
