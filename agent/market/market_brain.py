@@ -277,11 +277,18 @@ class MarketBrain:
         orders = []
         melon_sold_this_turn = 0
         truncated_by_slots = False
+        omitted_by_slots = []
 
         for c in candidates:
             if order_budget is not None and order_budget <= 0:
                 truncated_by_slots = True
-                break
+                if available_stock.get(c["product"], 0) > 0:
+                    omitted_by_slots.append({
+                        "product": c["product"],
+                        "urgency": c["urgency"],
+                        "available_stock": available_stock.get(c["product"], 0),
+                    })
+                continue
             if not endgame and urgency == 1 and to_shed <= 0:
                 break
             prod = c["product"]
@@ -357,6 +364,7 @@ class MarketBrain:
         return orders, {"candidates": candidates, "days_left": days_left,
                         "endgame": endgame, "pressure": pressure, "urgency": urgency,
                         "upstream_truncation": truncated_by_slots,
+                        "omitted_by_slots": omitted_by_slots,
                         "max_slots": max_slots,
                         "melon_diagnostics": diag, **diag}
 

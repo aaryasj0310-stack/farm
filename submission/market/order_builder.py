@@ -262,13 +262,24 @@ class OrderBuilder:
                     emitted += 1
                 queued["hire"] = emitted
                 if emitted < payload["count"]:
-                    ledger["dropped"].append({"kind": "hire_slots"})
+                    dropped_cnt = payload["count"] - emitted
+                    ledger["dropped"].append({
+                        "kind": "hire_slots",
+                        "count": dropped_cnt,
+                        "cost": float(est),
+                        "tier": tier,
+                    })
             elif kind == "wheat":
                 if take(None):
                     orders.append(["BUY_PRODUCT", "WHEAT", int(payload["n"])])
                     queued["wheat"] = int(payload["n"])
                 else:
-                    ledger["dropped"].append({"kind": "wheat_slots"})
+                    ledger["dropped"].append({
+                        "kind": "wheat_slots",
+                        "n": int(payload["n"]),
+                        "cost": float(est),
+                        "tier": tier,
+                    })
             elif kind == "land":
                 next_quadrant = len(farm.unlocked) + 1
                 assert next_quadrant != 4, "Quadrant 4 (SE) is permanently hard-blocked and must NEVER be purchased!"
@@ -276,19 +287,35 @@ class OrderBuilder:
                     orders.append(["BUY_LAND"])
                     queued["land"] = True
                 else:
-                    ledger["dropped"].append({"kind": "land_slots"})
+                    ledger["dropped"].append({
+                        "kind": "land_slots",
+                        "cost": float(est),
+                        "tier": tier,
+                    })
             elif kind == "seed":
                 if take(None):
                     orders.append(["BUY_SEED", payload["crop"], int(payload["n"])])
                     queued["seed"][payload["crop"]] = int(payload["n"])
                 else:
-                    ledger["dropped"].append({"kind": "seed_slots", "crop": payload["crop"]})
+                    ledger["dropped"].append({
+                        "kind": "seed_slots",
+                        "crop": payload["crop"],
+                        "n": int(payload["n"]),
+                        "cost": float(est),
+                        "tier": tier,
+                    })
             elif kind == "animal":
                 if take(None):
                     orders.append(["BUY_ANIMAL", payload["animal"], int(payload["n"])])
                     queued["animal"][payload["animal"]] = int(payload["n"])
                 else:
-                    ledger["dropped"].append({"kind": "animal_slots", "animal": payload["animal"]})
+                    ledger["dropped"].append({
+                        "kind": "animal_slots",
+                        "animal": payload["animal"],
+                        "n": int(payload["n"]),
+                        "cost": float(est),
+                        "tier": tier,
+                    })
 
         ledger["queued"] = queued
         ledger["orders"] = [list(o) for o in orders]

@@ -144,11 +144,19 @@ _RUNTIME_ARBITRATION_MODE: str = str(_CONFIG_ARBITRATION_MODE).strip().lower()
 
 
 def set_arbitration_mode(mode: str) -> None:
-    """Set arbitration mode ('central', 'legacy', or 'historical_stack'). Intended for benchmarks/tests."""
+    """Set arbitration mode. Intended for benchmarks/tests."""
     global _RUNTIME_ARBITRATION_MODE
     mode_str = str(mode).strip().lower()
-    if mode_str not in ("central", "legacy", "historical_stack"):
-        raise ValueError(f"Invalid arbitration mode '{mode}'. Must be 'central', 'legacy', or 'historical_stack'.")
+    valid_modes = (
+        "central",
+        "legacy",
+        "historical_stack",
+        "historical_candidates_central",
+        "expanded_central",
+        "expanded_legacy",
+    )
+    if mode_str not in valid_modes:
+        raise ValueError(f"Invalid arbitration mode '{mode}'. Must be one of {valid_modes}.")
     _RUNTIME_ARBITRATION_MODE = mode_str
 
 
@@ -576,7 +584,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     # 3. Market layer: purchase intent compilation (domain isolated)
     active_mode = get_arbitration_mode()
-    is_historical = (active_mode == "historical_stack")
+    is_historical = (active_mode in ("historical_stack", "historical_candidates_central"))
     builder_max_slots = 10 if is_historical else None
     sell_max_slots = (10 if ctx["day"] >= 28 else 6) if is_historical else None
 
@@ -618,7 +626,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     market = []
     _cp_diag = None
 
-    if active_mode in ("legacy", "historical_stack"):
+    if active_mode in ("legacy", "historical_stack", "expanded_legacy"):
         try:
             market = legacy_compose_market(
                 purchase_orders, sell_orders, ctx, cap=10
@@ -688,7 +696,9 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         "animal_count": animals_count,
         "wheat_on_hand": shed_wheat,
         "purchase_orders": [list(o) for o in purchase_orders],
+        "purchase_ledger": copy.deepcopy(_ledger) if _ledger else None,
         "sell_orders": [list(o) for o in sell_orders],
+        "sell_details": copy.deepcopy(_d) if _d else None,
         "market": [list(o) for o in market],
         "land_proposed": land_proposed,
         "land_selected": land_selected,

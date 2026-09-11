@@ -333,4 +333,4 @@ SELL_BATCH_SIZES = {
 # ---------------------------------------------------------------- arbitration ----
 # Authoritative arbitration mode: "central" (Phase 3 CentralPlanner) or "legacy" (MarketBrain.compose)
 ARBITRATION_MODE = "central"
-USE_CENTRAL_PLANNER = (ARBITRATION_MODE == "central")
+USE_CENTRAL_PLANNER = (ARBITRATION_MODE in ("central", "historical_candidates_central", "expanded_central"))

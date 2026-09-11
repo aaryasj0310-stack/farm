@@ -212,3 +212,24 @@ def test_historical_stack_mode_routing():
     # Reset back to central
     set_arbitration_mode("central")
 
+
+def test_historical_candidates_central_mode_routing():
+    """Verify historical_candidates_central mode activates pre-CentralPlanner limits AND routes to CentralPlanner."""
+    reset_agent_state()
+    set_arbitration_mode("historical_candidates_central")
+    assert get_arbitration_mode() == "historical_candidates_central"
+
+    obs = make_test_obs(day=0, hour=0)
+    res = agent(obs)
+    assert "market" in res
+    diag = get_central_planner_diagnostics()
+    assert diag is not None
+    assert "total_candidates" in diag
+    tel = get_last_turn_telemetry()
+    assert tel["mode"] == "historical_candidates_central"
+    assert tel["central_planner_diagnostic"] is not None
+
+    # Reset back to central
+    set_arbitration_mode("central")
+
+
