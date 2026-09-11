@@ -686,3 +686,131 @@ class TestCentralPlannerPhase3:
         assert diag["selection_changed_from_legacy"] is False
         assert diag["execution_order_only_changed"] is False
 
+    # ------------------------------------------------------------------
+    # 24. Three-Level Wheat Classification Tests (Cases A - F)
+    # ------------------------------------------------------------------
+    def test_case_a_immediate_starvation_is_p0(self):
+        """Case A: 10 animals, 5 shed wheat -> P0_CRITICAL immediate starvation."""
+        ctx = {"hour": 9, "day": 10, "farm": MockFarm(n_animals=10), "private": MockPrivate(shed={"WHEAT": 5})}
+        buys = [["BUY_PRODUCT", "WHEAT", 10]]
+        orders, diag = self.cp.plan_market(ctx, None, buys, None, [], None, cap=10)
+        assert len(orders) == 1
+        cand = diag["accepted_details"][0]
+        assert cand["priority_class"] == P0_CRITICAL
+        assert cand["metadata"]["wheat_priority"] == P0_CRITICAL
+        assert cand["metadata"]["wheat_priority_reason"] == "immediate_starvation_risk"
+        assert cand["metadata"]["animals"] == 10
+        assert cand["metadata"]["shed_wheat"] == 5
+
+    def test_case_b_exactly_one_feeding_covered_unreplenished_is_p1(self):
+        """Case B: 10 animals, 10 shed wheat, replenishment not safe -> P1_URGENT near-term danger."""
+        ctx = {"hour": 9, "day": 10, "farm": MockFarm(n_animals=10), "private": MockPrivate(shed={"WHEAT": 10})}
+        class MockPlan:
+            diagnostics = {
+                "feed_risk": {
+                    "immediate_shortage": False,
+                    "near_term_shortage": True,
+                    "feed_days_covered": 1,
+                    "next_safe_replenishment_day": None,
+                    "projected_deficit": 30,
+                    "feed_trigger": True,
+                },
+                "projected_wheat_supply": 10,
+            }
+            intents = {"buy_wheat": 10}
+
+        buys = [["BUY_PRODUCT", "WHEAT", 10]]
+        orders, diag = self.cp.plan_market(ctx, MockPlan(), buys, None, [], None, cap=10)
+        assert len(orders) == 1
+        cand = diag["accepted_details"][0]
+        assert cand["priority_class"] == P1_URGENT
+        assert cand["metadata"]["wheat_priority"] == P1_URGENT
+        assert cand["metadata"]["wheat_priority_reason"] == "near_term_feed_danger"
+
+    def test_case_c_comfortable_short_term_buffer_is_p2(self):
+        """Case C: 10 animals, 20+ shed wheat, macro buy_wheat intent > 0 -> P2_STRATEGIC routine buffer."""
+        ctx = {"hour": 9, "day": 10, "farm": MockFarm(n_animals=10), "private": MockPrivate(shed={"WHEAT": 25})}
+        class MockPlan:
+            diagnostics = {
+                "feed_risk": {
+                    "immediate_shortage": False,
+                    "near_term_shortage": False,
+                    "feed_days_covered": 2,
+                    "next_safe_replenishment_day": 12,
+                    "projected_deficit": 0,
+                    "feed_trigger": False,
+                },
+                "projected_wheat_supply": 45,
+            }
+            intents = {"buy_wheat": 15}
+
+        buys = [["BUY_PRODUCT", "WHEAT", 15]]
+        orders, diag = self.cp.plan_market(ctx, MockPlan(), buys, None, [], None, cap=10)
+        assert len(orders) == 1
+        cand = diag["accepted_details"][0]
+        assert cand["priority_class"] == P2_STRATEGIC
+        assert cand["metadata"]["wheat_priority"] == P2_STRATEGIC
+        assert cand["metadata"]["wheat_priority_reason"] == "routine_feed_buffer"
+
+    def test_case_d_routine_wheat_vs_normal_sell(self):
+        """Case D: P2 routine wheat vs normal revenue-generating sell: CentralPlanner does not force wheat ahead."""
+        ctx = {"hour": 9, "day": 10, "farm": MockFarm(n_animals=10), "private": MockPrivate(shed={"WHEAT": 25})}
+        class MockPlan:
+            diagnostics = {
+                "feed_risk": {
+                    "immediate_shortage": False,
+                    "near_term_shortage": False,
+                    "feed_days_covered": 2,
+                    "next_safe_replenishment_day": 12,
+                }
+            }
+            intents = {"buy_wheat": 10}
+
+        buys = [["BUY_PRODUCT", "WHEAT", 10]]
+        sells = [["SELL", "CARROT", 10]]
+        sell_details = {"urgency": 0, "candidates": [{"product": "CARROT", "urgency": 0.5}]}
+
+        # Cap = 1: exactly 1 slot available
+        orders, diag = self.cp.plan_market(ctx, MockPlan(), buys, None, sells, sell_details, cap=1)
+        assert len(orders) == 1
+        assert orders[0] == ["SELL", "CARROT", 10]
+        assert diag["wheat_telemetry"]["wheat_selected_count"] == 0
+        assert diag["wheat_telemetry"]["wheat_rejected_count"] == 1
+        assert diag["wheat_telemetry"]["critical_wheat_rejected_count"] == 0
+
+    def test_case_e_p0_wheat_vs_sell(self):
+        """Case E: P0 starvation wheat still beats lower-priority sell candidates."""
+        ctx = {"hour": 9, "day": 10, "farm": MockFarm(n_animals=10), "private": MockPrivate(shed={"WHEAT": 2})}
+        buys = [["BUY_PRODUCT", "WHEAT", 10]]
+        sells = [["SELL", "CARROT", 10]]
+        sell_details = {"urgency": 0, "candidates": [{"product": "CARROT", "urgency": 0.5}]}
+
+        orders, diag = self.cp.plan_market(ctx, None, buys, None, sells, sell_details, cap=1)
+        assert len(orders) == 1
+        assert orders[0] == ["BUY_PRODUCT", "WHEAT", 10]
+        assert diag["accepted_details"][0]["priority_class"] == P0_CRITICAL
+
+    def test_case_f_p1_wheat_vs_lower_priority_discretionary(self):
+        """Case F: P1 near-term wheat beats lower-priority discretionary actions."""
+        ctx = {"hour": 9, "day": 10, "farm": MockFarm(n_animals=10), "private": MockPrivate(shed={"WHEAT": 10})}
+        class MockPlan:
+            diagnostics = {
+                "feed_risk": {
+                    "immediate_shortage": False,
+                    "near_term_shortage": True,
+                    "feed_days_covered": 1,
+                    "next_safe_replenishment_day": None,
+                }
+            }
+            intents = {"buy_wheat": 10}
+
+        buys = [
+            ["BUY_PRODUCT", "WHEAT", 10],      # P1
+            ["BUY_PRODUCT", "FERTILIZER", 2],  # P3
+        ]
+        orders, diag = self.cp.plan_market(ctx, MockPlan(), buys, None, [], None, cap=1)
+        assert len(orders) == 1
+        assert orders[0] == ["BUY_PRODUCT", "WHEAT", 10]
+        assert diag["accepted_details"][0]["priority_class"] == P1_URGENT
+
+

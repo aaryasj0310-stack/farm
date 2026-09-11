@@ -311,46 +311,64 @@ class CentralPlanner:
             if prod == "WHEAT":
                 n_animals = self._get_existing_animals_count(ctx)
                 wheat_have = self._get_wheat_in_shed(ctx)
-                if n_animals > 0 and wheat_have < n_animals:
-                    return ProposalCandidate(
-                        proposal_id=proposal_id,
-                        order=order_copy,
-                        source="purchase",
-                        kind="feed_wheat",
-                        priority_class=P0_CRITICAL,
-                        urgency=2.0,
-                        original_index=idx,
-                    )
-                elif n_animals > 0 and wheat_have < n_animals * FEED_WHEAT_BUFFER_DAYS:
-                    return ProposalCandidate(
-                        proposal_id=proposal_id,
-                        order=order_copy,
-                        source="purchase",
-                        kind="feed_wheat",
-                        priority_class=P1_URGENT,
-                        urgency=1.0,
-                        original_index=idx,
-                    )
-                elif macro_plan and hasattr(macro_plan, "intents") and macro_plan.intents.get("buy_wheat", 0) > 0:
-                    return ProposalCandidate(
-                        proposal_id=proposal_id,
-                        order=order_copy,
-                        source="purchase",
-                        kind="feed_wheat",
-                        priority_class=P1_URGENT,
-                        urgency=1.0,
-                        original_index=idx,
-                    )
+
+                # Check authoritative feed_risk from macro_plan diagnostics if available
+                feed_risk = {}
+                if macro_plan and hasattr(macro_plan, "diagnostics") and isinstance(macro_plan.diagnostics, dict):
+                    feed_risk = macro_plan.diagnostics.get("feed_risk", {})
+
+                macro_buy_wheat_intent = 0
+                if macro_plan and hasattr(macro_plan, "intents") and isinstance(macro_plan.intents, dict):
+                    macro_buy_wheat_intent = int(macro_plan.intents.get("buy_wheat", 0))
+
+                immediate_shortage = feed_risk.get("immediate_shortage")
+                if immediate_shortage is None:
+                    immediate_shortage = (n_animals > 0 and wheat_have < n_animals)
+
+                near_term_shortage = feed_risk.get("near_term_shortage")
+                if near_term_shortage is None:
+                    feed_days_covered = (wheat_have // n_animals) if n_animals > 0 else 999
+                    near_term_shortage = (n_animals > 0 and not immediate_shortage and feed_days_covered < 2)
+
+                if immediate_shortage:
+                    prio = P0_CRITICAL
+                    urg = 2.0
+                    reason = "immediate_starvation_risk"
+                elif near_term_shortage:
+                    prio = P1_URGENT
+                    urg = 1.0
+                    reason = "near_term_feed_danger"
                 else:
-                    return ProposalCandidate(
-                        proposal_id=proposal_id,
-                        order=order_copy,
-                        source="purchase",
-                        kind="feed_wheat",
-                        priority_class=P2_STRATEGIC,
-                        urgency=0.5,
-                        original_index=idx,
-                    )
+                    prio = P2_STRATEGIC
+                    urg = 0.5
+                    reason = "routine_feed_buffer" if macro_buy_wheat_intent > 0 else "routine_wheat_purchase"
+
+                projected_supply = feed_risk.get(
+                    "projected_wheat_supply",
+                    macro_plan.diagnostics.get("projected_wheat_supply") if (macro_plan and hasattr(macro_plan, "diagnostics")) else None,
+                )
+
+                meta = {
+                    "wheat_priority": prio,
+                    "wheat_priority_reason": reason,
+                    "animals": n_animals,
+                    "shed_wheat": wheat_have,
+                    "projected_feed_supply": projected_supply,
+                    "projected_feed_deficit": feed_risk.get("projected_deficit", None),
+                    "near_term_feed_risk": near_term_shortage,
+                    "macro_buy_wheat_intent": macro_buy_wheat_intent,
+                }
+
+                return ProposalCandidate(
+                    proposal_id=proposal_id,
+                    order=order_copy,
+                    source="purchase",
+                    kind="feed_wheat",
+                    priority_class=prio,
+                    urgency=urg,
+                    original_index=idx,
+                    metadata=meta,
+                )
             elif prod == "FERTILIZER":
                 return ProposalCandidate(
                     proposal_id=proposal_id,
@@ -573,7 +591,7 @@ class CentralPlanner:
                 order=order_copy,
                 source="sell",
                 kind="sell",
-                priority_class=P3_NORMAL,
+                priority_class=P2_STRATEGIC,
                 urgency=min(0.49, cand_urgency_score * 0.1),
                 original_index=idx,
             )
@@ -620,7 +638,7 @@ class CentralPlanner:
         hour = self._get_hour(ctx)
         day = self._get_day(ctx)
         effective_cap = max(0, cap)
-        purchases_first = (hour == 0)
+        purchases_first = (hour in (0, 1))
 
         try:
             return self._plan_market_core(
@@ -964,11 +982,48 @@ class CentralPlanner:
                         "accepted_priority": acc.priority_class,
                     })
 
+        # Wheat-specific telemetry compilation
+        all_proposals = execution_candidates + all_rejected
+        wheat_proposals = [c for c in all_proposals if c.kind == "feed_wheat"]
+        wheat_P0_count = sum(1 for c in wheat_proposals if c.priority_class == P0_CRITICAL)
+        wheat_P1_count = sum(1 for c in wheat_proposals if c.priority_class == P1_URGENT)
+        wheat_P2_count = sum(1 for c in wheat_proposals if c.priority_class == P2_STRATEGIC)
+        wheat_selected_count = sum(1 for c in execution_candidates if c.kind == "feed_wheat")
+        wheat_rejected_count = sum(1 for c in all_rejected if c.kind == "feed_wheat")
+        critical_wheat_rejected_count = sum(1 for c in all_rejected if c.kind == "feed_wheat" and c.priority_class == P0_CRITICAL)
+
+        # Check if routine wheat preempted any sells
+        has_routine_wheat_accepted = any(c.kind == "feed_wheat" and c.priority_class >= P2_STRATEGIC for c in execution_candidates)
+        sells_rejected_by_cap = sum(1 for c in all_rejected if c.source == "sell" and c.rejection_reason == "slot_cap")
+        routine_wheat_preempted_sell_count = sells_rejected_by_cap if has_routine_wheat_accepted else 0
+
+        wheat_telemetry = {
+            "wheat_P0_count": wheat_P0_count,
+            "wheat_P1_count": wheat_P1_count,
+            "wheat_P2_count": wheat_P2_count,
+            "wheat_selected_count": wheat_selected_count,
+            "wheat_rejected_count": wheat_rejected_count,
+            "critical_wheat_rejected_count": critical_wheat_rejected_count,
+            "routine_wheat_preempted_sell_count": routine_wheat_preempted_sell_count,
+            "proposals": [
+                {
+                    "proposal_id": c.proposal_id,
+                    "order": list(c.order),
+                    "priority_class": c.priority_class,
+                    "selected": (c in execution_candidates),
+                    "rejection_reason": c.rejection_reason,
+                    **c.metadata,
+                }
+                for c in wheat_proposals
+            ],
+        }
+
         diagnostics: Dict[str, Any] = {
             "total_candidates": total_candidates,
             "purchase_candidates": len(purchases),
             "sell_candidates": len(sells),
             "final_selected": len(final_orders),
+            "wheat_telemetry": wheat_telemetry,
             "slot_pressure": (total_candidates > cap),
             "upstream_truncation_detected": upstream_truncation_detected,
             "accepted_orders": [list(o) for o in final_orders],

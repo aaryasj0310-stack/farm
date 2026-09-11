@@ -643,12 +643,51 @@ class MacroPlanner:
 
         # Expose authoritative feed sustainability diagnostics
         projected_feed_demand = total_animals_planned * feeding_days_left
+
+        # Compute authoritative feed risk metadata for CentralPlanner arbitration
+        immediate_shortage = (n_animals > 0 and wheat_have < n_animals)
+        next_wheat_harvest_day = None
+        wheat_tiles = [t for t in farm.iter_tiles() if getattr(t, "is_plant", False) and getattr(t, "crop", None) == "WHEAT"]
+        for t in wheat_tiles:
+            placed = getattr(t, "placed_day", None)
+            if placed is not None:
+                matures = placed + 2
+                if matures >= day:
+                    if next_wheat_harvest_day is None or matures < next_wheat_harvest_day:
+                        next_wheat_harvest_day = matures
+
+        feed_days_covered = (wheat_have // n_animals) if n_animals > 0 else 999
+        replenishment_safe = (
+            next_wheat_harvest_day is not None and
+            next_wheat_harvest_day <= (day + feed_days_covered)
+        )
+        near_term_shortage = (
+            n_animals > 0 and
+            not immediate_shortage and
+            feed_days_covered < 2 and
+            not replenishment_safe
+        )
+
+        feed_risk = {
+            "immediate_shortage": immediate_shortage,
+            "near_term_shortage": near_term_shortage,
+            "feed_days_covered": feed_days_covered,
+            "next_safe_replenishment_day": next_wheat_harvest_day,
+            "projected_deficit": deficit,
+            "feed_trigger": trigger,
+            "wheat_have": wheat_have,
+            "n_animals": n_animals,
+            "macro_buy_wheat_intent": int(buy_wheat),
+            "projected_wheat_supply": projected_feed_supply,
+        }
+
         plan.diagnostics.update({
             "projected_wheat_supply": projected_feed_supply,
             "projected_wheat_demand": projected_feed_demand,
             "sustainable_herd_size": sustainable,
             "requested_herd_size": requested_herd_size,
             "final_feed_capped_herd_size": final_feed_capped_herd_size,
+            "feed_risk": feed_risk,
         })
 
         # structure build queue: use specific build_op
@@ -745,6 +784,8 @@ class MacroPlanner:
 
                 buy_wheat = min(wheat_needed - wheat_have, int(max_wheat_budget // 25))
         wheat_feed_cost = buy_wheat * 25
+        if "feed_risk" in plan.diagnostics:
+            plan.diagnostics["feed_risk"]["macro_buy_wheat_intent"] = int(buy_wheat)
 
         available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost - animal_cost)
 

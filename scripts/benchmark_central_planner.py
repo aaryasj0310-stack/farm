@@ -319,6 +319,16 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
     critical_wheat_proposed_count = 0
     critical_wheat_selected_count = 0
 
+    wheat_P0_count = 0
+    wheat_P1_count = 0
+    wheat_P2_count = 0
+    wheat_selected_count = 0
+    wheat_rejected_count = 0
+    critical_wheat_rejected_count = 0
+    routine_wheat_preempted_sell_count = 0
+    total_sell_orders = 0
+    total_sell_revenue = 0.0
+
     # Suppressed proposals tracking (upstream slot caps)
     suppressed_counts: Dict[str, int] = Counter()
     suppressed_proposals: List[Dict[str, Any]] = []
@@ -327,6 +337,15 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
     lost_opportunities: List[Dict[str, Any]] = []
 
     for t in turn_telemetry_records:
+        # Track executed sells and revenue
+        for m in t.get("market", []):
+            if len(m) > 0 and m[0] == "SELL":
+                total_sell_orders += 1
+                prod = m[1] if len(m) > 1 else ""
+                qty = int(m[2]) if len(m) > 2 else 0
+                px = market_price(prod, t.get("market_inventory_before", {}).get(prod, 10000.0))
+                total_sell_revenue += px * qty
+
         n_p = len(t.get("purchase_orders", []))
         n_s = len(t.get("sell_orders", []))
         c_tot = n_p + n_s
@@ -451,12 +470,23 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
             for p, count in diag.get("rejected_by_priority", {}).items():
                 rejected_by_priority[p] += count
 
+        wt = t.get("wheat_telemetry") or (diag.get("wheat_telemetry") if diag else None)
+        if wt:
+            wheat_P0_count += wt.get("wheat_P0_count", 0)
+            wheat_P1_count += wt.get("wheat_P1_count", 0)
+            wheat_P2_count += wt.get("wheat_P2_count", 0)
+            wheat_selected_count += wt.get("wheat_selected_count", 0)
+            wheat_rejected_count += wt.get("wheat_rejected_count", 0)
+            critical_wheat_rejected_count += wt.get("critical_wheat_rejected_count", 0)
+            routine_wheat_preempted_sell_count += wt.get("routine_wheat_preempted_sell_count", 0)
+
     # Section 15 Benchmark Assertions for Central Planner runs
     if mode in ("central", "historical_candidates_central", "expanded_central"):
         assert all(len(t.get("market", [])) <= 10 for t in turn_telemetry_records), "Market orders exceeded 10"
         assert p0_priority_inversion_count == 0, f"Found {p0_priority_inversion_count} P0 priority inversions"
         assert fallback_count == 0, f"CentralPlanner fallback used {fallback_count} times"
         assert invalid_proposal_count == 0, f"Found {invalid_proposal_count} invalid proposals"
+        assert critical_wheat_rejected_count == 0, f"Found {critical_wheat_rejected_count} critical wheat rejections"
 
     slot_pressure_changed_selection_rate = (
         slot_pressure_changed_selection_turns / max(1, turns_with_slot_pressure)
@@ -496,6 +526,15 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
         "animal_purchases": animal_purchases,
         "seed_purchases": seed_purchases,
         "critical_wheat_purchases": critical_wheat_purchases,
+        "wheat_P0_count": wheat_P0_count,
+        "wheat_P1_count": wheat_P1_count,
+        "wheat_P2_count": wheat_P2_count,
+        "wheat_selected_count": wheat_selected_count,
+        "wheat_rejected_count": wheat_rejected_count,
+        "critical_wheat_rejected_count": critical_wheat_rejected_count,
+        "routine_wheat_preempted_sell_count": routine_wheat_preempted_sell_count,
+        "total_sell_orders": total_sell_orders,
+        "total_sell_revenue": round(total_sell_revenue, 2),
         "crop_counts": crop_counts,
         "feed_failures": feed_failures,
         "shed_overflow_events": shed_overflow_events,
@@ -560,6 +599,18 @@ class CentralPlannerBenchmark:
                             "seed": s, "opponent": opp, "architecture": arch,
                             "mode": arch, "agent_dir": AGENT_DIR, "repo_root": REPO_ROOT
                         })
+        elif self.benchmark_type == "wheat_fix":
+            arch_list = [
+                "historical_stack",
+                "historical_candidates_central",
+            ]
+            for opp in self.opponents:
+                for s in self.seeds:
+                    for arch in arch_list:
+                        tasks.append({
+                            "seed": s, "opponent": opp, "architecture": arch,
+                            "mode": arch, "agent_dir": AGENT_DIR, "repo_root": REPO_ROOT
+                        })
         else:
             for opp in self.opponents:
                 for s in self.seeds:
@@ -572,7 +623,11 @@ class CentralPlannerBenchmark:
                         "mode": "central", "agent_dir": AGENT_DIR, "repo_root": REPO_ROOT
                     })
 
-        desc = f"Four-Way Matrix (4 architectures)" if self.benchmark_type == "four_way" else f"Paired A/B [{self.baseline_mode} vs central]"
+        desc = (
+            "Four-Way Matrix (4 architectures)" if self.benchmark_type == "four_way"
+            else "Wheat Fix Benchmark (A vs D2)" if self.benchmark_type == "wheat_fix"
+            else f"Paired A/B [{self.baseline_mode} vs central]"
+        )
         print(f"Starting {desc}: {len(self.seeds)} seeds x {len(self.opponents)} opponents = {len(tasks)} runs...")
         start_time = time.time()
 
@@ -686,17 +741,24 @@ def save_four_way_artifacts(raw_results: Dict[Tuple, Dict[str, Any]], csv_path: 
     print(f"Artifacts saved:\n  CSV:  {csv_path}\n  JSON: {json_path}")
 
 
-def compute_four_way_statistics(raw_results: Dict[Tuple, Dict[str, Any]], seeds: List[int], opponents: List[str]) -> Dict[str, Any]:
+def compute_four_way_statistics(
+    raw_results: Dict[Tuple, Dict[str, Any]],
+    seeds: List[int],
+    opponents: List[str],
+    arch_list: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     """Compute comprehensive four-way architecture statistics, paired comparisons, and capital audits."""
-    arch_list = [
-        "historical_stack",
-        "expanded_legacy",
-        "expanded_central",
-        "historical_candidates_central",
-    ]
+    if arch_list is None:
+        arch_list = [
+            "historical_stack",
+            "expanded_legacy",
+            "expanded_central",
+            "historical_candidates_central",
+        ]
 
     arch_summaries = {}
     capital_summaries = {}
+    wheat_summaries = {}
 
     for arch in arch_list:
         scores = [raw_results[(s, opp, arch)]["final_money"] for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
@@ -740,6 +802,33 @@ def compute_four_way_statistics(raw_results: Dict[Tuple, Dict[str, Any]], seeds:
             "mean_capital_efficiency": round(float(np.mean(effs)), 4),
         }
 
+        # Wheat & sell summaries
+        p0_cnts = [raw_results[(s, opp, arch)].get("wheat_P0_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        p1_cnts = [raw_results[(s, opp, arch)].get("wheat_P1_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        p2_cnts = [raw_results[(s, opp, arch)].get("wheat_P2_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        w_sel = [raw_results[(s, opp, arch)].get("wheat_selected_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        w_rej = [raw_results[(s, opp, arch)].get("wheat_rejected_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        w_crit_rej = [raw_results[(s, opp, arch)].get("critical_wheat_rejected_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        w_preempt = [raw_results[(s, opp, arch)].get("routine_wheat_preempted_sell_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        sell_orders = [raw_results[(s, opp, arch)].get("total_sell_orders", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        sell_revs = [raw_results[(s, opp, arch)].get("total_sell_revenue", 0.0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        feed_fails = [raw_results[(s, opp, arch)].get("feed_failures", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        p0_invs = [raw_results[(s, opp, arch)].get("p0_priority_inversion_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+
+        wheat_summaries[arch] = {
+            "mean_wheat_P0": round(float(np.mean(p0_cnts)), 2),
+            "mean_wheat_P1": round(float(np.mean(p1_cnts)), 2),
+            "mean_wheat_P2": round(float(np.mean(p2_cnts)), 2),
+            "mean_wheat_selected": round(float(np.mean(w_sel)), 2),
+            "mean_wheat_rejected": round(float(np.mean(w_rej)), 2),
+            "total_critical_wheat_rejected": int(np.sum(w_crit_rej)),
+            "total_routine_wheat_preempted_sells": int(np.sum(w_preempt)),
+            "mean_sell_orders": round(float(np.mean(sell_orders)), 2),
+            "mean_sell_revenue": round(float(np.mean(sell_revs)), 2),
+            "total_feed_failures": int(np.sum(feed_fails)),
+            "total_p0_inversions": int(np.sum(p0_invs)),
+        }
+
     # Paired comparisons
     def get_paired_stats(arch_x, arch_y):
         deltas = []
@@ -749,9 +838,14 @@ def compute_four_way_statistics(raw_results: Dict[Tuple, Dict[str, Any]], seeds:
                 ry = raw_results.get((s, opp, arch_y))
                 if rx and ry:
                     deltas.append(rx["final_money"] - ry["final_money"])
+
+        if not deltas:
+            return {}
+
         darr = np.array(deltas)
         sorted_d = np.sort(darr)
         b10_cnt = max(1, int(len(darr) * 0.10))
+
         return {
             "comparison": f"{arch_x} vs {arch_y}",
             "mean_delta": round(float(np.mean(darr)), 2),
@@ -769,42 +863,49 @@ def compute_four_way_statistics(raw_results: Dict[Tuple, Dict[str, Any]], seeds:
             "ties": int(np.sum(darr == 0)),
         }
 
-    paired_comparisons = {
-        "D_vs_A": get_paired_stats("historical_candidates_central", "historical_stack"),
-        "D_vs_C": get_paired_stats("historical_candidates_central", "expanded_central"),
-        "C_vs_B": get_paired_stats("expanded_central", "expanded_legacy"),
-    }
+    paired_comparisons = {}
+    if "historical_candidates_central" in arch_list and "historical_stack" in arch_list:
+        paired_comparisons["D_vs_A"] = get_paired_stats("historical_candidates_central", "historical_stack")
+    if "historical_candidates_central" in arch_list and "expanded_central" in arch_list:
+        paired_comparisons["D_vs_C"] = get_paired_stats("historical_candidates_central", "expanded_central")
+    if "expanded_central" in arch_list and "expanded_legacy" in arch_list:
+        paired_comparisons["C_vs_B"] = get_paired_stats("expanded_central", "expanded_legacy")
 
     # Overspending analysis: expanded_central (C) vs historical_candidates_central (D)
-    diff_hires = capital_summaries["expanded_central"]["mean_spend_hires"] - capital_summaries["historical_candidates_central"]["mean_spend_hires"]
-    diff_seeds = capital_summaries["expanded_central"]["mean_spend_seeds"] - capital_summaries["historical_candidates_central"]["mean_spend_seeds"]
-    diff_wheat = capital_summaries["expanded_central"]["mean_spend_wheat"] - capital_summaries["historical_candidates_central"]["mean_spend_wheat"]
-    diff_animals = capital_summaries["expanded_central"]["mean_spend_animals"] - capital_summaries["historical_candidates_central"]["mean_spend_animals"]
-    diff_land = capital_summaries["expanded_central"]["mean_spend_land"] - capital_summaries["historical_candidates_central"]["mean_spend_land"]
-    diff_total = capital_summaries["expanded_central"]["mean_total_spend"] - capital_summaries["historical_candidates_central"]["mean_total_spend"]
+    overspending_analysis = {}
+    if "expanded_central" in capital_summaries and "historical_candidates_central" in capital_summaries:
+        diff_hires = capital_summaries["expanded_central"]["mean_spend_hires"] - capital_summaries["historical_candidates_central"]["mean_spend_hires"]
+        diff_seeds = capital_summaries["expanded_central"]["mean_spend_seeds"] - capital_summaries["historical_candidates_central"]["mean_spend_seeds"]
+        diff_wheat = capital_summaries["expanded_central"]["mean_spend_wheat"] - capital_summaries["historical_candidates_central"]["mean_spend_wheat"]
+        diff_animals = capital_summaries["expanded_central"]["mean_spend_animals"] - capital_summaries["historical_candidates_central"]["mean_spend_animals"]
+        diff_land = capital_summaries["expanded_central"]["mean_spend_land"] - capital_summaries["historical_candidates_central"]["mean_spend_land"]
+        diff_total = capital_summaries["expanded_central"]["mean_total_spend"] - capital_summaries["historical_candidates_central"]["mean_total_spend"]
 
-    overspending_analysis = {
-        "additional_spend_hires": round(diff_hires, 2),
-        "additional_spend_seeds": round(diff_seeds, 2),
-        "additional_spend_wheat": round(diff_wheat, 2),
-        "additional_spend_animals": round(diff_animals, 2),
-        "additional_spend_land": round(diff_land, 2),
-        "additional_total_spend": round(diff_total, 2),
-    }
+        overspending_analysis = {
+            "additional_spend_hires": round(diff_hires, 2),
+            "additional_spend_seeds": round(diff_seeds, 2),
+            "additional_spend_wheat": round(diff_wheat, 2),
+            "additional_spend_animals": round(diff_animals, 2),
+            "additional_spend_land": round(diff_land, 2),
+            "additional_total_spend": round(diff_total, 2),
+        }
 
     # Suppression analysis: historical_candidates_central (D)
-    total_suppressed_proposals = sum(
-        raw_results[(s, opp, "historical_candidates_central")]["suppressed_candidates_total"]
-        for s in seeds for opp in opponents if (s, opp, "historical_candidates_central") in raw_results
-    )
-    suppression_analysis = {
-        "total_suppressed_proposals_D": total_suppressed_proposals,
-        "mean_suppressed_per_match_D": round(total_suppressed_proposals / max(1, len(seeds) * len(opponents)), 2),
-    }
+    suppression_analysis = {}
+    if "historical_candidates_central" in arch_list:
+        total_suppressed_proposals = sum(
+            raw_results[(s, opp, "historical_candidates_central")]["suppressed_candidates_total"]
+            for s in seeds for opp in opponents if (s, opp, "historical_candidates_central") in raw_results
+        )
+        suppression_analysis = {
+            "total_suppressed_proposals_D": total_suppressed_proposals,
+            "mean_suppressed_per_match_D": round(total_suppressed_proposals / max(1, len(seeds) * len(opponents)), 2),
+        }
 
     return {
         "architecture_summaries": arch_summaries,
         "capital_summaries": capital_summaries,
+        "wheat_summaries": wheat_summaries,
         "paired_comparisons": paired_comparisons,
         "overspending_analysis": overspending_analysis,
         "suppression_analysis": suppression_analysis,
@@ -812,9 +913,9 @@ def compute_four_way_statistics(raw_results: Dict[Tuple, Dict[str, Any]], seeds:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Kaggriculture Central Planner Four-Way / Paired Benchmark")
-    parser.add_argument("--benchmark", type=str, choices=["four_way", "arbitration_only", "full_stack"], default="four_way",
-                        help="Benchmark type: 'four_way' (all 4 matrix cells), 'arbitration_only', or 'full_stack'")
+    parser = argparse.ArgumentParser(description="Kaggriculture Central Planner Four-Way / Wheat Fix / Paired Benchmark")
+    parser.add_argument("--benchmark", type=str, choices=["four_way", "wheat_fix", "arbitration_only", "full_stack"], default="wheat_fix",
+                        help="Benchmark type: 'wheat_fix' (A vs D2), 'four_way' (all 4 cells), 'arbitration_only', or 'full_stack'")
     parser.add_argument("--seeds", type=int, default=25, help="Number of seeds to evaluate (default 25)")
     parser.add_argument("--start-seed", type=int, default=101, help="Starting seed number (default 101)")
     parser.add_argument("--opponents", nargs="+", default=["random", "starter"], help="Opponent policies to test")
@@ -825,7 +926,117 @@ if __name__ == "__main__":
 
     seed_list = list(range(args.start_seed, args.start_seed + args.seeds))
 
-    if args.benchmark == "four_way":
+    PREVIOUS_D_BASELINE = 68003.82
+
+    if args.benchmark == "wheat_fix":
+        csv_path = args.csv or os.path.join(REPO_ROOT, "artifacts", "central_planner_wheat_fix.csv")
+        json_path = args.json or os.path.join(REPO_ROOT, "artifacts", "central_planner_wheat_fix.json")
+
+        benchmark = CentralPlannerBenchmark(
+            seeds=seed_list,
+            opponents=args.opponents,
+            benchmark_type="wheat_fix",
+            max_workers=args.workers,
+        )
+        res = benchmark.run()
+        stats = compute_four_way_statistics(
+            res["raw_results"], seed_list, args.opponents,
+            arch_list=["historical_stack", "historical_candidates_central"],
+        )
+        stats["previous_d_baseline"] = PREVIOUS_D_BASELINE
+        save_four_way_artifacts(res["raw_results"], csv_path, json_path, stats)
+
+        arch_sums = stats["architecture_summaries"]
+        cap_sums = stats["capital_summaries"]
+        wheat_sums = stats["wheat_summaries"]
+        pairs = stats["paired_comparisons"]
+        p_d_vs_a = pairs.get("D_vs_A", {})
+
+        d2_mean = arch_sums["historical_candidates_central"]["mean"]
+        d2_median = arch_sums["historical_candidates_central"]["median"]
+        a_mean = arch_sums["historical_stack"]["mean"]
+        a_median = arch_sums["historical_stack"]["median"]
+        d2_minus_prev_d = d2_mean - PREVIOUS_D_BASELINE
+
+        print("\n=========================================================================================")
+        print("                     WHEAT PRIORITY FIX BENCHMARK (A vs D2)                              ")
+        print("=========================================================================================")
+        print(f"{'Architecture':<32} | {'Mean':>10} | {'Median':>10} | {'Std':>8} | {'Min':>10} | {'Max':>10} | {'B10 Mean':>10}")
+        print("-" * 105)
+        for arch in ["historical_stack", "historical_candidates_central"]:
+            s = arch_sums[arch]
+            lbl = "A. historical_stack" if arch == "historical_stack" else "D2. hist_candidates_central"
+            print(f"{lbl:<32} | ${s['mean']:>9,.2f} | ${s['median']:>9,.2f} | ${s['std']:>7,.2f} | ${s['min']:>9,.2f} | ${s['max']:>9,.2f} | ${s['bottom_10_mean']:>9,.2f}")
+        print("-" * 105)
+
+        print("\n=========================================================================================")
+        print("                              DECISION GATE COMPARISONS                                  ")
+        print("=========================================================================================")
+        print(f"--- Primary Gate: D2 vs A (Historical Candidates + Corrected Central vs Historical Stack) ---")
+        print(f"  Mean Delta (D2 - A):      ${p_d_vs_a.get('mean_delta', 0.0):>+10,.2f}")
+        print(f"  Median Delta:             ${p_d_vs_a.get('median_delta', 0.0):>+10,.2f}")
+        print(f"  Delta Range:              Min ${p_d_vs_a.get('min_delta', 0.0):>+10,.2f} | Max ${p_d_vs_a.get('max_delta', 0.0):>+10,.2f}")
+        print(f"  Percentiles:              P10: ${p_d_vs_a.get('p10_delta', 0.0):>+9,.2f} | P25: ${p_d_vs_a.get('p25_delta', 0.0):>+9,.2f} | P75: ${p_d_vs_a.get('p75_delta', 0.0):>+9,.2f} | P90: ${p_d_vs_a.get('p90_delta', 0.0):>+9,.2f}")
+        print(f"  Bottom 10% Mean Delta:    ${p_d_vs_a.get('bottom_10_mean_delta', 0.0):>+10,.2f}")
+        print(f"  Win / Loss / Tie (D2 vs A): {p_d_vs_a.get('x_wins', 0)} / {p_d_vs_a.get('y_wins', 0)} / {p_d_vs_a.get('ties', 0)}")
+        print()
+        print(f"--- Improvement Gate: D2 vs Previous D (Effect of Wheat Priority Fix) ---")
+        print(f"  Previous D Mean:          ${PREVIOUS_D_BASELINE:>10,.2f}")
+        print(f"  Corrected D2 Mean:        ${d2_mean:>10,.2f}")
+        print(f"  Lift over Previous D:     ${d2_minus_prev_d:>+10,.2f}")
+        print()
+
+        print("=========================================================================================")
+        print("                             WHEAT TELEMETRY & FEED SAFETY                               ")
+        print("=========================================================================================")
+        print(f"{'Architecture':<32} | {'P0':>5} | {'P1':>5} | {'P2':>5} | {'Sel':>5} | {'Rej':>5} | {'CritRej':>7} | {'PreemptSell':>11} | {'FeedFail':>8} | {'P0Inv':>5}")
+        print("-" * 110)
+        for arch in ["historical_stack", "historical_candidates_central"]:
+            w = wheat_sums[arch]
+            lbl = "A. historical_stack" if arch == "historical_stack" else "D2. hist_candidates_central"
+            print(f"{lbl:<32} | {w['mean_wheat_P0']:>5.1f} | {w['mean_wheat_P1']:>5.1f} | {w['mean_wheat_P2']:>5.1f} | {w['mean_wheat_selected']:>5.1f} | {w['mean_wheat_rejected']:>5.1f} | {w['total_critical_wheat_rejected']:>7d} | {w['total_routine_wheat_preempted_sells']:>11d} | {w['total_feed_failures']:>8d} | {w['total_p0_inversions']:>5d}")
+        print("-" * 110)
+
+        print("\n=========================================================================================")
+        print("                             CAPITAL & REVENUE REALIZATION                               ")
+        print("=========================================================================================")
+        print(f"{'Architecture':<32} | {'Total Spend':>11} | {'Wheat Spend':>11} | {'Seed Spend':>10} | {'Sell Orders':>11} | {'Sell Rev':>10} | {'Avg Cash':>9} | {'Eff':>6}")
+        print("-" * 115)
+        for arch in ["historical_stack", "historical_candidates_central"]:
+            c = cap_sums[arch]
+            w = wheat_sums[arch]
+            lbl = "A. historical_stack" if arch == "historical_stack" else "D2. hist_candidates_central"
+            print(f"{lbl:<32} | ${c['mean_total_spend']:>10,.2f} | ${c['mean_spend_wheat']:>10,.2f} | ${c['mean_spend_seeds']:>9,.2f} | {w['mean_sell_orders']:>11.1f} | ${w['mean_sell_revenue']:>9,.2f} | ${c['mean_average_cash']:>8,.2f} | {c['mean_capital_efficiency']:>6.2f}")
+        print("-" * 115)
+        print()
+
+        print("\n=========================================================================================")
+        print("                               KEY PAIRED COMPARISONS                                    ")
+        print("=========================================================================================")
+        for key, p in [
+            ("D2 - A: Historical Candidates + Corrected Central vs Historical Stack", pairs["D_vs_A"]),
+        ]:
+            print(f"--- {key} ---")
+            print(f"  Mean Delta:    ${p['mean_delta']:>+10,.2f} (Median: ${p['median_delta']:>+10,.2f}, Std: ${p['std_delta']:,.2f})")
+            print(f"  Delta Range:   Min ${p['min_delta']:>+10,.2f} | Max ${p['max_delta']:>+10,.2f}")
+            print(f"  Percentiles:   P10: ${p['p10_delta']:>+9,.2f} | P25: ${p['p25_delta']:>+9,.2f} | P75: ${p['p75_delta']:>+9,.2f} | P90: ${p['p90_delta']:>+9,.2f}")
+            print(f"  Bottom 10% Mean: ${p['bottom_10_mean_delta']:>+10,.2f}")
+            print(f"  Win / Loss / Tie: {p['x_wins']} / {p['y_wins']} / {p['ties']}")
+            print()
+
+        print("=========================================================================================")
+        print("                             CAPITAL DEPLOYMENT BREAKDOWN                                ")
+        print("=========================================================================================")
+        print(f"{'Architecture':<32} | {'Total Spend':>11} | {'Hires':>9} | {'Seeds':>8} | {'Wheat':>8} | {'Animals':>8} | {'Land':>8} | {'Avg Cash':>9} | {'Eff':>6}")
+        print("-" * 115)
+        for arch in ["historical_stack", "historical_candidates_central"]:
+            c = cap_sums[arch]
+            lbl = "A. historical_stack" if arch == "historical_stack" else "D2. hist_candidates_central"
+            print(f"{lbl:<32} | ${c['mean_total_spend']:>10,.2f} | ${c['mean_spend_hires']:>8,.2f} | ${c['mean_spend_seeds']:>7,.2f} | ${c['mean_spend_wheat']:>7,.2f} | ${c['mean_spend_animals']:>7,.2f} | ${c['mean_spend_land']:>7,.2f} | ${c['mean_average_cash']:>8,.2f} | {c['mean_capital_efficiency']:>6.2f}")
+        print("-" * 115)
+        print("=========================================================================================\n")
+
+    elif args.benchmark == "four_way":
         csv_path = args.csv or os.path.join(REPO_ROOT, "artifacts", "central_planner_four_way.csv")
         json_path = args.json or os.path.join(REPO_ROOT, "artifacts", "central_planner_four_way.json")
 

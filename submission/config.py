@@ -331,6 +331,10 @@ SELL_BATCH_SIZES = {
 }
 
 # ---------------------------------------------------------------- arbitration ----
-# Authoritative arbitration mode: "central" (Phase 3 CentralPlanner) or "legacy" (MarketBrain.compose)
-ARBITRATION_MODE = "central"
+# Authoritative arbitration mode:
+# - "historical_stack": Empirical benchmark winner ($69,540.72 mean, $84.3k sell rev).
+# - "historical_candidates_central": CentralPlanner with upstream slot discipline ($68,116.48 mean,
+#   $57.0k B10 mean, zero P0 inversions, zero critical wheat rejections).
+# - "central": CentralPlanner with default settings.
+ARBITRATION_MODE = "historical_stack"
 USE_CENTRAL_PLANNER = (ARBITRATION_MODE in ("central", "historical_candidates_central", "expanded_central"))

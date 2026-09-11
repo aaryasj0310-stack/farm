@@ -138,7 +138,7 @@ def reset_opponent_model_state():
 try:
     from config import ARBITRATION_MODE as _CONFIG_ARBITRATION_MODE
 except Exception:
-    _CONFIG_ARBITRATION_MODE = "central"
+    _CONFIG_ARBITRATION_MODE = "historical_stack"
 
 _RUNTIME_ARBITRATION_MODE: str = str(_CONFIG_ARBITRATION_MODE).strip().lower()
 
@@ -584,7 +584,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     # 3. Market layer: purchase intent compilation (domain isolated)
     active_mode = get_arbitration_mode()
-    is_historical = (active_mode in ("historical_stack", "historical_candidates_central"))
+    is_historical = (active_mode in ("legacy", "historical_stack", "historical_candidates_central"))
     builder_max_slots = 10 if is_historical else None
     sell_max_slots = (10 if ctx["day"] >= 28 else 6) if is_historical else None
 
@@ -704,6 +704,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         "land_selected": land_selected,
         "critical_wheat_proposed": critical_wheat_proposed,
         "critical_wheat_selected": critical_wheat_selected,
+        "wheat_telemetry": copy.deepcopy(_cp_diag.get("wheat_telemetry")) if (_cp_diag and "wheat_telemetry" in _cp_diag) else None,
         "central_planner_diagnostic": copy.deepcopy(_cp_diag) if _cp_diag else None,
     }
 
