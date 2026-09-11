@@ -25,13 +25,15 @@ FEED_PRICE = 25        # conservative market replacement cost
 FEED_BUFFER_DAYS = 3
 
 
-def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20, cutoff_day=None):
-    """Choose the highest modeled incremental terminal profit affordable now.
+def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
+                       cutoff_day=None, max_sustainable=None):
+    """Compute optimal target counts for COW and SHEEP (GOOSE always 0).
 
     Stage 8B C4 Policy: Enforces late-game livestock investment cap (cutoff_day=12).
     Purchases on or after cutoff_day fail to amortize capital costs, feed, and care.
     Also enforces economic feasibility: an animal must produce primary product (milk/wool)
     to be considered viable; fertilizer alone cannot cover costs.
+    Also enforces feed sustainability: total herd cannot exceed max_sustainable.
 
     O(21**2) worst-case, O(1) extra space; no imports, I/O or randomness.
     Recompute after actual purchases; execute additions only when housing and
@@ -47,6 +49,8 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
     remaining = max(0, 29 - day)
     herd = c0 + s0 + g0
     effective_herd_cap = min(HERD_CAP, int(max_pastures))
+    if max_sustainable is not None:
+        effective_herd_cap = min(effective_herd_cap, max(0, int(max_sustainable)))
     
     # C4: Late-game livestock investment cap
     effective_cutoff = C4_LIVESTOCK_CUTOFF_DAY if cutoff_day is None else int(cutoff_day)

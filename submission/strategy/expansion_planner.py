@@ -346,18 +346,14 @@ def opportunity_window_factor(next_quadrant, current_day):
 
     Returns 1.0 when the season permits profitable production,
     and 0.0 when no productive planting window remains.
+    Mathematically derived from shortest crop lifecycle:
+      Carrot requires 3 days (first_yield_day=2, max_yield_day=3).
+      Planting on Day 26 matures on Day 26 + 3 = 29 (final season day).
+      Planting on Day 27+ matures on Day 30+ (post-season, zero salvage).
     """
     if current_day > 25:
-        return 0.0  # planting stops after Day 25
-
-    if next_quadrant == 3:
-        # SW primary crop is Strawberry (deadline Day 13)
-        # When current_day <= 13, window is fully open.
-        # After Day 13, Strawberry cap becomes 0, but other crops (Tomato, Carrot)
-        # can still be evaluated cleanly by compute_land_roi.
-        return 1.0
-    elif next_quadrant == 2:
-        return 1.0
+        # Planting viability cutoff: planting ceases after Day 25.
+        return 0.0
 
     return 1.0
 
@@ -438,7 +434,7 @@ def compute_land_urgency(next_quadrant, current_day, money, farm,
 
 
 # ---------------------------------------------------------------------------
-# Purchase gate (non-negotiable treasury safety)
+# Purchase gate (non-negotiable treasury safety & dynamic economic gate)
 # ---------------------------------------------------------------------------
 
 def should_buy_land(next_quadrant, current_day, money, farm,
@@ -447,18 +443,14 @@ def should_buy_land(next_quadrant, current_day, money, farm,
                     ow_factor=1.0,
                     forecast=None, n_own_tiles=0, n_opp_tiles=0,
                     seeds_owned=None):
-    """Determine if land should be purchased TODAY.
+    """Determine if land should be purchased TODAY via dynamic economic gates.
 
-    The gate requires:
-      1. Past unlock day
-      2. Money covers land + mandatory commitments + seed tranche + reserve
-      3. adjusted_roi > 0 (land + timing is economically justified)
-
-    v5.11: adjusted_roi = roi × ow_factor
-    If adjusted_roi <= 0, DO NOT BUY regardless of treasury.
-
-    High urgency does NOT loosen the gate. It only triggers treasury hoarding
-    in the macro planner's budget chain.
+    Requirements:
+      1. Quadrant legally available (past unlock day, unbought, not hard blocked).
+      2. Treasury covers land + mandatory commitments + seed tranche + reserve.
+      3. Labor/operational capacity can service the added land.
+      4. Adjusted ROI is positive and clears economic threshold.
+      5. Explicit payback: expected_remaining_profit > land_price + incremental_support_costs.
     """
     if next_quadrant not in QUADRANT_UNLOCK_DAYS:
         return False, "no_schedule", {}
@@ -468,8 +460,6 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
     if current_day < unlock_day:
         return False, f"before_day_{unlock_day}", {}
-    if next_quadrant == 3 and current_day > 13:
-        return False, "sw_window_closed_after_day_13", {}
 
     n_extra = len(farm.unlocked) - 1
     if n_extra >= len(LAND_PRICES):
@@ -511,6 +501,25 @@ def should_buy_land(next_quadrant, current_day, money, farm,
 
     adjusted_roi = roi * ow_factor
 
+    # Incremental support costs and explicit payback calculation:
+    # expected_remaining_profit_from_SW = marginal_revenue_gain = (1.0 + roi) * land_price
+    # incremental_support_costs = seed_cost
+    incremental_support_costs = seed_cost
+    expected_remaining_profit = (1.0 + roi) * land_price
+    payback_surplus = expected_remaining_profit - (land_price + incremental_support_costs)
+
+    # Operational/labor serviceability check
+    worker_count = 1 + (len(farm.hands) if hasattr(farm, "hands") else 0)
+    current_active_tiles = 0
+    if hasattr(farm, "iter_tiles"):
+        current_active_tiles = sum(
+            1 for t in farm.iter_tiles()
+            if getattr(t, "is_plant", False) or getattr(t, "is_animal", False)
+        )
+    # Servicing SW added tiles requires sufficient daily labor budget
+    # If only 1 worker and already active on 15+ tiles, labor cannot service added land
+    labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
+
     diag_base = {
         "land_price": land_price,
         "mandatory": mandatory,
@@ -520,6 +529,11 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         "roi": roi,
         "ow_factor": ow_factor,
         "adjusted_roi": adjusted_roi,
+        "expected_remaining_profit": round(expected_remaining_profit, 1),
+        "incremental_support_costs": round(incremental_support_costs, 1),
+        "payback_surplus": round(payback_surplus, 1),
+        "worker_count": worker_count,
+        "current_active_tiles": current_active_tiles,
         "buy_today_value": round(buy_today_val, 1),
         "wait_1_day_value": round(wait_1_day_val, 1),
         "delay_value": round(delay_val, 1),
@@ -527,16 +541,25 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     }
 
     # Leader heuristic: Early NE land unlock on Days 3-6 when cash >= threshold
-    # Validates that land + mandatory commitments can still be satisfied.
     thresh = NE_EARLY_UNLOCK_THRESHOLD_DAY6 if current_day == 6 else NE_EARLY_UNLOCK_THRESHOLD_DAY3_5
     if next_quadrant == 2 and 3 <= current_day <= NE_EARLY_UNLOCK_MAX_DAY and money >= thresh:
         if money >= land_price + mandatory:
             return True, "early_ne_leader_unlock", diag_base
 
-    # v5.11: STRICT GATE — adjusted_roi must be positive to buy
+    # 1. Adjusted ROI must clear threshold (> 0.0)
     if adjusted_roi <= 0:
         return False, f"adjusted_roi_{adjusted_roi:.2f}_non_positive", diag_base
 
+    # 2. Economic payback test:
+    # expected_remaining_profit_from_SW must exceed land_price + incremental_support_costs
+    if payback_surplus <= 0:
+        return False, f"insufficient_payback_{payback_surplus:.0f}", diag_base
+
+    # 3. Labor serviceability check
+    if not labor_adequate:
+        return False, "insufficient_labor_capacity", diag_base
+
+    # 4. Treasury safety gate
     if money >= total_required:
         return True, "treasury_sufficient_roi_positive", diag_base
     else:

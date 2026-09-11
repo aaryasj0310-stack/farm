@@ -7338,6 +7338,26 @@ def inventory_at_price(item, target_price):
     return float(MARKET_I0 + _solve_shape(p["af"], y, p["T"]))
 
 
+def safe_drip_budget(item, current_inventory, keep_frac, spot=None):
+    """Largest Q whose LAST unit still quotes >= keep_frac * spot.
+
+    Uses exact continuous inverse and verifies discrete integer quote across
+    both scarcity and glut branches.
+    """
+    if spot is None:
+        spot = market_price(item, current_inventory)
+    if spot <= PRICE_FLOOR:
+        return 0
+    threshold = max(PRICE_FLOOR + 1, int(spot * keep_frac))
+    limit = inventory_at_price(item, threshold)
+    budget = max(0, int(limit - float(current_inventory)))
+    while budget > 0 and market_price(item, current_inventory + budget) < threshold:
+        budget -= 1
+    while market_price(item, current_inventory + budget + 1) >= threshold:
+        budget += 1
+    return max(0, budget)
+
+
 def drip_batch_size(item, current_inventory, keep_frac):
     """Largest Q whose LAST unit still quotes >= keep_frac * spot.
 
@@ -7345,10 +7365,8 @@ def drip_batch_size(item, current_inventory, keep_frac):
     enough for slicing decisions.
     """
     spot = market_price(item, current_inventory)
-    threshold = max(2, int(spot * keep_frac))
-    limit = inventory_for_price_at_least(item, threshold)
-    budget = int(limit - current_inventory)
-    return max(0, budget), spot
+    budget = safe_drip_budget(item, current_inventory, keep_frac, spot)
+    return budget, spot
 
 
 def total_revenue_estimate(item, start_inventory, quantity):
@@ -7548,40 +7566,108 @@ def in_bonus_window(tile, day):
     return start <= age <= cd["max_yield_day"]
 
 
+def crop_produces_today(tile, day):
+    """True if this ongoing crop produces today or at the end-of-day refresh today.
+
+    Based on:
+      * planted_day
+      * first_yield_day
+      * interval
+      * max_yield
+    """
+    is_plant = getattr(tile, "is_plant", False) or g(tile, "kind") == "PLANT"
+    if not is_plant:
+        return False
+    crop_name = getattr(tile, "crop", g(tile, "crop"))
+    cd = CROPS.get(crop_name)
+    if cd is None or not cd.get("ongoing"):
+        return False
+    planted = getattr(tile, "planted_day", g(tile, "planted_day"))
+    if planted is None:
+        return False
+
+    first = cd["first_yield_day"]
+    interval = cd["interval"]
+    max_yield = cd["max_yield"]
+    if interval <= 0:
+        return False
+
+    # 1. Engine end-of-day refresh timing:
+    # In engine _daily_refresh_plants(), next_day = current_day + 1.
+    # Production fires at end of `day` when:
+    # days_since_first = (day + 1) - planted - first >= 0
+    # and days_since_first % interval == 0
+    # and (days_since_first // interval + 1) <= max_yield.
+    since_first_eod = (day + 1) - planted - first
+    if since_first_eod >= 0 and since_first_eod % interval == 0:
+        if (since_first_eod // interval + 1) <= max_yield:
+            return True
+
+    # 2. Calendar age on `day`: age = day - planted
+    # age >= first and (age - first) % interval == 0
+    # and ((age - first) // interval + 1) <= max_yield.
+    age = day - planted
+    if age >= first and (age - first) % interval == 0:
+        if ((age - first) // interval + 1) <= max_yield:
+            return True
+
+    return False
+
+
+ongoing_crop_produces_today = crop_produces_today
+
+
 def needs_water_today(tile, day):
     """Determine if a plant tile must/should be watered today under Points 1.2 & 1.5.
-    
-    Guardrail 1: Planting day ALWAYS requires same-day water (starts with counter=1).
-    Guardrail 2: If missed yesterday (counter >= 1), MUST water today (prevent weed).
-    Guardrail 3: In bonus window (one-time) or active production (ongoing) -> ALWAYS water.
-    Guardrail 4: Pre-bonus / non-bonus -> alternate days by spatial checkerboard ((x + y + day) % 2 == 0).
+
+    1. Always water on planting day.
+    2. If missed yesterday (counter >= 1), MUST water today (prevent weed).
+    3. If ongoing crop produces today AND fertilizer is active today, water so fertilized production doubles.
+    4. Otherwise for ongoing crops, alternate days by spatial checkerboard ((x + y + day) % 2 == 0).
+    5. One-time crops: in bonus window -> ALWAYS water; otherwise alternate days.
     """
-    if not tile.is_plant:
+    is_plant = getattr(tile, "is_plant", False) or g(tile, "kind") == "PLANT"
+    if not is_plant:
         return False
-    if tile.watered_today:
+    watered_today = bool(getattr(tile, "watered_today", g(tile, "watered_today", False)))
+    if watered_today:
         return False
-        
-    # Guardrail 1: Planting day
-    if tile.planted_day is not None and tile.planted_day == day:
-        return True
-        
-    # Guardrail 2: Missed yesterday -> mandatory survival watering
-    if tile.consecutive_unwatered >= 1:
-        return True
-        
-    cd = CROPS.get(tile.crop)
-    if cd is None:
-        return True
-        
-    # Guardrail 3: Ongoing crops (Tomato, Strawberry) must be watered daily for maximum yield
-    if cd["ongoing"]:
+
+    planted_day = getattr(tile, "planted_day", g(tile, "planted_day"))
+
+    # Guardrail 1: Planting day ALWAYS requires same-day water (starts with counter=1)
+    if planted_day is not None and planted_day == day:
         return True
 
+    # Guardrail 2: Missed yesterday -> mandatory survival watering
+    consecutive_unwatered = int(getattr(tile, "consecutive_unwatered", g(tile, "consecutive_unwatered", 0)) or 0)
+    if consecutive_unwatered >= 1:
+        return True
+
+    crop_name = getattr(tile, "crop", g(tile, "crop"))
+    cd = CROPS.get(crop_name)
+    if cd is None:
+        return True
+
+    x = int(getattr(tile, "x", g(tile, "x", 0)) or 0)
+    y = int(getattr(tile, "y", g(tile, "y", 0)) or 0)
+
+    # Ongoing crops (Tomato, Strawberry): do NOT force daily watering
+    if cd.get("ongoing"):
+        fert_day = getattr(tile, "fertilized_until_day", g(tile, "fertilized_until_day", -1))
+        fertilized_active = fert_day is not None and fert_day >= day
+        # Scheduled production day AND fertilizer active today -> force water to double output
+        if crop_produces_today(tile, day) and fertilized_active:
+            return True
+        # Otherwise alternate days by spatial checkerboard
+        return (x + y + day) % 2 == 0
+
+    # One-time crops (Wheat, Carrot, Melon)
     if in_bonus_window(tile, day):
         return True
-        
-    # Guardrail 4: Outside bonus window and watered yesterday -> alternate days
-    return (tile.x + tile.y + day) % 2 == 0
+
+    # Outside bonus window and watered yesterday -> alternate days
+    return (x + y + day) % 2 == 0
 
 
 def decay_step_for(tile):
@@ -7613,8 +7699,8 @@ def animal_production_days(tile):
 
 
 
-
 OPP_MONEY_WINDOW = 24  # sliding window of opponent money deltas (turns)
+BUYABLE_PRODUCTS = {"WHEAT", "FERTILIZER"}
 
 # Module-level (survives across turns within one process/episode).
 _STATE = {
@@ -7624,8 +7710,12 @@ _STATE = {
     "known_shops": [],
     "town_drain_seen": {},       # product -> units inferred drained by town
     "opp_sales_inferred": {},    # product -> units inferred sold by opponent
+    "opp_sales_step": {},        # product -> units inferred sold by opponent on latest step
+    "opp_market_inference": {},  # product -> latest step inference dict
     "our_units_sold": {},        # product -> total units we sold (cumulative)
     "our_units_sold_last_step": {},  # product -> units sold on immediate previous step
+    "our_units_bought": {},      # product -> total units we bought (cumulative)
+    "our_units_bought_last_step": {},  # product -> units bought on immediate previous step
     "prev_opp_money": None,      # opponent money on previous turn
     "opp_money_deltas": deque(maxlen=OPP_MONEY_WINDOW),  # recent delta list
     "noop_attempts": 0,
@@ -7682,8 +7772,12 @@ def reset_memory(mem=None):
     mem["known_shops"] = []
     mem["town_drain_seen"] = {}
     mem["opp_sales_inferred"] = {}
+    mem["opp_sales_step"] = {}
+    mem["opp_market_inference"] = {}
     mem["our_units_sold"] = {}
     mem["our_units_sold_last_step"] = {}
+    mem["our_units_bought"] = {}
+    mem["our_units_bought_last_step"] = {}
     mem["prev_opp_money"] = None
     mem["opp_money_deltas"] = deque(maxlen=OPP_MONEY_WINDOW)
     mem["noop_attempts"] = 0
@@ -7699,28 +7793,203 @@ def reset_memory(mem=None):
 def _update_drain_ledger(ctx, mem):
     """market_net_drain = diff(market_inventory) - expected_town_consumption.
 
-    Everything that is not explained by town consumption must be player
-    activity (ours or opponent's) -> attribute to opponent after subtracting
-    our own recorded step-level sells/buys.
+    Observable equation:
+      delta_inventory = (visible_sales) - (buys) - (town_consumption)
+      delta_inventory = (our_visible_sales + opp_visible_sales)
+                        - (our_buys + opp_buys)
+                        - (expected_town)
+
+    Rearranging for unobserved opponent activity:
+      residual = delta_inventory + expected_town - our_visible_sales + our_buys
+      residual = opp_visible_sales - opp_buys
+
+    Mechanics accounted for:
+      1. $1 floor-price sales do NOT increment market inventory (invisible/censored).
+      2. BUY_PRODUCT (WHEAT, FERTILIZER) decreases market inventory.
+      3. Non-buyable products cannot have opp_buys.
     """
     inv_now = ctx["market"].inventory
     prev = mem["prev_inventory"]
+    step_inferences = {}
+    step_sales = {}
+
     if prev is not None:
         shops = mem.get("known_shops", [])
         for item in PRODUCTS:
-            delta = inv_now.get(item, 0) - prev.get(item, 0)
+            prev_inv = prev.get(item, 0)
+            cur_inv = inv_now.get(item, 0)
+            delta = cur_inv - prev_inv
             expected_town = _expected_town_consumption(item, shops, ctx["step"])
-            # delta = net_player_sales - expected_town
-            # net_player_sales = delta + expected_town
-            net_player = delta + expected_town
-            ours_step = mem.get("our_units_sold_last_step", {}).get(item, 0)
-            opp_added = max(0.0, net_player - ours_step)
-            if opp_added >= 0.5:
+            mem.setdefault("town_drain_seen", {})[item] = \
+                mem["town_drain_seen"].get(item, 0) + expected_town
+
+            prev_px = market_price(item, prev_inv)
+            cur_px = market_price(item, cur_inv)
+            floor_hit = (prev_px <= PRICE_FLOOR) or (cur_px <= PRICE_FLOOR)
+
+            our_sells = mem.get("our_units_sold_last_step", {}).get(item, 0)
+            our_buys = mem.get("our_units_bought_last_step", {}).get(item, 0)
+
+            # At or below floor, sales pay $1 and are NOT added to market inventory
+            if prev_px <= PRICE_FLOOR:
+                our_visible_sells = 0
+            else:
+                our_visible_sells = our_sells
+
+            residual = delta + expected_town - our_visible_sells + our_buys
+            is_buyable = (item in BUYABLE_PRODUCTS)
+
+            if prev_px <= PRICE_FLOOR:
+                # Completely floor-censored: sales do not increment inventory.
+                # Zero delta does NOT mean opponent sold 0.
+                opp_buy_est = max(0.0, -residual) if is_buyable and residual < -0.5 else 0.0
+                inf = {
+                    "opponent_visible_sales_estimate": 0.0,
+                    "opponent_buy_estimate": opp_buy_est,
+                    "opponent_sales_lower_bound": 0.0,
+                    "opponent_sales_upper_bound": None,
+                    "confidence": "low",
+                    "censored": True,
+                    "visible_sales_est": 0.0,
+                    "buy_est": opp_buy_est,
+                    "sales_lower_bound": 0.0,
+                    "sales_upper_bound": None,
+                }
+                step_inferences[item] = inf
+                step_sales[item] = 0.0
+
+            elif floor_hit and cur_px <= PRICE_FLOOR and residual > 0.5:
+                # Reached floor during this step.
+                # Residual is a lower bound because further sales may have been censored at $1.
+                inf = {
+                    "opponent_visible_sales_estimate": residual,
+                    "opponent_buy_estimate": 0.0,
+                    "opponent_sales_lower_bound": residual,
+                    "opponent_sales_upper_bound": None,
+                    "confidence": "medium",
+                    "censored": True,
+                    "visible_sales_est": residual,
+                    "buy_est": 0.0,
+                    "sales_lower_bound": residual,
+                    "sales_upper_bound": None,
+                }
+                step_inferences[item] = inf
+                step_sales[item] = residual
                 mem["opp_sales_inferred"][item] = \
-                    mem["opp_sales_inferred"].get(item, 0) + opp_added
+                    mem["opp_sales_inferred"].get(item, 0) + residual
+
+            elif not is_buyable:
+                # Non-buyable products: opp_buys == 0, so residual = opp_visible_sales
+                if residual >= 0.5:
+                    inf = {
+                        "opponent_visible_sales_estimate": residual,
+                        "opponent_buy_estimate": 0.0,
+                        "opponent_sales_lower_bound": residual,
+                        "opponent_sales_upper_bound": residual,
+                        "confidence": "high",
+                        "censored": False,
+                        "visible_sales_est": residual,
+                        "buy_est": 0.0,
+                        "sales_lower_bound": residual,
+                        "sales_upper_bound": residual,
+                    }
+                    step_inferences[item] = inf
+                    step_sales[item] = residual
+                    mem["opp_sales_inferred"][item] = \
+                        mem["opp_sales_inferred"].get(item, 0) + residual
+                elif residual > -0.5:
+                    inf = {
+                        "opponent_visible_sales_estimate": 0.0,
+                        "opponent_buy_estimate": 0.0,
+                        "opponent_sales_lower_bound": 0.0,
+                        "opponent_sales_upper_bound": 0.0,
+                        "confidence": "high",
+                        "censored": False,
+                        "visible_sales_est": 0.0,
+                        "buy_est": 0.0,
+                        "sales_lower_bound": 0.0,
+                        "sales_upper_bound": 0.0,
+                    }
+                    step_inferences[item] = inf
+                    step_sales[item] = 0.0
+                else:
+                    # Negative residual on non-buyable (anomalous drain/noise)
+                    inf = {
+                        "opponent_visible_sales_estimate": 0.0,
+                        "opponent_buy_estimate": 0.0,
+                        "opponent_sales_lower_bound": 0.0,
+                        "opponent_sales_upper_bound": 0.0,
+                        "confidence": "low",
+                        "censored": False,
+                        "visible_sales_est": 0.0,
+                        "buy_est": 0.0,
+                        "sales_lower_bound": 0.0,
+                        "sales_upper_bound": 0.0,
+                    }
+                    step_inferences[item] = inf
+                    step_sales[item] = 0.0
+
+            else:
+                # Buyable product (WHEAT, FERTILIZER) above floor
+                if residual < -0.5:
+                    # Inventory drop beyond town and our purchases -> opponent purchase!
+                    opp_buy_est = -residual
+                    inf = {
+                        "opponent_visible_sales_estimate": 0.0,
+                        "opponent_buy_estimate": opp_buy_est,
+                        "opponent_sales_lower_bound": 0.0,
+                        "opponent_sales_upper_bound": None,
+                        "confidence": "medium",
+                        "censored": False,
+                        "visible_sales_est": 0.0,
+                        "buy_est": opp_buy_est,
+                        "sales_lower_bound": 0.0,
+                        "sales_upper_bound": None,
+                    }
+                    step_inferences[item] = inf
+                    step_sales[item] = 0.0
+
+                elif residual >= 0.5:
+                    # Positive residual -> lower bound on opponent sales
+                    inf = {
+                        "opponent_visible_sales_estimate": residual,
+                        "opponent_buy_estimate": 0.0,
+                        "opponent_sales_lower_bound": residual,
+                        "opponent_sales_upper_bound": None,
+                        "confidence": "medium",
+                        "censored": False,
+                        "visible_sales_est": residual,
+                        "buy_est": 0.0,
+                        "sales_lower_bound": residual,
+                        "sales_upper_bound": None,
+                    }
+                    step_inferences[item] = inf
+                    step_sales[item] = residual
+                    mem["opp_sales_inferred"][item] = \
+                        mem["opp_sales_inferred"].get(item, 0) + residual
+
+                else:
+                    inf = {
+                        "opponent_visible_sales_estimate": 0.0,
+                        "opponent_buy_estimate": 0.0,
+                        "opponent_sales_lower_bound": 0.0,
+                        "opponent_sales_upper_bound": None,
+                        "confidence": "medium",
+                        "censored": False,
+                        "visible_sales_est": 0.0,
+                        "buy_est": 0.0,
+                        "sales_lower_bound": 0.0,
+                        "sales_upper_bound": None,
+                    }
+                    step_inferences[item] = inf
+                    step_sales[item] = 0.0
+
+    mem["opp_market_inference"] = step_inferences
+    mem["opp_sales_step"] = step_sales
     mem["prev_inventory"] = dict(inv_now)
-    # Clear step-level sales for next turn
+    # Clear step-level sales and buys for next turn
     mem["our_units_sold_last_step"] = {}
+    mem["our_units_bought_last_step"] = {}
 
 
 def _expected_town_consumption(item, shops, step):
@@ -7778,6 +8047,27 @@ def get_our_units_sold(product=None):
     return dict(_STATE.get("our_units_sold", {}))
 
 
+def record_our_buy(product, units):
+    mem = _STATE
+    mem["our_units_bought"][product] = mem["our_units_bought"].get(product, 0) + units
+    mem.setdefault("our_units_bought_last_step", {})[product] = \
+        mem.get("our_units_bought_last_step", {}).get(product, 0) + units
+
+
+def get_our_units_bought(product=None):
+    """Return total cumulative units bought for a product, or a copy of all products."""
+    if product is not None:
+        return _STATE.get("our_units_bought", {}).get(product, 0)
+    return dict(_STATE.get("our_units_bought", {}))
+
+
+def get_opp_market_inference(product=None):
+    """Return latest step opponent market activity inference dict."""
+    if product is not None:
+        return _STATE.get("opp_market_inference", {}).get(product, {})
+    return dict(_STATE.get("opp_market_inference", {}))
+
+
 def noop_penalty():
     _STATE["noop_attempts"] += 1
 
@@ -7788,7 +8078,9 @@ def diagnostics():
     return {
         "noop_attempts": m["noop_attempts"],
         "our_units_sold": dict(m["our_units_sold"]),
+        "our_units_bought": dict(m.get("our_units_bought", {})),
         "opp_sales_inferred": {k: round(v, 1) for k, v in m["opp_sales_inferred"].items()},
+        "opp_market_inference": dict(m.get("opp_market_inference", {})),
         "shops_known": list(m.get("known_shops", [])),
         "prev_opp_money": m["prev_opp_money"],
         "opp_money_deltas": deltas,
@@ -8449,7 +8741,10 @@ def opponent_primary_product(mem, default="MELON"):
     inferred = mem.get("opp_sales_inferred", {})
     if not inferred:
         return default
-    return max(inferred, key=lambda k: inferred[k])
+    pos = {k: v for k, v in inferred.items() if v > 0}
+    if not pos:
+        return default
+    return max(pos, key=lambda k: pos[k])
 
 # ===========================================================================
 # END MODULE: state/opponent_model.py
@@ -8883,8 +9178,9 @@ def build_opponent_advice(opp_state, ctx, forecast, boosts=None):
     advice.preempt_sell = _compute_preempt_sell(sell_probs, our_shed)
 
     # ---- 5c. Sell Delay / Post-Crash Hold -------------------------------
+    opp_market_inf = opp_state.get("opp_market_inference", {})
     advice.delay_sell = _compute_delay_sell(
-        opp_sales, our_shed, fc, day, ctx,
+        opp_sales, our_shed, fc, day, ctx, opp_market_inference=opp_market_inf,
     )
 
     # ---- 5d. Counter-Pick Monopoly Detection ----------------------------
@@ -8931,7 +9227,7 @@ def _compute_preempt_sell(sell_probs, our_shed):
     return result
 
 
-def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx):
+def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx, opp_market_inference=None):
     """Flag products opponent recently dumped causing depressed prices."""
     result = []
     if not opp_sales or not our_shed:
@@ -8942,6 +9238,11 @@ def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx):
             continue
         if our_shed.get(product, 0) <= 0:
             continue
+
+        if opp_market_inference:
+            inf = opp_market_inference.get(product, {})
+            if inf.get("confidence") == "low" and inf.get("sales_lower_bound", 0) <= 0:
+                continue
 
         # Compute expected price from forecast to check depression
         expected = 0.0
@@ -9333,18 +9634,14 @@ def opportunity_window_factor(next_quadrant, current_day):
 
     Returns 1.0 when the season permits profitable production,
     and 0.0 when no productive planting window remains.
+    Mathematically derived from shortest crop lifecycle:
+      Carrot requires 3 days (first_yield_day=2, max_yield_day=3).
+      Planting on Day 26 matures on Day 26 + 3 = 29 (final season day).
+      Planting on Day 27+ matures on Day 30+ (post-season, zero salvage).
     """
     if current_day > 25:
-        return 0.0  # planting stops after Day 25
-
-    if next_quadrant == 3:
-        # SW primary crop is Strawberry (deadline Day 13)
-        # When current_day <= 13, window is fully open.
-        # After Day 13, Strawberry cap becomes 0, but other crops (Tomato, Carrot)
-        # can still be evaluated cleanly by compute_land_roi.
-        return 1.0
-    elif next_quadrant == 2:
-        return 1.0
+        # Planting viability cutoff: planting ceases after Day 25.
+        return 0.0
 
     return 1.0
 
@@ -9425,7 +9722,7 @@ def compute_land_urgency(next_quadrant, current_day, money, farm,
 
 
 # ---------------------------------------------------------------------------
-# Purchase gate (non-negotiable treasury safety)
+# Purchase gate (non-negotiable treasury safety & dynamic economic gate)
 # ---------------------------------------------------------------------------
 
 def should_buy_land(next_quadrant, current_day, money, farm,
@@ -9434,18 +9731,14 @@ def should_buy_land(next_quadrant, current_day, money, farm,
                     ow_factor=1.0,
                     forecast=None, n_own_tiles=0, n_opp_tiles=0,
                     seeds_owned=None):
-    """Determine if land should be purchased TODAY.
+    """Determine if land should be purchased TODAY via dynamic economic gates.
 
-    The gate requires:
-      1. Past unlock day
-      2. Money covers land + mandatory commitments + seed tranche + reserve
-      3. adjusted_roi > 0 (land + timing is economically justified)
-
-    v5.11: adjusted_roi = roi × ow_factor
-    If adjusted_roi <= 0, DO NOT BUY regardless of treasury.
-
-    High urgency does NOT loosen the gate. It only triggers treasury hoarding
-    in the macro planner's budget chain.
+    Requirements:
+      1. Quadrant legally available (past unlock day, unbought, not hard blocked).
+      2. Treasury covers land + mandatory commitments + seed tranche + reserve.
+      3. Labor/operational capacity can service the added land.
+      4. Adjusted ROI is positive and clears economic threshold.
+      5. Explicit payback: expected_remaining_profit > land_price + incremental_support_costs.
     """
     if next_quadrant not in QUADRANT_UNLOCK_DAYS:
         return False, "no_schedule", {}
@@ -9455,8 +9748,6 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
     if current_day < unlock_day:
         return False, f"before_day_{unlock_day}", {}
-    if next_quadrant == 3 and current_day > 13:
-        return False, "sw_window_closed_after_day_13", {}
 
     n_extra = len(farm.unlocked) - 1
     if n_extra >= len(LAND_PRICES):
@@ -9498,6 +9789,25 @@ def should_buy_land(next_quadrant, current_day, money, farm,
 
     adjusted_roi = roi * ow_factor
 
+    # Incremental support costs and explicit payback calculation:
+    # expected_remaining_profit_from_SW = marginal_revenue_gain = (1.0 + roi) * land_price
+    # incremental_support_costs = seed_cost
+    incremental_support_costs = seed_cost
+    expected_remaining_profit = (1.0 + roi) * land_price
+    payback_surplus = expected_remaining_profit - (land_price + incremental_support_costs)
+
+    # Operational/labor serviceability check
+    worker_count = 1 + (len(farm.hands) if hasattr(farm, "hands") else 0)
+    current_active_tiles = 0
+    if hasattr(farm, "iter_tiles"):
+        current_active_tiles = sum(
+            1 for t in farm.iter_tiles()
+            if getattr(t, "is_plant", False) or getattr(t, "is_animal", False)
+        )
+    # Servicing SW added tiles requires sufficient daily labor budget
+    # If only 1 worker and already active on 15+ tiles, labor cannot service added land
+    labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
+
     diag_base = {
         "land_price": land_price,
         "mandatory": mandatory,
@@ -9507,6 +9817,11 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         "roi": roi,
         "ow_factor": ow_factor,
         "adjusted_roi": adjusted_roi,
+        "expected_remaining_profit": round(expected_remaining_profit, 1),
+        "incremental_support_costs": round(incremental_support_costs, 1),
+        "payback_surplus": round(payback_surplus, 1),
+        "worker_count": worker_count,
+        "current_active_tiles": current_active_tiles,
         "buy_today_value": round(buy_today_val, 1),
         "wait_1_day_value": round(wait_1_day_val, 1),
         "delay_value": round(delay_val, 1),
@@ -9514,16 +9829,25 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     }
 
     # Leader heuristic: Early NE land unlock on Days 3-6 when cash >= threshold
-    # Validates that land + mandatory commitments can still be satisfied.
     thresh = NE_EARLY_UNLOCK_THRESHOLD_DAY6 if current_day == 6 else NE_EARLY_UNLOCK_THRESHOLD_DAY3_5
     if next_quadrant == 2 and 3 <= current_day <= NE_EARLY_UNLOCK_MAX_DAY and money >= thresh:
         if money >= land_price + mandatory:
             return True, "early_ne_leader_unlock", diag_base
 
-    # v5.11: STRICT GATE — adjusted_roi must be positive to buy
+    # 1. Adjusted ROI must clear threshold (> 0.0)
     if adjusted_roi <= 0:
         return False, f"adjusted_roi_{adjusted_roi:.2f}_non_positive", diag_base
 
+    # 2. Economic payback test:
+    # expected_remaining_profit_from_SW must exceed land_price + incremental_support_costs
+    if payback_surplus <= 0:
+        return False, f"insufficient_payback_{payback_surplus:.0f}", diag_base
+
+    # 3. Labor serviceability check
+    if not labor_adequate:
+        return False, "insufficient_labor_capacity", diag_base
+
+    # 4. Treasury safety gate
     if money >= total_required:
         return True, "treasury_sufficient_roi_positive", diag_base
     else:
@@ -9629,13 +9953,15 @@ FEED_PRICE = 25        # conservative market replacement cost
 FEED_BUFFER_DAYS = 3
 
 
-def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20, cutoff_day=None):
-    """Choose the highest modeled incremental terminal profit affordable now.
+def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
+                       cutoff_day=None, max_sustainable=None):
+    """Compute optimal target counts for COW and SHEEP (GOOSE always 0).
 
     Stage 8B C4 Policy: Enforces late-game livestock investment cap (cutoff_day=12).
     Purchases on or after cutoff_day fail to amortize capital costs, feed, and care.
     Also enforces economic feasibility: an animal must produce primary product (milk/wool)
     to be considered viable; fertilizer alone cannot cover costs.
+    Also enforces feed sustainability: total herd cannot exceed max_sustainable.
 
     O(21**2) worst-case, O(1) extra space; no imports, I/O or randomness.
     Recompute after actual purchases; execute additions only when housing and
@@ -9651,6 +9977,8 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
     remaining = max(0, 29 - day)
     herd = c0 + s0 + g0
     effective_herd_cap = min(HERD_CAP, int(max_pastures))
+    if max_sustainable is not None:
+        effective_herd_cap = min(effective_herd_cap, max(0, int(max_sustainable)))
     
     # C4: Late-game livestock investment cap
     effective_cutoff = C4_LIVESTOCK_CUTOFF_DAY if cutoff_day is None else int(cutoff_day)
@@ -11223,7 +11551,6 @@ Known simplifications (documented, deliberate):
 
 
 
-
 # ---------------------------------------------------------------------------
 # Asset economics — imported from authoritative baked_economics artifact.
 # ---------------------------------------------------------------------------
@@ -11451,6 +11778,76 @@ def compute_sustainable_animals(wheat_capacity, days_left, wheat_per_animal=1):
     return wheat_capacity // (days_left * wheat_per_animal)
 
 
+def compute_authoritative_feed_capacity(farm, private, day, season_end=28, current_animals_count=0):
+    """Authoritative projected wheat supply and sustainable herd calculation.
+
+    Components of feed supply:
+      1. Wheat on hand: shed inventory + worker inventories.
+      2. Expected wheat from existing planted wheat maturing on or before season_end (Day 28).
+      3. Expected wheat from already-planned wheat planting where reasonably predictable.
+      4. Affordable emergency/market wheat purchases if intentional.
+    """
+    days_left = SEASON_DAYS - day
+    feeding_days_left = max(1, season_end - day + 1) if day <= season_end else 0
+
+    # 1. Wheat on hand
+    shed_wheat = int(private.shed.get("WHEAT", 0)) if hasattr(private, "shed") else 0
+    worker_wheat = 0
+    if hasattr(private, "inventories"):
+        worker_wheat = sum(int(inv.get("WHEAT", 0)) for inv in private.inventories)
+    wheat_on_hand = shed_wheat + worker_wheat
+
+    # 2. Existing planted wheat yield
+    wheat_tiles = [t for t in farm.iter_tiles() if getattr(t, "is_plant", False) and getattr(t, "crop", None) == "WHEAT"]
+    planted_yield = 0
+    for t in wheat_tiles:
+        placed = getattr(t, "placed_day", None)
+        if placed is None:
+            placed = day
+        harvest_day = placed + 4
+        if harvest_day <= season_end:
+            fert_day = getattr(t, "fertilized_until_day", None)
+            is_fert = fert_day is not None and fert_day >= placed
+            planted_yield += (6 if is_fert else 4)
+
+    # 3. Predictable planned wheat yield
+    planned_yield = 0
+    if day <= 4:
+        nw_empty = sum(1 for t in farm.iter_tiles() if getattr(t, "kind", None) == "EMPTY" and farm.quadrant_of(t.pos) == "NW")
+        needed_nw = max(0, PHASE1_WHEAT_TILES - len(wheat_tiles))
+        can_plant = min(nw_empty, needed_nw)
+        if day + 4 <= season_end:
+            planned_yield += can_plant * 4
+    elif "SW" in farm.unlocked and day <= 24:
+        sw_soil_empty = sum(1 for t in farm.iter_tiles() if getattr(t, "kind", None) == "EMPTY" and t.pos in SW_SOIL_TILES)
+        if sw_soil_empty > 0 and day + 4 <= season_end:
+            sw_alloc = sw_plant_decision(day, sw_soil_empty, wheat_on_hand + planted_yield, current_animals_count)
+            planned_yield += sw_alloc.get("WHEAT", 0) * 4
+
+    # 4. Affordable emergency market wheat purchases
+    wheat_spot = 25
+    money = getattr(farm, "money", 0)
+    discretionary_cash = max(0.0, money - 300 - 150)
+    affordable_wheat = min(100, int(discretionary_cash // wheat_spot))
+
+    projected_feed_supply = wheat_on_hand + planted_yield + planned_yield + affordable_wheat
+
+    if feeding_days_left <= 0:
+        sustainable_herd_size = HERD_CAP
+    else:
+        sustainable_herd_size = int(projected_feed_supply // feeding_days_left)
+
+    return {
+        "projected_wheat_supply": projected_feed_supply,
+        "feeding_days_left": feeding_days_left,
+        "sustainable_herd_size": sustainable_herd_size,
+        "wheat_on_hand": wheat_on_hand,
+        "planted_yield": planted_yield,
+        "planned_yield": planned_yield,
+        "affordable_wheat": affordable_wheat,
+    }
+
+
 def detect_wheat_deficit(wheat_capacity, wheat_have, days_left,
                          n_animals, buffer_days):
     """Projected wheat shortfall before starvation.
@@ -11527,16 +11924,19 @@ class MacroPlanner:
                        farm.quadrant_of(t.pos) in farm.unlocked and
                        t.pos != PORT_SW]
 
-        # --- wheat capacity projection (dynamic animal cap) ---
+        # --- Authoritative wheat feed capacity projection ---
         wheat_tiles = [t for t in farm.iter_tiles()
                        if t.is_plant and t.crop == "WHEAT"]
         wheat_tile_days = [t.placed_day for t in wheat_tiles]
         days_left = SEASON_DAYS - day
         wheat_cap = compute_wheat_capacity(wheat_tile_days, day)
         wheat_have = int(private.shed.get("WHEAT", 0))
-        sustainable = compute_sustainable_animals(wheat_cap, days_left)
-        if day <= 2:
-            sustainable = max(sustainable, PHASE1_GEESE_DAY0_2)
+
+        feed_info = compute_authoritative_feed_capacity(
+            farm, private, day, season_end=28, current_animals_count=n_animals)
+        projected_feed_supply = feed_info["projected_wheat_supply"]
+        feeding_days_left = feed_info["feeding_days_left"]
+        sustainable = feed_info["sustainable_herd_size"]
 
         # --- wheat deficit detection ---
         deficit, trigger = detect_wheat_deficit(
@@ -11595,14 +11995,28 @@ class MacroPlanner:
             dynamic_targets = {"COW": counts.get("COW", 0),
                                "SHEEP": counts.get("SHEEP", 0),
                                "GOOSE": 0}
+            requested_herd_size = sum(dynamic_targets.values())
+            final_feed_capped_herd_size = min(requested_herd_size, sustainable)
         else:
-            dynamic_targets = get_animal_targets(
+            raw_targets = get_animal_targets(
                 day=day,
                 money=cash_for_animals,
                 shed_wheat=wheat_have,
                 current_animals=counts,
                 max_pastures=max_pastures,
+                max_sustainable=sustainable,
             )
+            requested_herd_size = sum(raw_targets.values())
+            dynamic_targets = dict(raw_targets)
+            if requested_herd_size > sustainable:
+                excess = requested_herd_size - sustainable
+                for an in ("GOOSE", "COW", "SHEEP"):
+                    if excess <= 0:
+                        break
+                    reduce_by = min(excess, dynamic_targets.get(an, 0))
+                    dynamic_targets[an] -= reduce_by
+                    excess -= reduce_by
+            final_feed_capped_herd_size = min(requested_herd_size, sustainable)
 
         # Purchase affordable animals if empty pasture exists or is being built
         # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
@@ -11632,6 +12046,11 @@ class MacroPlanner:
                 struct_kind = info["structure"]
                 free_struct = [pos for pos, k in structures_empty.items() if k == struct_kind]
                 while (housing_available > 0 and (counts.get(animal, 0) + buy_animal.get(animal, 0) < target)) or (animal == "GOOSE" and free_struct):
+                    total_now = sum(counts.values()) + sum(buy_animal.values())
+                    if total_now >= sustainable:
+                        break
+                    if feeding_days_left > 0 and (total_now + 1) * feeding_days_left > projected_feed_supply:
+                        break
                     if cash_for_animals >= info["cost"]:
                         buy_animal[animal] = buy_animal.get(animal, 0) + 1
                         cash_for_animals -= info["cost"]
@@ -11648,6 +12067,18 @@ class MacroPlanner:
                 needed_wheat = total_animals_planned * min(FEED_WHEAT_BUFFER_DAYS, days_left)
                 if needed_wheat > wheat_have:
                     buy_wheat = needed_wheat - wheat_have
+        else:
+            total_animals_planned = sum(counts.values())
+
+        # Expose authoritative feed sustainability diagnostics
+        projected_feed_demand = total_animals_planned * feeding_days_left
+        plan.diagnostics.update({
+            "projected_wheat_supply": projected_feed_supply,
+            "projected_wheat_demand": projected_feed_demand,
+            "sustainable_herd_size": sustainable,
+            "requested_herd_size": requested_herd_size,
+            "final_feed_capped_herd_size": final_feed_capped_herd_size,
+        })
 
         # structure build queue: use specific build_op
         if reserved_structure_tiles:
@@ -12100,7 +12531,7 @@ class MacroPlanner:
             "reason": sw_reason_text,
         }
 
-        plan.diagnostics = {
+        plan.diagnostics.update({
             "day": day,
             "money": money,
             "sw_unlocked": sw_is_unlocked,
@@ -12128,7 +12559,7 @@ class MacroPlanner:
             # v5.11: Dynamic caps and targets
             "dynamic_strawberry_cap": get_strawberry_cap(day, "SW" in farm.unlocked),
             "dynamic_sw_seed_targets": expansion_seed_targets(next_quadrant, day, money) if next_quadrant else {},
-        }
+        })
 
         return plan
 
@@ -12551,7 +12982,7 @@ is used only for carry/hold comparisons, never as an average sell price.
 """
 
 
-
+DRIP_PROTECTED_PRODUCTS = ("MELON", "WOOL", "MILK", "STRAWBERRY")
 
 SELLABLE = ("WHEAT", "CARROT", "TOMATO", "STRAWBERRY",
             "MELON", "EGG", "MILK", "WOOL", "FERTILIZER")
@@ -12659,9 +13090,10 @@ class MarketBrain:
         preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()
         delay_set = set(opp_advice.delay_sell) if opp_advice else set()
 
-        # MELON parameters & price protection initialization
+        # Product spot prices & price protection initialization
+        spot_init_map = {p: market_price(p, inv.get(p, 10000.0)) for p in SELLABLE}
         melon_market_inv_init = float(inv.get("MELON", 10000.0))
-        melon_spot_init = market_price("MELON", melon_market_inv_init)
+        melon_spot_init = spot_init_map["MELON"]
         season_melons_sold = _get_season_units_sold("MELON")
         melon_cap_remaining = max(0, MELON_SEASON_SALE_CAP - season_melons_sold)
         is_floor_exception = endgame or (urgency == 2)
@@ -12695,7 +13127,7 @@ class MarketBrain:
         else:
             batch_target = 4   # sell 3-5 units
 
-        # Available stock per product respecting reserves & caps
+        # Available stock per product respecting reserves, caps, and floor-hold rules
         available_stock = {}
         for prod in SELLABLE:
             if prod in delay_set and not endgame and urgency < 2:
@@ -12714,11 +13146,10 @@ class MarketBrain:
                 else:
                     fert_reserve = 0
                 stock = max(0, stock - fert_reserve)
-            elif prod == "MELON":
-                if not is_floor_exception and melon_spot_init <= 1:
-                    stock = 0  # Hold $1 MELON at price floor in normal and shed relief modes
-                elif urgency < 2 and not endgame:
-                    stock = min(stock, melon_cap_remaining)
+            elif prod in HOLD_AT_FLOOR_PRODUCTS and not is_floor_exception and spot_init_map.get(prod, 10) <= 1:
+                stock = 0  # Hold $1 fragile products at price floor in normal and shed relief modes
+            elif prod == "MELON" and urgency < 2 and not endgame:
+                stock = min(stock, melon_cap_remaining)
 
             if stock > 0:
                 available_stock[prod] = stock
@@ -12745,11 +13176,11 @@ class MarketBrain:
             if prod not in available_stock:
                 continue
             st = available_stock[prod]
-            spot = market_price(prod, inv.get(prod, 10000))
+            spot = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000)))
             urgency_score = st / (shed_total or 1)
             if spot <= 1:
-                if prod == "MELON" and not is_floor_exception:
-                    urgency_score = 0.0  # Do not elevate urgency for MELON at floor
+                if prod in HOLD_AT_FLOOR_PRODUCTS and not is_floor_exception:
+                    urgency_score = 0.0  # Do not elevate urgency for fragile goods at floor
                 else:
                     urgency_score = 0.95
             if prod in preempt_set:
@@ -12777,18 +13208,19 @@ class MarketBrain:
 
             bt = batch_target
 
-            if prod == "MELON":
-                if is_floor_exception:
-                    slice_qty = min(st, 20)
-                else:
-                    safe_qty = max(0, melon_turn_drip_budget - melon_sold_this_turn)
+            if prod in DRIP_PROTECTED_PRODUCTS and not is_floor_exception:
+                keep_f = DRIP_PRICE_KEEP_FRAC.get(prod, 0.90)
+                spot_i = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000.0)))
+                thresh = max(2, int(spot_i * keep_f))
+                safe_qty = self._safe_drip_qty(prod, inv.get(prod, 10000.0), thresh)
+                if prod == "MELON":
                     safe_qty = min(safe_qty, max(0, melon_cap_remaining - melon_sold_this_turn))
-                    if safe_qty <= 0:
-                        continue
-                    if urgency == 1:
-                        slice_qty = min(st, bt if bt > 10 else 10, to_shed, safe_qty)
-                    else:
-                        slice_qty = min(st, bt, safe_qty)
+                if safe_qty <= 0:
+                    continue
+                if urgency == 1:
+                    slice_qty = min(st, bt if bt > 10 else 10, to_shed, safe_qty)
+                else:
+                    slice_qty = min(st, bt, safe_qty)
             else:
                 if endgame or days_left <= 2 or urgency == 2 or prod == "FERTILIZER":
                     slice_qty = min(st, 20)
@@ -12812,9 +13244,13 @@ class MarketBrain:
             # In emergency mode, allow multiple slices of the overflowing product if to_shed remains
             if not endgame and urgency == 1 and to_shed > 0 and order_budget > 0 and available_stock[prod] > 0:
                 while order_budget > 0 and to_shed > 0 and available_stock[prod] > 0:
-                    if prod == "MELON":
-                        safe_qty = max(0, melon_turn_drip_budget - melon_sold_this_turn)
-                        safe_qty = min(safe_qty, max(0, melon_cap_remaining - melon_sold_this_turn))
+                    if prod in DRIP_PROTECTED_PRODUCTS and not is_floor_exception:
+                        keep_f = DRIP_PRICE_KEEP_FRAC.get(prod, 0.90)
+                        spot_i = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000.0)))
+                        thresh = max(2, int(spot_i * keep_f))
+                        safe_qty = self._safe_drip_qty(prod, inv.get(prod, 10000.0), thresh)
+                        if prod == "MELON":
+                            safe_qty = min(safe_qty, max(0, melon_cap_remaining - melon_sold_this_turn))
                         if safe_qty <= 0:
                             break
                         extra_qty = min(available_stock[prod], bt if bt > 10 else 10, to_shed, safe_qty)
@@ -12838,11 +13274,23 @@ class MarketBrain:
                         "melon_diagnostics": diag, **diag}
 
     # ------------------------------------------------------------------
+    def _safe_drip_qty(self, prod, current_inv, threshold):
+        """Calculate max units Q that can be added to current_inv such that
+        market_price(prod, current_inv + Q) >= threshold.
+        """
+        if threshold <= 1:
+            return 999999
+        limit = inventory_at_price(prod, threshold)
+        budget = max(0, int(limit - float(current_inv)))
+        while budget > 0 and market_price(prod, current_inv + budget) < threshold:
+            budget -= 1
+        while market_price(prod, current_inv + budget + 1) >= threshold:
+            budget += 1
+        return max(0, budget)
+
     def _drip_budget(self, prod, current_inv, keep_frac, spot):
         threshold = max(2, int(spot * keep_frac))
-        limit = inventory_for_price_at_least(prod, threshold)
-        budget = int(limit - float(current_inv))
-        return max(0, budget)
+        return self._safe_drip_qty(prod, current_inv, threshold)
 
     def _is_sell_hour(self, day, hour):
         return hour in SELL_HOUR_SET
@@ -13055,9 +13503,11 @@ def _build_opp_advice(ctx, mem):
 
         # Phase 3: update shed estimate
         opp_animals = sum(1 for t in opp_farm.iter_tiles() if t.is_animal)
+        opp_sales_step = mem.get("opp_sales_step", {})
         opp_sales = mem.get("opp_sales_inferred", {})
+        opp_market_inf = mem.get("opp_market_inference", {})
         _estimated_shed = update_opponent_shed_estimate(
-            _estimated_shed, deltas, opp_sales,
+            _estimated_shed, deltas, opp_sales_step,
             opp_animals, ctx["day"], ctx["hour"],
         )
 
@@ -13066,6 +13516,8 @@ def _build_opp_advice(ctx, mem):
             "estimated_shed": _estimated_shed,
             "sell_probs": {},
             "opp_sales_inferred": opp_sales,
+            "opp_sales_step": opp_sales_step,
+            "opp_market_inference": opp_market_inf,
             "shed_pressure": sum(_estimated_shed.values()) / 100.0,
             "forecast": forecast,
             "commitments": summarize_opponent_commitments(opp_farm),
@@ -13411,14 +13863,20 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             purchase_orders, sell_orders,
             purchases_first=(ctx["hour"] in (0, 1))
         )
-        for order in market:
-            if order[0] == "SELL":
-                try:
-                    record_our_sale(order[1], order[2])
-                except Exception:
-                    pass
     except Exception:
         market = [list(o) for o in (purchase_orders + sell_orders)[:10]]
+
+    for order in market:
+        if order[0] == "SELL":
+            try:
+                record_our_sale(order[1], order[2])
+            except Exception:
+                pass
+        elif order[0] == "BUY_PRODUCT":
+            try:
+                record_our_buy(order[1], order[2])
+            except Exception:
+                pass
 
     # 6. Action dict assembly
     n_units = 1 + len(ctx["farm"].hands)

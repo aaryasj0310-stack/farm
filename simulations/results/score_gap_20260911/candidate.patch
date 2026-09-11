@@ -1,0 +1,29 @@
+diff --git a/submission/execution/task_scheduler.py b/submission/execution/task_scheduler.py
+index c0694e7..e6d892d 100644
+--- a/submission/execution/task_scheduler.py
++++ b/submission/execution/task_scheduler.py
+@@ -902,12 +902,18 @@ def assign_tasks(tasks, ctx, extra_units=()):
+         if not free_units:
+             continue
+         target = task.get("target") or tuple(farm.farmer)
+-        # Prefer free units without an active mission
+-        non_mission = [u for u in free_units if u not in _ACTIVE_MISSIONS]
+-        pool = non_mission if non_mission else free_units
+-        best = min(pool, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+-        if best in _ACTIVE_MISSIONS:
+-            del _ACTIVE_MISSIONS[best]  # Preempted by urgent survival task!
++        # Urgent work goes to the closest capable worker. Preserve unrelated
++        # missions only on equal-distance ties, never at the cost of a rescue.
++        best = min(free_units, key=lambda u: (
++            abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]),
++            u in _ACTIVE_MISSIONS, u,
++        ))
++        # A regular mission may have become urgent. Transfer its ownership
++        # here so Step 1b cannot send a second worker to the same operation.
++        for u, mission in list(_ACTIVE_MISSIONS.items()):
++            if u == best or (mission["op"] == task["op"] and
++                             tuple(mission["target"]) == tuple(target)):
++                del _ACTIVE_MISSIONS[u]
+         busy.add(best)
+         task["unit_pos"] = pos_by_idx[best]
+         assignment[best] = task

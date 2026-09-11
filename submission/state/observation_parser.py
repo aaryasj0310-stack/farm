@@ -162,40 +162,108 @@ def in_bonus_window(tile, day):
     return start <= age <= cd["max_yield_day"]
 
 
+def crop_produces_today(tile, day):
+    """True if this ongoing crop produces today or at the end-of-day refresh today.
+
+    Based on:
+      * planted_day
+      * first_yield_day
+      * interval
+      * max_yield
+    """
+    is_plant = getattr(tile, "is_plant", False) or g(tile, "kind") == "PLANT"
+    if not is_plant:
+        return False
+    crop_name = getattr(tile, "crop", g(tile, "crop"))
+    cd = CROPS.get(crop_name)
+    if cd is None or not cd.get("ongoing"):
+        return False
+    planted = getattr(tile, "planted_day", g(tile, "planted_day"))
+    if planted is None:
+        return False
+
+    first = cd["first_yield_day"]
+    interval = cd["interval"]
+    max_yield = cd["max_yield"]
+    if interval <= 0:
+        return False
+
+    # 1. Engine end-of-day refresh timing:
+    # In engine _daily_refresh_plants(), next_day = current_day + 1.
+    # Production fires at end of `day` when:
+    # days_since_first = (day + 1) - planted - first >= 0
+    # and days_since_first % interval == 0
+    # and (days_since_first // interval + 1) <= max_yield.
+    since_first_eod = (day + 1) - planted - first
+    if since_first_eod >= 0 and since_first_eod % interval == 0:
+        if (since_first_eod // interval + 1) <= max_yield:
+            return True
+
+    # 2. Calendar age on `day`: age = day - planted
+    # age >= first and (age - first) % interval == 0
+    # and ((age - first) // interval + 1) <= max_yield.
+    age = day - planted
+    if age >= first and (age - first) % interval == 0:
+        if ((age - first) // interval + 1) <= max_yield:
+            return True
+
+    return False
+
+
+ongoing_crop_produces_today = crop_produces_today
+
+
 def needs_water_today(tile, day):
     """Determine if a plant tile must/should be watered today under Points 1.2 & 1.5.
-    
-    Guardrail 1: Planting day ALWAYS requires same-day water (starts with counter=1).
-    Guardrail 2: If missed yesterday (counter >= 1), MUST water today (prevent weed).
-    Guardrail 3: In bonus window (one-time) or active production (ongoing) -> ALWAYS water.
-    Guardrail 4: Pre-bonus / non-bonus -> alternate days by spatial checkerboard ((x + y + day) % 2 == 0).
+
+    1. Always water on planting day.
+    2. If missed yesterday (counter >= 1), MUST water today (prevent weed).
+    3. If ongoing crop produces today AND fertilizer is active today, water so fertilized production doubles.
+    4. Otherwise for ongoing crops, alternate days by spatial checkerboard ((x + y + day) % 2 == 0).
+    5. One-time crops: in bonus window -> ALWAYS water; otherwise alternate days.
     """
-    if not tile.is_plant:
+    is_plant = getattr(tile, "is_plant", False) or g(tile, "kind") == "PLANT"
+    if not is_plant:
         return False
-    if tile.watered_today:
+    watered_today = bool(getattr(tile, "watered_today", g(tile, "watered_today", False)))
+    if watered_today:
         return False
-        
-    # Guardrail 1: Planting day
-    if tile.planted_day is not None and tile.planted_day == day:
-        return True
-        
-    # Guardrail 2: Missed yesterday -> mandatory survival watering
-    if tile.consecutive_unwatered >= 1:
-        return True
-        
-    cd = CROPS.get(tile.crop)
-    if cd is None:
-        return True
-        
-    # Guardrail 3: Ongoing crops (Tomato, Strawberry) must be watered daily for maximum yield
-    if cd["ongoing"]:
+
+    planted_day = getattr(tile, "planted_day", g(tile, "planted_day"))
+
+    # Guardrail 1: Planting day ALWAYS requires same-day water (starts with counter=1)
+    if planted_day is not None and planted_day == day:
         return True
 
+    # Guardrail 2: Missed yesterday -> mandatory survival watering
+    consecutive_unwatered = int(getattr(tile, "consecutive_unwatered", g(tile, "consecutive_unwatered", 0)) or 0)
+    if consecutive_unwatered >= 1:
+        return True
+
+    crop_name = getattr(tile, "crop", g(tile, "crop"))
+    cd = CROPS.get(crop_name)
+    if cd is None:
+        return True
+
+    x = int(getattr(tile, "x", g(tile, "x", 0)) or 0)
+    y = int(getattr(tile, "y", g(tile, "y", 0)) or 0)
+
+    # Ongoing crops (Tomato, Strawberry): do NOT force daily watering
+    if cd.get("ongoing"):
+        fert_day = getattr(tile, "fertilized_until_day", g(tile, "fertilized_until_day", -1))
+        fertilized_active = fert_day is not None and fert_day >= day
+        # Scheduled production day AND fertilizer active today -> force water to double output
+        if crop_produces_today(tile, day) and fertilized_active:
+            return True
+        # Otherwise alternate days by spatial checkerboard
+        return (x + y + day) % 2 == 0
+
+    # One-time crops (Wheat, Carrot, Melon)
     if in_bonus_window(tile, day):
         return True
-        
-    # Guardrail 4: Outside bonus window and watered yesterday -> alternate days
-    return (tile.x + tile.y + day) % 2 == 0
+
+    # Outside bonus window and watered yesterday -> alternate days
+    return (x + y + day) % 2 == 0
 
 
 def decay_step_for(tile):

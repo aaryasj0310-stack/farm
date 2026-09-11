@@ -1,0 +1,633 @@
+"""
+Kaggriculture Master Agent — Closed-Loop Adaptive Architecture
+
+Architecture Chain:
+  obs -> parse_observation -> PriceForecast (W1) -> MacroPlanner (W2)
+      -> TaskScheduler (unit actions)
+      + OrderBuilder (purchase orders) + MarketBrain (sell orders) + EndgameLiquidator
+      -> Action Dict {"farmer": ..., "hands": ..., "market": ...}
+
+  Phase 6: Opponent Modeling pipeline
+      obs -> get_state() -> OpponentModel -> OpponentAdvisor -> MacroPlanner + MarketBrain
+
+Submission Rule Compliance:
+  - The last 'def' in this file is the agent entry point: def agent(obs, config=None)
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+from typing import Any, Dict, Optional
+from collections import Counter
+
+# Safe path injection for Kaggle execution environment (where __file__ is undefined)
+_CWD = os.getcwd()
+_OWN_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else None
+_DIR_CANDIDATES = [
+    _OWN_DIR,
+    os.path.join(_CWD, "agent"),
+    "/kaggle_simulations/agent",
+    _CWD,
+]
+
+for _base in reversed(_DIR_CANDIDATES):
+    if _base and os.path.exists(_base):
+        if _base in sys.path:
+            sys.path.remove(_base)
+        sys.path.insert(0, _base)
+        for _sub in reversed(("state", "strategy", "execution", "market")):
+            _sub_path = os.path.join(_base, _sub)
+            if os.path.exists(_sub_path):
+                if _sub_path in sys.path:
+                    sys.path.remove(_sub_path)
+                sys.path.insert(0, _sub_path)
+
+try:
+    from observation_parser import parse_observation
+except ImportError:
+    from state.observation_parser import parse_observation
+
+try:
+    from config import QUADRANT_HARD_BLOCK, get_target_hands
+    from strategy.price_forecast import PriceForecast
+    from strategy.macro_planner import MacroPlanner
+    from strategy.endgame_liquidator import EndgameLiquidator
+    from strategy.shop_adapter import demand_boosts
+    from strategy.opponent_advisor import build_opponent_advice, OpponentAdvice
+    from execution.task_scheduler import (
+        assign_tasks, build_tasks, get_daily_log, reset_daily_log,
+        get_sw_tile_breakdown, get_sw_season_summary,
+    )
+    from execution.pathfinding import bfs_first_step
+    from market.order_builder import OrderBuilder
+    from market.market_brain import MarketBrain
+    from state.state_tracker import get_state, record_our_sale
+    from state.opponent_model import (
+        snapshot_opponent_farm, detect_tile_deltas, infer_turn_transactions,
+        forecast_opponent_production, get_imminent_harvests,
+        summarize_opponent_commitments, update_opponent_shed_estimate,
+        compute_opponent_sell_probabilities,
+    )
+except ImportError:
+    from config import QUADRANT_HARD_BLOCK, get_target_hands
+    from price_forecast import PriceForecast
+    from macro_planner import MacroPlanner
+    from endgame_liquidator import EndgameLiquidator
+    from shop_adapter import demand_boosts
+    from opponent_advisor import build_opponent_advice, OpponentAdvice
+    from task_scheduler import (
+        assign_tasks, build_tasks, get_daily_log, reset_daily_log,
+        get_sw_tile_breakdown, get_sw_season_summary,
+    )
+    from pathfinding import bfs_first_step
+    from order_builder import OrderBuilder
+    from market_brain import MarketBrain
+    from state_tracker import get_state, record_our_sale
+    from opponent_model import (
+        snapshot_opponent_farm, detect_tile_deltas, infer_turn_transactions,
+        forecast_opponent_production, get_imminent_harvests,
+        summarize_opponent_commitments, update_opponent_shed_estimate,
+        compute_opponent_sell_probabilities,
+    )
+
+PASS_ACTION = {"farmer": ["PASS"], "hands": [], "market": []}
+
+# Singleton / lazy-loaded instances
+_FC = None
+_PLANNER = None
+_BUILDER = None
+_BRAIN = None
+_LIQUIDATOR = None
+
+# Persistent opponent modeling state (survives across turns within one process)
+_prev_opp_snapshot = None
+_estimated_shed = None
+_OPPONENT_MODEL_DIAGNOSTICS = {
+    "failure_count": 0,
+    "last_exception_type": None,
+    "last_exception_message": None,
+    "last_failure_step": None,
+    "is_degraded": False,
+}
+
+
+def get_opponent_model_diagnostics():
+    """Return a copy of the opponent-model diagnostics."""
+    return dict(_OPPONENT_MODEL_DIAGNOSTICS)
+
+
+def reset_opponent_model_state():
+    """Reset module-level opponent-model state across episodes."""
+    global _prev_opp_snapshot, _estimated_shed, _OPPONENT_MODEL_DIAGNOSTICS
+    _prev_opp_snapshot = None
+    _estimated_shed = None
+    _OPPONENT_MODEL_DIAGNOSTICS = {
+        "failure_count": 0,
+        "last_exception_type": None,
+        "last_exception_message": None,
+        "last_failure_step": None,
+        "is_degraded": False,
+    }
+
+
+try:
+    from state.state_tracker import register_reset_hook as _rrh_pkg
+    _rrh_pkg(reset_opponent_model_state)
+except Exception:
+    pass
+
+try:
+    from state_tracker import register_reset_hook as _rrh_flat
+    _rrh_flat(reset_opponent_model_state)
+except Exception:
+    pass
+
+
+def _get_components():
+    global _FC, _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR
+    if _FC is None:
+        _FC = PriceForecast.load()
+        _PLANNER = MacroPlanner(_FC)
+        _BUILDER = OrderBuilder()
+        _BRAIN = MarketBrain(_FC)
+        _LIQUIDATOR = EndgameLiquidator(_FC, _BRAIN)
+    return _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR
+
+
+def _build_opp_advice(ctx, mem):
+    """Build OpponentAdvice from current observation and persistent memory.
+
+    Returns OpponentAdvice (always safe — empty advice on any missing data).
+    """
+    try:
+        opp_farm = ctx.get("opponent_farm")
+        if opp_farm is None:
+            return OpponentAdvice()
+
+        # Phase 1: snapshot and detect deltas
+        global _prev_opp_snapshot, _estimated_shed
+        new_snap = snapshot_opponent_farm(opp_farm)
+        deltas = detect_tile_deltas(opp_farm, _prev_opp_snapshot)
+        _prev_opp_snapshot = new_snap
+
+        # Phase 2: forecast production
+        forecast = forecast_opponent_production(opp_farm, ctx["day"])
+
+        # Phase 3: update shed estimate
+        opp_animals = sum(1 for t in opp_farm.iter_tiles() if t.is_animal)
+        opp_sales = mem.get("opp_sales_inferred", {})
+        _estimated_shed = update_opponent_shed_estimate(
+            _estimated_shed, deltas, opp_sales,
+            opp_animals, ctx["day"], ctx["hour"],
+        )
+
+        # Phase 3: sell probabilities
+        opp_state_for_probs = {
+            "estimated_shed": _estimated_shed,
+            "sell_probs": {},
+            "opp_sales_inferred": opp_sales,
+            "shed_pressure": sum(_estimated_shed.values()) / 100.0,
+            "forecast": forecast,
+            "commitments": summarize_opponent_commitments(opp_farm),
+            "animal_counts": dict(Counter(t.animal for t in opp_farm.iter_tiles()
+                                          if t.is_animal)),
+        }
+        sell_probs = compute_opponent_sell_probabilities(
+            opp_farm, _estimated_shed, ctx, mem,
+        )
+        opp_state_for_probs["sell_probs"] = sell_probs
+
+        # Phase 5: build advice
+        town_obj = ctx.get("town")
+        unlocked_shops = getattr(town_obj, "unlocked_shops", None)
+        if unlocked_shops is None and isinstance(town_obj, dict):
+            unlocked_shops = town_obj.get("unlocked_shops", [])
+        boosts = demand_boosts(unlocked_shops or [])
+        advice = build_opponent_advice(
+            opp_state_for_probs, ctx, forecast, boosts=boosts,
+        )
+        return advice
+    except Exception as e:
+        # Never let opponent modeling crash the main agent
+        global _OPPONENT_MODEL_DIAGNOSTICS
+        _OPPONENT_MODEL_DIAGNOSTICS["failure_count"] += 1
+        _OPPONENT_MODEL_DIAGNOSTICS["last_exception_type"] = type(e).__name__
+        _OPPONENT_MODEL_DIAGNOSTICS["last_exception_message"] = str(e)
+        _OPPONENT_MODEL_DIAGNOSTICS["last_failure_step"] = ctx.get("step") if isinstance(ctx, dict) else getattr(ctx, "step", None)
+        _OPPONENT_MODEL_DIAGNOSTICS["is_degraded"] = True
+        return OpponentAdvice()
+
+
+def _survival_fallback_from_ctx(ctx: Dict[str, Any]) -> Dict[str, Any]:
+    """Survival-capable fallback task generator using parsed context.
+
+    Priority:
+      1. Feed animal in immediate survival danger if eligible unit already holds wheat
+      2. Water crops that will die today (consecutive_unwatered >= 1 or survival)
+      3. Harvest crops at immediate decay risk (turns_until_decay <= 1)
+      4. Harvest animal output if safe (yield_units > 0)
+      5. Otherwise PASS
+    """
+    farm = ctx["farm"]
+    private = ctx.get("private")
+    inventories = private.inventories if private is not None else []
+
+    units = [(0, tuple(farm.farmer))]
+    for i, h in enumerate(farm.hands):
+        units.append((i + 1, tuple(h)))
+    pos_by_idx = dict(units)
+
+    wheat_counts = {
+        u: (inventories[u].get("WHEAT", 0) if u < len(inventories) and isinstance(inventories[u], dict) else 0)
+        for u, _ in units
+    }
+
+    free_units = set(pos_by_idx.keys())
+    actions = {u: ["PASS"] for u in free_units}
+    assignment = {}
+
+    starving_animals = []
+    dying_crops = []
+    decaying_crops = []
+    harvestable_animals = []
+
+    for t in farm.iter_tiles():
+        if t.is_animal:
+            if getattr(t, "consecutive_unfed", 0) >= 1 and not getattr(t, "fed_today", False):
+                starving_animals.append(t.pos)
+            if getattr(t, "yield_units", 0) > 0:
+                harvestable_animals.append(t.pos)
+        elif getattr(t, "kind", None) == "PLANT":
+            if getattr(t, "consecutive_unwatered", 0) >= 1 and not getattr(t, "watered_today", False):
+                dying_crops.append(t.pos)
+            if getattr(t, "yield_units", 0) > 0 and getattr(t, "turns_until_decay", 99) <= 1:
+                decaying_crops.append(t.pos)
+
+    # 1. feed animal in immediate survival danger if eligible unit already holds wheat
+    for target in starving_animals:
+        if not free_units:
+            break
+        eligible = [u for u in free_units if wheat_counts.get(u, 0) > 0]
+        if not eligible:
+            continue
+        best_u = min(eligible, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        wheat_counts[best_u] -= 1
+        assignment[best_u] = {"op": "FEED", "target": tuple(target), "kind": "feed_rescue"}
+        if pos_by_idx[best_u] == tuple(target):
+            actions[best_u] = ["FEED"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], tuple(target), 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 2. water crops that will die today
+    for target in dying_crops:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        assignment[best_u] = {"op": "WATER", "target": tuple(target), "kind": "water_emergency"}
+        if pos_by_idx[best_u] == tuple(target):
+            actions[best_u] = ["WATER"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], tuple(target), 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 3. harvest crops at immediate decay risk
+    for target in decaying_crops:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        assignment[best_u] = {"op": "HARVEST", "target": tuple(target), "kind": "harvest_decay"}
+        if pos_by_idx[best_u] == tuple(target):
+            actions[best_u] = ["HARVEST"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], tuple(target), 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 4. harvest animal output if safe
+    for target in harvestable_animals:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        assignment[best_u] = {"op": "HARVEST", "target": tuple(target), "kind": "harvest_animal"}
+        if pos_by_idx[best_u] == tuple(target):
+            actions[best_u] = ["HARVEST"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], tuple(target), 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    return {"actions": actions, "assignment": assignment}
+
+
+def _survival_fallback_raw(obs: Dict[str, Any]) -> Dict[str, Any]:
+    """Safe fallback operating directly on unparsed observation dictionary."""
+    player_id = obs.get("player", 0) if isinstance(obs, dict) else 0
+    farms = obs.get("farms", []) if isinstance(obs, dict) else []
+    our_farm = (
+        farms[player_id]
+        if isinstance(farms, list) and len(farms) > player_id and isinstance(farms[player_id], dict)
+        else {}
+    )
+    farmer = tuple(our_farm.get("farmer", [4, 4]))
+    hands = [tuple(h) for h in our_farm.get("hands", [])]
+    tiles = our_farm.get("tiles", [])
+
+    private = obs.get("private", {}) if isinstance(obs, dict) else {}
+    inventories = private.get("inventories", []) if isinstance(private, dict) else []
+
+    units = [(0, farmer)] + [(i + 1, h) for i, h in enumerate(hands)]
+    pos_by_idx = dict(units)
+    wheat_counts = {
+        u: (inventories[u].get("WHEAT", 0) if u < len(inventories) and isinstance(inventories[u], dict) else 0)
+        for u, _ in units
+    }
+
+    free_units = set(pos_by_idx.keys())
+    actions = {u: ["PASS"] for u in free_units}
+
+    starving_animals = []
+    dying_crops = []
+    decaying_crops = []
+    harvestable_animals = []
+
+    if isinstance(tiles, list):
+        for y, row in enumerate(tiles):
+            if not isinstance(row, list):
+                continue
+            for x, tile in enumerate(row):
+                if not isinstance(tile, dict):
+                    continue
+                pos = (x, y)
+                if "animal" in tile:
+                    if tile.get("consecutive_unfed", 0) >= 1 and not tile.get("fed_today", False):
+                        starving_animals.append(pos)
+                    if tile.get("yield_units", 0) > 0:
+                        harvestable_animals.append(pos)
+                elif tile.get("kind") == "PLANT" or "crop" in tile:
+                    if tile.get("consecutive_unwatered", 0) >= 1 and not tile.get("watered_today", False):
+                        dying_crops.append(pos)
+                    if tile.get("yield_units", 0) > 0 and tile.get("turns_until_decay", 99) <= 1:
+                        decaying_crops.append(pos)
+
+    # 1. feed animal in immediate survival danger if eligible unit already holds wheat
+    for target in starving_animals:
+        if not free_units:
+            break
+        eligible = [u for u in free_units if wheat_counts.get(u, 0) > 0]
+        if not eligible:
+            continue
+        best_u = min(eligible, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        wheat_counts[best_u] -= 1
+        if pos_by_idx[best_u] == target:
+            actions[best_u] = ["FEED"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], target, 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 2. water crops that will die today
+    for target in dying_crops:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        if pos_by_idx[best_u] == target:
+            actions[best_u] = ["WATER"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], target, 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 3. harvest crops at immediate decay risk
+    for target in decaying_crops:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        if pos_by_idx[best_u] == target:
+            actions[best_u] = ["HARVEST"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], target, 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    # 4. harvest animal output if safe
+    for target in harvestable_animals:
+        if not free_units:
+            break
+        best_u = min(free_units, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        free_units.remove(best_u)
+        if pos_by_idx[best_u] == target:
+            actions[best_u] = ["HARVEST"]
+        else:
+            step = bfs_first_step(pos_by_idx[best_u], target, 10)
+            actions[best_u] = [step] if step else ["PASS"]
+
+    return {
+        "farmer": list(actions.get(0, ["PASS"])),
+        "hands": [list(actions.get(i + 1, ["PASS"])) for i in range(len(hands))],
+        "market": [],
+        "_emergency_fallback": True,
+    }
+
+
+def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
+    # Phase 6: use get_state for persistent memory + episode detection
+    try:
+        ctx, mem = get_state(obs)
+    except Exception as exc:
+        return _emergency_fallback(obs, exc)
+
+    if ctx is None:
+        return _emergency_fallback(obs, RuntimeError("ctx is None"))
+
+    planner, builder, brain, liquidator = _get_components()
+
+    # v5.9: Reset daily log and opponent state at start of day 0
+    if ctx["day"] == 0 and ctx["hour"] == 0:
+        try:
+            reset_daily_log()
+            reset_opponent_model_state()
+        except Exception:
+            pass
+
+    # Dynamic shop boosts from observed town unlocks
+    known_shops = obs.get("town", {}).get("unlocked_shops", []) if isinstance(obs, dict) else []
+    boosts = demand_boosts(known_shops)
+
+    # Phase 6: build opponent advice (domain isolated)
+    opp_advice = _build_opp_advice(ctx, mem)
+
+    # 1. Macro strategic planning & 2. Task execution (domain isolated)
+    asg = None
+    plan = None
+    is_strategy_fallback = False
+    try:
+        plan = planner.build(ctx, boosts=boosts, opp_advice=opp_advice)
+        if plan.intents.get("buy_land"):
+            n_extra = len(ctx["farm"].unlocked) - 1
+            next_q = n_extra + 2
+            if next_q in QUADRANT_HARD_BLOCK:
+                plan.intents["buy_land"] = False  # force block
+        tasks = build_tasks(ctx, plan)
+        asg = assign_tasks(tasks, ctx)
+    except Exception as exc:
+        # Fallback to survival tasks when planner or task scheduler fails
+        global _LAST_FALLBACK_DIAGNOSTIC
+        import traceback
+        tb_str = traceback.format_exc()
+        _LAST_FALLBACK_DIAGNOSTIC = {
+            "step": ctx.get("step", 0),
+            "day": ctx.get("day", 0),
+            "hour": ctx.get("hour", 0),
+            "exception_type": type(exc).__name__,
+            "exception_message": str(exc),
+            "traceback": tb_str,
+            "is_fallback": True,
+        }
+        try:
+            from config import DEBUG
+            if DEBUG:
+                sys.stderr.write(f"[STRATEGY_TASK_FALLBACK] D{ctx['day']} H{ctx['hour']:02d}: {exc}\n")
+        except Exception:
+            pass
+        asg = _survival_fallback_from_ctx(ctx)
+        is_strategy_fallback = True
+
+    # 3. Market layer: purchase intent compilation (domain isolated)
+    purchase_orders = []
+    try:
+        if ctx["hour"] == 0:
+            if plan is not None:
+                purchase_orders, _ledger = builder.build(ctx, plan.intents)
+        elif ctx["hour"] == 1:
+            target_h = get_target_hands(ctx["day"])
+            hires_so_far = ctx["farm"].hires_today
+            hires_needed = max(0, target_h - hires_so_far)
+            if hires_needed > 0:
+                for _ in range(min(hires_needed, 10)):
+                    purchase_orders.append(["HIRE"])
+        else:
+            if plan is not None:
+                purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents)
+    except Exception:
+        purchase_orders = []
+
+    # 4. Market layer: sell-side intent compilation (domain isolated)
+    sell_orders = []
+    try:
+        if ctx["day"] >= 28:
+            sell_orders, _d = liquidator.plan(ctx, opp_advice=opp_advice)
+        else:
+            sell_orders, _d = brain.sell_orders(ctx, opp_advice=opp_advice)
+    except Exception:
+        sell_orders = []
+
+    # 5. Market composition
+    market = []
+    try:
+        market = MarketBrain.compose(
+            purchase_orders, sell_orders,
+            purchases_first=(ctx["hour"] in (0, 1))
+        )
+        for order in market:
+            if order[0] == "SELL":
+                try:
+                    record_our_sale(order[1], order[2])
+                except Exception:
+                    pass
+    except Exception:
+        market = [list(o) for o in (purchase_orders + sell_orders)[:10]]
+
+    # 6. Action dict assembly
+    n_units = 1 + len(ctx["farm"].hands)
+    res = {
+        "farmer": list(asg["actions"].get(0, ["PASS"])),
+        "hands": [list(asg["actions"].get(i, ["PASS"])) for i in range(1, n_units)],
+        "market": market,
+    }
+    if is_strategy_fallback:
+        res["_emergency_fallback"] = True
+    return res
+
+
+_LAST_FALLBACK_DIAGNOSTIC: Optional[Dict[str, Any]] = None
+
+
+def get_last_fallback_diagnostic() -> Optional[Dict[str, Any]]:
+    """Return diagnostic telemetry from the most recent emergency fallback, if any."""
+    return _LAST_FALLBACK_DIAGNOSTIC
+
+
+def _emergency_fallback(obs: Dict[str, Any], exc: Exception) -> Dict[str, Any]:
+    """Safe, deterministic emergency fallback returning a survival-capable action."""
+    global _LAST_FALLBACK_DIAGNOSTIC
+    import traceback
+    tb_str = traceback.format_exc()
+
+    day = obs.get("day", 0) if isinstance(obs, dict) else 0
+    hour = obs.get("hour", 0) if isinstance(obs, dict) else 0
+    step = obs.get("step", 0) if isinstance(obs, dict) else 0
+
+    _LAST_FALLBACK_DIAGNOSTIC = {
+        "step": step,
+        "day": day,
+        "hour": hour,
+        "exception_type": type(exc).__name__,
+        "exception_message": str(exc),
+        "traceback": tb_str,
+        "is_fallback": True,
+    }
+
+    try:
+        from config import DEBUG
+        if DEBUG:
+            sys.stderr.write(f"[EMERGENCY_FALLBACK] Step {step} (D{day} H{hour:02d}): {exc}\n{tb_str}\n")
+    except Exception:
+        pass
+
+    try:
+        ctx = parse_observation(obs)
+        if ctx is not None:
+            asg = _survival_fallback_from_ctx(ctx)
+            n_hands = len(ctx["farm"].hands)
+            return {
+                "farmer": list(asg["actions"].get(0, ["PASS"])),
+                "hands": [list(asg["actions"].get(i + 1, ["PASS"])) for i in range(n_hands)],
+                "market": [],
+                "_emergency_fallback": True,
+            }
+    except Exception:
+        pass
+
+    return _survival_fallback_raw(obs)
+
+
+def get_daily_telemetry() -> Dict[int, Dict[str, Any]]:
+    """Return complete daily telemetry log."""
+    return get_daily_log()
+
+
+def reset_daily_telemetry() -> None:
+    """Reset daily telemetry log and seasonal trackers."""
+    reset_daily_log()
+
+
+def get_sw_telemetry() -> Dict[str, Any]:
+    """Return seasonal SW telemetry summary."""
+    return get_sw_season_summary()
+
+
+# ==============================================================================
+# KAGGLE ENTRY POINT (LAST 'def')
+# ==============================================================================
+def agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Official competition entry point with safe deterministic fallback."""
+    global _LAST_FALLBACK_DIAGNOSTIC
+    try:
+        _LAST_FALLBACK_DIAGNOSTIC = None
+        return _agent_decision(obs)
+    except Exception as exc:
+        return _emergency_fallback(obs, exc)

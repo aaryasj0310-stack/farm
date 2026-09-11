@@ -48,9 +48,11 @@ flowchart TD
 
     subgraph MARKET_LAYER["Market Planning & Compilation"]
         ORD_BUILD["ARCH-MKT-03: OrderBuilder
-        Wages & Feed Reserved, Slot Protection"]
+        Hire Acquisition & Feed Reserved, Slot Protection"]
         MKT_BRAIN["ARCH-MKT-02: MarketBrain
-        Floor Hold, Carry Check, Drip Slicing"]
+        Sell Windows, Shed Pressure,
+        Melon Floor Hold/Drip,
+        Non-Melon Phase Batches"]
         LIQUIDATOR["ARCH-STRAT-06: EndgameLiquidator
         D28-29 Final Inventory Dump"]
         MKT_COMP["MarketBrain.compose()
@@ -116,7 +118,7 @@ flowchart TD
     ORD_BUILD -->|purchase_orders| MKT_COMP
 
     PARSER --> MKT_BRAIN
-    PRICE_FC --> MKT_BRAIN
+    PRICE_FC -.->|Injected dependency unused by live sell path| MKT_BRAIN
     OPP_ADV --> MKT_BRAIN
     MKT_BRAIN -->|sell_orders (D0-27)| MKT_COMP
     LIQUIDATOR -->|sell_orders (D28-29)| MKT_COMP
@@ -137,7 +139,7 @@ flowchart TD
     CTX["Parsed Context (ctx)
     FarmView, MarketView, PrivateView"]
     FC["PriceForecast
-    E[P|d] table"]
+    Exhaustive 8^8 Distribution"]
     OPP["OpponentAdvice
     supply_adjustment, counter_pick"]
     BOOSTS["Shop Demand Boosts"]
@@ -145,61 +147,73 @@ flowchart TD
     subgraph S1["Workforce & Cash Reservation"]
         HANDS["RULE-HIRE-01: get_target_hands(day)
         Day 0-5: 4 | Day 6-9: 8 | Day 10: 10 | Day 11+: 12"]
-        HIRE_COST["FORM-HIRE-01: hire_total_cost(target)"]
-        RESERVE["FORM-BUDGET-01: Cash Reservation
-        money - wages - feed - base_reserve (300)"]
+        HIRE_COST["FORM-HIRE-01: Incremental hiring capital cost"]
+        RESERVE["FORM-ANIM-BUDGET-01: Livestock Cash Reservation
+        money - future_hire_cost - seed_reserve - land_reserve - base_reserve"]
     end
 
-    subgraph S2["Land Expansion Gate"]
+    subgraph S2["Land Expansion Gate & Intent Pipeline"]
         L_ROI["FORM-LAND-01: compute_land_roi()
-        Marginal profit on +25 tiles"]
+        Marginal profit on +25 tiles (optimistic crop portfolio)"]
         L_OW["opportunity_window_factor()
         1.0 if day <= 25 else 0.0"]
         L_URG["compute_land_urgency()
         Deadline proximity (SW D11 / NE D6)"]
         L_GATE{"DEC-LAND-SW-01: should_buy_land()
-        Money >= Total Req & ROI_adj > 0"}
+        Money >= Total Req & ROI_adj > 0 & Labor Feasible & Payback Surplus > 0"}
+        BUY_INTENT["MacroPlan.intents['buy_land'] = True"]
+        ORD_BUY["OrderBuilder emits BUY_LAND (Hour 0)"]
+        ENG_PROC["Engine Market Processing (Turn T)"]
+        NEXT_OBS["Next Turn Observation (Turn T+1):
+        farm.unlocked updated with SW"]
     end
 
     subgraph S3["Livestock & Wheat Balancing"]
-        WHEAT_PROJ["Project Wheat Tile Harvests"]
-        HERD_CAP["FORM-HERD-01: Sustainable Herd Calc
-        herd <= wheat_prod / (buffer * interval)"]
-        ANIM_TGT["DEC-ANIM-01: get_animal_targets()
-        Optimal terminal profit (C4 Cutoff D12)"]
-        WHEAT_DEF["FORM-WHEAT-DEF: Wheat Deficit Check
-        needed = herd * buffer; buy_wheat = needed - have"]
+        WHEAT_PROJ["Project Wheat Supply: shed + workers + planted + planned + affordable"]
+        HERD_CAP["FORM-HERD-01: Authoritative Feed Capacity
+        sustainable = floor(projected_wheat_supply / feeding_days_left)"]
+        ANIM_TGT["DEC-ANIM-01: get_animal_targets(..., max_sustainable=sustainable)
+        Strictly clamped by feed capacity (no ungrounded early-game exception)"]
+        WHEAT_DEF["FORM-FEED-01: Wheat Buffer Purchase Need
+        needed = animals * buffer; buy = min(needed - have, budget // 25)"]
     end
 
-    subgraph S4["Land Allocation & Portfolio Crop Scoring"]
+    subgraph S4["Land Allocation & Crop Engines"]
         TILE_PART["Tile Partitioning
-        NW/NE/SW soil vs Pasture/Coop vs Fallow"]
+        NW/NE Soil vs SW Dedicated Soil vs Pastures vs Portal"]
+        SW_DEC["FORM-SW-WHEAT-01: sw_plant_decision()
+        n_wheat = min(free, (deficit + 4) // 5); Remainder to CARROT (RULE-CROP-04)"]
         CROP_COUNT["FORM-CROP-01: get_committed_crop_counts()
-        live + planned + candidate"]
+        Mutated loop: live + planned, candidate + 1"]
         CROP_SCORE["FORM-CROP-02: _crop_score()
-        E[Revenue(I_eff)] - Costs / CycleDays"]
-        CAP_CHECK{"DEC-CROP-CAP: Cap / Deadline Check
-        CROP_TILE_CAPS & dynamic strawberry cap"}
+        Revenue Multipliers & Lifecycle Costs
+        FORM-CROP-DRAIN-01 / FORM-CROP-INVENTORY-01"]
+        CAP_CHECK["RULE-CROP-01 / 02 / 03A: Caps & Deadlines"]
         QUEUES["MacroPlan Queues:
         plant_queue, build_queue, place_queue"]
     end
 
-    CTX --> HANDS --> HIRE_COST --> RESERVE
+    CTX --> HANDS
+    HANDS --> HIRE_COST --> RESERVE
+
     CTX --> L_ROI
     FC --> L_ROI
     L_ROI --> L_GATE
     L_OW --> L_GATE
     RESERVE --> L_GATE
-    L_URG --> RESERVE
+    L_GATE -->|Yes: set intent| BUY_INTENT
+    BUY_INTENT --> ORD_BUY --> ENG_PROC --> NEXT_OBS
+    NEXT_OBS -.->|Subsequent Turn Planning| CTX
 
     CTX --> WHEAT_PROJ --> HERD_CAP
-    HERD_CAP --> ANIM_TGT
+    HERD_CAP -.->|Calculated but Uncoupled| ANIM_TGT
     RESERVE --> ANIM_TGT
     ANIM_TGT --> WHEAT_DEF
 
-    CTX --> TILE_PART
-    L_GATE -->|SW Unlocked| TILE_PART
-    TILE_PART --> CROP_SCORE
+    CTX -->|farm.unlocked (already-owned quadrants)| TILE_PART
+    TILE_PART -->|If SW in farm.unlocked: 15 Soil Tiles| SW_DEC
+    SW_DEC --> QUEUES
+    TILE_PART -->|NW / NE Soil Tiles| CROP_SCORE
     CROP_COUNT --> CROP_SCORE
     OPP --> CROP_SCORE
     BOOSTS --> CROP_SCORE
@@ -219,21 +233,25 @@ flowchart TD
         hire, buy_land, buy_seed, buy_wheat, buy_animal"]
         ORD_BUILD["ARCH-MKT-03: OrderBuilder.build()"]
         MAND_HIRE["Mandatory Hire Cost Reserved
-        affordable_hires = min(k, money // fib)"]
+        Iteratively accumulate Fibonacci hire costs from farm.hires_today"]
         SURV_FEED["Survival Feed Wheat Reserved
         w_buyable = min(req, discretionary // unit_px)"]
-        DISC_BUDGET["Discretionary Budget Partition
-        Land ($2,000) -> Seeds (Melon/Straw/Wheat) -> Animals"]
+        DISC_BUDGET["FORM-BUDGET-01: Discretionary Budget
+        money - mandatory_hire_budget - reserve - survival_feed_budget
+        Land ($2,000) -> Seeds -> Animals"]
         SLOT_ALLOC["FORM-SLOT-01: Slot Budgeting
         non_hire_needed = wheat + land + seeds
         max_hire_slots = max(4, 10 - non_hire_needed)"]
-        H0_ORDERS["Hour 0 Market Orders:
-        max_hire_slots x ['HIRE']
-        1x ['BUY_LAND'] (guaranteed slot!)
-        1x ['BUY_PRODUCT', 'WHEAT', n]
-        Nx ['BUY_SEED', crop, n]"]
-        H1_DEFER["Hour 1 Deferred Hiring:
-        target_hands - hires_today x ['HIRE']"]
+        H0_ORDERS["Hour 0 Market Orders (Priority Sequence):
+        1. HIRE (up to max_hire_slots)
+        2. BUY_PRODUCT WHEAT (slot-protected)
+        3. BUY_LAND (slot-protected if affordable / kept)
+        4. BUY_SEED (slot-protected)
+        5. BUY_ANIMAL"]
+        H1_DEFER["Hour 1 Deferred Hiring (main.py):
+        recompute max(0, target_hands - hires_today)
+        emit min(needed, 10) x HIRE orders
+        (no explicit agent-side affordability check)"]
     end
 
     subgraph SELLS["Sell-Side Trading (MarketBrain / Endgame)"]
@@ -242,16 +260,18 @@ flowchart TD
         WIN_CHECK{"Hour in SELL_WINDOWS?
         [1, 5, 9, 13, 17, 21]"}
         SHED_CAP{"Shed Emergency?
-        Shed >= 65 (soft cap)
+        Shed >= 65 (relieves toward 55 this turn)
         or H >= 22 & Shed > 88 (midnight)"}
-        FLOOR_CHECK{"Floor Hold?
-        Spot == $1 & days_left >= 5"}
-        CARRY_CHECK{"Carry Check?
-        E[P|d+3] > Spot + 2%"}
-        DRIP_SIZE["FORM-DRIP-01: Drip Slicing
-        Safe qty where marginal price >= keep_frac * spot"]
-        MELON_CAP["RULE-MKT-03: Melon Season Cap
-        sold_melons <= 150"]
+        PROD_BRANCH{"Product Check"}
+        PROT_BRANCH["DRIP_PROTECTED_PRODUCTS (MELON, WOOL, MILK, STRAWBERRY):
+        1. Hold at $1 floor (if normal / relief)
+        2. FORM-DRIP-01: safe_drip_budget (P_keep = max(2, floor(spot * keep_frac)))
+        3. MELON: Cap to MELON_SEASON_SALE_CAP (150)
+        4. Update live I_mkt per slice"]
+        OTHER_BRANCH["NON-PROTECTED Branch:
+        1. If spot <= 1: urgency_score = 0.95 (priority boost)
+        2. Phase batch_target: D0-5: 15, D6-8: 7, D9+: 4
+        (Relief: max(bt, 10), Urg2/End: 20)"]
         SELL_ORDERS["Compiled Sell Orders:
         ['SELL', prod, qty]"]
     end
@@ -273,11 +293,10 @@ flowchart TD
 
     SHED --> WIN_CHECK
     SHED --> SHED_CAP
-    SHED_CAP -->|Urgency 1 or 2| DRIP_SIZE
-    WIN_CHECK -->|Urgency 0| FLOOR_CHECK
-    FLOOR_CHECK -->|Pass| CARRY_CHECK
-    CARRY_CHECK -->|Pass| DRIP_SIZE
-    DRIP_SIZE --> MELON_CAP --> SELL_ORDERS
+    SHED_CAP -->|Urgency 1 or 2| PROD_BRANCH
+    WIN_CHECK -->|Urgency 0 Window Open| PROD_BRANCH
+    PROD_BRANCH -->|Melon| MELON_BRANCH --> SELL_ORDERS
+    PROD_BRANCH -->|Other Commodities| OTHER_BRANCH --> SELL_ORDERS
     SELL_ORDERS --> MERGE
 
     MERGE --> EMITTED
@@ -297,17 +316,22 @@ flowchart TD
     plant_queue, build_queue, place_queue"]
 
     subgraph BUILD_TASKS["task_scheduler.build_tasks()"]
-        T100["Priority 100: Starving Animal Feed & Dying Plant Water"]
+        T100["Priority 100: Survival WATER for Plants in Immediate Dehydration Danger"]
+        T99["Priority 99: Animal Emergency FEED Rescue (consecutive_unfed >= 1)"]
         T90["Priority 90: Decaying Crop Harvest (turns <= 1)"]
+        T87["Priority 87: Fertilizer Staging (PICKUP from shed)"]
         T86["Priority 86: Feed Staging (PICKUP wheat from shed)"]
         T85["Priority 85: Production Day Animal Feed"]
         T84["Priority 84: Animal Placement (shed to pasture)"]
         T78["Priority 78: Structure Build (BUILD_PASTURE)"]
-        T75["Priority 75: Plant & Water (immediate same-day watering)"]
-        T75B["Priority 75: Fertilizer Collection"]
-        T70["Priority 70: Bonus Window Water"]
+        T76["Priority 76: Max Yield Day Bonus Water"]
+        T75["Priority 75: Plant & Water / Fertilizer Collection"]
+        T70["Priority 70: Bonus Water & Animal Harvest"]
         T65["Priority 65: Animal Care & Standard Harvest"]
-        T20["Priority 20: Routine Weeding"]
+        T60["Priority 60: Crop Fertilization (Straw/Tom/Wheat/Carrot) & Off-Feed"]
+        T30["Priority 30: Routine Off-Window Water"]
+        T20["Priority 20/35: Routine / Blocking Weed Dig"]
+        T10["Priority 10/5/1: Idle Fallback (Fert Collect > Water > Dig > Port SW)"]
     end
 
     subgraph DISPATCH["task_scheduler.assign_tasks()"]
@@ -317,18 +341,19 @@ flowchart TD
         FILTER["Filter Reachable Eligible Units
         (e.g., must hold wheat for FEED)"]
         ZONING{"Within C2 Zonal Boundary?
-        dist <= 12 Manhattan"}
-        CLUSTERING["FORM-EXEC-01: Clustered Scoring
-        Score = Priority - 3*Dist + ClusterBonus"]
+        dist <= 12 Manhattan (FORM-DIST-01) & No Diagonal SW<->NE"}
+        CLUSTERING["FORM-EXEC-01: Clustered Scoring (C6_PRIORITY_BAND = 20)
+        Score = -Prio + SpillPenalty(10) + 3*(Dist - ClusterBonus)"]
         BEST_UNIT["Assign Best Scored Unit"]
-        SET_STICKY["Register in _ACTIVE_MISSIONS"]
+        SET_STICKY["Register in _ACTIVE_MISSIONS
+        (Age <= 40 & NoProgress < 4)"]
     end
 
-    subgraph PATHFINDING["bfs_first_step()"]
+    subgraph PATHFINDING["task_scheduler.emit() / bfs_first_step()"]
         BFS["Breadth-First Search on 10x10 Grid"]
         STEP{"At Target?"}
-        OP["Emit OP: WATER, FEED, HARVEST, CARE, PLANT, etc."]
-        MOVE["Emit Direction: MOVE_NORTH, SOUTH, EAST, WEST"]
+        OP["Emit Tile Action: WATER, FEED, HARVEST, CARE, PLANT, etc."]
+        MOVE["Emit Direction String: 'NORTH', 'SOUTH', 'EAST', 'WEST'"]
     end
 
     TILES --> BUILD_TASKS
@@ -363,26 +388,32 @@ flowchart TD
     RESET_EXEC["reset_memory()
     Fire Registered Reset Hooks"]
 
-    TRY_MAIN{"Try Main Pipeline:
-    _agent_decision(obs)"}
-    PLAN_EXEC{"Planner / Dispatch
-    Success?"}
+    subgraph DOMAIN_ISO["Domain-Isolated Turn Execution in main._agent_decision()"]
+        TRY_STRAT{"Try Strategy & Execution:
+        MacroPlanner & TaskScheduler"}
+        TRY_PURCH{"Try Morning Purchases:
+        Hour 0: OrderBuilder / Hour 1: Hires"}
+        TRY_SELL{"Try Sell-Side Market:
+        MarketBrain.sell_orders() / Endgame"}
+        TRY_COMP{"Try Order Composition:
+        MarketBrain.compose()"}
+    end
+
     SURV_CTX["_survival_fallback_from_ctx(ctx)
     Rescue Feed > Water Dying > Harvest Decay"]
-    SURV_RAW["_survival_fallback_raw(obs)
-    Pure unparsed dictionary survival"]
+    DIAG_LOG[("STATE-DIAG-FALL: _LAST_FALLBACK_DIAGNOSTIC")]
 
     OBS --> GET_ST --> RESET_CHK
-    RESET_CHK -->|Yes| RESET_EXEC --> TRY_MAIN
-    RESET_CHK -->|No| TRY_MAIN
+    RESET_CHK -->|Yes| RESET_EXEC --> TRY_STRAT
+    RESET_CHK -->|No| TRY_STRAT
 
-    TRY_MAIN --> PLAN_EXEC
-    PLAN_EXEC -->|Success| NORMAL["Normal Action Dict Assembly"]
-    PLAN_EXEC -->|Exception in Planner/Dispatch| SURV_CTX
-    TRY_MAIN -->|Exception in State/Setup| SURV_RAW
+    TRY_STRAT -->|Success| TRY_PURCH
+    TRY_STRAT -->|Exception| SURV_CTX
+    SURV_CTX --> DIAG_LOG
+    SURV_CTX --> TRY_PURCH
 
-    SURV_CTX --> FALL_ACT["Emit Survival Actions (_emergency_fallback = True)"]
-    SURV_RAW --> FALL_ACT
-    NORMAL --> ENGINE["Engine Execution"]
-    FALL_ACT --> ENGINE
+    TRY_PURCH --> TRY_SELL
+    TRY_SELL --> TRY_COMP
+    TRY_COMP --> ACTION_DICT["Emit Final Action Dict
+    (farmer, hands, market, _emergency_fallback)"]
 ```

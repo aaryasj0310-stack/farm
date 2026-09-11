@@ -43,11 +43,24 @@ from config import (
     MELON_SEASON_SALE_CAP,
 )
 
-from market.price_math import (
-    inventory_for_price_at_least,
-    market_price,
-    total_revenue_estimate,
-)
+try:
+    from market.price_math import (
+        inventory_at_price,
+        inventory_for_price_at_least,
+        market_price,
+        safe_drip_budget,
+        total_revenue_estimate,
+    )
+except ImportError:
+    from price_math import (
+        inventory_at_price,
+        inventory_for_price_at_least,
+        market_price,
+        safe_drip_budget,
+        total_revenue_estimate,
+    )
+
+DRIP_PROTECTED_PRODUCTS = ("MELON", "WOOL", "MILK", "STRAWBERRY")
 
 SELLABLE = ("WHEAT", "CARROT", "TOMATO", "STRAWBERRY",
             "MELON", "EGG", "MILK", "WOOL", "FERTILIZER")
@@ -155,9 +168,10 @@ class MarketBrain:
         preempt_set = set(opp_advice.preempt_sell) if opp_advice else set()
         delay_set = set(opp_advice.delay_sell) if opp_advice else set()
 
-        # MELON parameters & price protection initialization
+        # Product spot prices & price protection initialization
+        spot_init_map = {p: market_price(p, inv.get(p, 10000.0)) for p in SELLABLE}
         melon_market_inv_init = float(inv.get("MELON", 10000.0))
-        melon_spot_init = market_price("MELON", melon_market_inv_init)
+        melon_spot_init = spot_init_map["MELON"]
         season_melons_sold = _get_season_units_sold("MELON")
         melon_cap_remaining = max(0, MELON_SEASON_SALE_CAP - season_melons_sold)
         is_floor_exception = endgame or (urgency == 2)
@@ -191,7 +205,7 @@ class MarketBrain:
         else:
             batch_target = 4   # sell 3-5 units
 
-        # Available stock per product respecting reserves & caps
+        # Available stock per product respecting reserves, caps, and floor-hold rules
         available_stock = {}
         for prod in SELLABLE:
             if prod in delay_set and not endgame and urgency < 2:
@@ -210,11 +224,10 @@ class MarketBrain:
                 else:
                     fert_reserve = 0
                 stock = max(0, stock - fert_reserve)
-            elif prod == "MELON":
-                if not is_floor_exception and melon_spot_init <= 1:
-                    stock = 0  # Hold $1 MELON at price floor in normal and shed relief modes
-                elif urgency < 2 and not endgame:
-                    stock = min(stock, melon_cap_remaining)
+            elif prod in HOLD_AT_FLOOR_PRODUCTS and not is_floor_exception and spot_init_map.get(prod, 10) <= 1:
+                stock = 0  # Hold $1 fragile products at price floor in normal and shed relief modes
+            elif prod == "MELON" and urgency < 2 and not endgame:
+                stock = min(stock, melon_cap_remaining)
 
             if stock > 0:
                 available_stock[prod] = stock
@@ -241,11 +254,11 @@ class MarketBrain:
             if prod not in available_stock:
                 continue
             st = available_stock[prod]
-            spot = market_price(prod, inv.get(prod, 10000))
+            spot = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000)))
             urgency_score = st / (shed_total or 1)
             if spot <= 1:
-                if prod == "MELON" and not is_floor_exception:
-                    urgency_score = 0.0  # Do not elevate urgency for MELON at floor
+                if prod in HOLD_AT_FLOOR_PRODUCTS and not is_floor_exception:
+                    urgency_score = 0.0  # Do not elevate urgency for fragile goods at floor
                 else:
                     urgency_score = 0.95
             if prod in preempt_set:
@@ -273,18 +286,19 @@ class MarketBrain:
 
             bt = batch_target
 
-            if prod == "MELON":
-                if is_floor_exception:
-                    slice_qty = min(st, 20)
-                else:
-                    safe_qty = max(0, melon_turn_drip_budget - melon_sold_this_turn)
+            if prod in DRIP_PROTECTED_PRODUCTS and not is_floor_exception:
+                keep_f = DRIP_PRICE_KEEP_FRAC.get(prod, 0.90)
+                spot_i = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000.0)))
+                thresh = max(2, int(spot_i * keep_f))
+                safe_qty = self._safe_drip_qty(prod, inv.get(prod, 10000.0), thresh)
+                if prod == "MELON":
                     safe_qty = min(safe_qty, max(0, melon_cap_remaining - melon_sold_this_turn))
-                    if safe_qty <= 0:
-                        continue
-                    if urgency == 1:
-                        slice_qty = min(st, bt if bt > 10 else 10, to_shed, safe_qty)
-                    else:
-                        slice_qty = min(st, bt, safe_qty)
+                if safe_qty <= 0:
+                    continue
+                if urgency == 1:
+                    slice_qty = min(st, bt if bt > 10 else 10, to_shed, safe_qty)
+                else:
+                    slice_qty = min(st, bt, safe_qty)
             else:
                 if endgame or days_left <= 2 or urgency == 2 or prod == "FERTILIZER":
                     slice_qty = min(st, 20)
@@ -308,9 +322,13 @@ class MarketBrain:
             # In emergency mode, allow multiple slices of the overflowing product if to_shed remains
             if not endgame and urgency == 1 and to_shed > 0 and order_budget > 0 and available_stock[prod] > 0:
                 while order_budget > 0 and to_shed > 0 and available_stock[prod] > 0:
-                    if prod == "MELON":
-                        safe_qty = max(0, melon_turn_drip_budget - melon_sold_this_turn)
-                        safe_qty = min(safe_qty, max(0, melon_cap_remaining - melon_sold_this_turn))
+                    if prod in DRIP_PROTECTED_PRODUCTS and not is_floor_exception:
+                        keep_f = DRIP_PRICE_KEEP_FRAC.get(prod, 0.90)
+                        spot_i = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000.0)))
+                        thresh = max(2, int(spot_i * keep_f))
+                        safe_qty = self._safe_drip_qty(prod, inv.get(prod, 10000.0), thresh)
+                        if prod == "MELON":
+                            safe_qty = min(safe_qty, max(0, melon_cap_remaining - melon_sold_this_turn))
                         if safe_qty <= 0:
                             break
                         extra_qty = min(available_stock[prod], bt if bt > 10 else 10, to_shed, safe_qty)
@@ -334,11 +352,23 @@ class MarketBrain:
                         "melon_diagnostics": diag, **diag}
 
     # ------------------------------------------------------------------
+    def _safe_drip_qty(self, prod, current_inv, threshold):
+        """Calculate max units Q that can be added to current_inv such that
+        market_price(prod, current_inv + Q) >= threshold.
+        """
+        if threshold <= 1:
+            return 999999
+        limit = inventory_at_price(prod, threshold)
+        budget = max(0, int(limit - float(current_inv)))
+        while budget > 0 and market_price(prod, current_inv + budget) < threshold:
+            budget -= 1
+        while market_price(prod, current_inv + budget + 1) >= threshold:
+            budget += 1
+        return max(0, budget)
+
     def _drip_budget(self, prod, current_inv, keep_frac, spot):
         threshold = max(2, int(spot * keep_frac))
-        limit = inventory_for_price_at_least(prod, threshold)
-        budget = int(limit - float(current_inv))
-        return max(0, budget)
+        return self._safe_drip_qty(prod, current_inv, threshold)
 
     def _is_sell_hour(self, day, hour):
         return hour in SELL_HOUR_SET

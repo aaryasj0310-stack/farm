@@ -648,4 +648,7 @@ def opponent_primary_product(mem, default="MELON"):
     inferred = mem.get("opp_sales_inferred", {})
     if not inferred:
         return default
-    return max(inferred, key=lambda k: inferred[k])
+    pos = {k: v for k, v in inferred.items() if v > 0}
+    if not pos:
+        return default
+    return max(pos, key=lambda k: pos[k])

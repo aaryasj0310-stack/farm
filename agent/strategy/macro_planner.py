@@ -56,6 +56,7 @@ from config import (
     MAX_ANIMAL_BUYS_PER_DAY,
     MELON_PLANT_LAST_DAY_FERT,
     PHASE1_GEESE_DAY0_2,
+    PHASE1_WHEAT_TILES,
     SEASON_DAYS,
     STARTING_MONEY,
     TARGET_COWS,
@@ -79,7 +80,10 @@ from config import (
     get_sw_seed_targets,
     C4_LIVESTOCK_CUTOFF_DAY,
 )
-from strategy.animal_planner import get_animal_targets
+try:
+    from strategy.animal_planner import get_animal_targets, HERD_CAP
+except ImportError:
+    from animal_planner import get_animal_targets, HERD_CAP
 from strategy.expansion_planner import (
     compute_land_urgency,
     compute_land_roi,
@@ -345,6 +349,76 @@ def compute_sustainable_animals(wheat_capacity, days_left, wheat_per_animal=1):
     return wheat_capacity // (days_left * wheat_per_animal)
 
 
+def compute_authoritative_feed_capacity(farm, private, day, season_end=28, current_animals_count=0):
+    """Authoritative projected wheat supply and sustainable herd calculation.
+
+    Components of feed supply:
+      1. Wheat on hand: shed inventory + worker inventories.
+      2. Expected wheat from existing planted wheat maturing on or before season_end (Day 28).
+      3. Expected wheat from already-planned wheat planting where reasonably predictable.
+      4. Affordable emergency/market wheat purchases if intentional.
+    """
+    days_left = SEASON_DAYS - day
+    feeding_days_left = max(1, season_end - day + 1) if day <= season_end else 0
+
+    # 1. Wheat on hand
+    shed_wheat = int(private.shed.get("WHEAT", 0)) if hasattr(private, "shed") else 0
+    worker_wheat = 0
+    if hasattr(private, "inventories"):
+        worker_wheat = sum(int(inv.get("WHEAT", 0)) for inv in private.inventories)
+    wheat_on_hand = shed_wheat + worker_wheat
+
+    # 2. Existing planted wheat yield
+    wheat_tiles = [t for t in farm.iter_tiles() if getattr(t, "is_plant", False) and getattr(t, "crop", None) == "WHEAT"]
+    planted_yield = 0
+    for t in wheat_tiles:
+        placed = getattr(t, "placed_day", None)
+        if placed is None:
+            placed = day
+        harvest_day = placed + 4
+        if harvest_day <= season_end:
+            fert_day = getattr(t, "fertilized_until_day", None)
+            is_fert = fert_day is not None and fert_day >= placed
+            planted_yield += (6 if is_fert else 4)
+
+    # 3. Predictable planned wheat yield
+    planned_yield = 0
+    if day <= 4:
+        nw_empty = sum(1 for t in farm.iter_tiles() if getattr(t, "kind", None) == "EMPTY" and farm.quadrant_of(t.pos) == "NW")
+        needed_nw = max(0, PHASE1_WHEAT_TILES - len(wheat_tiles))
+        can_plant = min(nw_empty, needed_nw)
+        if day + 4 <= season_end:
+            planned_yield += can_plant * 4
+    elif "SW" in farm.unlocked and day <= 24:
+        sw_soil_empty = sum(1 for t in farm.iter_tiles() if getattr(t, "kind", None) == "EMPTY" and t.pos in SW_SOIL_TILES)
+        if sw_soil_empty > 0 and day + 4 <= season_end:
+            sw_alloc = sw_plant_decision(day, sw_soil_empty, wheat_on_hand + planted_yield, current_animals_count)
+            planned_yield += sw_alloc.get("WHEAT", 0) * 4
+
+    # 4. Affordable emergency market wheat purchases
+    wheat_spot = 25
+    money = getattr(farm, "money", 0)
+    discretionary_cash = max(0.0, money - 300 - 150)
+    affordable_wheat = min(100, int(discretionary_cash // wheat_spot))
+
+    projected_feed_supply = wheat_on_hand + planted_yield + planned_yield + affordable_wheat
+
+    if feeding_days_left <= 0:
+        sustainable_herd_size = HERD_CAP
+    else:
+        sustainable_herd_size = int(projected_feed_supply // feeding_days_left)
+
+    return {
+        "projected_wheat_supply": projected_feed_supply,
+        "feeding_days_left": feeding_days_left,
+        "sustainable_herd_size": sustainable_herd_size,
+        "wheat_on_hand": wheat_on_hand,
+        "planted_yield": planted_yield,
+        "planned_yield": planned_yield,
+        "affordable_wheat": affordable_wheat,
+    }
+
+
 def detect_wheat_deficit(wheat_capacity, wheat_have, days_left,
                          n_animals, buffer_days):
     """Projected wheat shortfall before starvation.
@@ -421,16 +495,19 @@ class MacroPlanner:
                        farm.quadrant_of(t.pos) in farm.unlocked and
                        t.pos != PORT_SW]
 
-        # --- wheat capacity projection (dynamic animal cap) ---
+        # --- Authoritative wheat feed capacity projection ---
         wheat_tiles = [t for t in farm.iter_tiles()
                        if t.is_plant and t.crop == "WHEAT"]
         wheat_tile_days = [t.placed_day for t in wheat_tiles]
         days_left = SEASON_DAYS - day
         wheat_cap = compute_wheat_capacity(wheat_tile_days, day)
         wheat_have = int(private.shed.get("WHEAT", 0))
-        sustainable = compute_sustainable_animals(wheat_cap, days_left)
-        if day <= 2:
-            sustainable = max(sustainable, PHASE1_GEESE_DAY0_2)
+
+        feed_info = compute_authoritative_feed_capacity(
+            farm, private, day, season_end=28, current_animals_count=n_animals)
+        projected_feed_supply = feed_info["projected_wheat_supply"]
+        feeding_days_left = feed_info["feeding_days_left"]
+        sustainable = feed_info["sustainable_herd_size"]
 
         # --- wheat deficit detection ---
         deficit, trigger = detect_wheat_deficit(
@@ -489,14 +566,28 @@ class MacroPlanner:
             dynamic_targets = {"COW": counts.get("COW", 0),
                                "SHEEP": counts.get("SHEEP", 0),
                                "GOOSE": 0}
+            requested_herd_size = sum(dynamic_targets.values())
+            final_feed_capped_herd_size = min(requested_herd_size, sustainable)
         else:
-            dynamic_targets = get_animal_targets(
+            raw_targets = get_animal_targets(
                 day=day,
                 money=cash_for_animals,
                 shed_wheat=wheat_have,
                 current_animals=counts,
                 max_pastures=max_pastures,
+                max_sustainable=sustainable,
             )
+            requested_herd_size = sum(raw_targets.values())
+            dynamic_targets = dict(raw_targets)
+            if requested_herd_size > sustainable:
+                excess = requested_herd_size - sustainable
+                for an in ("GOOSE", "COW", "SHEEP"):
+                    if excess <= 0:
+                        break
+                    reduce_by = min(excess, dynamic_targets.get(an, 0))
+                    dynamic_targets[an] -= reduce_by
+                    excess -= reduce_by
+            final_feed_capped_herd_size = min(requested_herd_size, sustainable)
 
         # Purchase affordable animals if empty pasture exists or is being built
         # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
@@ -526,6 +617,11 @@ class MacroPlanner:
                 struct_kind = info["structure"]
                 free_struct = [pos for pos, k in structures_empty.items() if k == struct_kind]
                 while (housing_available > 0 and (counts.get(animal, 0) + buy_animal.get(animal, 0) < target)) or (animal == "GOOSE" and free_struct):
+                    total_now = sum(counts.values()) + sum(buy_animal.values())
+                    if total_now >= sustainable:
+                        break
+                    if feeding_days_left > 0 and (total_now + 1) * feeding_days_left > projected_feed_supply:
+                        break
                     if cash_for_animals >= info["cost"]:
                         buy_animal[animal] = buy_animal.get(animal, 0) + 1
                         cash_for_animals -= info["cost"]
@@ -542,6 +638,18 @@ class MacroPlanner:
                 needed_wheat = total_animals_planned * min(FEED_WHEAT_BUFFER_DAYS, days_left)
                 if needed_wheat > wheat_have:
                     buy_wheat = needed_wheat - wheat_have
+        else:
+            total_animals_planned = sum(counts.values())
+
+        # Expose authoritative feed sustainability diagnostics
+        projected_feed_demand = total_animals_planned * feeding_days_left
+        plan.diagnostics.update({
+            "projected_wheat_supply": projected_feed_supply,
+            "projected_wheat_demand": projected_feed_demand,
+            "sustainable_herd_size": sustainable,
+            "requested_herd_size": requested_herd_size,
+            "final_feed_capped_herd_size": final_feed_capped_herd_size,
+        })
 
         # structure build queue: use specific build_op
         if reserved_structure_tiles:
@@ -994,7 +1102,7 @@ class MacroPlanner:
             "reason": sw_reason_text,
         }
 
-        plan.diagnostics = {
+        plan.diagnostics.update({
             "day": day,
             "money": money,
             "sw_unlocked": sw_is_unlocked,
@@ -1022,7 +1130,7 @@ class MacroPlanner:
             # v5.11: Dynamic caps and targets
             "dynamic_strawberry_cap": get_strawberry_cap(day, "SW" in farm.unlocked),
             "dynamic_sw_seed_targets": expansion_seed_targets(next_quadrant, day, money) if next_quadrant else {},
-        }
+        })
 
         return plan
 

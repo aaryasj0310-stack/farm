@@ -99,8 +99,9 @@ def build_opponent_advice(opp_state, ctx, forecast, boosts=None):
     advice.preempt_sell = _compute_preempt_sell(sell_probs, our_shed)
 
     # ---- 5c. Sell Delay / Post-Crash Hold -------------------------------
+    opp_market_inf = opp_state.get("opp_market_inference", {})
     advice.delay_sell = _compute_delay_sell(
-        opp_sales, our_shed, fc, day, ctx,
+        opp_sales, our_shed, fc, day, ctx, opp_market_inference=opp_market_inf,
     )
 
     # ---- 5d. Counter-Pick Monopoly Detection ----------------------------
@@ -147,7 +148,7 @@ def _compute_preempt_sell(sell_probs, our_shed):
     return result
 
 
-def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx):
+def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx, opp_market_inference=None):
     """Flag products opponent recently dumped causing depressed prices."""
     result = []
     if not opp_sales or not our_shed:
@@ -158,6 +159,11 @@ def _compute_delay_sell(opp_sales, our_shed, forecast, current_day, ctx):
             continue
         if our_shed.get(product, 0) <= 0:
             continue
+
+        if opp_market_inference:
+            inf = opp_market_inference.get(product, {})
+            if inf.get("confidence") == "low" and inf.get("sales_lower_bound", 0) <= 0:
+                continue
 
         # Compute expected price from forecast to check depression
         expected = 0.0

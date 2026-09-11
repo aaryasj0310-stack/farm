@@ -100,6 +100,26 @@ def inventory_at_price(item, target_price):
     return float(MARKET_I0 + _solve_shape(p["af"], y, p["T"]))
 
 
+def safe_drip_budget(item, current_inventory, keep_frac, spot=None):
+    """Largest Q whose LAST unit still quotes >= keep_frac * spot.
+
+    Uses exact continuous inverse and verifies discrete integer quote across
+    both scarcity and glut branches.
+    """
+    if spot is None:
+        spot = market_price(item, current_inventory)
+    if spot <= PRICE_FLOOR:
+        return 0
+    threshold = max(PRICE_FLOOR + 1, int(spot * keep_frac))
+    limit = inventory_at_price(item, threshold)
+    budget = max(0, int(limit - float(current_inventory)))
+    while budget > 0 and market_price(item, current_inventory + budget) < threshold:
+        budget -= 1
+    while market_price(item, current_inventory + budget + 1) >= threshold:
+        budget += 1
+    return max(0, budget)
+
+
 def drip_batch_size(item, current_inventory, keep_frac):
     """Largest Q whose LAST unit still quotes >= keep_frac * spot.
 
@@ -107,10 +127,8 @@ def drip_batch_size(item, current_inventory, keep_frac):
     enough for slicing decisions.
     """
     spot = market_price(item, current_inventory)
-    threshold = max(2, int(spot * keep_frac))
-    limit = inventory_for_price_at_least(item, threshold)
-    budget = int(limit - current_inventory)
-    return max(0, budget), spot
+    budget = safe_drip_budget(item, current_inventory, keep_frac, spot)
+    return budget, spot
 
 
 def total_revenue_estimate(item, start_inventory, quantity):

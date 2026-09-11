@@ -79,8 +79,8 @@ def test_escrow_gate():
     buy, reason, _ = should_buy_land(3, 9, 2250, farm, hire_cost=54, reserve=0, roi=1.0, ow_factor=1.0)
     assert buy is True
     buy, reason, _ = should_buy_land(3, 14, 10000, farm, hire_cost=54, roi=2.0, ow_factor=1.0)
-    assert buy is False
-    assert "sw_window_closed_after_day_13" in reason
+    assert buy is True
+    assert "treasury_sufficient_roi_positive" in reason
 
 # 3-------- Planting Decision ---------
 def test_sw_plant_decision_logic():

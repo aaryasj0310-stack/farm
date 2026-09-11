@@ -50,9 +50,9 @@ from config import (
     log,
 )
 try:
-    from state.observation_parser import crop_age, in_bonus_window, needs_water_today, turns_until_decay
+    from state.observation_parser import crop_age, in_bonus_window, needs_water_today, turns_until_decay, crop_produces_today
 except ImportError:
-    from observation_parser import crop_age, in_bonus_window, needs_water_today, turns_until_decay
+    from observation_parser import crop_age, in_bonus_window, needs_water_today, turns_until_decay, crop_produces_today
 try:
     from execution.pathfinding import bfs_first_step
 except ImportError:

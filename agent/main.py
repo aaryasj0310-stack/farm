@@ -62,7 +62,7 @@ try:
     from execution.pathfinding import bfs_first_step
     from market.order_builder import OrderBuilder
     from market.market_brain import MarketBrain
-    from state.state_tracker import get_state, record_our_sale
+    from state.state_tracker import get_state, record_our_sale, record_our_buy
     from state.opponent_model import (
         snapshot_opponent_farm, detect_tile_deltas, infer_turn_transactions,
         forecast_opponent_production, get_imminent_harvests,
@@ -83,7 +83,7 @@ except ImportError:
     from pathfinding import bfs_first_step
     from order_builder import OrderBuilder
     from market_brain import MarketBrain
-    from state_tracker import get_state, record_our_sale
+    from state_tracker import get_state, record_our_sale, record_our_buy
     from opponent_model import (
         snapshot_opponent_farm, detect_tile_deltas, infer_turn_transactions,
         forecast_opponent_production, get_imminent_harvests,
@@ -176,9 +176,11 @@ def _build_opp_advice(ctx, mem):
 
         # Phase 3: update shed estimate
         opp_animals = sum(1 for t in opp_farm.iter_tiles() if t.is_animal)
+        opp_sales_step = mem.get("opp_sales_step", {})
         opp_sales = mem.get("opp_sales_inferred", {})
+        opp_market_inf = mem.get("opp_market_inference", {})
         _estimated_shed = update_opponent_shed_estimate(
-            _estimated_shed, deltas, opp_sales,
+            _estimated_shed, deltas, opp_sales_step,
             opp_animals, ctx["day"], ctx["hour"],
         )
 
@@ -187,6 +189,8 @@ def _build_opp_advice(ctx, mem):
             "estimated_shed": _estimated_shed,
             "sell_probs": {},
             "opp_sales_inferred": opp_sales,
+            "opp_sales_step": opp_sales_step,
+            "opp_market_inference": opp_market_inf,
             "shed_pressure": sum(_estimated_shed.values()) / 100.0,
             "forecast": forecast,
             "commitments": summarize_opponent_commitments(opp_farm),
@@ -532,14 +536,20 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             purchase_orders, sell_orders,
             purchases_first=(ctx["hour"] in (0, 1))
         )
-        for order in market:
-            if order[0] == "SELL":
-                try:
-                    record_our_sale(order[1], order[2])
-                except Exception:
-                    pass
     except Exception:
         market = [list(o) for o in (purchase_orders + sell_orders)[:10]]
+
+    for order in market:
+        if order[0] == "SELL":
+            try:
+                record_our_sale(order[1], order[2])
+            except Exception:
+                pass
+        elif order[0] == "BUY_PRODUCT":
+            try:
+                record_our_buy(order[1], order[2])
+            except Exception:
+                pass
 
     # 6. Action dict assembly
     n_units = 1 + len(ctx["farm"].hands)
