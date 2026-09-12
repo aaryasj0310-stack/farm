@@ -442,7 +442,10 @@ def should_buy_land(next_quadrant, current_day, money, farm,
                     reserve=MONEY_RESERVE_DEFAULT, roi=0.0,
                     ow_factor=1.0,
                     forecast=None, n_own_tiles=0, n_opp_tiles=0,
-                    seeds_owned=None):
+                    seeds_owned=None,
+                    wheat_on_hand=0, projected_wheat_requirement=0,
+                    actual_feed_shortfall_units=0, urgency=0.0,
+                    treasury_protection_active=False):
     """Determine if land should be purchased TODAY via dynamic economic gates.
 
     Requirements:
@@ -486,8 +489,10 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         needed = max(0, n - have)
         seed_cost += CROPS[c]["seed"] * needed
 
-    # Mandatory commitments: hires + feed + seeds for current production
-    mandatory = hire_cost + feed_cost + animal_cost
+    # Mandatory commitments: hires + actual unavoidable survival feed shortfall
+    # Discretionary planned animals are excluded from mandatory commitments before land
+    planned_animal_cost = float(animal_cost)
+    mandatory = float(hire_cost) + float(feed_cost)
 
     # Total required: land + mandatory + seed_tranche + reserve
     total_required = land_price + mandatory + seed_cost + reserve
@@ -512,23 +517,44 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     worker_count = 1 + (len(farm.hands) if hasattr(farm, "hands") else 0)
     current_active_tiles = 0
     if hasattr(farm, "iter_tiles"):
-        current_active_tiles = sum(
-            1 for t in farm.iter_tiles()
-            if getattr(t, "is_plant", False) or getattr(t, "is_animal", False)
-        )
+        for t in farm.iter_tiles():
+            if isinstance(t, dict):
+                if t.get("is_plant") or t.get("is_animal") or t.get("plant") or t.get("animal"):
+                    current_active_tiles += 1
+            else:
+                if (getattr(t, "is_plant", False) or getattr(t, "is_animal", False)) and not getattr(t, "is_fallow", False):
+                    current_active_tiles += 1
     # Servicing SW added tiles requires sufficient daily labor budget
     # If only 1 worker and already active on 15+ tiles, labor cannot service added land
     labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
 
+    shortfall = max(0.0, total_required - money)
     diag_base = {
+        "day": current_day,
+        "next_quadrant": next_quadrant,
+        "money": round(float(money), 2),
         "land_price": land_price,
+        "hire_cost": round(float(hire_cost), 2),
+        "wheat_on_hand": int(wheat_on_hand),
+        "projected_wheat_requirement": int(projected_wheat_requirement),
+        "actual_feed_shortfall_units": int(actual_feed_shortfall_units),
+        "actual_feed_shortfall_cost": round(float(feed_cost), 2),
+        "planned_animal_cost": round(planned_animal_cost, 2),
+        "seed_tranche_cost": round(seed_cost, 2),
+        "reserve": round(float(reserve), 2),
+        "true_mandatory_commitment": round(mandatory, 2),
+        "total_required_cash": round(total_required, 2),
+        "shortfall": round(shortfall, 2),
+        "roi": round(roi, 4),
+        "adjusted_roi": round(adjusted_roi, 4),
+        "labor_serviceability_result": bool(labor_adequate),
+        "urgency": round(float(urgency), 2),
+        "treasury_protection_active": bool(treasury_protection_active),
+        # Legacy/helper fields preserved for backward compatibility
         "mandatory": mandatory,
         "seed_cost": seed_cost,
-        "reserve": reserve,
         "total_required": total_required,
-        "roi": roi,
         "ow_factor": ow_factor,
-        "adjusted_roi": adjusted_roi,
         "expected_remaining_profit": round(expected_remaining_profit, 1),
         "incremental_support_costs": round(incremental_support_costs, 1),
         "payback_surplus": round(payback_surplus, 1),
@@ -544,29 +570,44 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     thresh = NE_EARLY_UNLOCK_THRESHOLD_DAY6 if current_day == 6 else NE_EARLY_UNLOCK_THRESHOLD_DAY3_5
     if next_quadrant == 2 and 3 <= current_day <= NE_EARLY_UNLOCK_MAX_DAY and money >= thresh:
         if money >= land_price + mandatory:
-            return True, "early_ne_leader_unlock", diag_base
+            reason = "early_ne_leader_unlock"
+            diag = dict(diag_base)
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return True, reason, diag
 
     # 1. Adjusted ROI must clear threshold (> 0.0)
     if adjusted_roi <= 0:
-        return False, f"adjusted_roi_{adjusted_roi:.2f}_non_positive", diag_base
+        reason = f"adjusted_roi_{adjusted_roi:.2f}_non_positive"
+        diag = dict(diag_base)
+        diag["final_rejection_or_acceptance_reason"] = reason
+        return False, reason, diag
 
     # 2. Economic payback test:
     # expected_remaining_profit_from_SW must exceed land_price + incremental_support_costs
     if payback_surplus <= 0:
-        return False, f"insufficient_payback_{payback_surplus:.0f}", diag_base
+        reason = f"insufficient_payback_{payback_surplus:.0f}"
+        diag = dict(diag_base)
+        diag["final_rejection_or_acceptance_reason"] = reason
+        return False, reason, diag
 
     # 3. Labor serviceability check
     if not labor_adequate:
-        return False, "insufficient_labor_capacity", diag_base
+        reason = "insufficient_labor_capacity"
+        diag = dict(diag_base)
+        diag["final_rejection_or_acceptance_reason"] = reason
+        return False, reason, diag
 
     # 4. Treasury safety gate
     if money >= total_required:
-        return True, "treasury_sufficient_roi_positive", diag_base
-    else:
-        shortfall = total_required - money
+        reason = "treasury_sufficient_roi_positive"
         diag = dict(diag_base)
-        diag["shortfall"] = shortfall
-        return False, f"short_{shortfall:.0f}", diag
+        diag["final_rejection_or_acceptance_reason"] = reason
+        return True, reason, diag
+    else:
+        reason = f"short_{shortfall:.0f}"
+        diag = dict(diag_base)
+        diag["final_rejection_or_acceptance_reason"] = reason
+        return False, reason, diag
 
 
 # ---------------------------------------------------------------------------

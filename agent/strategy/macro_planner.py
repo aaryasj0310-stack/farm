@@ -429,6 +429,64 @@ def compute_authoritative_feed_capacity(farm, private, day, season_end=28, curre
     }
 
 
+def compute_unavoidable_feed_shortfall(farm, private, day, n_animals, feed_buffer):
+    """Compute unavoidable survival feed shortfall for existing animals.
+
+    Reuses authoritative feed projections and enforces strict temporal validity:
+    - Immediately usable wheat: shed inventory + worker-held inventory.
+    - Future wheat harvests from in-ground tiles: can only cover feeding on/after
+      their arrival day. Future harvests cannot cover near-term hunger.
+    Returns (wheat_on_hand, projected_wheat_req, shortfall_units, shortfall_cost).
+    """
+    if n_animals <= 0:
+        return 0, 0, 0, 0.0
+
+    shed_wheat = int(private.shed.get("WHEAT", 0)) if hasattr(private, "shed") and isinstance(private.shed, dict) else 0
+    worker_wheat = 0
+    if hasattr(private, "inventories") and isinstance(private.inventories, list):
+        for inv in private.inventories:
+            if isinstance(inv, dict):
+                worker_wheat += int(inv.get("WHEAT", 0))
+    wheat_on_hand = shed_wheat + worker_wheat
+
+    days_left = max(0, SEASON_DAYS - day)
+    buffer_days = max(1, min(int(feed_buffer), days_left)) if days_left > 0 else 0
+    if buffer_days == 0:
+        return wheat_on_hand, 0, 0, 0.0
+
+    # Collect existing in-ground wheat tile harvest schedules
+    wheat_harvests = []
+    if hasattr(farm, "iter_tiles"):
+        for t in farm.iter_tiles():
+            if t is None or t == "LOCKED":
+                continue
+            is_plant = getattr(t, "is_plant", False) if not isinstance(t, dict) else (t.get("is_plant", False) or t.get("kind") == "PLANT")
+            crop = getattr(t, "crop", None) if not isinstance(t, dict) else t.get("crop")
+            if is_plant and crop == "WHEAT":
+                placed = getattr(t, "placed_day", None) if not isinstance(t, dict) else t.get("placed_day")
+                if placed is None:
+                    placed = day
+                h_day = placed + 4
+                fert_day = getattr(t, "fertilized_until_day", None) if not isinstance(t, dict) else t.get("fertilized_until_day")
+                is_fert = fert_day is not None and fert_day >= placed
+                yield_units = 6 if is_fert else 4
+                wheat_harvests.append((h_day, yield_units))
+
+    max_deficit = 0
+    for k in range(buffer_days):
+        target_day = day + k
+        cumulative_needed = n_animals * (k + 1)
+        maturing_by_target = sum(y for h_day, y in wheat_harvests if h_day <= target_day)
+        cumulative_supply = wheat_on_hand + maturing_by_target
+        deficit = max(0, cumulative_needed - cumulative_supply)
+        if deficit > max_deficit:
+            max_deficit = deficit
+
+    projected_req = n_animals * buffer_days
+    shortfall_cost = float(max_deficit * 25.0)
+    return wheat_on_hand, projected_req, max_deficit, shortfall_cost
+
+
 def detect_wheat_deficit(wheat_capacity, wheat_have, days_left,
                          n_animals, buffer_days):
     """Projected wheat shortfall before starvation.
@@ -577,10 +635,21 @@ class MacroPlanner:
         # Discretionary cash reservation: wages, base reserve, and upcoming land/seed escrow
         future_hire_cost = sum(hire_total_cost(get_target_hands(d))
                                for d in range(day, min(day + 3, 30)))
-        seed_reserve = 150 if "SW" not in farm.unlocked and day in (8, 9) else 0
-        land_reserve = 2000 if "SW" not in farm.unlocked and day in (8, 9) and ctx["farm"].money >= 2000 else (
-            1000 if "NE" not in farm.unlocked and day in (3, 4) and ctx["farm"].money >= 1000 else 0
-        )
+        n_extra_temp = len(farm.unlocked) - 1
+        next_q_temp = n_extra_temp + 2 if n_extra_temp + 2 <= 4 else None
+        seed_reserve = 0
+        land_reserve = 0
+        if next_q_temp == 3 and "SW" not in farm.unlocked and day <= LAND_BUY_LAST_DAY:
+            if day in (8, 9) and ctx["farm"].money >= 2000:
+                land_reserve = 2000
+                seed_reserve = 150
+            elif day >= 11:
+                land_reserve = 2000
+                seed_reserve = 150
+        elif next_q_temp == 2 and "NE" not in farm.unlocked and 3 <= day <= LAND_BUY_LAST_DAY:
+            if ctx["farm"].money >= 1000:
+                land_reserve = 1000
+
         day_0_seed_reserve = 1040 if day == 0 else 0
         ne_fund_reserve = 600 if "NE" not in farm.unlocked and day < 3 else 0
         cash_for_animals = max(0.0, ctx["farm"].money - future_hire_cost - self.reserve - seed_reserve - land_reserve - day_0_seed_reserve - ne_fund_reserve)
@@ -784,13 +853,21 @@ class MacroPlanner:
         n_own_tiles = len([t for t in farm.iter_tiles() if t.is_plant])
         n_opp_tiles = 0  # opponent tiles not available in observation
 
+        feed_shortfall_cost = 0.0
+        feed_shortfall_units = 0
+        proj_wheat_req = 0
+        wheat_on_hand = 0
+        land_capital_protection_active = False
+
         if not is_endgame and next_quadrant is not None:
             if next_quadrant in QUADRANT_HARD_BLOCK:
                 sw_reason = "hard_blocked"
             elif next_quadrant in QUADRANT_UNLOCK_DAYS:
-                # Compute feed cost for treasury gate
-                feed_buffer = 5 if day <= 5 and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
-                feed_cost = (n_animals + sum(buy_animal.values())) * feed_buffer * 25
+                # Time-aware unavoidable feed shortfall for existing animals
+                feed_buffer = 5 if day <= 5 and n_animals > 0 else FEED_WHEAT_BUFFER_DAYS
+                wheat_on_hand, proj_wheat_req, feed_shortfall_units, feed_shortfall_cost = compute_unavoidable_feed_shortfall(
+                    farm, private, day, n_animals, feed_buffer
+                )
 
                 # v5.11: Compute dynamic land ROI
                 land_roi, land_roi_info = compute_land_roi(
@@ -799,24 +876,59 @@ class MacroPlanner:
 
                 # v5.11: Compute opportunity-window factor
                 ow_factor = opportunity_window_factor(next_quadrant, day)
+                adjusted_roi = land_roi * ow_factor
+
+                # Labor serviceability check
+                worker_count = 1 + (len(farm.hands) if hasattr(farm, "hands") else 0)
+                current_active_tiles = 0
+                if hasattr(farm, "iter_tiles"):
+                    current_active_tiles = sum(
+                        1 for t in farm.iter_tiles()
+                        if getattr(t, "is_plant", False) or getattr(t, "is_animal", False)
+                    )
+                labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
+
+                # Compute urgency for deadline tracking (does NOT gate or loosen purchases)
+                sw_urgency, _, _ = compute_land_urgency(
+                    next_quadrant, day, money, farm)
+
+                # Separate persistent land capital protection from deadline urgency
+                protection_start_day = 5 if next_quadrant == 2 else (11 if next_quadrant == 3 else 999)
+                is_early_ne = (next_quadrant == 2 and 3 <= day <= 6 and money >= 1000)
+                land_capital_protection_active = (
+                    next_quadrant is not None
+                    and day >= protection_start_day
+                    and day <= LAND_BUY_LAST_DAY
+                    and (adjusted_roi > 0.0 or is_early_ne)
+                    and labor_adequate
+                    and next_quadrant not in QUADRANT_HARD_BLOCK
+                )
+
+                planned_animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
 
                 # Use expansion planner's non-negotiable purchase gate
-                # v5.11: Pass ow_factor to gate — adjusted_roi = roi * ow_factor
+                # Charges ONLY mandatory hires + real unavoidable feed shortfall
                 buy_land, sw_reason, sw_info = should_buy_land(
                     next_quadrant, day, money, farm,
-                    hire_cost=hire_cost, feed_cost=feed_cost,
-                    animal_cost=sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items()),
-                    reserve=self.reserve, roi=land_roi,
+                    hire_cost=hire_cost,
+                    feed_cost=feed_shortfall_cost,
+                    animal_cost=planned_animal_cost,
+                    reserve=self.reserve,
+                    roi=land_roi,
                     ow_factor=ow_factor,
                     forecast=self.fc,
                     seeds_owned=private.seeds,
+                    wheat_on_hand=wheat_on_hand,
+                    projected_wheat_requirement=proj_wheat_req,
+                    actual_feed_shortfall_units=feed_shortfall_units,
+                    urgency=sw_urgency,
+                    treasury_protection_active=land_capital_protection_active,
                 )
                 if buy_land:
                     land_cost = LAND_PRICES[n_extra_unlocked]
+                    land_capital_protection_active = False
 
-                # Compute urgency for treasury hoarding (does NOT loosen gate)
-                sw_urgency, _, sw_info = compute_land_urgency(
-                    next_quadrant, day, money, farm)
+                plan.diagnostics["land_decision"] = dict(sw_info)
 
         animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
 
@@ -824,7 +936,8 @@ class MacroPlanner:
         buy_wheat = 0
         effective_reserve = 50 if (day in (3, 4, 5, 6) and "NE" in farm.unlocked) else self.reserve
         post_hire_money = max(0.0, money - hire_cost)
-        available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost - animal_cost)
+        # Note: Land takes priority over discretionary animal purchases.
+        available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost)
 
         if plan.feeding_enabled:
             # While NE is pending, maintain a safe 5-day survival buffer rather than 20-day expansion
@@ -846,23 +959,15 @@ class MacroPlanner:
         if "feed_risk" in plan.diagnostics:
             plan.diagnostics["feed_risk"]["macro_buy_wheat_intent"] = int(buy_wheat)
 
-        available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost - animal_cost)
-
-        # v5.10: Protect SW treasury from discretionary spending
-        # When expansion is urgent but not yet purchased, reserve the fund
-        # Do NOT hoard SW land fund before Day 11 when melons are in the ground — melon harvest provides $18k!
-        discretionary_budget = available_before_seeds
-        if sw_urgency >= 0.5 and not buy_land and next_quadrant is not None and day >= 11:
-            # v5.11: Use dynamic targets
+        # Discretionary budget: protect land capital if protection active, without double-counting reserve
+        discretionary_budget = max(0.0, available_before_seeds - animal_cost)
+        if land_capital_protection_active and not buy_land and next_quadrant is not None:
             targets = expansion_seed_targets(next_quadrant, day, money)
-            seed_reserve = sum(CROPS[c]["seed"] * n for c, n in targets.items())
+            seed_tranche = sum(CROPS[c]["seed"] * n for c, n in targets.items())
             n_extra = len(farm.unlocked) - 1
-            land_reserve = LAND_PRICES[n_extra] if n_extra < len(LAND_PRICES) else 0
-            sw_treasury_need = land_reserve + seed_reserve + effective_reserve
-            discretionary_budget = max(0.0, available_before_seeds - sw_treasury_need)
-        elif next_quadrant == 2 and 5 <= day <= 6 and not buy_land:
-            # Protect $1,000 NE land capital from discretionary spending
-            discretionary_budget = max(0.0, available_before_seeds - 1000.0)
+            target_land_price = LAND_PRICES[n_extra] if n_extra < len(LAND_PRICES) else 0
+            protected_land_capital = target_land_price + seed_tranche + feed_shortfall_cost
+            discretionary_budget = max(0.0, available_before_seeds - protected_land_capital - animal_cost)
 
         seed_budget = max(0.0, discretionary_budget - wheat_feed_cost)
         remaining_money = seed_budget
