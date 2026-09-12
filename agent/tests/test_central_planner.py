@@ -46,6 +46,7 @@ from strategy.central_planner import (
     P2_STRATEGIC,
     P3_NORMAL,
     P4_DISCRETIONARY,
+    HARD_CAPACITY_THRESHOLD,
 )
 
 
@@ -342,9 +343,9 @@ class TestCentralPlannerPhase3:
     # 10. Shed Emergency Overrides Hour 0 Purchase Priority
     # ------------------------------------------------------------------
     def test_shed_emergency_overrides_hour0_purchase_priority(self):
-        """Under shed pressure, P0 emergency sells take precedence over P2 purchases at hour 0."""
-        ctx = {"hour": 0, "day": 10, "farm": MockFarm(0), "private": MockPrivate(shed={"MELON": SHED_SOFT_CAP + 5})}
-        sell_details = {"pressure": True, "reason": "shed_pressure"}
+        """Under true hard capacity emergency (shed >= 96), P0 emergency sells take precedence over P2 purchases at hour 0."""
+        ctx = {"hour": 0, "day": 10, "farm": MockFarm(0), "private": MockPrivate(shed={"MELON": HARD_CAPACITY_THRESHOLD + 2})}
+        sell_details = {"pressure": True, "reason": "overflow"}
 
         buys = [
             ["BUY_ANIMAL", "COW", 1],
@@ -357,6 +358,7 @@ class TestCentralPlannerPhase3:
         orders, diag = self.cp.plan_market(ctx, None, buys, None, sells, sell_details, cap=2)
         assert orders[0] == ["SELL", "MELON", 10]
         assert diag["accepted_details"][0]["priority_class"] == P0_CRITICAL
+        assert diag["accepted_details"][0]["metadata"]["sell_pressure_class"] == "hard_capacity_emergency"
 
     # ------------------------------------------------------------------
     # 11. Feed Starvation Wheat Buy Beats Normal Sells
@@ -515,9 +517,9 @@ class TestCentralPlannerPhase3:
         assert accepted_sources.count("sell") == 2
 
     def test_crowded_scenario_b(self):
-        """Scenario B: Critical feed wheat + near-deadline land + animals + shed-pressure sells + normal sells."""
-        ctx = {"hour": 1, "day": 19, "farm": MockFarm(n_animals=3), "private": MockPrivate(shed={"WHEAT": 0, "MELON": 70})}
-        sell_details = {"pressure": True, "reason": "shed_pressure"}
+        """Scenario B: Critical feed wheat + near-deadline land + animals + hard-capacity emergency sells + normal sells."""
+        ctx = {"hour": 1, "day": 19, "farm": MockFarm(n_animals=3), "private": MockPrivate(shed={"WHEAT": 0, "MELON": HARD_CAPACITY_THRESHOLD})}
+        sell_details = {"pressure": True, "reason": "overflow"}
 
         buys = [
             ["BUY_PRODUCT", "WHEAT", 5],                # P0 (starvation)
@@ -588,19 +590,24 @@ class TestCentralPlannerPhase3:
     def test_agent_main_integration_with_central_planner(self):
         """Verify main._agent_decision executes with real observation using CentralPlanner."""
         import kaggle_environments
-        from main import _agent_decision, get_central_planner_diagnostics
-        env = kaggle_environments.make("kaggriculture", configuration={"episodeSteps": 720, "seed": 42})
-        env.reset(2)
-        obs = env.state[0].observation
-        res = _agent_decision(obs)
-        assert "market" in res
-        assert isinstance(res["market"], list)
-        diag = get_central_planner_diagnostics()
-        assert isinstance(diag, dict)
-        assert "total_candidates" in diag
-        assert "purchase_candidates" in diag
-        assert "sell_candidates" in diag
-        assert "slot_pressure" in diag
+        from main import _agent_decision, get_central_planner_diagnostics, get_arbitration_mode, set_arbitration_mode
+        prev_mode = get_arbitration_mode()
+        set_arbitration_mode("historical_candidates_central")
+        try:
+            env = kaggle_environments.make("kaggriculture", configuration={"episodeSteps": 720, "seed": 42})
+            env.reset(2)
+            obs = env.state[0].observation
+            res = _agent_decision(obs)
+            assert "market" in res
+            assert isinstance(res["market"], list)
+            diag = get_central_planner_diagnostics()
+            assert isinstance(diag, dict)
+            assert "total_candidates" in diag
+            assert "purchase_candidates" in diag
+            assert "sell_candidates" in diag
+            assert "slot_pressure" in diag
+        finally:
+            set_arbitration_mode(prev_mode)
 
     # ------------------------------------------------------------------
     # 21. Historical Legacy Compose Semantics
@@ -812,5 +819,147 @@ class TestCentralPlannerPhase3:
         assert len(orders) == 1
         assert orders[0] == ["BUY_PRODUCT", "WHEAT", 10]
         assert diag["accepted_details"][0]["priority_class"] == P1_URGENT
+
+    # ------------------------------------------------------------------
+    # 25. Hard vs Soft Shed Pressure De-Escalation Tests (Cases A - G)
+    # ------------------------------------------------------------------
+    def test_shed_pressure_case_a_moderate_soft_pressure(self):
+        """Case A: shed = 70, Hour 0. Sells are P2_STRATEGIC (soft_cap_relief), not P0.
+
+        P1 HIRE and P1 BUY_SEED strictly take precedence over routine soft-cap relief.
+        """
+        ctx = {"hour": 0, "day": 10, "farm": MockFarm(n_animals=4), "private": MockPrivate(shed={"WHEAT": 70})}
+        class MockPlan:
+            plant_queue = [((0, 0), "TOMATO")]
+            intents = {}
+            diagnostics = {}
+
+        buys = [
+            ["HIRE"],
+            ["BUY_SEED", "TOMATO", 1],  # P1 (needed today)
+        ]
+        sells = [["SELL", "WHEAT", 10]]
+        sell_details = {"pressure": True, "reason": "shed_pressure"}
+
+        orders, diag = self.cp.plan_market(ctx, MockPlan(), buys, None, sells, sell_details, cap=2)
+        assert len(orders) == 2
+        assert ["HIRE"] in orders
+        assert ["BUY_SEED", "TOMATO", 1] in orders
+        assert ["SELL", "WHEAT", 10] not in orders
+
+        # Verify candidate metadata
+        sell_cands = [c for c in diag["rejected_details"] if c["source"] == "sell"]
+        assert len(sell_cands) == 1
+        assert sell_cands[0]["priority_class"] == P2_STRATEGIC
+        assert sell_cands[0]["metadata"]["sell_pressure_class"] == "soft_cap_relief"
+        assert sell_cands[0]["metadata"]["hard_threshold"] == 96
+
+    def test_shed_pressure_case_b_high_manageable_pressure(self):
+        """Case B: shed = 88, Hour 0. High but manageable pressure is P2_STRATEGIC, not P0."""
+        ctx = {"hour": 0, "day": 10, "farm": MockFarm(n_animals=4), "private": MockPrivate(shed={"WHEAT": 88})}
+        sells = [["SELL", "WHEAT", 10]]
+        sell_details = {"pressure": True, "reason": "shed_pressure"}
+
+        orders, diag = self.cp.plan_market(ctx, None, [], None, sells, sell_details, cap=1)
+        assert len(orders) == 1
+        cand = diag["accepted_details"][0]
+        assert cand["priority_class"] == P2_STRATEGIC
+        assert cand["metadata"]["sell_pressure_class"] == "soft_cap_relief"
+
+    def test_shed_pressure_case_c_near_capacity_emergency(self):
+        """Case C: shed = 98 (>= 96). True hard capacity emergency is P0_CRITICAL."""
+        ctx = {"hour": 0, "day": 10, "farm": MockFarm(n_animals=4), "private": MockPrivate(shed={"WHEAT": 98})}
+        sells = [["SELL", "WHEAT", 10]]
+        sell_details = {"pressure": True, "reason": "overflow"}
+
+        orders, diag = self.cp.plan_market(ctx, None, [], None, sells, sell_details, cap=1)
+        assert len(orders) == 1
+        cand = diag["accepted_details"][0]
+        assert cand["priority_class"] == P0_CRITICAL
+        assert cand["metadata"]["sell_pressure_class"] == "hard_capacity_emergency"
+        assert cand["metadata"]["shed_total"] == 98
+        assert cand["metadata"]["hard_threshold"] == 96
+
+    def test_shed_pressure_case_d_midnight_hard_guard(self):
+        """Case D: Hour 22, urgency = 2. Midnight hard guard is P0_CRITICAL."""
+        ctx = {"hour": 22, "day": 10, "farm": MockFarm(n_animals=4), "private": MockPrivate(shed={"WHEAT": 60})}
+        sells = [["SELL", "WHEAT", 10]]
+        sell_details = {"urgency": 2, "reason": "midnight_guard"}
+
+        orders, diag = self.cp.plan_market(ctx, None, [], None, sells, sell_details, cap=1)
+        assert len(orders) == 1
+        cand = diag["accepted_details"][0]
+        assert cand["priority_class"] == P0_CRITICAL
+        assert cand["metadata"]["sell_pressure_class"] == "midnight_hard_guard"
+
+    def test_shed_pressure_case_e_day29_liquidation(self):
+        """Case E: Day 29 final liquidation is P0_CRITICAL."""
+        ctx = {"hour": 0, "day": 29, "farm": MockFarm(n_animals=4), "private": MockPrivate(shed={"WHEAT": 30})}
+        sells = [["SELL", "WHEAT", 10]]
+        sell_details = {"reason": "day29_liquidation"}
+
+        orders, diag = self.cp.plan_market(ctx, None, [], None, sells, sell_details, cap=1)
+        assert len(orders) == 1
+        cand = diag["accepted_details"][0]
+        assert cand["priority_class"] == P0_CRITICAL
+        assert cand["metadata"]["sell_pressure_class"] == "day29"
+
+    def test_shed_pressure_case_f_p0_emergency_vs_hire(self):
+        """Case F: True P0 emergency sell (shed = 98) strictly beats P1 morning HIRE."""
+        ctx = {"hour": 0, "day": 10, "farm": MockFarm(n_animals=4), "private": MockPrivate(shed={"WHEAT": 98})}
+        buys = [["HIRE"]]  # P1 on Hour 0
+        sells = [["SELL", "WHEAT", 10]]  # P0 emergency
+        sell_details = {"pressure": True, "reason": "overflow"}
+
+        # Cap = 1: P0 sell must beat P1 hire
+        orders, diag = self.cp.plan_market(ctx, None, buys, None, sells, sell_details, cap=1)
+        assert len(orders) == 1
+        assert orders[0] == ["SELL", "WHEAT", 10]
+        assert diag["accepted_details"][0]["priority_class"] == P0_CRITICAL
+        assert diag["rejected_details"][0]["order"] == ["HIRE"]
+        assert diag["rejected_details"][0]["priority_class"] == P1_URGENT
+
+    def test_day10_11_morning_collision_regression(self):
+        """Reproduction of Day 11 Hour 0 collision: shed = 92 (< 96).
+
+        Under old D2: 6 P0 sells crowded out hires and completely dropped seeds.
+        Under corrected D3: Sells are P2_STRATEGIC soft_cap_relief;
+        P1 HIRE and P1 BUY_SEED are prioritized first.
+        """
+        ctx = {"hour": 0, "day": 11, "farm": MockFarm(n_animals=4), "private": MockPrivate(shed={"WHEAT": 92})}
+        class MockPlan:
+            plant_queue = [((0, 0), "TOMATO"), ((0, 1), "WHEAT")]
+            intents = {}
+            diagnostics = {}
+
+        # 10 HIRE proposals + 1 TOMATO seed + 1 WHEAT seed
+        buys = [["HIRE"] for _ in range(8)] + [
+            ["BUY_SEED", "TOMATO", 1],
+            ["BUY_SEED", "WHEAT", 8],
+        ]
+        # 6 SELL proposals
+        sells = [
+            ["SELL", "WHEAT", 10],
+            ["SELL", "WHEAT", 10],
+            ["SELL", "WHEAT", 10],
+            ["SELL", "WHEAT", 1],
+            ["SELL", "MILK", 4],
+            ["SELL", "MELON", 2],
+        ]
+        sell_details = {"pressure": True, "reason": "shed_pressure"}
+
+        orders, diag = self.cp.plan_market(ctx, MockPlan(), buys, None, sells, sell_details, cap=10)
+        assert len(orders) == 10
+
+        # Assert all 10 purchases (hires + seeds) are selected and seeds are NOT dropped!
+        hires_selected = sum(1 for o in orders if o[0] == "HIRE")
+        seeds_selected = [o for o in orders if o[0] == "BUY_SEED"]
+        sells_selected = sum(1 for o in orders if o[0] == "SELL")
+
+        assert hires_selected == 8
+        assert len(seeds_selected) == 2  # TOMATO and WHEAT both preserved!
+        assert sells_selected == 0       # Soft-cap sells deferred to Hour 1!
+        assert diag["sell_telemetry"]["soft_cap_sell_P0_count"] == 0
+        assert diag["sell_telemetry"]["soft_cap_sell_P2_count"] == 6
 
 

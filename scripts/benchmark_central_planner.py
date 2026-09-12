@@ -138,6 +138,7 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
     sw_unlock_day = None
     feed_failures = 0
     shed_overflow_events = 0
+    max_shed_occupancy = 0
     total_market_orders_executed = 0
 
     purchase_spend = {
@@ -202,7 +203,10 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
         # Shed overflow detection
         s_private = s_obs0.get("private", {})
         s_shed = s_private.get("shed", {})
-        if sum(s_shed.values()) >= 100:
+        s_shed_occ = sum(s_shed.values())
+        if s_shed_occ > max_shed_occupancy:
+            max_shed_occupancy = s_shed_occ
+        if s_shed_occ >= 100:
             shed_overflow_events += 1
 
         # Track spend from market actions
@@ -328,6 +332,14 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
     routine_wheat_preempted_sell_count = 0
     total_sell_orders = 0
     total_sell_revenue = 0.0
+
+    soft_cap_sell_P0_count = 0
+    soft_cap_sell_P2_count = 0
+    hard_capacity_sell_P0_count = 0
+    day29_liquidation_P0_count = 0
+    midnight_hard_guard_P0_count = 0
+    endgame_sell_P1_count = 0
+    preempt_sell_P1_count = 0
 
     # Suppressed proposals tracking (upstream slot caps)
     suppressed_counts: Dict[str, int] = Counter()
@@ -480,6 +492,16 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
             critical_wheat_rejected_count += wt.get("critical_wheat_rejected_count", 0)
             routine_wheat_preempted_sell_count += wt.get("routine_wheat_preempted_sell_count", 0)
 
+        st = t.get("sell_telemetry") or (diag.get("sell_telemetry") if diag else None)
+        if st:
+            soft_cap_sell_P0_count += st.get("soft_cap_sell_P0_count", 0)
+            soft_cap_sell_P2_count += st.get("soft_cap_sell_P2_count", 0)
+            hard_capacity_sell_P0_count += st.get("hard_capacity_sell_P0_count", 0)
+            day29_liquidation_P0_count += st.get("day29_liquidation_P0_count", 0)
+            midnight_hard_guard_P0_count += st.get("midnight_hard_guard_P0_count", 0)
+            endgame_sell_P1_count += st.get("endgame_sell_P1_count", 0)
+            preempt_sell_P1_count += st.get("preempt_sell_P1_count", 0)
+
     # Section 15 Benchmark Assertions for Central Planner runs
     if mode in ("central", "historical_candidates_central", "expanded_central"):
         assert all(len(t.get("market", [])) <= 10 for t in turn_telemetry_records), "Market orders exceeded 10"
@@ -538,6 +560,14 @@ def _worker_run_match(payload: Dict[str, Any]) -> Dict[str, Any]:
         "crop_counts": crop_counts,
         "feed_failures": feed_failures,
         "shed_overflow_events": shed_overflow_events,
+        "max_shed_occupancy": max_shed_occupancy,
+        "soft_cap_sell_P0_count": soft_cap_sell_P0_count,
+        "soft_cap_sell_P2_count": soft_cap_sell_P2_count,
+        "hard_capacity_sell_P0_count": hard_capacity_sell_P0_count,
+        "day29_liquidation_P0_count": day29_liquidation_P0_count,
+        "midnight_hard_guard_P0_count": midnight_hard_guard_P0_count,
+        "endgame_sell_P1_count": endgame_sell_P1_count,
+        "preempt_sell_P1_count": preempt_sell_P1_count,
         "endgame_unsold_inventory": endgame_unsold_inventory,
         "total_market_orders_executed": total_market_orders_executed,
         "turns_total": turns_total,
@@ -815,6 +845,12 @@ def compute_four_way_statistics(
         feed_fails = [raw_results[(s, opp, arch)].get("feed_failures", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
         p0_invs = [raw_results[(s, opp, arch)].get("p0_priority_inversion_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
 
+        shed_overflows = [raw_results[(s, opp, arch)].get("shed_overflow_events", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        max_shed_occs = [raw_results[(s, opp, arch)].get("max_shed_occupancy", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        soft_p0 = [raw_results[(s, opp, arch)].get("soft_cap_sell_P0_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        soft_p2 = [raw_results[(s, opp, arch)].get("soft_cap_sell_P2_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+        hard_p0 = [raw_results[(s, opp, arch)].get("hard_capacity_sell_P0_count", 0) for s in seeds for opp in opponents if (s, opp, arch) in raw_results]
+
         wheat_summaries[arch] = {
             "mean_wheat_P0": round(float(np.mean(p0_cnts)), 2),
             "mean_wheat_P1": round(float(np.mean(p1_cnts)), 2),
@@ -827,6 +863,12 @@ def compute_four_way_statistics(
             "mean_sell_revenue": round(float(np.mean(sell_revs)), 2),
             "total_feed_failures": int(np.sum(feed_fails)),
             "total_p0_inversions": int(np.sum(p0_invs)),
+            "total_shed_overflows": int(np.sum(shed_overflows)),
+            "max_shed_occupancy": int(np.max(max_shed_occs)) if max_shed_occs else 0,
+            "mean_max_shed_occupancy": round(float(np.mean(max_shed_occs)), 2) if max_shed_occs else 0.0,
+            "total_soft_cap_sell_P0": int(np.sum(soft_p0)),
+            "total_soft_cap_sell_P2": int(np.sum(soft_p2)),
+            "total_hard_capacity_sell_P0": int(np.sum(hard_p0)),
         }
 
     # Paired comparisons
@@ -996,6 +1038,18 @@ if __name__ == "__main__":
             lbl = "A. historical_stack" if arch == "historical_stack" else "D2. hist_candidates_central"
             print(f"{lbl:<32} | {w['mean_wheat_P0']:>5.1f} | {w['mean_wheat_P1']:>5.1f} | {w['mean_wheat_P2']:>5.1f} | {w['mean_wheat_selected']:>5.1f} | {w['mean_wheat_rejected']:>5.1f} | {w['total_critical_wheat_rejected']:>7d} | {w['total_routine_wheat_preempted_sells']:>11d} | {w['total_feed_failures']:>8d} | {w['total_p0_inversions']:>5d}")
         print("-" * 110)
+        print()
+
+        print("=========================================================================================")
+        print("                          SHED PRESSURE & SAFETY TELEMETRY                               ")
+        print("=========================================================================================")
+        print(f"{'Architecture':<32} | {'Max Shed':>8} | {'Mean Max':>8} | {'Overflows':>9} | {'Soft P0':>7} | {'Soft P2':>7} | {'Hard P0':>7}")
+        print("-" * 88)
+        for arch in ["historical_stack", "historical_candidates_central"]:
+            w = wheat_sums[arch]
+            lbl = "A. historical_stack" if arch == "historical_stack" else "D3. hist_candidates_central"
+            print(f"{lbl:<32} | {w['max_shed_occupancy']:>8d} | {w['mean_max_shed_occupancy']:>8.1f} | {w['total_shed_overflows']:>9d} | {w['total_soft_cap_sell_P0']:>7d} | {w['total_soft_cap_sell_P2']:>7d} | {w['total_hard_capacity_sell_P0']:>7d}")
+        print("-" * 88)
 
         print("\n=========================================================================================")
         print("                             CAPITAL & REVENUE REALIZATION                               ")

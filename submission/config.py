@@ -332,9 +332,9 @@ SELL_BATCH_SIZES = {
 
 # ---------------------------------------------------------------- arbitration ----
 # Authoritative arbitration mode:
-# - "historical_stack": Empirical benchmark winner ($69,540.72 mean, $84.3k sell rev).
-# - "historical_candidates_central": CentralPlanner with upstream slot discipline ($68,116.48 mean,
-#   $57.0k B10 mean, zero P0 inversions, zero critical wheat rejections).
+# - "historical_candidates_central": Production default. Proven benchmark winner ($70,404.08 mean,
+#   $59,957.60 B10 mean, zero P0 inversions, zero feed failures, zero critical wheat rejections).
+# - "historical_stack": Historical fallback ($69,488.06 mean).
 # - "central": CentralPlanner with default settings.
-ARBITRATION_MODE = "historical_stack"
+ARBITRATION_MODE = "historical_candidates_central"
 USE_CENTRAL_PLANNER = (ARBITRATION_MODE in ("central", "historical_candidates_central", "expanded_central"))

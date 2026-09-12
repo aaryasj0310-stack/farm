@@ -138,7 +138,7 @@ def reset_opponent_model_state():
 try:
     from config import ARBITRATION_MODE as _CONFIG_ARBITRATION_MODE
 except Exception:
-    _CONFIG_ARBITRATION_MODE = "historical_stack"
+    _CONFIG_ARBITRATION_MODE = "historical_candidates_central"
 
 _RUNTIME_ARBITRATION_MODE: str = str(_CONFIG_ARBITRATION_MODE).strip().lower()
 
@@ -705,6 +705,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         "critical_wheat_proposed": critical_wheat_proposed,
         "critical_wheat_selected": critical_wheat_selected,
         "wheat_telemetry": copy.deepcopy(_cp_diag.get("wheat_telemetry")) if (_cp_diag and "wheat_telemetry" in _cp_diag) else None,
+        "sell_telemetry": copy.deepcopy(_cp_diag.get("sell_telemetry")) if (_cp_diag and "sell_telemetry" in _cp_diag) else None,
         "central_planner_diagnostic": copy.deepcopy(_cp_diag) if _cp_diag else None,
     }
 

@@ -60,6 +60,13 @@ PRIORITY_NAMES: Dict[int, str] = {
     P4_DISCRETIONARY: "P4_DISCRETIONARY",
 }
 
+# Hard capacity threshold: 4-unit headroom below SHED_CAPACITY (100 - 4 = 96).
+# Multi-unit batch harvests (cow milk 4-6, sheep wool 4-6, melon/wheat 4-6)
+# will overflow and permanently destroy inventory if shed occupancy >= 96.
+# True P0 capacity emergency is strictly reserved for shed_total >= HARD_CAPACITY_THRESHOLD.
+HARD_CAPACITY_HEADROOM = 4
+HARD_CAPACITY_THRESHOLD = SHED_CAPACITY - HARD_CAPACITY_HEADROOM  # 96
+
 
 # ----------------------------------------------------------------------
 # Authoritative Historical Legacy Composition Helper
@@ -481,11 +488,22 @@ class CentralPlanner:
         hour = self._get_hour(ctx)
         proposal_id = f"sell:{idx}"
 
+        shed_total = self._get_shed_total(ctx)
+
         # 1. Day 29 final liquidation (unsold inventory worth $0)
         is_day_29 = (day >= 29) or (
             isinstance(sell_details, dict) and sell_details.get("reason") in ("final_day", "day29_liquidation")
         )
         if is_day_29:
+            meta = {
+                "sell_pressure_class": "day29",
+                "shed_total": shed_total,
+                "shed_capacity": SHED_CAPACITY,
+                "soft_cap": SHED_SOFT_CAP,
+                "hard_threshold": HARD_CAPACITY_THRESHOLD,
+                "priority_class": P0_CRITICAL,
+                "priority_reason": "day29_final_liquidation",
+            }
             return ProposalCandidate(
                 proposal_id=proposal_id,
                 order=order_copy,
@@ -494,6 +512,7 @@ class CentralPlanner:
                 priority_class=P0_CRITICAL,
                 urgency=2.0,
                 original_index=idx,
+                metadata=meta,
             )
 
         # 2. Midnight hard-guard (hour >= 22 and high shed total)
@@ -501,6 +520,15 @@ class CentralPlanner:
             sell_details.get("urgency") == 2 or sell_details.get("reason") == "midnight_guard"
         )
         if is_midnight_guard:
+            meta = {
+                "sell_pressure_class": "midnight_hard_guard",
+                "shed_total": shed_total,
+                "shed_capacity": SHED_CAPACITY,
+                "soft_cap": SHED_SOFT_CAP,
+                "hard_threshold": HARD_CAPACITY_THRESHOLD,
+                "priority_class": P0_CRITICAL,
+                "priority_reason": "midnight_hard_guard",
+            }
             return ProposalCandidate(
                 proposal_id=proposal_id,
                 order=order_copy,
@@ -509,20 +537,25 @@ class CentralPlanner:
                 priority_class=P0_CRITICAL,
                 urgency=2.0,
                 original_index=idx,
+                metadata=meta,
             )
 
-        # 3. Severe shed pressure / overflow
-        shed_pressure = False
-        if isinstance(sell_details, dict):
-            if sell_details.get("pressure") is True:
-                shed_pressure = True
-            elif sell_details.get("reason") in ("shed_pressure", "overflow"):
-                shed_pressure = True
-        if not shed_pressure:
-            if self._get_shed_total(ctx) >= SHED_SOFT_CAP:
-                shed_pressure = True
-
-        if shed_pressure:
+        # 3. True near-certain shed capacity emergency (P0_CRITICAL)
+        # Narrowly reserved for physical capacity overflow risk (shed >= 96)
+        # or explicit overflow reason from upstream engine when near capacity (>= 90).
+        is_hard_capacity_emergency = (shed_total >= HARD_CAPACITY_THRESHOLD) or (
+            isinstance(sell_details, dict) and sell_details.get("reason") == "overflow" and shed_total >= (HARD_CAPACITY_THRESHOLD - 6)
+        )
+        if is_hard_capacity_emergency:
+            meta = {
+                "sell_pressure_class": "hard_capacity_emergency",
+                "shed_total": shed_total,
+                "shed_capacity": SHED_CAPACITY,
+                "soft_cap": SHED_SOFT_CAP,
+                "hard_threshold": HARD_CAPACITY_THRESHOLD,
+                "priority_class": P0_CRITICAL,
+                "priority_reason": "hard_capacity_emergency",
+            }
             return ProposalCandidate(
                 proposal_id=proposal_id,
                 order=order_copy,
@@ -531,6 +564,7 @@ class CentralPlanner:
                 priority_class=P0_CRITICAL,
                 urgency=2.0,
                 original_index=idx,
+                metadata=meta,
             )
 
         # 4. Endgame liquidation before final day (e.g. Day 28)
@@ -540,6 +574,15 @@ class CentralPlanner:
             )
         )
         if is_endgame:
+            meta = {
+                "sell_pressure_class": "endgame",
+                "shed_total": shed_total,
+                "shed_capacity": SHED_CAPACITY,
+                "soft_cap": SHED_SOFT_CAP,
+                "hard_threshold": HARD_CAPACITY_THRESHOLD,
+                "priority_class": P1_URGENT,
+                "priority_reason": "endgame_dump",
+            }
             return ProposalCandidate(
                 proposal_id=proposal_id,
                 order=order_copy,
@@ -548,6 +591,7 @@ class CentralPlanner:
                 priority_class=P1_URGENT,
                 urgency=1.0,
                 original_index=idx,
+                metadata=meta,
             )
 
         # 5. Opponent preemptive sell
@@ -564,6 +608,15 @@ class CentralPlanner:
                 is_preempt = True
 
         if is_preempt:
+            meta = {
+                "sell_pressure_class": "opponent_preempt",
+                "shed_total": shed_total,
+                "shed_capacity": SHED_CAPACITY,
+                "soft_cap": SHED_SOFT_CAP,
+                "hard_threshold": HARD_CAPACITY_THRESHOLD,
+                "priority_class": P1_URGENT,
+                "priority_reason": "opponent_preempt",
+            }
             return ProposalCandidate(
                 proposal_id=proposal_id,
                 order=order_copy,
@@ -572,9 +625,40 @@ class CentralPlanner:
                 priority_class=P1_URGENT,
                 urgency=1.0,
                 original_index=idx,
+                metadata=meta,
             )
 
-        # 6. Normal scheduled sell window
+        # 6. Ordinary shed soft-cap relief (shed_total >= SHED_SOFT_CAP, but < HARD_CAPACITY_THRESHOLD)
+        # Classified as P2_STRATEGIC (urgency = 0.60):
+        # On Hour 0, P1 morning HIRE (urgency 1.0) and P1 planting-dependent BUY_SEED (urgency 1.0)
+        # strictly take precedence. Soft-cap relief sales execute on Hour 1 or subsequent sell windows.
+        is_soft_cap_relief = (shed_total >= SHED_SOFT_CAP) or (
+            isinstance(sell_details, dict) and (
+                sell_details.get("pressure") is True or sell_details.get("reason") in ("shed_pressure", "overflow")
+            )
+        )
+        if is_soft_cap_relief:
+            meta = {
+                "sell_pressure_class": "soft_cap_relief",
+                "shed_total": shed_total,
+                "shed_capacity": SHED_CAPACITY,
+                "soft_cap": SHED_SOFT_CAP,
+                "hard_threshold": HARD_CAPACITY_THRESHOLD,
+                "priority_class": P2_STRATEGIC,
+                "priority_reason": "soft_cap_relief",
+            }
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="sell",
+                kind="sell",
+                priority_class=P2_STRATEGIC,
+                urgency=0.60,
+                original_index=idx,
+                metadata=meta,
+            )
+
+        # 7. Normal scheduled sell window
         cand_urgency_score = 0.0
         if isinstance(sell_details, dict) and isinstance(sell_details.get("candidates"), list):
             for c in sell_details["candidates"]:
@@ -586,6 +670,15 @@ class CentralPlanner:
             isinstance(sell_details, dict) and sell_details.get("urgency") == 0
         )
         if is_normal_window:
+            meta = {
+                "sell_pressure_class": "normal_window",
+                "shed_total": shed_total,
+                "shed_capacity": SHED_CAPACITY,
+                "soft_cap": SHED_SOFT_CAP,
+                "hard_threshold": HARD_CAPACITY_THRESHOLD,
+                "priority_class": P2_STRATEGIC,
+                "priority_reason": "normal_window",
+            }
             return ProposalCandidate(
                 proposal_id=proposal_id,
                 order=order_copy,
@@ -594,9 +687,19 @@ class CentralPlanner:
                 priority_class=P2_STRATEGIC,
                 urgency=min(0.49, cand_urgency_score * 0.1),
                 original_index=idx,
+                metadata=meta,
             )
 
-        # 7. Discretionary off-window sell
+        # 8. Discretionary off-window sell
+        meta = {
+            "sell_pressure_class": "discretionary",
+            "shed_total": shed_total,
+            "shed_capacity": SHED_CAPACITY,
+            "soft_cap": SHED_SOFT_CAP,
+            "hard_threshold": HARD_CAPACITY_THRESHOLD,
+            "priority_class": P4_DISCRETIONARY,
+            "priority_reason": "discretionary_off_window",
+        }
         return ProposalCandidate(
             proposal_id=proposal_id,
             order=order_copy,
@@ -605,6 +708,7 @@ class CentralPlanner:
             priority_class=P4_DISCRETIONARY,
             urgency=0.0,
             original_index=idx,
+            metadata=meta,
         )
 
     # ------------------------------------------------------------------
@@ -1018,12 +1122,26 @@ class CentralPlanner:
             ],
         }
 
+        # Sell pressure telemetry compilation
+        sell_proposals = [c for c in all_proposals if c.source == "sell"]
+        sell_telemetry = {
+            "soft_cap_sell_P0_count": sum(1 for c in sell_proposals if c.metadata.get("sell_pressure_class") == "soft_cap_relief" and c.priority_class == P0_CRITICAL),
+            "soft_cap_sell_P2_count": sum(1 for c in sell_proposals if c.metadata.get("sell_pressure_class") == "soft_cap_relief" and c.priority_class == P2_STRATEGIC),
+            "hard_capacity_sell_P0_count": sum(1 for c in sell_proposals if c.metadata.get("sell_pressure_class") == "hard_capacity_emergency"),
+            "midnight_sell_P0_count": sum(1 for c in sell_proposals if c.metadata.get("sell_pressure_class") == "midnight_hard_guard"),
+            "day29_sell_P0_count": sum(1 for c in sell_proposals if c.metadata.get("sell_pressure_class") == "day29"),
+            "total_sell_proposals": len(sell_proposals),
+            "sells_selected_count": sum(1 for c in execution_candidates if c.source == "sell"),
+            "sells_rejected_count": sum(1 for c in all_rejected if c.source == "sell"),
+        }
+
         diagnostics: Dict[str, Any] = {
             "total_candidates": total_candidates,
             "purchase_candidates": len(purchases),
             "sell_candidates": len(sells),
             "final_selected": len(final_orders),
             "wheat_telemetry": wheat_telemetry,
+            "sell_telemetry": sell_telemetry,
             "slot_pressure": (total_candidates > cap),
             "upstream_truncation_detected": upstream_truncation_detected,
             "accepted_orders": [list(o) for o in final_orders],

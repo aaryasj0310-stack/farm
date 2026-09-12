@@ -54,11 +54,11 @@ def make_test_obs(farmer=(4, 4), hands=None, tiles=None, inventories=None, shed=
 
 
 def test_arbitration_mode_defaults_and_validation():
-    """Verify default mode is 'historical_stack' and switch validates inputs."""
+    """Verify default mode is 'historical_candidates_central' and switch validates inputs."""
     reset_agent_state()
-    assert ARBITRATION_MODE == "historical_stack"
-    assert USE_CENTRAL_PLANNER is False
-    assert get_arbitration_mode() == "historical_stack"
+    assert ARBITRATION_MODE == "historical_candidates_central"
+    assert USE_CENTRAL_PLANNER is True
+    assert get_arbitration_mode() == "historical_candidates_central"
 
     set_arbitration_mode("legacy")
     assert get_arbitration_mode() == "legacy"
