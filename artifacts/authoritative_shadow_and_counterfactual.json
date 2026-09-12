@@ -1,0 +1,76 @@
+{
+  "shadow_sensitivity": {
+    "0.0": {
+      "threshold": 0.0,
+      "raw_evaluations": 600,
+      "unique_opportunities": 300,
+      "approved_unique_opps": 177,
+      "cows_approved": 90,
+      "sheep_approved": 87,
+      "approved_per_match": 3.54,
+      "rejections": {
+        "ROI_BELOW_THRESHOLD": 13,
+        "FEED_CAP": 110,
+        "CASH": 0,
+        "NO_HOUSING": 0
+      }
+    },
+    "250.0": {
+      "threshold": 250.0,
+      "raw_evaluations": 600,
+      "unique_opportunities": 300,
+      "approved_unique_opps": 156,
+      "cows_approved": 90,
+      "sheep_approved": 66,
+      "approved_per_match": 3.12,
+      "rejections": {
+        "ROI_BELOW_THRESHOLD": 102,
+        "FEED_CAP": 42,
+        "CASH": 0,
+        "NO_HOUSING": 0
+      }
+    },
+    "500.0": {
+      "threshold": 500.0,
+      "raw_evaluations": 600,
+      "unique_opportunities": 300,
+      "approved_unique_opps": 110,
+      "cows_approved": 44,
+      "sheep_approved": 66,
+      "approved_per_match": 2.2,
+      "rejections": {
+        "ROI_BELOW_THRESHOLD": 173,
+        "FEED_CAP": 17,
+        "CASH": 0,
+        "NO_HOUSING": 0
+      }
+    },
+    "1000.0": {
+      "threshold": 1000.0,
+      "raw_evaluations": 600,
+      "unique_opportunities": 300,
+      "approved_unique_opps": 78,
+      "cows_approved": 12,
+      "sheep_approved": 66,
+      "approved_per_match": 1.56,
+      "rejections": {
+        "ROI_BELOW_THRESHOLD": 211,
+        "FEED_CAP": 11,
+        "CASH": 0,
+        "NO_HOUSING": 0
+      }
+    }
+  },
+  "counterfactual_replay": {
+    "total_actual_purchased_units": 61,
+    "actual_placed_units": 17,
+    "actual_stranded_units": 44,
+    "housing_safe_purchases_allowed": 3,
+    "housing_safe_purchases_prevented": 58,
+    "prevented_stranded_cows": 44,
+    "prevented_placed_cows": 14,
+    "wasted_capital_saved_total": 17600.0,
+    "wasted_capital_saved_per_match": 352.0,
+    "net_financial_improvement_per_match": 226.0
+  }
+}

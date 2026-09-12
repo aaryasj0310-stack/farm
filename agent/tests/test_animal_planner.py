@@ -29,11 +29,11 @@ def test_zero_geese_policy():
 
 def test_c4_late_uneconomic_purchase_prevented():
     """Test 2: Late uneconomic animal purchases are strictly prevented on/after cutoff."""
-    # On Day 12 (cutoff boundary) and later, planner must not plan new animal purchases
-    res_12 = get_animal_targets(12, 10000, 50, {'COW': 0, 'SHEEP': 0, 'GOOSE': 0}, max_pastures=10)
-    assert res_12['COW'] == 0
-    assert res_12['SHEEP'] == 0
-    assert res_12['GOOSE'] == 0
+    # On Day 15 (after selective livestock window) and later, planner must not plan new animal purchases
+    res_15 = get_animal_targets(15, 10000, 50, {'COW': 0, 'SHEEP': 0, 'GOOSE': 0}, max_pastures=10)
+    assert res_15['COW'] == 0
+    assert res_15['SHEEP'] == 0
+    assert res_15['GOOSE'] == 0
 
     # On Day 23 (late season), even with excess cash, planner refuses additions
     res_23 = get_animal_targets(23, 10000, 50, {'COW': 2, 'SHEEP': 3, 'GOOSE': 0}, max_pastures=10)
@@ -167,7 +167,8 @@ def test_early_pasture_planned_before_sw():
     plan = planner.build(ctx)
     assert plan.build_op == "BUILD_PASTURE"
     assert len(plan.build_queue) > 0
-    assert all(pos in EARLY_PASTURE_TILES for pos in plan.build_queue)
+    # Dynamic near-shed planning allocates early pastures in unlocked NW quadrant near shed
+    assert all(ctx["farm"].quadrant_of(pos) == "NW" for pos in plan.build_queue)
 
 
 def test_circular_dependency_broken_animal_buy_order_emitted():
@@ -200,8 +201,8 @@ def test_circular_dependency_broken_animal_buy_order_emitted():
 
 
 def test_c4_cutoff_strictly_preserved():
-    """Test 3: C4 cutoff strictly preserved: 0 new animals on/after Day 12."""
-    for d in (12, 13, 20, 28):
+    """Test 3: C4 cutoff strictly preserved: 0 new animals after selective window."""
+    for d in (15, 20, 28):
         res = get_animal_targets(d, 50000, 100, {"COW": 1, "SHEEP": 1, "GOOSE": 0}, max_pastures=10)
         assert res["COW"] == 1
         assert res["SHEEP"] == 1

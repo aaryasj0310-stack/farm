@@ -588,7 +588,15 @@ class MacroPlanner:
         # Dynamic animal targets via corrected Astra heuristic
         # Stage 8B C4: Cease new livestock investment on or after C4_LIVESTOCK_CUTOFF_DAY (Day 12).
         # Days 3-5: Protect NE land fund ($1,000) and workforce ramp.
-        if is_endgame or day >= C4_LIVESTOCK_CUTOFF_DAY or day in (3, 4, 5):
+        allow_livestock = (day < C4_LIVESTOCK_CUTOFF_DAY)
+        try:
+            from config import SELECTIVE_LIVESTOCK_GATE_ENABLED, SELECTIVE_LIVESTOCK_MAX_DAY
+            if not allow_livestock and SELECTIVE_LIVESTOCK_GATE_ENABLED and day <= SELECTIVE_LIVESTOCK_MAX_DAY:
+                allow_livestock = True
+        except ImportError:
+            pass
+
+        if is_endgame or not allow_livestock or day in (3, 4, 5):
             dynamic_targets = {"COW": counts.get("COW", 0),
                                "SHEEP": counts.get("SHEEP", 0),
                                "GOOSE": 0}
@@ -619,7 +627,7 @@ class MacroPlanner:
         # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
         # Stage 8B C4: Cap animal purchases and pasture construction on or after C4_LIVESTOCK_CUTOFF_DAY
         needed_new_pastures = 0
-        if not is_endgame and day < C4_LIVESTOCK_CUTOFF_DAY:
+        if not is_endgame and allow_livestock:
             # Queue PASTURE construction if needed to reach targets or house owned animals
             # Only pasture species (COW + SHEEP) count toward target_pastures
             target_pastures = max(
@@ -722,6 +730,9 @@ class MacroPlanner:
             "pasture_diagnostics": {
                 "existing_pastures": existing_pastures,
                 "existing_empty_pastures": existing_empty_pastures,
+                "current_large_livestock": pasture_eval.get("current_large_livestock", 0),
+                "unused_existing_pasture_capacity": pasture_eval.get("unused_existing_pasture_capacity", 0),
+                "first_new_pasture_marginal_slot": pasture_eval.get("first_new_pasture_marginal_slot"),
                 "current_animals": dict(counts),
                 "animals_in_transit": sum(buy_animal.values()),
                 "dynamic_pasture_candidates": pasture_eval["dynamic_candidates_count"],

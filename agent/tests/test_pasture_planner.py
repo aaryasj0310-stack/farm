@@ -20,6 +20,7 @@ from strategy.animal_planner import (
     HERD_CAP,
     COW_CAP,
     SHEEP_CAP,
+    C4_LIVESTOCK_CUTOFF_DAY,
     estimate_species_remaining_profit,
     get_animal_targets,
 )
@@ -102,20 +103,6 @@ def test_distance_to_shed():
     # Check that distance is always >= 1 for non-shed tiles
     assert distance_to_shed((0, 0)) > 1
 
-
-def test_case_a_capacity_above_nine():
-    """Existing pastures = 9, viable NW/NE candidates -> dynamic capacity >= 10."""
-    sw_pastures = [
-        (0, 5, {"kind": "PASTURE", "x": 0, "y": 5}),
-        (0, 6, {"kind": "PASTURE", "x": 0, "y": 6}),
-        (0, 7, {"kind": "PASTURE", "x": 0, "y": 7}),
-        (1, 5, {"kind": "PASTURE", "x": 1, "y": 5}),
-        (1, 6, {"kind": "PASTURE", "x": 1, "y": 6}),
-        (1, 7, {"kind": "PASTURE", "x": 1, "y": 7}),
-        (2, 5, {"kind": "PASTURE", "x": 2, "y": 5}),
-        (2, 6, {"kind": "PASTURE", "x": 2, "y": 6}),
-        (2, 7, {"kind": "PASTURE", "x": 2, "y": 7}),
-    ]
 def _eval_helper(farm_state, fc, day=3):
     empty_tiles = [
         (t.x, t.y) for t in farm_state.iter_tiles()
@@ -322,3 +309,154 @@ def test_case_k_only_queued_build_tiles_removed_from_crop_queue():
     # Unbuilt SW tiles outside queued builds must be eligible for crops
     sw_plantings = [pos for pos in plant_positions if pos[0] < 5 and pos[1] >= 5]
     assert len(sw_plantings) > 0, "Unbuilt SW tiles should be available for crop allocation"
+
+
+def test_regression_marginal_offset_existing_empty_housing():
+    """Test A: Existing empty housing (7 empty of 9) offsets marginal valuation.
+
+    Current herd = 2 cows, existing pastures = 9 (7 empty).
+    The first new candidate pasture must NOT be valued as animal #3.
+    It must be valued using the marginal slot after those 7 empty pastures (animal #10).
+    """
+    sw_pastures = [
+        (0, 5, {"kind": "PASTURE", "x": 0, "y": 5}),
+        (0, 6, {"kind": "PASTURE", "x": 0, "y": 6}),
+        (0, 7, {"kind": "PASTURE", "x": 0, "y": 7}),
+        (1, 5, {"kind": "PASTURE", "x": 1, "y": 5}),
+        (1, 6, {"kind": "PASTURE", "x": 1, "y": 6}),
+        (1, 7, {"kind": "PASTURE", "x": 1, "y": 7}),
+        (2, 5, {"kind": "PASTURE", "x": 2, "y": 5}),
+        (2, 6, {"kind": "PASTURE", "x": 2, "y": 6}),
+        (2, 7, {"kind": "PASTURE", "x": 2, "y": 7}),
+    ]
+    # 2 cows placed in the first two pastures, remaining 7 are empty
+    animals = [
+        (0, 5, {"kind": "PASTURE", "x": 0, "y": 5, "animal": "COW", "is_animal": True}),
+        (0, 6, {"kind": "PASTURE", "x": 0, "y": 6, "animal": "COW", "is_animal": True}),
+    ]
+    farm_state = make_test_farm(day=3, structures=sw_pastures, animals=animals)
+    fc = FakeForecast({"CARROT": 20.0, "POTATO": 25.0})
+
+    eval_result = _eval_helper(farm_state, fc, day=3)
+
+    assert eval_result["existing_pastures"] == 9
+    assert eval_result["existing_empty_pastures"] == 7
+    assert eval_result["current_large_livestock"] == 2
+    assert eval_result["unused_existing_pasture_capacity"] == 7
+    assert eval_result["first_new_pasture_marginal_slot"] == 8
+
+    # Compare against full sequence from current_animals
+    full_seq = get_marginal_animal_profit_sequence(
+        day=3,
+        current_animals={"COW": 2, "SHEEP": 0, "GOOSE": 0},
+        n_slots=15,
+        cutoff_day=C4_LIVESTOCK_CUTOFF_DAY,
+    )
+    # Slot 0 in full_seq is animal #3 (the first empty pasture)
+    # The first candidate must be evaluated against full_seq[7] (animal #10)
+    first_cand = eval_result["all_candidates"][0]
+    expected_marginal_val = full_seq[7][0]
+    assert first_cand["marginal_livestock_value"] == expected_marginal_val
+
+
+def test_regression_no_offset_when_housing_full():
+    """Test B: No offset when housing is full.
+
+    Current livestock = 9 (9 pastures, 0 empty).
+    First new pasture candidate directly represents the next animal slot (animal #10).
+    """
+    pastures = []
+    animals = []
+    for y in range(5, 8):
+        for x in range(3):
+            pastures.append((x, y, {"kind": "PASTURE", "x": x, "y": y}))
+            animals.append((x, y, {"kind": "PASTURE", "x": x, "y": y, "animal": "COW", "is_animal": True}))
+
+    farm_state = make_test_farm(day=3, structures=pastures, animals=animals)
+    fc = FakeForecast({"CARROT": 20.0, "POTATO": 25.0})
+
+    eval_result = _eval_helper(farm_state, fc, day=3)
+
+    assert eval_result["existing_pastures"] == 9
+    assert eval_result["existing_empty_pastures"] == 0
+    assert eval_result["current_large_livestock"] == 9
+    assert eval_result["unused_existing_pasture_capacity"] == 0
+    assert eval_result["first_new_pasture_marginal_slot"] == 1
+
+    full_seq = get_marginal_animal_profit_sequence(
+        day=3,
+        current_animals={"COW": 9, "SHEEP": 0, "GOOSE": 0},
+        n_slots=5,
+        cutoff_day=C4_LIVESTOCK_CUTOFF_DAY,
+    )
+    first_cand = eval_result["all_candidates"][0]
+    assert first_cand["marginal_livestock_value"] == full_seq[0][0]
+
+
+def test_regression_species_caps_respected_beyond_existing_capacity():
+    """Test C: Species caps remain respected as new pasture capacity extends.
+
+    When existing capacity and early candidates hit SHEEP_CAP (12),
+    subsequent pasture slots must roll over to COW instead of continuing sheep.
+    """
+    # 10 sheep already owned, 10 pastures, 0 empty
+    pastures = []
+    animals = []
+    coords = [(x, y) for y in range(5, 9) for x in range(3)][:10]
+    for x, y in coords:
+        pastures.append((x, y, {"kind": "PASTURE", "x": x, "y": y}))
+        animals.append((x, y, {"kind": "PASTURE", "x": x, "y": y, "animal": "SHEEP", "is_animal": True}))
+
+    farm_state = make_test_farm(day=3, structures=pastures, animals=animals)
+    fc = FakeForecast({"CARROT": 10.0, "POTATO": 10.0})
+
+    eval_result = _eval_helper(farm_state, fc, day=3)
+    cands = eval_result["all_candidates"]
+
+    # Slot 1 and Slot 2 can be SHEEP (10 + 2 = 12 = SHEEP_CAP)
+    assert cands[0]["target_species"] == "SHEEP"
+    assert cands[1]["target_species"] == "SHEEP"
+    # Slot 3 cannot be SHEEP because SHEEP_CAP is reached; must roll over to COW
+    assert cands[2]["target_species"] == "COW"
+
+
+def test_regression_candidate_ranking_economics_over_historical():
+    """Test D: Historical pasture lists must only act as deterministic tie-breakers.
+
+    A nonhistorical near-shed candidate with higher net value must rank before
+    a historical SW candidate with lower net value.
+    """
+    farm_state = make_test_farm(day=3)
+    # Two candidates: pos A (historical SW, dist 3, net 500), pos B (nonhistorical NW, dist 2, net 900)
+    cands = [
+        {
+            "pos": (0, 5),
+            "distance_to_shed": 3,
+            "net_pasture_value": 500.0,
+            "is_preferred_early": False,
+            "is_preferred_sw": True,
+            "accepted": True,
+        },
+        {
+            "pos": (4, 3),
+            "distance_to_shed": 2,
+            "net_pasture_value": 900.0,
+            "is_preferred_early": False,
+            "is_preferred_sw": False,
+            "accepted": True,
+        },
+    ]
+
+    # Apply ranking key
+    cands.sort(key=lambda c: (
+        -c["net_pasture_value"],
+        c["distance_to_shed"],
+        0 if c["is_preferred_early"] else (1 if c["is_preferred_sw"] else 2),
+        c["pos"][1],
+        c["pos"][0],
+    ))
+
+    assert cands[0]["pos"] == (4, 3), "Nonhistorical candidate with $900 net must outrank historical candidate with $500 net"
+    assert cands[0]["net_pasture_value"] == 900.0
+    assert cands[1]["pos"] == (0, 5)
+

@@ -23,7 +23,7 @@ def test_invests_daytime_proceeds_in_available_livestock_housing():
 
 def test_reinvestment_preserves_deadline_land_fund_and_placement_time():
     intents = {"buy_animal": {"SHEEP": 2}}
-    for ctx in [livestock_ctx(day=12), livestock_ctx(hour=21),
+    for ctx in [livestock_ctx(day=15), livestock_ctx(hour=21),
                 livestock_ctx(hour=0), livestock_ctx(unlocked=("NW", "NE")),
                 livestock_ctx(money=300)]:
         orders, _ = OrderBuilder().reinvest_livestock(ctx, intents)

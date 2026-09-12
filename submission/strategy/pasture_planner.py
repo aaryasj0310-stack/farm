@@ -52,9 +52,28 @@ def get_marginal_animal_profit_sequence(
     Total herd cannot exceed HERD_CAP=20.
     Returns: list of (profit, species_name) for each slot.
     """
-    profits = estimate_species_remaining_profit(day, cutoff_day=cutoff_day)
-    s_prof = float(profits.get("SHEEP", 0.0))
-    c_prof = float(profits.get("COW", 0.0))
+    try:
+        from config import (
+            SELECTIVE_LIVESTOCK_GATE_ENABLED,
+            SELECTIVE_LIVESTOCK_GATE_THRESHOLD,
+            SELECTIVE_LIVESTOCK_MAX_DAY,
+        )
+    except ImportError:
+        SELECTIVE_LIVESTOCK_GATE_ENABLED = False
+        SELECTIVE_LIVESTOCK_GATE_THRESHOLD = 500.0
+        SELECTIVE_LIVESTOCK_MAX_DAY = 14
+
+    effective_cutoff = C4_LIVESTOCK_CUTOFF_DAY if cutoff_day is None else int(cutoff_day)
+    if day >= effective_cutoff and SELECTIVE_LIVESTOCK_GATE_ENABLED and day <= SELECTIVE_LIVESTOCK_MAX_DAY:
+        from strategy.marginal_livestock_valuator import estimate_realized_marginal_animal_value
+        eval_c = estimate_realized_marginal_animal_value("COW", day, current_animals or {}, empty_pastures=1)
+        eval_s = estimate_realized_marginal_animal_value("SHEEP", day, current_animals or {}, empty_pastures=1)
+        c_prof = float(eval_c["net_realized_value"]) if eval_c["net_realized_value"] >= SELECTIVE_LIVESTOCK_GATE_THRESHOLD else 0.0
+        s_prof = float(eval_s["net_realized_value"]) if eval_s["net_realized_value"] >= SELECTIVE_LIVESTOCK_GATE_THRESHOLD else 0.0
+    else:
+        profits = estimate_species_remaining_profit(day, cutoff_day=cutoff_day)
+        s_prof = float(profits.get("SHEEP", 0.0))
+        c_prof = float(profits.get("COW", 0.0))
 
     c_cur = int(current_animals.get("COW", 0)) if current_animals else 0
     s_cur = int(current_animals.get("SHEEP", 0)) if current_animals else 0
@@ -190,13 +209,25 @@ def evaluate_pasture_candidates(
         c["pos"][0],
     ))
 
-    # 2. Derive marginal profit sequence for available candidate slots
-    slot_sequence = get_marginal_animal_profit_sequence(
+    # 2. Derive marginal profit sequence for available candidate slots,
+    # offsetting by unused existing pasture capacity (geese use coops, not pastures)
+    current_large_livestock = (
+        int(current_animals.get("COW", 0))
+        + int(current_animals.get("SHEEP", 0))
+    ) if current_animals else 0
+
+    unused_existing_capacity = max(
+        0,
+        existing_pastures - current_large_livestock
+    )
+
+    full_sequence = get_marginal_animal_profit_sequence(
         day=day,
         current_animals=current_animals,
-        n_slots=len(raw_cands),
+        n_slots=unused_existing_capacity + len(raw_cands),
         cutoff_day=cutoff_day,
     )
+    candidate_sequence = full_sequence[unused_existing_capacity:]
 
     remaining_production_days = max(0, 29 - day)
     evaluated_candidates = []
@@ -204,7 +235,7 @@ def evaluate_pasture_candidates(
 
     # 3. Evaluate each slot
     for idx, cand in enumerate(raw_cands):
-        marg_profit, species = slot_sequence[idx] if idx < len(slot_sequence) else (0.0, "OUT_OF_BOUNDS")
+        marg_profit, species = candidate_sequence[idx] if idx < len(candidate_sequence) else (0.0, "OUT_OF_BOUNDS")
         dist = cand["distance_to_shed"]
 
         logistics_penalty = float(dist * remaining_production_days * LOGISTICS_CHORE_STEP_COST)
@@ -241,11 +272,12 @@ def evaluate_pasture_candidates(
         if accepted:
             positive_candidates.append(entry)
 
-    # 4. Rank positive candidates: preferred seed positions first, then distance ascending, net_val descending
+    # 4. Rank positive candidates: economics (-net_val) first, then distance ascending,
+    # historical preference as deterministic tie-breaker, then coordinates
     positive_candidates.sort(key=lambda c: (
-        0 if c["is_preferred_early"] else (1 if c["is_preferred_sw"] else 2),
-        c["distance_to_shed"],
         -c["net_pasture_value"],
+        c["distance_to_shed"],
+        0 if c["is_preferred_early"] else (1 if c["is_preferred_sw"] else 2),
         c["pos"][1],
         c["pos"][0],
     ))
@@ -257,8 +289,11 @@ def evaluate_pasture_candidates(
     dynamic_max_pastures = min(HERD_CAP, existing_pastures + len(positive_candidates))
 
     return {
+        "current_large_livestock": current_large_livestock,
         "existing_pastures": existing_pastures,
         "existing_empty_pastures": existing_empty_pastures,
+        "unused_existing_pasture_capacity": unused_existing_capacity,
+        "first_new_pasture_marginal_slot": (unused_existing_capacity + 1) if candidate_sequence else None,
         "dynamic_candidates_count": len(evaluated_candidates),
         "positive_candidates_count": len(positive_candidates),
         "dynamic_max_pastures": dynamic_max_pastures,

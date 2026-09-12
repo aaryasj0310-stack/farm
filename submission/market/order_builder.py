@@ -61,10 +61,91 @@ class OrderBuilder:
         wages. Retain normal affordability, housing and shed checks without
         repeating morning hires.
         """
-        if (ctx["day"] >= C4_LIVESTOCK_CUTOFF_DAY
+        try:
+            from config import SELECTIVE_LIVESTOCK_GATE_ENABLED, SELECTIVE_LIVESTOCK_MAX_DAY
+        except ImportError:
+            SELECTIVE_LIVESTOCK_GATE_ENABLED = False
+            SELECTIVE_LIVESTOCK_MAX_DAY = 14
+
+        allow_reinvest = (ctx["day"] < C4_LIVESTOCK_CUTOFF_DAY) or (
+            SELECTIVE_LIVESTOCK_GATE_ENABLED and ctx["day"] <= SELECTIVE_LIVESTOCK_MAX_DAY
+        )
+        if (not allow_reinvest
                 or not 2 <= ctx["hour"] <= 18
                 or not intents.get("buy_animal")):
             return [], {}
+
+        # Post-cutoff selective livestock: strictly require physically built, empty, unreserved housing.
+        # Queued/planned structures, positive candidates, or dynamic capacity never authorize purchases.
+        if ctx["day"] >= C4_LIVESTOCK_CUTOFF_DAY:
+            farm = ctx.get("farm")
+            private = ctx.get("private")
+
+            physical_empty_pastures = 0
+            if farm:
+                for t in farm.iter_tiles():
+                    if t.kind == "PASTURE" and not t.is_animal:
+                        if not hasattr(farm, "unlocked") or not hasattr(farm, "quadrant_of") or farm.quadrant_of(t.pos) in farm.unlocked:
+                            physical_empty_pastures += 1
+
+            shed_large = 0
+            carried_large = 0
+            if private:
+                if hasattr(private, "shed") and isinstance(private.shed, dict):
+                    shed_large = sum(int(private.shed.get(a, 0)) for a in ("COW", "SHEEP"))
+                if hasattr(private, "inventories") and isinstance(private.inventories, list):
+                    for inv in private.inventories:
+                        if isinstance(inv, dict):
+                            carried_large += sum(int(inv.get(a, 0)) for a in ("COW", "SHEEP"))
+
+            pending_large = shed_large + carried_large
+            guaranteed_empty = max(0, physical_empty_pastures - pending_large)
+
+            if guaranteed_empty <= 0:
+                money = float(getattr(farm, "money", 0)) if farm else 0.0
+                return [], {
+                    "budget": max(0.0, money - self.reserve),
+                    "queued": [],
+                    "dropped": [{"kind": "animal", "reason": "no_empty_structure"}],
+                    "orders": [],
+                }
+
+            capped_buy_animal = {}
+            remaining_guaranteed = guaranteed_empty
+            trimmed_animals = []
+            for a, count in intents.get("buy_animal", {}).items():
+                cnt = int(count)
+                if cnt <= 0:
+                    continue
+                if a in ("COW", "SHEEP"):
+                    alloc = min(cnt, remaining_guaranteed)
+                    if alloc > 0:
+                        capped_buy_animal[a] = alloc
+                        remaining_guaranteed -= alloc
+                    if alloc < cnt:
+                        trimmed_animals.append({"kind": "animal", "animal": a, "trimmed_from": cnt, "to": alloc})
+                else:
+                    capped_buy_animal[a] = cnt
+
+            if not any(v > 0 for v in capped_buy_animal.values()):
+                money = float(getattr(farm, "money", 0)) if farm else 0.0
+                return [], {
+                    "budget": max(0.0, money - self.reserve),
+                    "queued": [],
+                    "dropped": [{"kind": "animal", "reason": "no_empty_structure"}],
+                    "orders": [],
+                }
+
+            orders, ledger = self.build(ctx, {
+                "buy_animal": capped_buy_animal,
+                "buy_wheat": intents.get("buy_wheat", 0),
+                "pending_structures": {},
+            }, max_slots=max_slots)
+
+            if isinstance(ledger, dict) and "dropped" in ledger:
+                ledger["dropped"].extend(trimmed_animals)
+            return orders, ledger
+
         return self.build(ctx, {
             "buy_animal": intents["buy_animal"],
             "buy_wheat": intents.get("buy_wheat", 0),

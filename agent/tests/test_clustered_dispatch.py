@@ -281,9 +281,9 @@ def test_c6_test_i_c4_preservation():
     res_10 = get_animal_targets(10, 10000, 50, {'COW': 0, 'SHEEP': 0, 'GOOSE': 0}, max_pastures=9)
     assert res_10['SHEEP'] > 0 or res_10['COW'] > 0
 
-    res_12 = get_animal_targets(12, 10000, 50, {'COW': 0, 'SHEEP': 0, 'GOOSE': 0}, max_pastures=10)
-    assert res_12['COW'] == 0
-    assert res_12['SHEEP'] == 0
+    res_15 = get_animal_targets(15, 10000, 50, {'COW': 0, 'SHEEP': 0, 'GOOSE': 0}, max_pastures=10)
+    assert res_15['COW'] == 0
+    assert res_15['SHEEP'] == 0
 
 
 # =========================================================================

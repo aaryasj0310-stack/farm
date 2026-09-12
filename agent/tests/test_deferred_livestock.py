@@ -52,9 +52,9 @@ def test_case_b_reinvestment_respects_cutoff():
     orders_d11, _ = builder.reinvest_livestock(ctx_d11, intents)
     assert any(o[0] == "BUY_ANIMAL" for o in orders_d11)
     
-    ctx_d12 = make_deferred_ctx(day=C4_LIVESTOCK_CUTOFF_DAY, hour=5)
-    orders_d12, _ = builder.reinvest_livestock(ctx_d12, intents)
-    assert orders_d12 == []
+    ctx_d15 = make_deferred_ctx(day=15, hour=5)
+    orders_d15, _ = builder.reinvest_livestock(ctx_d15, intents)
+    assert orders_d15 == []
 
 
 def test_case_c_sees_newly_built_empty_pastures():

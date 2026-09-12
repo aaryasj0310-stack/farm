@@ -303,6 +303,79 @@ ANIMAL_SCALING = {
 # capital cost, pasture build cost, feed procurement, and care opportunity costs.
 C4_LIVESTOCK_CUTOFF_DAY = 12
 
+# Selective Market-Aware Livestock Gate (Enabled in production with housing safety)
+SELECTIVE_LIVESTOCK_GATE_ENABLED = True
+SELECTIVE_LIVESTOCK_GATE_THRESHOLD = 500.0
+SELECTIVE_LIVESTOCK_MAX_DAY = 14
+
+
+def set_selective_livestock_gate(enabled: bool, threshold: float = 500.0, max_day: int = 14) -> None:
+    """Configure the selective market-aware livestock investment gate."""
+    global SELECTIVE_LIVESTOCK_GATE_ENABLED, SELECTIVE_LIVESTOCK_GATE_THRESHOLD, SELECTIVE_LIVESTOCK_MAX_DAY
+    SELECTIVE_LIVESTOCK_GATE_ENABLED = bool(enabled)
+    SELECTIVE_LIVESTOCK_GATE_THRESHOLD = float(threshold)
+    SELECTIVE_LIVESTOCK_MAX_DAY = int(max_day)
+    try:
+        import strategy.animal_planner as ap
+        ap.SELECTIVE_LIVESTOCK_GATE_ENABLED = bool(enabled)
+        ap.SELECTIVE_LIVESTOCK_GATE_THRESHOLD = float(threshold)
+        ap.SELECTIVE_LIVESTOCK_MAX_DAY = int(max_day)
+    except Exception:
+        pass
+    try:
+        import strategy.macro_planner as mp
+        mp.SELECTIVE_LIVESTOCK_GATE_ENABLED = bool(enabled)
+        mp.SELECTIVE_LIVESTOCK_GATE_THRESHOLD = float(threshold)
+        mp.SELECTIVE_LIVESTOCK_MAX_DAY = int(max_day)
+    except Exception:
+        pass
+    try:
+        import strategy.pasture_planner as pp
+        pp.SELECTIVE_LIVESTOCK_GATE_ENABLED = bool(enabled)
+        pp.SELECTIVE_LIVESTOCK_GATE_THRESHOLD = float(threshold)
+        pp.SELECTIVE_LIVESTOCK_MAX_DAY = int(max_day)
+    except Exception:
+        pass
+    try:
+        import market.order_builder as ob
+        ob.SELECTIVE_LIVESTOCK_GATE_ENABLED = bool(enabled)
+        ob.SELECTIVE_LIVESTOCK_GATE_THRESHOLD = float(threshold)
+        ob.SELECTIVE_LIVESTOCK_MAX_DAY = int(max_day)
+    except Exception:
+        pass
+
+
+def set_livestock_cutoff_day(day: int) -> None:
+    """Set the livestock investment cutoff day for A/B testing."""
+    global C4_LIVESTOCK_CUTOFF_DAY
+    C4_LIVESTOCK_CUTOFF_DAY = int(day)
+    try:
+        import strategy.animal_planner as ap
+        ap.C4_LIVESTOCK_CUTOFF_DAY = int(day)
+    except Exception:
+        pass
+    try:
+        import strategy.macro_planner as mp
+        mp.C4_LIVESTOCK_CUTOFF_DAY = int(day)
+    except Exception:
+        pass
+    try:
+        import strategy.pasture_planner as pp
+        pp.C4_LIVESTOCK_CUTOFF_DAY = int(day)
+    except Exception:
+        pass
+    try:
+        import market.order_builder as ob
+        ob.C4_LIVESTOCK_CUTOFF_DAY = int(day)
+    except Exception:
+        pass
+
+
+def get_livestock_cutoff_day() -> int:
+    """Return the currently configured livestock cutoff day."""
+    return C4_LIVESTOCK_CUTOFF_DAY
+
+
 def get_animal_targets(day=None, money=None, shed_wheat=None, current_animals=None, max_pastures=20, hands=None):
     """Return animal targets. Supports both legacy hands count signature and full Astra heuristic."""
     if hands is not None:

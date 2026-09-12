@@ -17,9 +17,17 @@ HERD_CAP = 20          # fertilizer clearance, not the 75-tile physical maximum
 SHEEP_CAP = 12         # 3-4 wool / 3 days: <= 12-13/day town wool drain
 COW_CAP = 19           # 2-3 milk / 2 days: <= 19 milk/day town drain
 try:
-    from config import C4_LIVESTOCK_CUTOFF_DAY
+    from config import (
+        C4_LIVESTOCK_CUTOFF_DAY,
+        SELECTIVE_LIVESTOCK_GATE_ENABLED,
+        SELECTIVE_LIVESTOCK_GATE_THRESHOLD,
+        SELECTIVE_LIVESTOCK_MAX_DAY,
+    )
 except ImportError:
     C4_LIVESTOCK_CUTOFF_DAY = 12
+    SELECTIVE_LIVESTOCK_GATE_ENABLED = False
+    SELECTIVE_LIVESTOCK_GATE_THRESHOLD = 500.0
+    SELECTIVE_LIVESTOCK_MAX_DAY = 14
 
 FEED_PRICE = 25        # conservative market replacement cost
 FEED_BUFFER_DAYS = 3
@@ -89,17 +97,29 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
     
     # C4: Late-game livestock investment cap
     effective_cutoff = C4_LIVESTOCK_CUTOFF_DAY if cutoff_day is None else int(cutoff_day)
-    if remaining == 0 or herd >= effective_herd_cap or day >= effective_cutoff:
+    allow_eval = (day < effective_cutoff) or (SELECTIVE_LIVESTOCK_GATE_ENABLED and day <= SELECTIVE_LIVESTOCK_MAX_DAY)
+    if remaining == 0 or herd >= effective_herd_cap or not allow_eval:
         return result
 
     cash = max(0.0, float(money))
     wheat = max(0, int(shed_wheat))
     
-    species_profits = estimate_species_remaining_profit(day, cutoff_day=effective_cutoff)
-    cow_profit = species_profits["COW"]
-    sheep_profit = species_profits["SHEEP"]
-    
     room = effective_herd_cap - herd
+    if day >= effective_cutoff and SELECTIVE_LIVESTOCK_GATE_ENABLED:
+        from strategy.marginal_livestock_valuator import estimate_realized_marginal_animal_value
+        eval_c = estimate_realized_marginal_animal_value(
+            "COW", day, current_animals, empty_pastures=room
+        )
+        eval_s = estimate_realized_marginal_animal_value(
+            "SHEEP", day, current_animals, empty_pastures=room
+        )
+        cow_profit = eval_c["net_realized_value"] if eval_c["net_realized_value"] >= SELECTIVE_LIVESTOCK_GATE_THRESHOLD else 0.0
+        sheep_profit = eval_s["net_realized_value"] if eval_s["net_realized_value"] >= SELECTIVE_LIVESTOCK_GATE_THRESHOLD else 0.0
+    else:
+        species_profits = estimate_species_remaining_profit(day, cutoff_day=effective_cutoff)
+        cow_profit = species_profits["COW"]
+        sheep_profit = species_profits["SHEEP"]
+    
     max_c = min(room, max(0, COW_CAP - c0)) if cow_profit > 0 else 0
     max_s = min(room, max(0, SHEEP_CAP - s0)) if sheep_profit > 0 else 0
     

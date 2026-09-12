@@ -1,0 +1,373 @@
+{
+  "n_pairs": 50,
+  "stats_arm_a": {
+    "mean": 84281.36,
+    "median": 85560.0,
+    "std": 7070.9721220211295,
+    "min": 65513.0,
+    "max": 97519.0,
+    "b10_mean": 71262.0
+  },
+  "stats_arm_b": {
+    "mean": 82584.36,
+    "median": 84365.5,
+    "std": 9329.784938057253,
+    "min": 60343.0,
+    "max": 98120.0,
+    "b10_mean": 66216.2
+  },
+  "paired_stats": {
+    "mean_delta": -1697.0,
+    "median_delta": -1250.0,
+    "std_delta": 9890.69541336705,
+    "min_delta": -25307.0,
+    "max_delta": 28642.0,
+    "wins": 22,
+    "losses": 27,
+    "ties": 1,
+    "win_rate": 44.0
+  },
+  "opp_stats": {
+    "random": {
+      "mean_a": 84326.24,
+      "mean_b": 84525.08,
+      "mean_delta": 198.84,
+      "median_delta": 601.0,
+      "wins": 14,
+      "losses": 11,
+      "ties": 0
+    },
+    "starter": {
+      "mean_a": 84236.48,
+      "mean_b": 80643.64,
+      "mean_delta": -3592.84,
+      "median_delta": -2385.0,
+      "wins": 8,
+      "losses": 16,
+      "ties": 1
+    }
+  },
+  "herd_trajectory_a": {
+    "10": {
+      "cows": 2.16,
+      "sheep": 0.02,
+      "geese": 0.0,
+      "total_herd": 2.18
+    },
+    "11": {
+      "cows": 2.72,
+      "sheep": 1.38,
+      "geese": 0.0,
+      "total_herd": 4.1
+    },
+    "12": {
+      "cows": 3.12,
+      "sheep": 3.74,
+      "geese": 0.0,
+      "total_herd": 6.86
+    },
+    "13": {
+      "cows": 3.12,
+      "sheep": 6.72,
+      "geese": 0.0,
+      "total_herd": 9.84
+    },
+    "14": {
+      "cows": 3.12,
+      "sheep": 7.4,
+      "geese": 0.0,
+      "total_herd": 10.52
+    },
+    "15": {
+      "cows": 3.12,
+      "sheep": 7.42,
+      "geese": 0.0,
+      "total_herd": 10.54
+    },
+    "20": {
+      "cows": 3.12,
+      "sheep": 7.42,
+      "geese": 0.0,
+      "total_herd": 10.54
+    },
+    "28": {
+      "cows": 3.12,
+      "sheep": 7.42,
+      "geese": 0.0,
+      "total_herd": 10.54
+    }
+  },
+  "herd_trajectory_b": {
+    "10": {
+      "cows": 2.18,
+      "sheep": 0.02,
+      "geese": 0.0,
+      "total_herd": 2.2
+    },
+    "11": {
+      "cows": 2.72,
+      "sheep": 1.44,
+      "geese": 0.0,
+      "total_herd": 4.16
+    },
+    "12": {
+      "cows": 3.08,
+      "sheep": 3.7,
+      "geese": 0.0,
+      "total_herd": 6.78
+    },
+    "13": {
+      "cows": 3.08,
+      "sheep": 6.64,
+      "geese": 0.0,
+      "total_herd": 9.72
+    },
+    "14": {
+      "cows": 3.08,
+      "sheep": 7.84,
+      "geese": 0.0,
+      "total_herd": 10.92
+    },
+    "15": {
+      "cows": 3.08,
+      "sheep": 10.06,
+      "geese": 0.0,
+      "total_herd": 13.14
+    },
+    "20": {
+      "cows": 3.08,
+      "sheep": 10.18,
+      "geese": 0.0,
+      "total_herd": 13.26
+    },
+    "28": {
+      "cows": 3.08,
+      "sheep": 10.18,
+      "geese": 0.0,
+      "total_herd": 13.26
+    }
+  },
+  "peak_stats": {
+    "arm_a": {
+      "mean": 10.54,
+      "p10": 10.0,
+      "p50": 11.0,
+      "p90": 11.0,
+      "max": 11,
+      "mean_peak_day": 12.56
+    },
+    "arm_b": {
+      "mean": 13.26,
+      "p10": 12.0,
+      "p50": 13.0,
+      "p90": 14.0,
+      "max": 14,
+      "mean_peak_day": 14.0
+    }
+  },
+  "day_metrics_b": {
+    "12": {
+      "mean_herd": 6.78,
+      "mean_econ_target": 10.34,
+      "mean_pasture_cap": 10.66,
+      "mean_feed_cap": 10.38,
+      "mean_gross_money": 9112.42,
+      "mean_wheat_shed": 56.06,
+      "mean_wheat_planted": 28.64,
+      "mean_wheat_supply": 184.7,
+      "mean_feeding_days": 17.0,
+      "selected_cow": 0.0,
+      "selected_sheep": 0.26,
+      "executed_cow": 0.0,
+      "executed_sheep": 0.26,
+      "authoritative_sheep_profit": 4375.0,
+      "authoritative_cow_profit": 3755.0
+    },
+    "13": {
+      "mean_herd": 9.72,
+      "mean_econ_target": 10.32,
+      "mean_pasture_cap": 19.48,
+      "mean_feed_cap": 9.36,
+      "mean_gross_money": 16906.74,
+      "mean_wheat_shed": 27.9,
+      "mean_wheat_planted": 30.0,
+      "mean_wheat_supply": 157.9,
+      "mean_feeding_days": 16.0,
+      "selected_cow": 0.0,
+      "selected_sheep": 2.48,
+      "executed_cow": 0.0,
+      "executed_sheep": 2.48,
+      "authoritative_sheep_profit": 4300.0,
+      "authoritative_cow_profit": 3680.0
+    },
+    "14": {
+      "mean_herd": 10.92,
+      "mean_econ_target": 10.92,
+      "mean_pasture_cap": 13.42,
+      "mean_feed_cap": 13.96,
+      "mean_gross_money": 16116.2,
+      "mean_wheat_shed": 58.94,
+      "mean_wheat_planted": 57.84,
+      "mean_wheat_supply": 216.78,
+      "mean_feeding_days": 15.0,
+      "selected_cow": 0.0,
+      "selected_sheep": 0.0,
+      "executed_cow": 0.0,
+      "executed_sheep": 0.0,
+      "authoritative_sheep_profit": 0.0,
+      "authoritative_cow_profit": 0.0
+    },
+    "15": {
+      "mean_herd": 13.14,
+      "mean_econ_target": 13.14,
+      "mean_pasture_cap": 13.42,
+      "mean_feed_cap": 14.2,
+      "mean_gross_money": 17361.4,
+      "mean_wheat_shed": 46.28,
+      "mean_wheat_planted": 59.6,
+      "mean_wheat_supply": 205.88,
+      "mean_feeding_days": 14.0,
+      "selected_cow": 0.0,
+      "selected_sheep": 0.0,
+      "executed_cow": 0.0,
+      "executed_sheep": 0.0,
+      "authoritative_sheep_profit": 0.0,
+      "authoritative_cow_profit": 0.0
+    }
+  },
+  "d12_13_purchases": {
+    "arm_a_bought": 0,
+    "arm_b_bought": 137,
+    "arm_b_placed": 134,
+    "arm_b_realized_contrib": 91975.0
+  },
+  "wheat_stats_b": {
+    "12": {
+      "mean_orders": 0.14,
+      "mean_bushels": 6.8,
+      "mean_spend": 170.0
+    },
+    "13": {
+      "mean_orders": 1.9,
+      "mean_bushels": 107.24,
+      "mean_spend": 2681.0
+    },
+    "14": {
+      "mean_orders": 0.08,
+      "mean_bushels": 3.88,
+      "mean_spend": 97.0
+    },
+    "15": {
+      "mean_orders": 0.78,
+      "mean_bushels": 26.26,
+      "mean_spend": 656.5
+    }
+  },
+  "labor_comparison": {
+    "10": {
+      "arm_a": {
+        "feed_completion": 1.8271257905832747,
+        "care_completion": 13.06340718105424,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      },
+      "arm_b": {
+        "feed_completion": 1.5238740264138164,
+        "care_completion": 12.582781456953644,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      }
+    },
+    "11": {
+      "arm_a": {
+        "feed_completion": 8.521923620933523,
+        "care_completion": 10.237068965517242,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      },
+      "arm_b": {
+        "feed_completion": 8.209727492238702,
+        "care_completion": 9.849807893817673,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      }
+    },
+    "12": {
+      "arm_a": {
+        "feed_completion": 5.255521521844269,
+        "care_completion": 10.801229023871425,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      },
+      "arm_b": {
+        "feed_completion": 5.106314432989691,
+        "care_completion": 10.512760477639898,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      }
+    },
+    "13": {
+      "arm_a": {
+        "feed_completion": 4.506747019520503,
+        "care_completion": 7.355805243445693,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      },
+      "arm_b": {
+        "feed_completion": 4.515375632541845,
+        "care_completion": 6.962476815522899,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      }
+    },
+    "14": {
+      "arm_a": {
+        "feed_completion": 5.505795574288725,
+        "care_completion": 9.558422678538978,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      },
+      "arm_b": {
+        "feed_completion": 4.492633326416269,
+        "care_completion": 8.271670190274842,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      }
+    },
+    "15": {
+      "arm_a": {
+        "feed_completion": 5.194805194805195,
+        "care_completion": 8.812647157753112,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      },
+      "arm_b": {
+        "feed_completion": 4.209473588508046,
+        "care_completion": 6.750741839762611,
+        "water_completion": 100.0,
+        "anim_harvest_completion": 100.0
+      }
+    }
+  },
+  "safety_arm_a": {
+    "feed_failures": 2701,
+    "animal_starvations": 2701,
+    "animal_deaths": 0,
+    "missed_production_feeds": 0,
+    "placement_failures": 0,
+    "shed_overflows": 0,
+    "critical_wheat_rejections": 0,
+    "p0_inversions": 0
+  },
+  "safety_arm_b": {
+    "feed_failures": 3548,
+    "animal_starvations": 3548,
+    "animal_deaths": 0,
+    "missed_production_feeds": 0,
+    "placement_failures": 0,
+    "shed_overflows": 0,
+    "critical_wheat_rejections": 0,
+    "p0_inversions": 0
+  },
+  "shadow_d15_mean_target": 13.42
+}

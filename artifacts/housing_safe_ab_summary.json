@@ -1,0 +1,70 @@
+{
+  "total_pairs": 50,
+  "total_matches": 100,
+  "scores_arm_a": {
+    "mean": 85323.88,
+    "median": 86614.5,
+    "std": 6687.660082988667,
+    "min": 70687.0,
+    "max": 97501.0,
+    "p10": 75040.7,
+    "p25": 80858.0,
+    "p75": 90239.75,
+    "p90": 93281.6
+  },
+  "scores_arm_b": {
+    "mean": 86598.0,
+    "median": 87104.0,
+    "std": 7860.405745252595,
+    "min": 67226.0,
+    "max": 104363.0,
+    "p10": 76950.5,
+    "p25": 80815.75,
+    "p75": 91774.0,
+    "p90": 95428.8
+  },
+  "paired_delta": {
+    "mean": 1274.12,
+    "median": 1233.5,
+    "std": 7912.762361249073,
+    "min": -20888.0,
+    "max": 19885.0,
+    "p10": -7998.499999999999,
+    "p25": -1677.5,
+    "p75": 4584.25,
+    "p90": 9629.900000000005,
+    "wins": 28,
+    "losses": 16,
+    "ties": 6
+  },
+  "livestock_arm_a": {
+    "mean_peak_herd": 10.38,
+    "median_peak_herd": 10.5,
+    "late_cows_bought": 0,
+    "late_cows_placed": 0,
+    "late_cows_stranded": 0
+  },
+  "livestock_arm_b": {
+    "mean_peak_herd": 12.32,
+    "median_peak_herd": 12.0,
+    "late_cows_bought": 90,
+    "late_cows_placed": 90,
+    "late_cows_stranded": 0,
+    "late_cows_bought_without_housing": 0,
+    "late_sheep_bought": 2,
+    "late_sheep_placed": 2,
+    "late_sheep_stranded": 0
+  },
+  "safety_arm_a": {
+    "feed_failures_pre28": 2369,
+    "feed_failures_endgame": 302,
+    "animal_escapes": 0,
+    "shed_overflows": 0
+  },
+  "safety_arm_b": {
+    "feed_failures_pre28": 2823,
+    "feed_failures_endgame": 437,
+    "animal_escapes": 0,
+    "shed_overflows": 0
+  }
+}
