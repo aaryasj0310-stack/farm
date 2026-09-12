@@ -82,8 +82,18 @@ from config import (
 )
 try:
     from strategy.animal_planner import get_animal_targets, HERD_CAP
+    from strategy.pasture_planner import (
+        evaluate_pasture_candidates,
+        estimate_crop_opportunity_value,
+        BUILD_ACTION_OPPORTUNITY_COST,
+    )
 except ImportError:
     from animal_planner import get_animal_targets, HERD_CAP
+    from pasture_planner import (
+        evaluate_pasture_candidates,
+        estimate_crop_opportunity_value,
+        BUILD_ACTION_OPPORTUNITY_COST,
+    )
 from strategy.expansion_planner import (
     compute_land_urgency,
     compute_land_roi,
@@ -536,17 +546,33 @@ class MacroPlanner:
         current_hands = len(farm.hands)
         hires = max(0, target_hands - current_hands)
 
-        # Dynamic animal targets computation (Leader-Calibrated Astra heuristic)
-        existing_pastures = sum(1 for t in farm.iter_tiles() if t.kind == "PASTURE")
-        if "SW" in farm.unlocked:
-            sw_pasture_cands = [t for t in empty_tiles if t in SW_PASTURE_TILES]
-            early_pasture_cands = [t for t in empty_tiles if t in EARLY_PASTURE_TILES]
-            pasture_cands = sw_pasture_cands + early_pasture_cands
-            max_pastures = min(9, existing_pastures + len(pasture_cands))
-        else:
-            early_pasture_cands = [t for t in empty_tiles if t in EARLY_PASTURE_TILES]
-            pasture_cands = early_pasture_cands
-            max_pastures = min(len(EARLY_PASTURE_TILES), existing_pastures + len(early_pasture_cands))
+        # Dynamic animal targets computation (Dynamic Near-Shed Pasture Planner)
+        committed_counts = get_committed_crop_counts(farm)
+        crop_opp_val, best_crop_name = estimate_crop_opportunity_value(
+            day=day,
+            forecast=self.fc,
+            boosts=boosts,
+            committed_counts=committed_counts,
+            crop_score_func=_crop_score,
+            crop_allowed_func=_crop_allowed_today,
+            n_animals=n_animals,
+            opp_advice=opp_advice,
+        )
+
+        pasture_eval = evaluate_pasture_candidates(
+            farm=farm,
+            day=day,
+            empty_tiles=list(empty_tiles),
+            current_animals=counts,
+            crop_opportunity_val=crop_opp_val,
+            crop_name=best_crop_name,
+            cutoff_day=C4_LIVESTOCK_CUTOFF_DAY,
+        )
+        existing_pastures = pasture_eval["existing_pastures"]
+        existing_empty_pastures = pasture_eval["existing_empty_pastures"]
+        dynamic_max_pastures = pasture_eval["dynamic_max_pastures"]
+        positive_pasture_cands = list(pasture_eval["positive_candidates"])
+        max_pastures = dynamic_max_pastures
 
         # Discretionary cash reservation: wages, base reserve, and upcoming land/seed escrow
         future_hire_cost = sum(hire_total_cost(get_target_hands(d))
@@ -592,18 +618,23 @@ class MacroPlanner:
         # Purchase affordable animals if empty pasture exists or is being built
         # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
         # Stage 8B C4: Cap animal purchases and pasture construction on or after C4_LIVESTOCK_CUTOFF_DAY
+        needed_new_pastures = 0
         if not is_endgame and day < C4_LIVESTOCK_CUTOFF_DAY:
             # Queue PASTURE construction if needed to reach targets or house owned animals
+            # Only pasture species (COW + SHEEP) count toward target_pastures
             target_pastures = max(
                 dynamic_targets.get("COW", 0) + dynamic_targets.get("SHEEP", 0),
                 counts.get("COW", 0) + counts.get("SHEEP", 0)
             )
+            # Correction 1: existing_pastures already includes empty pastures.
+            # Do NOT subtract existing_empty_pastures again.
+            needed_new_pastures = max(0, target_pastures - existing_pastures)
+
             existing_structs = existing_pastures + len(reserved_structure_tiles)
-            while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and pasture_cands:
-                cand = pasture_cands.pop(0)
-                if cand in empty_tiles:
-                    empty_tiles.remove(cand)
-                reserved_structure_tiles.append((cand, "BUILD_PASTURE"))
+            while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and positive_pasture_cands:
+                cand_info = positive_pasture_cands.pop(0)
+                cand_pos = cand_info["pos"]
+                reserved_structure_tiles.append((cand_pos, "BUILD_PASTURE"))
                 existing_structs += 1
 
             # Purchase affordable animals up to total available housing (existing + queued today)
@@ -688,6 +719,24 @@ class MacroPlanner:
             "requested_herd_size": requested_herd_size,
             "final_feed_capped_herd_size": final_feed_capped_herd_size,
             "feed_risk": feed_risk,
+            "pasture_diagnostics": {
+                "existing_pastures": existing_pastures,
+                "existing_empty_pastures": existing_empty_pastures,
+                "current_animals": dict(counts),
+                "animals_in_transit": sum(buy_animal.values()),
+                "dynamic_pasture_candidates": pasture_eval["dynamic_candidates_count"],
+                "positive_pasture_candidates": pasture_eval["positive_candidates_count"],
+                "dynamic_max_pastures": dynamic_max_pastures,
+                "feed_sustainable_cap": sustainable,
+                "economic_herd_cap": HERD_CAP,
+                "effective_herd_cap": min(HERD_CAP, dynamic_max_pastures, sustainable),
+                "desired_target_herd": sum(dynamic_targets.values()),
+                "pastures_needed_now": needed_new_pastures,
+                "pastures_queued_now": len(reserved_structure_tiles),
+                "crop_opportunity_value": crop_opp_val,
+                "best_crop": best_crop_name,
+                "evaluated_candidates": pasture_eval["all_candidates"],
+            },
         })
 
         # structure build queue: use specific build_op
@@ -696,11 +745,10 @@ class MacroPlanner:
             plan.build_queue = [t for t, _ in reserved_structure_tiles[:2]]
 
         # ---------------- crop queue on remaining tiles ----------------
-        # Reserve remaining SW_PASTURE_TILES and EARLY_PASTURE_TILES for pasture construction only — never plant crops on them
-        if "SW" in farm.unlocked:
-            empty_tiles = [t for t in empty_tiles if t not in SW_PASTURE_TILES]
-        elif day < 3:
-            empty_tiles = [t for t in empty_tiles if t not in EARLY_PASTURE_TILES]
+        # Remove ONLY those tiles queued for structure construction today from crop queue.
+        # Unqueued candidate tiles remain 100% available for agricultural planting.
+        queued_build_positions = {pos for pos, _ in reserved_structure_tiles}
+        empty_tiles = [pos for pos in empty_tiles if pos not in queued_build_positions]
 
         # endgame: no new planting — just harvest and sell
         plant_queue = []

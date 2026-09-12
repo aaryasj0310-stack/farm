@@ -25,6 +25,41 @@ FEED_PRICE = 25        # conservative market replacement cost
 FEED_BUFFER_DAYS = 3
 
 
+def estimate_species_remaining_profit(day, cutoff_day=None):
+    """Compute expected remaining-season net profit for each species.
+
+    Enforces C4 cutoff, gestation lag, care bonus, feed cost, and daily fertilizer.
+    Returns: {"COW": cow_profit, "SHEEP": sheep_profit, "GOOSE": 0.0}
+    """
+    day = int(day)
+    effective_cutoff = C4_LIVESTOCK_CUTOFF_DAY if cutoff_day is None else int(cutoff_day)
+    remaining = max(0, 29 - day)
+    if remaining == 0 or day >= effective_cutoff:
+        return {"COW": 0.0, "SHEEP": 0.0, "GOOSE": 0.0}
+
+    # Accurate yield formulas with gestation lag and care bonus:
+    # COW: first yield at day + 8 (6 milk), then every 2 days (3 milk)
+    milk_units = (6 + 3 * ((remaining - 8) // 2)) if remaining >= 8 else 0
+    # SHEEP: first yield at day + 6 (6 wool), then every 3 days (4 wool)
+    wool_units = (6 + 4 * ((remaining - 6) // 3)) if remaining >= 6 else 0
+
+    if milk_units <= 0:
+        cow_profit = 0.0
+    else:
+        cow_profit = float(160 * milk_units + (100 - FEED_PRICE) * remaining - 400)
+
+    if wool_units <= 0:
+        sheep_profit = 0.0
+    else:
+        sheep_profit = float(200 * wool_units + (100 - FEED_PRICE) * remaining - 500)
+
+    return {
+        "COW": max(0.0, cow_profit),
+        "SHEEP": max(0.0, sheep_profit),
+        "GOOSE": 0.0,
+    }
+
+
 def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
                        cutoff_day=None, max_sustainable=None):
     """Compute optimal target counts for COW and SHEEP (GOOSE always 0).
@@ -60,23 +95,9 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
     cash = max(0.0, float(money))
     wheat = max(0, int(shed_wheat))
     
-    # Accurate yield formulas with gestation lag and care bonus:
-    # COW: first yield at day + 8 (6 milk), then every 2 days (3 milk)
-    milk_units = (6 + 3 * ((remaining - 8) // 2)) if remaining >= 8 else 0
-    # SHEEP: first yield at day + 6 (6 wool), then every 3 days (4 wool)
-    wool_units = (6 + 4 * ((remaining - 6) // 3)) if remaining >= 6 else 0
-    
-    # C4 Economic Feasibility: An animal must produce its primary product to justify purchase.
-    # Fertilizer alone cannot cover purchase + feed + care costs before season end.
-    if milk_units <= 0:
-        cow_profit = 0
-    else:
-        cow_profit = 160 * milk_units + (100 - FEED_PRICE) * remaining - 400
-
-    if wool_units <= 0:
-        sheep_profit = 0
-    else:
-        sheep_profit = 200 * wool_units + (100 - FEED_PRICE) * remaining - 500
+    species_profits = estimate_species_remaining_profit(day, cutoff_day=effective_cutoff)
+    cow_profit = species_profits["COW"]
+    sheep_profit = species_profits["SHEEP"]
     
     room = effective_herd_cap - herd
     max_c = min(room, max(0, COW_CAP - c0)) if cow_profit > 0 else 0

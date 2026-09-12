@@ -58,12 +58,11 @@ class OrderBuilder:
         """Invest harvest proceeds while there is still time to place animals.
 
         Recomputed planner intents count animals in transit and reserve future
-        wages. Require owned SW land to protect the expansion fund; retain the
-        normal affordability, housing and shed checks without repeating hires.
+        wages. Retain normal affordability, housing and shed checks without
+        repeating morning hires.
         """
         if (ctx["day"] >= C4_LIVESTOCK_CUTOFF_DAY
                 or not 2 <= ctx["hour"] <= 18
-                or "SW" not in ctx["farm"].unlocked
                 or not intents.get("buy_animal")):
             return [], {}
         return self.build(ctx, {
@@ -195,7 +194,9 @@ class OrderBuilder:
                 pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
                 free_structures = sum(
                     1 for t in farm.iter_tiles()
-                    if t.kind == struct_type and not t.is_animal
+                    if t.kind == struct_type and not t.is_animal and (
+                        not hasattr(farm, "unlocked") or not hasattr(farm, "quadrant_of") or farm.quadrant_of(t.pos) in farm.unlocked
+                    )
                 ) + pending_structures
                 matching_animals = [a for a, info in ANIMALS.items() if info["structure"] == struct_type]
                 animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
