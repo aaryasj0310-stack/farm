@@ -1,0 +1,4190 @@
+[
+  {
+    "seed": 101,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 226,
+    "div_day": 9,
+    "div_hour": 10,
+    "base_reward": 103555.0,
+    "cand_reward": 103445.0,
+    "delta": -110.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "SOUTH"
+      ],
+      "hands": [
+        [
+          "NORTH"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "NORTH"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 3012.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 3012.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 101,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 192,
+    "div_day": 8,
+    "div_hour": 0,
+    "base_reward": 102118.0,
+    "cand_reward": 104166.0,
+    "delta": 2048.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "PICKUP",
+        "WHEAT",
+        2
+      ],
+      "hands": [],
+      "market": [
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "BUY_PRODUCT",
+          "WHEAT",
+          4
+        ],
+        [
+          "BUY_SEED",
+          "WHEAT",
+          2
+        ]
+      ]
+    },
+    "cand_act": {
+      "farmer": [
+        "PICKUP",
+        "WHEAT",
+        2
+      ],
+      "hands": [],
+      "market": [
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "BUY_PRODUCT",
+          "WHEAT",
+          5
+        ],
+        [
+          "BUY_SEED",
+          "WHEAT",
+          1
+        ]
+      ]
+    },
+    "base_state": {
+      "step": 192,
+      "day": 8,
+      "hour": 0,
+      "money": 499.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    },
+    "cand_state": {
+      "step": 192,
+      "day": 8,
+      "hour": 0,
+      "money": 499.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    }
+  },
+  {
+    "seed": 102,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 227,
+    "div_day": 9,
+    "div_hour": 11,
+    "base_reward": 96729.0,
+    "cand_reward": 80242.0,
+    "delta": -16487.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 227,
+      "day": 9,
+      "hour": 11,
+      "money": 2952.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 227,
+      "day": 9,
+      "hour": 11,
+      "money": 2952.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 102,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 100172.0,
+    "cand_reward": 96720.0,
+    "delta": -3452.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 103,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 84989.0,
+    "cand_reward": 84989.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 103,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 147,
+    "div_day": 6,
+    "div_hour": 3,
+    "base_reward": 100760.0,
+    "cand_reward": 91456.0,
+    "delta": -9304.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "FEED"
+      ],
+      "hands": [
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "FEED"
+      ],
+      "hands": [
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 147,
+      "day": 6,
+      "hour": 3,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 147,
+      "day": 6,
+      "hour": 3,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 104,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 270,
+    "div_day": 11,
+    "div_hour": 6,
+    "base_reward": 85521.0,
+    "cand_reward": 85761.0,
+    "delta": 240.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "EAST"
+      ],
+      "hands": [
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WEST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "EAST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WEST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 270,
+      "day": 11,
+      "hour": 6,
+      "money": 3924.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 12
+    },
+    "cand_state": {
+      "step": 270,
+      "day": 11,
+      "hour": 6,
+      "money": 3924.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 12
+    }
+  },
+  {
+    "seed": 104,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 222,
+    "div_day": 9,
+    "div_hour": 6,
+    "base_reward": 97678.0,
+    "cand_reward": 88044.0,
+    "delta": -9634.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WATER"
+        ],
+        [
+          "CARE"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "BUILD_PASTURE"
+        ]
+      ],
+      "market": [
+        [
+          "BUY_PRODUCT",
+          "WHEAT",
+          38
+        ]
+      ]
+    },
+    "base_state": {
+      "step": 222,
+      "day": 9,
+      "hour": 6,
+      "money": 2191.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 222,
+      "day": 9,
+      "hour": 6,
+      "money": 1993.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 105,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 226,
+    "div_day": 9,
+    "div_hour": 10,
+    "base_reward": 94310.0,
+    "cand_reward": 93241.0,
+    "delta": -1069.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2965.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2965.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 105,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 168,
+    "div_day": 7,
+    "div_hour": 0,
+    "base_reward": 82991.0,
+    "cand_reward": 108414.0,
+    "delta": 25423.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "PICKUP",
+        "WHEAT",
+        2
+      ],
+      "hands": [],
+      "market": [
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "BUY_SEED",
+          "CARROT",
+          2
+        ],
+        [
+          "BUY_SEED",
+          "STRAWBERRY",
+          6
+        ]
+      ]
+    },
+    "cand_act": {
+      "farmer": [
+        "PICKUP",
+        "WHEAT",
+        2
+      ],
+      "hands": [],
+      "market": [
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "BUY_SEED",
+          "STRAWBERRY",
+          6
+        ],
+        [
+          "BUY_SEED",
+          "WHEAT",
+          4
+        ]
+      ]
+    },
+    "base_state": {
+      "step": 168,
+      "day": 7,
+      "hour": 0,
+      "money": 1001.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    },
+    "cand_state": {
+      "step": 168,
+      "day": 7,
+      "hour": 0,
+      "money": 1001.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    }
+  },
+  {
+    "seed": 106,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 86289.0,
+    "cand_reward": 86289.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 106,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 192,
+    "div_day": 8,
+    "div_hour": 0,
+    "base_reward": 91763.0,
+    "cand_reward": 94935.0,
+    "delta": 3172.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "PICKUP",
+        "WHEAT",
+        2
+      ],
+      "hands": [],
+      "market": [
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "BUY_PRODUCT",
+          "WHEAT",
+          4
+        ],
+        [
+          "BUY_SEED",
+          "WHEAT",
+          1
+        ]
+      ]
+    },
+    "cand_act": {
+      "farmer": [
+        "PICKUP",
+        "WHEAT",
+        2
+      ],
+      "hands": [],
+      "market": [
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "BUY_PRODUCT",
+          "WHEAT",
+          4
+        ]
+      ]
+    },
+    "base_state": {
+      "step": 192,
+      "day": 8,
+      "hour": 0,
+      "money": 503.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    },
+    "cand_state": {
+      "step": 192,
+      "day": 8,
+      "hour": 0,
+      "money": 503.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    }
+  },
+  {
+    "seed": 107,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 227,
+    "div_day": 9,
+    "div_hour": 11,
+    "base_reward": 99157.0,
+    "cand_reward": 81000.0,
+    "delta": -18157.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "HARVEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 227,
+      "day": 9,
+      "hour": 11,
+      "money": 2967.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 227,
+      "day": 9,
+      "hour": 11,
+      "money": 2967.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 107,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 101718.0,
+    "cand_reward": 93714.0,
+    "delta": -8004.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 108,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 72297.0,
+    "cand_reward": 72297.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 108,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 250,
+    "div_day": 10,
+    "div_hour": 10,
+    "base_reward": 89388.0,
+    "cand_reward": 101380.0,
+    "delta": 11992.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WATER"
+      ],
+      "hands": [
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "PICKUP",
+          "FERTILIZER",
+          2
+        ],
+        [
+          "PICKUP",
+          "WHEAT",
+          3
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": [
+        [
+          "BUY_PRODUCT",
+          "WHEAT",
+          4
+        ],
+        [
+          "BUY_ANIMAL",
+          "COW",
+          1
+        ]
+      ]
+    },
+    "cand_act": {
+      "farmer": [
+        "WATER"
+      ],
+      "hands": [
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "PICKUP",
+          "FERTILIZER",
+          2
+        ],
+        [
+          "PICKUP",
+          "WHEAT",
+          3
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": [
+        [
+          "BUY_PRODUCT",
+          "WHEAT",
+          4
+        ],
+        [
+          "BUY_ANIMAL",
+          "SHEEP",
+          1
+        ]
+      ]
+    },
+    "base_state": {
+      "step": 250,
+      "day": 10,
+      "hour": 10,
+      "money": 1643.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 10
+    },
+    "cand_state": {
+      "step": 250,
+      "day": 10,
+      "hour": 10,
+      "money": 1709.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 10
+    }
+  },
+  {
+    "seed": 109,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 273,
+    "div_day": 11,
+    "div_hour": 9,
+    "base_reward": 99221.0,
+    "cand_reward": 86286.0,
+    "delta": -12935.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "EAST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "STRAWBERRY"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": [
+        [
+          "SELL",
+          "MELON",
+          4
+        ]
+      ]
+    },
+    "cand_act": {
+      "farmer": [
+        "EAST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": [
+        [
+          "SELL",
+          "MELON",
+          4
+        ]
+      ]
+    },
+    "base_state": {
+      "step": 273,
+      "day": 11,
+      "hour": 9,
+      "money": 3898.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 12
+    },
+    "cand_state": {
+      "step": 273,
+      "day": 11,
+      "hour": 9,
+      "money": 3898.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 12
+    }
+  },
+  {
+    "seed": 109,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 83543.0,
+    "cand_reward": 89605.0,
+    "delta": 6062.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 110,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 97278.0,
+    "cand_reward": 97278.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 110,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 251,
+    "div_day": 10,
+    "div_hour": 11,
+    "base_reward": 84012.0,
+    "cand_reward": 82172.0,
+    "delta": -1840.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "BUILD_PASTURE"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": [
+        [
+          "BUY_ANIMAL",
+          "COW",
+          1
+        ]
+      ]
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 251,
+      "day": 10,
+      "hour": 11,
+      "money": 1657.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 10
+    },
+    "cand_state": {
+      "step": 251,
+      "day": 10,
+      "hour": 11,
+      "money": 1577.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 10
+    }
+  },
+  {
+    "seed": 111,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 68629.0,
+    "cand_reward": 68629.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 111,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 85340.0,
+    "cand_reward": 96717.0,
+    "delta": 11377.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 112,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 226,
+    "div_day": 9,
+    "div_hour": 10,
+    "base_reward": 87261.0,
+    "cand_reward": 95803.0,
+    "delta": 8542.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2950.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2950.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 112,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 101349.0,
+    "cand_reward": 94412.0,
+    "delta": -6937.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 113,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 95975.0,
+    "cand_reward": 95975.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 113,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 83582.0,
+    "cand_reward": 92191.0,
+    "delta": 8609.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 114,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 84559.0,
+    "cand_reward": 84559.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 114,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 92541.0,
+    "cand_reward": 95062.0,
+    "delta": 2521.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 115,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 270,
+    "div_day": 11,
+    "div_hour": 6,
+    "base_reward": 92950.0,
+    "cand_reward": 91831.0,
+    "delta": -1119.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "EAST"
+      ],
+      "hands": [
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WEST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "EAST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "SOUTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "WEST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 270,
+      "day": 11,
+      "hour": 6,
+      "money": 3848.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 12
+    },
+    "cand_state": {
+      "step": 270,
+      "day": 11,
+      "hour": 6,
+      "money": 3848.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 12
+    }
+  },
+  {
+    "seed": 115,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 528,
+    "div_day": 22,
+    "div_hour": 0,
+    "base_reward": 92746.0,
+    "cand_reward": 78975.0,
+    "delta": -13771.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "PICKUP",
+        "FERTILIZER",
+        6
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "WOOL",
+          10
+        ],
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ],
+        [
+          "SELL",
+          "STRAWBERRY",
+          2
+        ],
+        [
+          "SELL",
+          "FERTILIZER",
+          13
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ]
+      ]
+    },
+    "cand_act": {
+      "farmer": [
+        "PICKUP",
+        "FERTILIZER",
+        6
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "WOOL",
+          5
+        ],
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ],
+        [
+          "SELL",
+          "STRAWBERRY",
+          2
+        ],
+        [
+          "SELL",
+          "FERTILIZER",
+          13
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ]
+      ]
+    },
+    "base_state": {
+      "step": 528,
+      "day": 22,
+      "hour": 0,
+      "money": 40707.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    },
+    "cand_state": {
+      "step": 528,
+      "day": 22,
+      "hour": 0,
+      "money": 39853.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    }
+  },
+  {
+    "seed": 116,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 91327.0,
+    "cand_reward": 91327.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 116,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 226,
+    "div_day": 9,
+    "div_hour": 10,
+    "base_reward": 98673.0,
+    "cand_reward": 93634.0,
+    "delta": -5039.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2838.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2838.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 117,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 87192.0,
+    "cand_reward": 87192.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 117,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 95039.0,
+    "cand_reward": 93435.0,
+    "delta": -1604.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 118,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 85510.0,
+    "cand_reward": 85510.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 118,
+    "opponent": "random",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 93254.0,
+    "cand_reward": 84441.0,
+    "delta": -8813.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 119,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 226,
+    "div_day": 9,
+    "div_hour": 10,
+    "base_reward": 101266.0,
+    "cand_reward": 100715.0,
+    "delta": -551.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 3108.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 3108.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 119,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 84133.0,
+    "cand_reward": 82590.0,
+    "delta": -1543.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 120,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 226,
+    "div_day": 9,
+    "div_hour": 10,
+    "base_reward": 97849.0,
+    "cand_reward": 86634.0,
+    "delta": -11215.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 3094.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 3094.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 120,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 92062.0,
+    "cand_reward": 86932.0,
+    "delta": -5130.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 121,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 226,
+    "div_day": 9,
+    "div_hour": 10,
+    "base_reward": 100858.0,
+    "cand_reward": 99457.0,
+    "delta": -1401.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2965.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2965.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 121,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 79216.0,
+    "cand_reward": 90957.0,
+    "delta": 11741.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 122,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 92959.0,
+    "cand_reward": 92959.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 122,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 103156.0,
+    "cand_reward": 80893.0,
+    "delta": -22263.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 123,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 69293.0,
+    "cand_reward": 69293.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 123,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 216,
+    "div_day": 9,
+    "div_hour": 0,
+    "base_reward": 86039.0,
+    "cand_reward": 77296.0,
+    "delta": -8743.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "PICKUP",
+        "WHEAT",
+        2
+      ],
+      "hands": [],
+      "market": [
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "BUY_SEED",
+          "STRAWBERRY",
+          1
+        ],
+        [
+          "BUY_SEED",
+          "WHEAT",
+          6
+        ]
+      ]
+    },
+    "cand_act": {
+      "farmer": [
+        "PICKUP",
+        "WHEAT",
+        2
+      ],
+      "hands": [],
+      "market": [
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "HIRE"
+        ],
+        [
+          "BUY_SEED",
+          "CARROT",
+          4
+        ],
+        [
+          "BUY_SEED",
+          "STRAWBERRY",
+          1
+        ]
+      ]
+    },
+    "base_state": {
+      "step": 216,
+      "day": 9,
+      "hour": 0,
+      "money": 543.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    },
+    "cand_state": {
+      "step": 216,
+      "day": 9,
+      "hour": 0,
+      "money": 543.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 0
+    }
+  },
+  {
+    "seed": 124,
+    "opponent": "starter",
+    "diverged": false,
+    "div_step": null,
+    "div_day": null,
+    "div_hour": null,
+    "base_reward": 98286.0,
+    "cand_reward": 98286.0,
+    "delta": 0.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": null,
+    "cand_act": null,
+    "base_state": null,
+    "cand_state": null
+  },
+  {
+    "seed": 124,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 146,
+    "div_day": 6,
+    "div_hour": 2,
+    "base_reward": 97982.0,
+    "cand_reward": 91513.0,
+    "delta": -6469.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "COLLECT_FERTILIZER"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "PLANT",
+          "CARROT"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 146,
+      "day": 6,
+      "hour": 2,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 125,
+    "opponent": "starter",
+    "diverged": true,
+    "div_step": 226,
+    "div_day": 9,
+    "div_hour": 10,
+    "base_reward": 101670.0,
+    "cand_reward": 99521.0,
+    "delta": -2149.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "SOUTH"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "PLANT",
+          "WHEAT"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "WEST"
+      ],
+      "hands": [
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2965.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 226,
+      "day": 9,
+      "hour": 10,
+      "money": 2965.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  },
+  {
+    "seed": 125,
+    "opponent": "random",
+    "diverged": true,
+    "div_step": 147,
+    "div_day": 6,
+    "div_hour": 3,
+    "base_reward": 90966.0,
+    "cand_reward": 84273.0,
+    "delta": -6693.0,
+    "base_sw": false,
+    "cand_sw": false,
+    "base_act": {
+      "farmer": [
+        "FEED"
+      ],
+      "hands": [
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "NORTH"
+        ]
+      ],
+      "market": []
+    },
+    "cand_act": {
+      "farmer": [
+        "FEED"
+      ],
+      "hands": [
+        [
+          "COLLECT_FERTILIZER"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "WEST"
+        ],
+        [
+          "EAST"
+        ],
+        [
+          "WATER"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "NORTH"
+        ],
+        [
+          "EAST"
+        ]
+      ],
+      "market": []
+    },
+    "base_state": {
+      "step": 147,
+      "day": 6,
+      "hour": 3,
+      "money": 741.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    },
+    "cand_state": {
+      "step": 147,
+      "day": 6,
+      "hour": 3,
+      "money": 805.0,
+      "unlocked": [
+        "NW",
+        "NE"
+      ],
+      "seeds": {},
+      "hands": 8
+    }
+  }
+]

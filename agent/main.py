@@ -555,7 +555,12 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         if plan.intents.get("buy_land"):
             n_extra = len(ctx["farm"].unlocked) - 1
             next_q = n_extra + 2
-            if next_q in QUADRANT_HARD_BLOCK:
+            try:
+                from config import get_quadrant_hard_block
+                _qhb = get_quadrant_hard_block()
+            except Exception:
+                _qhb = QUADRANT_HARD_BLOCK
+            if next_q in _qhb:
                 plan.intents["buy_land"] = False  # force block
         tasks = build_tasks(ctx, plan)
         asg = assign_tasks(tasks, ctx)

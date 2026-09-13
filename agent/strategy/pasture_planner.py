@@ -190,7 +190,7 @@ def evaluate_pasture_candidates(
         if pos in protected_positions:
             continue
         quad = farm.quadrant_of(pos)
-        if quad not in farm.unlocked or quad == "SE":
+        if quad not in farm.unlocked or quad in ("SE", "SW"):
             continue
         dist = distance_to_shed(pos)
         raw_cands.append({

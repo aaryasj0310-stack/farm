@@ -20,6 +20,7 @@ Engine facts encoded here:
     and an unfed production day wipes the banked care bonus.
   - fertilizer_available flips True at end-of-day; collect it any time next day.
 """
+import math
 from config import (
     ANIMAL_LIST,
     ANIMALS,
@@ -41,6 +42,8 @@ from config import (
     PORT_SW,
     SHED_ACCESS_TILES,
     TURNS_PER_DAY,
+    EFFECTIVE_ACTIONS_PER_UNIT,
+    DYNAMIC_ZONAL_ALLOCATION,
     C2_MAX_SPILLOVER_DIST,
     C2_SPILLOVER_PRIORITY_FLOOR,
     C6_CLUSTER_RADIUS,
@@ -715,6 +718,168 @@ def get_home_quadrant(u_idx, n_units, unlocked):
         return "NW"
 
 
+def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
+    """Stage 8B Phase 2B: Workload-aware dynamic zonal allocation.
+    
+    Dynamically sizes zonal squads based on live task demand and priority classes:
+    1. Mandatory tasks (prio >= 70): urgent survival, feeding, decay harvest, plant+water, etc.
+    2. Discretionary tasks (prio < 70): animal care, standard harvest, bonus water, dig, fertilize.
+    3. Required units per zone: u_mand(Z) = ceil(demand_mand(Z) / EFFECTIVE_ACTIONS_PER_UNIT).
+    4. First guarantee required units for NW and NE mandatory tasks: u_NW_mand + u_NE_mand.
+    5. If surplus units remain (n_units - u_mand > 0), allocate up to required units to SW:
+       u_SW = min(surplus, ceil(demand(SW) / EFFECTIVE_ACTIONS_PER_UNIT)).
+    6. Distribute remaining surplus to NW/NE discretionary tasks.
+    7. Map specific worker IDs u_idx to quadrants based on minimum transit distance from current positions.
+    """
+    if n_units <= 0:
+        return {}
+
+    unlocked = getattr(farm, "unlocked", ["NW"])
+    if "SW" not in unlocked and "NE" not in unlocked:
+        return {u: "NW" for u in range(n_units)}
+
+    # 1. Live task demand by zone and priority class
+    demand_mand = {"NW": 0.0, "NE": 0.0, "SW": 0.0}
+    demand_disc = {"NW": 0.0, "NE": 0.0, "SW": 0.0}
+
+    for t in tasks:
+        tgt = t.get("target") or tuple(farm.farmer)
+        q = farm.quadrant_of(tgt) if hasattr(farm, "quadrant_of") else "NW"
+        if t.get("op") == "PICKUP" and tgt in SHED_ACCESS_TILES:
+            q = "SW" if tgt == PORT_SW else "NW"
+        if q not in unlocked:
+            continue
+        prio = t.get("priority", 0)
+        is_mand = (
+            prio >= 70
+            or t.get("kind") in ("feed_rescue", "feed_prod", "harvest_decay")
+            or (t.get("op") == "PLACE" and (t.get("args") or [None])[0] in ANIMALS)
+        )
+        if is_mand:
+            demand_mand[q] = demand_mand.get(q, 0.0) + 1.0
+        else:
+            demand_disc[q] = demand_disc.get(q, 0.0) + 1.0
+
+    eff_ap = float(EFFECTIVE_ACTIONS_PER_UNIT)
+    u_mand = {q: math.ceil(demand_mand[q] / eff_ap) for q in ("NW", "NE", "SW")}
+    u_disc = {q: math.ceil(demand_disc[q] / eff_ap) for q in ("NW", "NE", "SW")}
+
+    alloc = {"NW": 0, "NE": 0, "SW": 0}
+
+    # First guarantee NW and NE mandatory tasks
+    nw_mand = u_mand["NW"]
+    ne_mand = u_mand["NE"] if "NE" in unlocked else 0
+
+    if nw_mand + ne_mand >= n_units:
+        # Constrained capacity: strictly prioritize NW and NE mandatory tasks
+        if n_units <= 2:
+            alloc["NW"] = 1
+            alloc["NE"] = max(0, n_units - 1)
+        else:
+            tot = max(1.0, nw_mand + ne_mand)
+            alloc["NW"] = max(1, min(n_units - 1, round(n_units * (nw_mand / tot))))
+            alloc["NE"] = n_units - alloc["NW"]
+        alloc["SW"] = 0
+        surplus = 0
+    else:
+        alloc["NW"] = nw_mand
+        alloc["NE"] = ne_mand
+        surplus = n_units - (alloc["NW"] + alloc["NE"])
+
+    # If surplus remains, allocate up to required units to SW
+    if "SW" in unlocked and surplus > 0:
+        sw_total_demand = demand_mand["SW"] + demand_disc["SW"]
+        sw_req = math.ceil(sw_total_demand / eff_ap)
+        alloc_sw = min(surplus, sw_req)
+        alloc["SW"] = alloc_sw
+        surplus -= alloc_sw
+
+    # Distribute remaining surplus to NW/NE discretionary tasks
+    if surplus > 0:
+        nw_disc = u_disc["NW"]
+        give_nw = min(surplus, nw_disc)
+        alloc["NW"] += give_nw
+        surplus -= give_nw
+
+    if surplus > 0 and "NE" in unlocked:
+        ne_disc = u_disc["NE"]
+        give_ne = min(surplus, ne_disc)
+        alloc["NE"] += give_ne
+        surplus -= give_ne
+
+    # Leftover surplus: distribute between NW and NE
+    while surplus > 0:
+        if alloc["NW"] <= alloc["NE"]:
+            alloc["NW"] += 1
+        elif "NE" in unlocked:
+            alloc["NE"] += 1
+        else:
+            alloc["NW"] += 1
+        surplus -= 1
+
+    # Ensure NW has at least 1 unit
+    if alloc["NW"] == 0 and n_units > 0:
+        alloc["NW"] = 1
+        max_q = max(("NE", "SW"), key=lambda q: alloc[q])
+        if alloc[max_q] > 0:
+            alloc[max_q] -= 1
+
+    # Exact total invariant
+    diff = n_units - sum(alloc.values())
+    alloc["NW"] += diff
+
+    # Map worker IDs u_idx to quadrants based on minimum transit distance
+    zone_hubs = {
+        "NW": (4, 4),
+        "NE": (5, 2),
+        "SW": PORT_SW,
+    }
+
+    slots = []
+    for q in ("NW", "NE", "SW"):
+        slots.extend([q] * alloc[q])
+
+    cost_matrix = []
+    for u in range(n_units):
+        u_pos = pos_by_idx.get(u, (4, 4))
+        u_curr_q = farm.quadrant_of(u_pos) if hasattr(farm, "quadrant_of") else "NW"
+        row = []
+        for target_q in slots:
+            if u_curr_q == target_q:
+                cost = 0
+            elif (u_curr_q == "SW" and target_q == "NE") or (u_curr_q == "NE" and target_q == "SW"):
+                cost = 1000 + abs(u_pos[0] - zone_hubs[target_q][0]) + abs(u_pos[1] - zone_hubs[target_q][1])
+            else:
+                cost = abs(u_pos[0] - zone_hubs[target_q][0]) + abs(u_pos[1] - zone_hubs[target_q][1])
+            row.append(cost)
+        cost_matrix.append(row)
+
+    home_quads = {}
+    try:
+        from scipy.optimize import linear_sum_assignment
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+        for u, s in zip(row_ind, col_ind):
+            home_quads[u] = slots[s]
+    except Exception:
+        pairs = []
+        for u in range(n_units):
+            for s in range(len(slots)):
+                pairs.append((cost_matrix[u][s], u, s))
+        pairs.sort(key=lambda x: x[0])
+        used_u = set()
+        used_s = set()
+        for cost, u, s in pairs:
+            if u not in used_u and s not in used_s:
+                used_u.add(u)
+                used_s.add(s)
+                home_quads[u] = slots[s]
+        for u in range(n_units):
+            if u not in home_quads:
+                home_quads[u] = "NW"
+
+    return home_quads
+
+
 def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
     """Check if a previously assigned mission is still active and valid."""
     farm = ctx.get("farm")
@@ -840,8 +1005,11 @@ def assign_tasks(tasks, ctx, extra_units=()):
             return set(holders.get("WHEAT", []))
         return None                                  # no restriction
 
-    # Stage 8B Phase 1E (C2): Deterministic home quadrants + Rule W1 SW squad preservation
-    home_quads = {u_idx: get_home_quadrant(u_idx, n_units, farm.unlocked) for u_idx in range(n_units)}
+    # Stage 8B Phase 1E / 2B: Adaptive Zonal Dispatch (Dynamic or Rule W1 static fallback)
+    if DYNAMIC_ZONAL_ALLOCATION:
+        home_quads = compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx)
+    else:
+        home_quads = {u_idx: get_home_quadrant(u_idx, n_units, farm.unlocked) for u_idx in range(n_units)}
     sw_units = {u_idx for u_idx, q in home_quads.items() if q == "SW"}
 
     # Stage 8B Phase 1F: Separate urgent tasks from regular tasks

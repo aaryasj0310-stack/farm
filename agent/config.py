@@ -5,6 +5,7 @@ All engine facts here are mirrored from the installed kaggle_environments
 kaggriculture plugin (CROPS / ANIMALS / MARKET_PARAMS / SHOPS / timings).
 """
 import math
+import sys
 
 # ---------------------------------------------------------------- engine ----
 TURNS_PER_DAY = 24
@@ -217,6 +218,28 @@ NE_EARLY_UNLOCK_THRESHOLD_DAY3_5 = 1400
 NE_EARLY_UNLOCK_THRESHOLD_DAY6 = 1200
 QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
 
+
+def get_quadrant_hard_block() -> set:
+    """Return the set of hard-blocked quadrant indices."""
+    return set(QUADRANT_HARD_BLOCK)
+
+
+def set_quadrant_hard_block(blocks) -> None:
+    """Set the hard-blocked quadrant indices and sync loaded modules."""
+    global QUADRANT_HARD_BLOCK
+    QUADRANT_HARD_BLOCK = set(blocks)
+    for mod_name in (
+        "agent.strategy.expansion_planner", "strategy.expansion_planner",
+        "agent.strategy.macro_planner", "strategy.macro_planner",
+        "agent.main", "main",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "QUADRANT_HARD_BLOCK", set(blocks))
+            except Exception:
+                pass
+
+
 # ====================================================================
 # v5.10: Expansion Planner — deadline-aware land + seed pre-purchase
 # ====================================================================
@@ -307,11 +330,83 @@ C4_LIVESTOCK_CUTOFF_DAY = 12
 SELECTIVE_LIVESTOCK_GATE_ENABLED = True
 SELECTIVE_LIVESTOCK_GATE_THRESHOLD = 500.0
 SELECTIVE_LIVESTOCK_MAX_DAY = 14
+SELECTIVE_LIVESTOCK_GATE_MAX_DAY = 14
+
+# SW Land Serviceability and Partial Exploitation
+# None for dynamic model (optimal k* in {5, 10, 15}), or int in (5, 10, 15)
+SW_FORCE_K_TILES = None
+
+
+def set_sw_force_k_tiles(k) -> None:
+    """Configure the forced SW soil tile count for A/B testing (None for dynamic model)."""
+    global SW_FORCE_K_TILES
+    SW_FORCE_K_TILES = k
+    try:
+        import strategy.land_serviceability_model as lsm
+        lsm.SW_FORCE_K_TILES = k
+    except Exception:
+        pass
+
+
+# Stage 8B Phase 2B: Workload-Aware Dynamic Zonal Allocation
+DYNAMIC_ZONAL_ALLOCATION = False
+
+
+def set_dynamic_zonal_allocation(enabled: bool) -> None:
+    """Configure workload-aware dynamic zonal allocation (replaces Rule W1 squad partition)."""
+    global DYNAMIC_ZONAL_ALLOCATION
+    DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
+    try:
+        import execution.task_scheduler as ts
+        ts.DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
+    except Exception:
+        pass
+    try:
+        import task_scheduler as ts
+        ts.DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
+    except Exception:
+        pass
+    try:
+        import strategy.land_serviceability_model as lsm
+        lsm.DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
+    except Exception:
+        pass
+    try:
+        import land_serviceability_model as lsm
+        lsm.DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
+    except Exception:
+        pass
+
+
+def get_dynamic_zonal_allocation() -> bool:
+    """Return whether workload-aware dynamic zonal allocation is enabled."""
+    return DYNAMIC_ZONAL_ALLOCATION
+
+
+# SW delayed unlock day (e.g. Day 14 for delayed SW arm)
+SW_DELAYED_UNLOCK_DAY = None
+
+
+def set_sw_delayed_unlock_day(day) -> None:
+    """Configure delayed SW unlock day for experimental benchmarking."""
+    global SW_DELAYED_UNLOCK_DAY
+    SW_DELAYED_UNLOCK_DAY = int(day) if day is not None else None
+    try:
+        import strategy.expansion_planner as ep
+        ep.SW_DELAYED_UNLOCK_DAY = SW_DELAYED_UNLOCK_DAY
+    except Exception:
+        pass
+    try:
+        import expansion_planner as ep
+        ep.SW_DELAYED_UNLOCK_DAY = SW_DELAYED_UNLOCK_DAY
+    except Exception:
+        pass
+
 
 
 def set_selective_livestock_gate(enabled: bool, threshold: float = 500.0, max_day: int = 14) -> None:
     """Configure the selective market-aware livestock investment gate."""
-    global SELECTIVE_LIVESTOCK_GATE_ENABLED, SELECTIVE_LIVESTOCK_GATE_THRESHOLD, SELECTIVE_LIVESTOCK_MAX_DAY
+    global SELECTIVE_LIVESTOCK_GATE_ENABLED, SELECTIVE_LIVESTOCK_GATE_THRESHOLD, SELECTIVE_LIVESTOCK_GATE_MAX_DAY
     SELECTIVE_LIVESTOCK_GATE_ENABLED = bool(enabled)
     SELECTIVE_LIVESTOCK_GATE_THRESHOLD = float(threshold)
     SELECTIVE_LIVESTOCK_MAX_DAY = int(max_day)

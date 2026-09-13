@@ -266,7 +266,22 @@ def compute_land_roi(next_quadrant, current_day, money, farm, forecast,
     if next_quadrant not in QUADRANT_UNLOCK_DAYS:
         return 0.0, {"reason": "no_schedule"}
 
+    try:
+        from config import get_quadrant_hard_block
+        _qhb = get_quadrant_hard_block()
+    except Exception:
+        _qhb = QUADRANT_HARD_BLOCK
+    if next_quadrant in _qhb:
+        return 0.0, {"reason": "hard_blocked"}
+
     unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
+    if next_quadrant == 3:
+        try:
+            from config import SW_DELAYED_UNLOCK_DAY
+            if SW_DELAYED_UNLOCK_DAY is not None:
+                unlock_day = max(unlock_day, SW_DELAYED_UNLOCK_DAY)
+        except Exception:
+            pass
     if current_day < unlock_day:
         return 0.0, {"reason": f"before_unlock_{unlock_day}"}
 
@@ -445,7 +460,8 @@ def should_buy_land(next_quadrant, current_day, money, farm,
                     seeds_owned=None,
                     wheat_on_hand=0, projected_wheat_requirement=0,
                     actual_feed_shortfall_units=0, urgency=0.0,
-                    treasury_protection_active=False):
+                    treasury_protection_active=False,
+                    is_purchase_hour=True):
     """Determine if land should be purchased TODAY via dynamic economic gates.
 
     Requirements:
@@ -457,10 +473,22 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     """
     if next_quadrant not in QUADRANT_UNLOCK_DAYS:
         return False, "no_schedule", {}
-    if next_quadrant in QUADRANT_HARD_BLOCK:
+    try:
+        from config import get_quadrant_hard_block
+        _qhb = get_quadrant_hard_block()
+    except Exception:
+        _qhb = QUADRANT_HARD_BLOCK
+    if next_quadrant in _qhb:
         return False, "hard_blocked", {}
 
     unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
+    if next_quadrant == 3:
+        try:
+            from config import SW_DELAYED_UNLOCK_DAY
+            if SW_DELAYED_UNLOCK_DAY is not None:
+                unlock_day = max(unlock_day, SW_DELAYED_UNLOCK_DAY)
+        except Exception:
+            pass
     if current_day < unlock_day:
         return False, f"before_day_{unlock_day}", {}
 
@@ -483,9 +511,14 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     for c, n in targets.items():
         have = 0
         if isinstance(seeds_owned, dict):
-            have = seeds_owned.get(c, 0)
+            val = seeds_owned.get(c, 0)
+            have = val if isinstance(val, (int, float)) else 0
         elif hasattr(seeds_owned, "get"):
-            have = seeds_owned.get(c, 0)
+            try:
+                val = seeds_owned.get(c, 0)
+                have = int(val) if isinstance(val, (int, float, str)) else 0
+            except Exception:
+                have = 0
         needed = max(0, n - have)
         seed_cost += CROPS[c]["seed"] * needed
 
@@ -524,9 +557,19 @@ def should_buy_land(next_quadrant, current_day, money, farm,
             else:
                 if (getattr(t, "is_plant", False) or getattr(t, "is_animal", False)) and not getattr(t, "is_fallow", False):
                     current_active_tiles += 1
-    # Servicing SW added tiles requires sufficient daily labor budget
-    # If only 1 worker and already active on 15+ tiles, labor cannot service added land
-    labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
+
+    best_k = 15
+    sw_serv_diag = {}
+    if next_quadrant == 3 and is_purchase_hour:
+        try:
+            from strategy.land_serviceability_model import evaluate_sw_serviceability
+            labor_adequate, best_k, sw_serv_diag = evaluate_sw_serviceability(
+                current_day, farm, money, forecast, target_quadrant=3
+            )
+        except Exception:
+            labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
+    else:
+        labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
 
     shortfall = max(0.0, total_required - money)
     diag_base = {
@@ -548,6 +591,14 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         "roi": round(roi, 4),
         "adjusted_roi": round(adjusted_roi, 4),
         "labor_serviceability_result": bool(labor_adequate),
+        "best_k_tiles": best_k,
+        "best_k_serviceable": sw_serv_diag.get("best_k_serviceable", best_k if next_quadrant == 3 else 25),
+        "serviceability_fraction": sw_serv_diag.get("serviceability_fraction", 1.0),
+        "candidate_sw_workload": sw_serv_diag.get("candidate_sw_workload", 0.0),
+        "estimated_travel_overhead": sw_serv_diag.get("estimated_travel_overhead", 0.0),
+        "net_marginal_profit": sw_serv_diag.get("net_marginal_profit", 0.0),
+        "serviceability_adjusted_roi": sw_serv_diag.get("serviceability_adjusted_roi", round(adjusted_roi, 4)),
+        "expected_nw_ne_opportunity_cost": sw_serv_diag.get("expected_nw_ne_opportunity_cost", 0.0),
         "urgency": round(float(urgency), 2),
         "treasury_protection_active": bool(treasury_protection_active),
         # Legacy/helper fields preserved for backward compatibility
@@ -590,24 +641,24 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         diag["final_rejection_or_acceptance_reason"] = reason
         return False, reason, diag
 
-    # 3. Labor serviceability check
+    # 3. Treasury safety gate
+    if money < total_required:
+        reason = f"short_{shortfall:.0f}"
+        diag = dict(diag_base)
+        diag["final_rejection_or_acceptance_reason"] = reason
+        return False, reason, diag
+
+    # 4. Labor serviceability check
     if not labor_adequate:
         reason = "insufficient_labor_capacity"
         diag = dict(diag_base)
         diag["final_rejection_or_acceptance_reason"] = reason
         return False, reason, diag
 
-    # 4. Treasury safety gate
-    if money >= total_required:
-        reason = "treasury_sufficient_roi_positive"
-        diag = dict(diag_base)
-        diag["final_rejection_or_acceptance_reason"] = reason
-        return True, reason, diag
-    else:
-        reason = f"short_{shortfall:.0f}"
-        diag = dict(diag_base)
-        diag["final_rejection_or_acceptance_reason"] = reason
-        return False, reason, diag
+    reason = "treasury_sufficient_roi_positive"
+    diag = dict(diag_base)
+    diag["final_rejection_or_acceptance_reason"] = reason
+    return True, reason, diag
 
 
 # ---------------------------------------------------------------------------

@@ -35,6 +35,7 @@ Known simplifications (documented, deliberate):
   - animal revenue model: care-enabled output rates (latest engine rules)
 """
 from dataclasses import dataclass, field
+from typing import Optional, Dict, Any, List, Tuple, Set
 
 from config import (
     ANIMAL_CARE_CUTOFF_DAY,
@@ -402,7 +403,12 @@ def compute_authoritative_feed_capacity(farm, private, day, season_end=28, curre
     elif "SW" in farm.unlocked and day <= 24:
         sw_soil_empty = sum(1 for t in farm.iter_tiles() if getattr(t, "kind", None) == "EMPTY" and t.pos in SW_SOIL_TILES)
         if sw_soil_empty > 0 and day + 4 <= season_end:
-            sw_alloc = sw_plant_decision(day, sw_soil_empty, wheat_on_hand + planted_yield, current_animals_count)
+            try:
+                from strategy.land_serviceability_model import evaluate_sw_serviceability
+                _, best_k, _ = evaluate_sw_serviceability(day, farm, getattr(farm, "money", 0), None, target_quadrant=3)
+            except Exception:
+                best_k = sw_soil_empty
+            sw_alloc = sw_plant_decision(day, sw_soil_empty, wheat_on_hand + planted_yield, current_animals_count, max_tiles=best_k)
             planned_yield += sw_alloc.get("WHEAT", 0) * 4
 
     # 4. Affordable emergency market wheat purchases
@@ -505,17 +511,20 @@ def detect_wheat_deficit(wheat_capacity, wheat_have, days_left,
     return deficit, trigger
 
 
-def sw_plant_decision(day: int, free_tiles: int, wheat_stock: int, herd_size: int) -> dict:
+def sw_plant_decision(day: int, free_tiles: int, wheat_stock: int, herd_size: int, max_tiles: Optional[int] = None) -> dict:
     """Computes exact wheat and carrot seed allocation for free SW soil tiles.
 
     Mathematical specification:
     - Day >= 28: Fallow / harvest-only (0 seeds).
+    - If max_tiles is specified, caps free_tiles to max_tiles.
     - Day <= 25 and wheat_stock < feed_need: Allocate needed wheat seeds (ceil div).
     - Remainder of free tiles go to CARROT.
     - Day 27 EV gate: 0.5 * 3.5 * 70 - 20 = +102.5 > 0, so carrots are planted.
     """
     if day >= 28:
         return {"WHEAT": 0, "CARROT": 0}
+    if max_tiles is not None:
+        free_tiles = min(free_tiles, max_tiles)
     feed_need = herd_size * (29 - day + 1)
     n_wheat = 0
     if day <= 25 and wheat_stock < feed_need:
@@ -538,6 +547,7 @@ class MacroPlanner:
     def build(self, ctx, boosts=None, opp_advice=None):
         boosts = boosts or {}
         day = ctx["day"]
+        hour = ctx.get("hour", 0)
         farm = ctx["farm"]
         private = ctx["private"]
         plan = MacroPlan(day=day)
@@ -860,7 +870,12 @@ class MacroPlanner:
         land_capital_protection_active = False
 
         if not is_endgame and next_quadrant is not None:
-            if next_quadrant in QUADRANT_HARD_BLOCK:
+            try:
+                from config import get_quadrant_hard_block
+                _qhb = get_quadrant_hard_block()
+            except Exception:
+                _qhb = QUADRANT_HARD_BLOCK
+            if next_quadrant in _qhb:
                 sw_reason = "hard_blocked"
             elif next_quadrant in QUADRANT_UNLOCK_DAYS:
                 # Time-aware unavoidable feed shortfall for existing animals
@@ -886,22 +901,32 @@ class MacroPlanner:
                         1 for t in farm.iter_tiles()
                         if getattr(t, "is_plant", False) or getattr(t, "is_animal", False)
                     )
-                labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
+                baseline_labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
+
+                if next_quadrant == 3:
+                    try:
+                        from strategy.land_serviceability_model import evaluate_sw_serviceability
+                        labor_adequate, _, _ = evaluate_sw_serviceability(
+                            day, farm, money, self.fc, target_quadrant=3
+                        )
+                    except Exception:
+                        labor_adequate = baseline_labor_adequate
+                else:
+                    labor_adequate = baseline_labor_adequate
 
                 # Compute urgency for deadline tracking (does NOT gate or loosen purchases)
+                target_land_price = LAND_PRICES[n_extra_unlocked] if n_extra_unlocked < len(LAND_PRICES) else 0
                 sw_urgency, _, _ = compute_land_urgency(
-                    next_quadrant, day, money, farm)
+                    day, next_quadrant, money, target_land_price, self.fc
+                )
 
-                # Separate persistent land capital protection from deadline urgency
-                protection_start_day = 5 if next_quadrant == 2 else (11 if next_quadrant == 3 else 999)
                 is_early_ne = (next_quadrant == 2 and 3 <= day <= 6 and money >= 1000)
                 land_capital_protection_active = (
                     next_quadrant is not None
-                    and day >= protection_start_day
                     and day <= LAND_BUY_LAST_DAY
                     and (adjusted_roi > 0.0 or is_early_ne)
-                    and labor_adequate
-                    and next_quadrant not in QUADRANT_HARD_BLOCK
+                    and baseline_labor_adequate
+                    and next_quadrant not in _qhb
                 )
 
                 planned_animal_cost = sum(ANIMALS[a]["cost"] * k for a, k in buy_animal.items())
@@ -923,6 +948,7 @@ class MacroPlanner:
                     actual_feed_shortfall_units=feed_shortfall_units,
                     urgency=sw_urgency,
                     treasury_protection_active=land_capital_protection_active,
+                    is_purchase_hour=(hour == 0),
                 )
                 if buy_land:
                     land_cost = LAND_PRICES[n_extra_unlocked]
@@ -1032,12 +1058,22 @@ class MacroPlanner:
                     sw_soil_empty = [p for p in empty_tiles if p in SW_SOIL_TILES]
                     empty_tiles = [p for p in empty_tiles if p not in SW_SOIL_TILES]
                     if sw_soil_empty:
-                        sw_dec = sw_plant_decision(day, len(sw_soil_empty), wheat_have, n_animals)
+                        from strategy.land_serviceability_model import (
+                            get_sorted_sw_soil_tiles,
+                            evaluate_sw_serviceability,
+                        )
+                        sorted_order = get_sorted_sw_soil_tiles()
+                        sw_soil_empty.sort(key=lambda p: sorted_order.index(p) if p in sorted_order else 999)
+
+                        _, best_k, _ = evaluate_sw_serviceability(day, farm, money, self.fc, target_quadrant=3)
+                        active_sw_soil = sw_soil_empty[:best_k]
+
+                        sw_dec = sw_plant_decision(day, len(active_sw_soil), wheat_have, n_animals, max_tiles=best_k)
                         sw_wheat = sw_dec.get("WHEAT", 0)
                         sw_carrot = sw_dec.get("CARROT", 0)
 
                         # Plant SW wheat
-                        for pos in sw_soil_empty[:sw_wheat]:
+                        for pos in active_sw_soil[:sw_wheat]:
                             seed_cost = CROPS["WHEAT"]["seed"]
                             if seeds.get("WHEAT", 0) > 0:
                                 seeds["WHEAT"] -= 1
@@ -1051,7 +1087,7 @@ class MacroPlanner:
                             committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
                         # Plant SW carrot (Carrot Blitz)
-                        for pos in sw_soil_empty[sw_wheat:sw_wheat + sw_carrot]:
+                        for pos in active_sw_soil[sw_wheat:sw_wheat + sw_carrot]:
                             seed_cost = CROPS["CARROT"]["seed"]
                             if seeds.get("CARROT", 0) > 0:
                                 seeds["CARROT"] -= 1
