@@ -1,22 +1,43 @@
-"""Market-aware marginal livestock valuation.
+"""Market-aware marginal livestock valuation using sequential counterfactual inventory simulation.
 
 Calculates the true realized marginal net value of adding one specific additional
-animal (COW or SHEEP) on day D, accounting for:
+animal (COW, SHEEP, or GOOSE) on day D, accounting for:
 - Exact engine yield timing (gestation lag, intervals, care bonus)
-- Market price response curve (including own-supply price depression on existing herd output)
-- Town shop drain and market inventory saturation
-- Pasture crop opportunity cost (if new pasture construction is required)
-- Authoritative remaining feed procurement cost
-- Late-season liquidation discount / unsold inventory risk
+- Sequential market inventory simulation with-candidate vs without-candidate:
+  Inv(t+1) = max(1, Inv(t) + Supply(t) - Drain(t))
+  so earlier unsold production depresses later batch prices
+- Whole-farm counterfactual marginal product revenue:
+  DeltaRev = Rev_with - Rev_without
+  which naturally captures own-supply price depression on the existing herd
+  with zero double-counting and zero separate heuristic penalty subtractions
+- Authoritative live market pricing for feed (WHEAT) and fertilizer (FERTILIZER)
+- Pasture / housing opportunity cost
+- Exact conditional distribution over remaining future town shop unlocks
 """
 from typing import Dict, Any, List, Optional
-import math
+import itertools
 
-from config import (
-    MARKET_I0, MARKET_PARAMS, PRICE_FLOOR,
-    ANIMALS, CROPS
-)
-from market.price_math import market_price
+from config import MARKET_I0, ANIMALS
+try:
+    from market.price_math import market_price
+except ImportError:
+    from price_math import market_price
+
+try:
+    from strategy.baked_conditional_animal_prices import (
+        UNLOCK_DAYS, TC_DEMAND, SHOP_DEMAND_RATES
+    )
+except ImportError:
+    from baked_conditional_animal_prices import (
+        UNLOCK_DAYS, TC_DEMAND, SHOP_DEMAND_RATES
+    )
+
+
+try:
+    from strategy.price_forecast import PriceForecast
+    _PRICE_FORECAST = PriceForecast.load()
+except Exception:
+    _PRICE_FORECAST = None
 
 
 def estimate_realized_marginal_animal_value(
@@ -31,10 +52,14 @@ def estimate_realized_marginal_animal_value(
 ) -> Dict[str, Any]:
     """Calculate the realized marginal net value of adding ONE additional animal on `day`.
 
-    Returns a comprehensive breakdown of revenue, costs, penalties, and net realized value.
+    Simulates day-by-day inventory from day `day` to 28 for with-candidate and without-candidate
+    branches under one consistent joint future shop-unlock path:
+        I(t+1) = max(1, I(t) + Supply(t) - Drain(t))
+    and accumulates counterfactual revenue:
+        DeltaRev = Rev_with - Rev_without
     """
     sp = str(species).upper()
-    if sp not in ("COW", "SHEEP"):
+    if sp not in ("COW", "SHEEP", "GOOSE"):
         return {
             "species": sp, "day": day, "viable": False,
             "net_realized_value": -9999.0, "reason": "unsupported_species"
@@ -48,140 +73,157 @@ def estimate_realized_marginal_animal_value(
             "net_realized_value": -9999.0, "reason": "season_ended"
         }
 
-    cost = ANIMALS[sp]["cost"]
-    prod_item = ANIMALS[sp]["product"]  # MILK or WOOL
-    current_count = current_animals.get(sp, 0)
-    total_herd = sum(current_animals.values())
+    cost = float(ANIMALS[sp]["cost"])
+    prod_item = ANIMALS[sp]["product"]
+    current_count = int(current_animals.get(sp, 0)) if current_animals else 0
 
-    # 1. Exact Production Schedule and Yields
-    # In engine:
-    # COW: first_yield_day = 8, interval = 2, first yield = 6, recurring = 3
-    # SHEEP: first_yield_day = 6, interval = 3, first yield = 6, recurring = 4
-    first_lag = ANIMALS[sp]["first_yield_day"]
-    interval = ANIMALS[sp]["interval"]
-    first_yield = 6
-    recurring_yield = 4 if sp == "SHEEP" else 3
+    # 1. Exact Production Schedule and Yields (with authoritative engine care bonus)
+    first_lag = int(ANIMALS[sp]["first_yield_day"])
+    interval = int(ANIMALS[sp]["interval"])
+    first_yield = 6 if sp in ("COW", "SHEEP") else 2
+    recurring_yield = 4 if sp == "SHEEP" else (3 if sp == "COW" else 1)
 
     production_events = []
     prod_day = day + first_lag
+    cand_units = {t: 0.0 for t in range(day, 29)}
     while prod_day <= 28:
         units = first_yield if prod_day == (day + first_lag) else recurring_yield
         production_events.append((prod_day, units))
+        cand_units[prod_day] = float(units)
         prod_day += interval
 
+    # Feed cost: Authoritative incremental replacement cost via PriceForecast or live spot
+    feed_days = max(0, 29 - day)
+    wheat_inv = market_inventory.get("WHEAT", MARKET_I0) if market_inventory else MARKET_I0
+    if _PRICE_FORECAST is not None:
+        feed_cost = sum(_PRICE_FORECAST.expected_price("WHEAT", t) for t in range(day, 29))
+        feed_cost_model = "PriceForecast_expected_spot_replacement"
+    else:
+        wheat_price = float(market_price("WHEAT", wheat_inv))
+        feed_cost = feed_days * wheat_price
+        feed_cost_model = "live_market_spot_fallback"
+
     if not production_events:
-        # Cannot complete even 1 production cycle before liquidation
         return {
             "species": sp, "day": day, "viable": False,
-            "net_realized_value": -cost,
+            "net_realized_value": -cost - feed_cost,
             "gross_product_revenue": 0.0,
             "gross_fertilizer_revenue": 0.0,
-            "feed_cost": rem_days * 25.0,
+            "feed_cost": round(feed_cost, 2),
+            "feed_cost_model": feed_cost_model,
             "purchase_cost": cost,
             "pasture_opportunity_cost": 0.0,
             "market_impact_cost": 0.0,
+            "marginal_product_revenue": 0.0,
             "liquidation_discount": 0.0,
             "production_events": [],
             "reason": "insufficient_time_for_maturity",
         }
 
-    # 2. Market-Aware Pricing with Own-Supply Effect
-    # Baseline market inventory
+    # 2. Sequential Joint-Path Counterfactual Market Simulation
+    exist_rate = current_count * (float(recurring_yield) / float(interval))
     base_inv = float(market_inventory.get(prod_item, MARKET_I0)) if market_inventory else float(MARKET_I0)
-    
-    # Estimate daily town consumption of this product
-    # Base town drain: ~3-5 units per day depending on shop roll
-    daily_town_drain = 4.0 if sp == "SHEEP" else 5.0
 
-    total_gross_product_rev = 0.0
-    total_market_impact_penalty = 0.0
-    total_liquidation_discount = 0.0
+    known_daily_drain = TC_DEMAND.get(prod_item, 1.0) + sum(
+        SHOP_DEMAND_RATES.get(prod_item, {}).get(s, 0.0) for s in (town_shops or [])
+    )
 
-    # For each production batch, project market inventory and own-supply impact
-    for p_day, new_units in production_events:
-        days_from_now = p_day - day
-        # Estimate how much output existing herd will produce between now and p_day
-        # Existing sheep produce ~4/3 = 1.33 units/day each; cows ~3/2 = 1.5 units/day each
-        existing_daily_rate = (1.33 if sp == "SHEEP" else 1.5) * current_count
-        projected_existing_flow = existing_daily_rate * days_from_now
-        projected_drain = daily_town_drain * days_from_now
+    future_events = [ed for ed in UNLOCK_DAYS if day < ed <= 28]
+    k = len(future_events)
+    hit_rate = 12.0 if sp == "SHEEP" else 6.0
+    n_hits = 1 if sp == "SHEEP" else (3 if sp == "COW" else 2)
+    n_miss = 8 - n_hits
+    denom = 8 ** k
 
-        # Inventory in market when existing batch sells
-        inv_without = max(MARKET_I0 - 50, base_inv + projected_existing_flow - projected_drain)
-        inv_with = inv_without + new_units
+    total_delta_rev = 0.0
+    total_cand_rev = 0.0
 
-        # Prices with and without the marginal animal
-        price_without = market_price(prod_item, inv_without)
-        price_with = market_price(prod_item, inv_with)
+    # Enumerate all 2^k joint future shop paths (at most 256 paths)
+    for seq in itertools.product([0, 1], repeat=k):
+        # Exact integer probability representation
+        hits = sum(seq)
+        misses = k - hits
+        path_num = (n_hits ** hits) * (n_miss ** misses)
+        prob = path_num / float(denom)
 
-        # Revenue from new animal's units at depressed price
-        batch_revenue = new_units * price_with
+        inv_without = base_inv
+        inv_with = base_inv
+        rev_without = 0.0
+        rev_with = 0.0
+        cand_rev = 0.0
 
-        # Own-supply price depression penalty on existing herd's output on that same day:
-        # Existing herd output on this production day is roughly existing_daily_rate * interval
-        existing_batch_units = existing_daily_rate * interval
-        depression_penalty = existing_batch_units * max(0, price_without - price_with)
+        for t in range(day, 29):
+            # Same future unlock path applies consistently across every day
+            drain = known_daily_drain + sum(
+                seq[j] * hit_rate for j, ed in enumerate(future_events) if ed <= t
+            )
 
-        # Liquidation discount on final day (Day 28):
-        # Product arriving on Day 28 has very few market hours before turn 719.
-        # Often only partially drained by town shops before game end.
-        liq_disc = 0.0
-        if p_day >= 28:
-            liq_disc = batch_revenue * 0.40  # 40% discount for end-of-game market saturation
+            s_without = exist_rate
+            s_with = exist_rate + cand_units[t]
 
-        total_gross_product_rev += batch_revenue
-        total_market_impact_penalty += depression_penalty
-        total_liquidation_discount += liq_disc
+            # Engine order of operations:
+            # 1. Selling: Units enter market at beginning-of-day inventory
+            p_without = float(market_price(prod_item, inv_without + s_without / 2.0)) if s_without > 0 else 0.0
+            p_with = float(market_price(prod_item, inv_with + s_with / 2.0)) if s_with > 0 else 0.0
 
-    # Net realized product revenue after market impact and liquidation risk
-    net_product_rev = total_gross_product_rev - total_market_impact_penalty - total_liquidation_discount
+            rev_without += s_without * p_without
+            rev_with += s_with * p_with
+            cand_rev += cand_units[t] * p_with
 
-    # 3. Fertilizer Contribution
-    # 1 fertilizer per day after placement (day + 1 through day 28)
-    fert_days = max(0, 28 - (day + 1))
-    fert_price = 100.0  # base fertilizer price
-    if market_inventory:
-        fert_inv = market_inventory.get("FERTILIZER", MARKET_I0)
-        fert_price = float(market_price("FERTILIZER", fert_inv))
-    gross_fert_rev = fert_days * fert_price
+            # 2. Town consumption: subtracts drain from post-sale inventory
+            inv_without = max(1.0, inv_without + s_without - drain)
+            inv_with = max(1.0, inv_with + s_with - drain)
 
-    # 4. Feed Cost
-    # 1 bushel of wheat per day through day 28
-    feed_cost = rem_days * 25.0
+        total_delta_rev += prob * (rev_with - rev_without)
+        total_cand_rev += prob * cand_rev
 
-    # 5. Pasture Opportunity Cost
-    # If an empty pasture is already built, cost is 0.
-    # Otherwise, converting a soil tile forfeits that tile's crop revenue.
+    market_impact_cost = max(0.0, total_cand_rev - total_delta_rev)
+
+    # 3. Fertilizer Contribution & Sensitivity Audit
+    fert_days = max(0, 28 - day) if sp in ("COW", "SHEEP") else 0
+    fert_inv = market_inventory.get("FERTILIZER", MARKET_I0) if market_inventory else MARKET_I0
+    # Simulate own fertilizer supply on market price curve
+    gross_fert_rev = sum(
+        float(market_price("FERTILIZER", fert_inv + i)) for i in range(fert_days)
+    )
+
+    # 4. Housing / Pasture Opportunity Cost
     pasture_opp_cost = 0.0
     if empty_pastures <= 0:
-        pasture_opp_cost = max(0.0, crop_opportunity_val)
+        pasture_opp_cost = 200.0 + max(0.0, float(crop_opportunity_val))
 
-    # 6. Salvage Value
-    salvage_value = 100.0  # animals sell for 100 at Day 28 liquidation
-
-    # Total Net Realized Value
-    net_realized_value = (
-        net_product_rev
+    # 5. Net Realized Value
+    net_realized_val = (
+        total_delta_rev
         + gross_fert_rev
-        + salvage_value
-        - feed_cost
         - cost
+        - feed_cost
         - pasture_opp_cost
     )
+
+    fertilizer_sensitivity = {
+        "full_fertilizer": round(net_realized_val, 2),
+        "half_fertilizer": round(net_realized_val - 0.5 * gross_fert_rev, 2),
+        "zero_fertilizer": round(net_realized_val - gross_fert_rev, 2),
+    }
 
     return {
         "species": sp,
         "day": day,
-        "viable": bool(net_realized_value > 0),
-        "gross_product_revenue": round(total_gross_product_rev, 1),
-        "gross_fertilizer_revenue": round(gross_fert_rev, 1),
-        "salvage_value": salvage_value,
-        "feed_cost": round(feed_cost, 1),
+        "viable": bool(net_realized_val > 0),
+        "net_realized_value": round(net_realized_val, 2),
+        "marginal_product_revenue": round(total_delta_rev, 2),
+        "gross_product_revenue": round(total_cand_rev, 2),
+        "gross_fertilizer_revenue": round(gross_fert_rev, 2),
+        "fertilizer_sensitivity": fertilizer_sensitivity,
+        "feed_cost": round(feed_cost, 2),
+        "feed_cost_model": feed_cost_model,
         "purchase_cost": cost,
-        "pasture_opportunity_cost": round(pasture_opp_cost, 1),
-        "market_impact_cost": round(total_market_impact_penalty, 1),
-        "liquidation_discount": round(total_liquidation_discount, 1),
-        "net_realized_value": round(net_realized_value, 1),
+        "pasture_opportunity_cost": round(pasture_opp_cost, 2),
+        "market_impact_cost": round(market_impact_cost, 2),
+        "liquidation_discount": 0.0,
         "production_events": production_events,
         "total_units_produced": sum(u for _, u in production_events),
+        "joint_paths_evaluated": 2 ** k,
+        "break_even": bool(net_realized_val > 0),
     }

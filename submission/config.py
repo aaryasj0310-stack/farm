@@ -6,6 +6,7 @@ kaggriculture plugin (CROPS / ANIMALS / MARKET_PARAMS / SHOPS / timings).
 """
 import math
 import sys
+from typing import Tuple, Dict, Optional, Any, List, Set
 
 # ---------------------------------------------------------------- engine ----
 TURNS_PER_DAY = 24
@@ -312,14 +313,172 @@ def get_sw_seed_targets(day, money=0, land_cost=2000):
 
 # Animal scaling targets by workforce size (hands count)
 # Maps hands_count -> (target_geese, target_cows, target_sheep)
-# Animal scaling targets by workforce size (hands count)
-# Maps hands_count -> (target_geese, target_cows, target_sheep)
-ANIMAL_SCALING = {
+DEFAULT_ANIMAL_SCALING = {
     4:  (0, 2, 2),    # Days 0-5: 2 cows + 2 sheep (leader opening)
     8:  (0, 4, 4),    # Days 6-8: 4 cows + 4 sheep = 8 animals
     10: (0, 5, 8),    # Day 9: 5 cows + 8 sheep = 13 animals
     12: (0, 6, 12),   # Days 10-29: 6 cows + 12 sheep = 18 animals
 }
+ANIMAL_SCALING = dict(DEFAULT_ANIMAL_SCALING)
+
+DEFAULT_TARGET_COWS = 6
+DEFAULT_TARGET_SHEEP = 12
+DEFAULT_HERD_CAP = 20
+DEFAULT_COW_CAP = 19
+DEFAULT_SHEEP_CAP = 12
+
+LIVESTOCK_OVERRIDE_ENABLED = False
+ACTIVE_TARGET_COWS = DEFAULT_TARGET_COWS
+ACTIVE_TARGET_SHEEP = DEFAULT_TARGET_SHEEP
+ACTIVE_COW_CAP = DEFAULT_COW_CAP
+ACTIVE_SHEEP_CAP = DEFAULT_SHEEP_CAP
+ACTIVE_HERD_CAP = DEFAULT_HERD_CAP
+
+DYNAMIC_SW_CROPS_ENABLED = False
+STRATEGIC_SW_OWNERSHIP_ENABLED = False
+
+
+def get_active_livestock_targets() -> Tuple[int, int, int]:
+    """Authoritative runtime getter for target animal counts (geese, cows, sheep)."""
+    if not LIVESTOCK_OVERRIDE_ENABLED:
+        return (TARGET_GEESE, DEFAULT_TARGET_COWS, DEFAULT_TARGET_SHEEP)
+    return (TARGET_GEESE, ACTIVE_TARGET_COWS, ACTIVE_TARGET_SHEEP)
+
+
+def get_active_livestock_caps() -> Dict[str, int]:
+    """Authoritative runtime getter for species caps."""
+    if not LIVESTOCK_OVERRIDE_ENABLED:
+        return {"COW": DEFAULT_COW_CAP, "SHEEP": DEFAULT_SHEEP_CAP, "HERD": DEFAULT_HERD_CAP}
+    return {"COW": ACTIVE_COW_CAP, "SHEEP": ACTIVE_SHEEP_CAP, "HERD": ACTIVE_HERD_CAP}
+
+
+def get_active_animal_scaling() -> Dict[int, Tuple[int, int, int]]:
+    """Authoritative runtime getter for animal scaling by workforce hands."""
+    if not LIVESTOCK_OVERRIDE_ENABLED:
+        return dict(DEFAULT_ANIMAL_SCALING)
+    return dict(ANIMAL_SCALING)
+
+
+def set_active_livestock_portfolio(
+    cows: int,
+    sheep: int,
+    cow_cap: Optional[int] = None,
+    sheep_cap: Optional[int] = None,
+    herd_cap: Optional[int] = None,
+    scaling: Optional[Dict[int, Tuple[int, int, int]]] = None,
+) -> None:
+    """Configure authoritative livestock portfolio targets and physical optimizer caps."""
+    global LIVESTOCK_OVERRIDE_ENABLED, ACTIVE_TARGET_COWS, ACTIVE_TARGET_SHEEP
+    global ACTIVE_COW_CAP, ACTIVE_SHEEP_CAP, ACTIVE_HERD_CAP, ANIMAL_SCALING
+    global TARGET_COWS, TARGET_SHEEP
+
+    LIVESTOCK_OVERRIDE_ENABLED = True
+    ACTIVE_TARGET_COWS = int(cows)
+    ACTIVE_TARGET_SHEEP = int(sheep)
+    TARGET_COWS = int(cows)
+    TARGET_SHEEP = int(sheep)
+
+    # Physical caps for the optimizer: the arm cannot exceed these counts
+    ACTIVE_COW_CAP = int(cows) if cow_cap is None else int(cow_cap)
+    ACTIVE_SHEEP_CAP = int(sheep) if sheep_cap is None else int(sheep_cap)
+    ACTIVE_HERD_CAP = (int(cows) + int(sheep)) if herd_cap is None else int(herd_cap)
+
+    if scaling is not None:
+        ANIMAL_SCALING = dict(scaling)
+    else:
+        # Generate proportional milestone scaling based on targets
+        ANIMAL_SCALING = {
+            4: (0, min(2, cows), min(2, sheep)),
+            8: (0, min(cows, max(1, int(round(cows * 0.6)))), min(sheep, max(1, int(round(sheep * 0.6))))),
+            10: (0, min(cows, max(1, int(round(cows * 0.85)))), min(sheep, max(1, int(round(sheep * 0.85))))),
+            12: (0, cows, sheep),
+        }
+
+    # Synchronize loaded modules to prevent stale references
+    try:
+        import strategy.animal_planner as ap
+        ap.COW_CAP = ACTIVE_COW_CAP
+        ap.SHEEP_CAP = ACTIVE_SHEEP_CAP
+        ap.HERD_CAP = ACTIVE_HERD_CAP
+    except Exception:
+        pass
+    try:
+        import strategy.pasture_planner as pp
+        pp.COW_CAP = ACTIVE_COW_CAP
+        pp.SHEEP_CAP = ACTIVE_SHEEP_CAP
+        pp.HERD_CAP = ACTIVE_HERD_CAP
+    except Exception:
+        pass
+    try:
+        import strategy.land_serviceability_model as lsm
+        lsm.TARGET_COWS = ACTIVE_TARGET_COWS
+        lsm.TARGET_SHEEP = ACTIVE_TARGET_SHEEP
+    except Exception:
+        pass
+
+
+def reset_livestock_portfolio() -> None:
+    """Reset livestock portfolio to exact 588b3f1 baseline defaults."""
+    global LIVESTOCK_OVERRIDE_ENABLED, ACTIVE_TARGET_COWS, ACTIVE_TARGET_SHEEP
+    global ACTIVE_COW_CAP, ACTIVE_SHEEP_CAP, ACTIVE_HERD_CAP, ANIMAL_SCALING
+    global TARGET_COWS, TARGET_SHEEP
+
+    LIVESTOCK_OVERRIDE_ENABLED = False
+    ACTIVE_TARGET_COWS = DEFAULT_TARGET_COWS
+    ACTIVE_TARGET_SHEEP = DEFAULT_TARGET_SHEEP
+    TARGET_COWS = DEFAULT_TARGET_COWS
+    TARGET_SHEEP = DEFAULT_TARGET_SHEEP
+    ACTIVE_COW_CAP = DEFAULT_COW_CAP
+    ACTIVE_SHEEP_CAP = DEFAULT_SHEEP_CAP
+    ACTIVE_HERD_CAP = DEFAULT_HERD_CAP
+    ANIMAL_SCALING = dict(DEFAULT_ANIMAL_SCALING)
+
+    try:
+        import strategy.animal_planner as ap
+        ap.COW_CAP = DEFAULT_COW_CAP
+        ap.SHEEP_CAP = DEFAULT_SHEEP_CAP
+        ap.HERD_CAP = DEFAULT_HERD_CAP
+    except Exception:
+        pass
+    try:
+        import strategy.pasture_planner as pp
+        pp.COW_CAP = DEFAULT_COW_CAP
+        pp.SHEEP_CAP = DEFAULT_SHEEP_CAP
+        pp.HERD_CAP = DEFAULT_HERD_CAP
+    except Exception:
+        pass
+    try:
+        import strategy.land_serviceability_model as lsm
+        lsm.TARGET_COWS = DEFAULT_TARGET_COWS
+        lsm.TARGET_SHEEP = DEFAULT_TARGET_SHEEP
+    except Exception:
+        pass
+
+
+def set_dynamic_sw_crops(enabled: bool) -> None:
+    """Configure dynamic SW crop evaluation."""
+    global DYNAMIC_SW_CROPS_ENABLED
+    DYNAMIC_SW_CROPS_ENABLED = bool(enabled)
+
+
+def set_strategic_sw_ownership(enabled: bool) -> None:
+    """Configure strategic SW ownership policy."""
+    global STRATEGIC_SW_OWNERSHIP_ENABLED
+    STRATEGIC_SW_OWNERSHIP_ENABLED = bool(enabled)
+
+
+SW_FORCE_K_TILES: Optional[int] = None
+
+def set_sw_force_k(k: Optional[int]) -> None:
+    """Configure forced k tile activation in SW (None for dynamic selection)."""
+    global SW_FORCE_K_TILES
+    SW_FORCE_K_TILES = k
+    try:
+        import strategy.land_serviceability_model as lsm
+        lsm.SW_FORCE_K_TILES = k
+    except Exception:
+        pass
+
 
 # Stage 8B Phase 1A: C4 — Late-Game Livestock Investment Cap
 # Stage 8A empirical cutoff boundary: Day 12. Animals purchased Day 12+ fail to amortize
@@ -506,3 +665,121 @@ SELL_BATCH_SIZES = {
 # - "central": CentralPlanner with default settings.
 ARBITRATION_MODE = "historical_candidates_central"
 USE_CENTRAL_PLANNER = (ARBITRATION_MODE in ("central", "historical_candidates_central", "expanded_central"))
+
+
+# ====================================================================
+# SW Isolated Experiment Settings (Arms A, B, C, D)
+# ====================================================================
+SW_OWNERSHIP_MODE: str = "production"       # "production", "early_liquidity", "pure_economic"
+SW_TIMING_PRIOR_ENABLED: bool = False       # True for Arm C (soft D8/9 prior)
+SW_ACTIVATION_MODE: str = "production"      # "production", "discrete", "progressive"
+SW_SAFETY_RESERVE: float = 300.0            # Frozen at $300 across all arms
+
+
+def set_sw_experiment_arm(arm: str) -> None:
+    """Configure authoritative flags for SW experiment arms A, B, C, D."""
+    global SW_OWNERSHIP_MODE, SW_TIMING_PRIOR_ENABLED, SW_ACTIVATION_MODE
+    global STRATEGIC_SW_OWNERSHIP_ENABLED, DYNAMIC_ZONAL_ALLOCATION, DYNAMIC_SW_CROPS_ENABLED
+    arm_clean = str(arm).strip()
+    if "ArmA" in arm_clean:
+        # Arm A — Fresh Production Control: Current strategy with SW expansion disabled/frozen
+        set_quadrant_hard_block({3, 4})
+        SW_OWNERSHIP_MODE = "production"
+        SW_TIMING_PRIOR_ENABLED = False
+        SW_ACTIVATION_MODE = "production"
+        STRATEGIC_SW_OWNERSHIP_ENABLED = False
+        DYNAMIC_ZONAL_ALLOCATION = False
+        DYNAMIC_SW_CROPS_ENABLED = False
+    elif "ArmB" in arm_clean:
+        # Arm B — Working SW + Discrete Activation
+        set_quadrant_hard_block({4})
+        SW_OWNERSHIP_MODE = "early_liquidity"
+        SW_TIMING_PRIOR_ENABLED = False
+        SW_ACTIVATION_MODE = "discrete"
+        STRATEGIC_SW_OWNERSHIP_ENABLED = True
+        DYNAMIC_ZONAL_ALLOCATION = True
+        DYNAMIC_SW_CROPS_ENABLED = True
+    elif "ArmC" in arm_clean:
+        # Arm C — Primary Treatment: Working SW + Survival-Aware Progressive Activation (no Dusta prior)
+        set_quadrant_hard_block({4})
+        SW_OWNERSHIP_MODE = "early_liquidity"
+        SW_TIMING_PRIOR_ENABLED = False
+        SW_ACTIVATION_MODE = "progressive"
+        STRATEGIC_SW_OWNERSHIP_ENABLED = True
+        DYNAMIC_ZONAL_ALLOCATION = True
+        DYNAMIC_SW_CROPS_ENABLED = True
+    elif "ArmD" in arm_clean:
+        # Arm D — Dusta Prior + Survival-Aware Progressive Activation (differs from C by Dusta prior only)
+        set_quadrant_hard_block({4})
+        SW_OWNERSHIP_MODE = "early_liquidity"
+        SW_TIMING_PRIOR_ENABLED = True
+        SW_ACTIVATION_MODE = "progressive"
+        STRATEGIC_SW_OWNERSHIP_ENABLED = True
+        DYNAMIC_ZONAL_ALLOCATION = True
+        DYNAMIC_SW_CROPS_ENABLED = True
+    else:
+        raise ValueError(f"Unknown SW experiment arm: {arm}")
+
+    # Synchronize loaded modules
+    for mod_name in (
+        "agent.strategy.expansion_planner", "strategy.expansion_planner", "expansion_planner",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.land_serviceability_model", "strategy.land_serviceability_model", "land_serviceability_model",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                for attr, val in (
+                    ("SW_OWNERSHIP_MODE", SW_OWNERSHIP_MODE),
+                    ("SW_TIMING_PRIOR_ENABLED", SW_TIMING_PRIOR_ENABLED),
+                    ("SW_ACTIVATION_MODE", SW_ACTIVATION_MODE),
+                    ("SW_SAFETY_RESERVE", SW_SAFETY_RESERVE),
+                    ("STRATEGIC_SW_OWNERSHIP_ENABLED", STRATEGIC_SW_OWNERSHIP_ENABLED),
+                    ("DYNAMIC_ZONAL_ALLOCATION", DYNAMIC_ZONAL_ALLOCATION),
+                    ("DYNAMIC_SW_CROPS_ENABLED", DYNAMIC_SW_CROPS_ENABLED),
+                ):
+                    setattr(mod, attr, val)
+            except Exception:
+                pass
+
+
+LIVESTOCK_EXPERIMENT_ARM: str = "ArmC"      # "ArmA" (production control), "ArmB" (target+shop econ), "ArmC" (dynamic allocator)
+
+
+def set_livestock_experiment_arm(arm: str) -> None:
+    """Configure authoritative flags for Livestock experiment arms A, B, C."""
+    global LIVESTOCK_EXPERIMENT_ARM
+    arm_clean = str(arm).strip()
+    if "ArmA" in arm_clean:
+        LIVESTOCK_EXPERIMENT_ARM = "ArmA"
+    elif "ArmB" in arm_clean:
+        LIVESTOCK_EXPERIMENT_ARM = "ArmB"
+    elif "ArmC" in arm_clean:
+        LIVESTOCK_EXPERIMENT_ARM = "ArmC"
+    else:
+        raise ValueError(f"Unknown livestock experiment arm: {arm}")
+
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.animal_planner", "strategy.animal_planner", "animal_planner",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "LIVESTOCK_EXPERIMENT_ARM", LIVESTOCK_EXPERIMENT_ARM)
+            except Exception:
+                pass
+
+
+def get_sw_experiment_settings() -> Dict[str, Any]:
+    """Return immutable snapshot of current SW experiment settings."""
+    return {
+        "ownership_mode": SW_OWNERSHIP_MODE,
+        "timing_prior_enabled": SW_TIMING_PRIOR_ENABLED,
+        "activation_mode": SW_ACTIVATION_MODE,
+        "safety_reserve": SW_SAFETY_RESERVE,
+        "strategic_sw_ownership": STRATEGIC_SW_OWNERSHIP_ENABLED,
+        "dynamic_zonal_allocation": DYNAMIC_ZONAL_ALLOCATION,
+    }
+

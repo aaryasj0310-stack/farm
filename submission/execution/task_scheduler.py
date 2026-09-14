@@ -617,23 +617,41 @@ def build_tasks(ctx, macro):
 
     # ---------------- animals ----------------
     feeds_due = 0
+    max_feed_prio = 0
     for t in ctx["farm"].iter_tiles():
         if not t.is_animal:
             continue
         feed_now = False
-        if t.consecutive_unfed >= 1 and not t.fed_today and hour < 23:
-            add(PRIORITY_URGENT_SURVIVAL - 1, "FEED", t.pos,
-                kind="feed_rescue", meta={"wheat": 1})
+        feed_prio = 0
+        if t.consecutive_unfed >= 1 and not t.fed_today and hour < 24:
+            # Animal is at risk of escape! Top survival priority (105)
+            feed_prio = PRIORITY_URGENT_SURVIVAL + 5
+            add(feed_prio, "FEED", t.pos, kind="feed_rescue", meta={"wheat": 1})
             feed_now = True
-        elif produces_today(t, day) and not t.fed_today:
-            add(PRIORITY_PROD_DAY_FEED, "FEED", t.pos,
-                kind="feed_prod", meta={"wheat": 1})
+        elif produces_today(t, day) and not t.fed_today and hour < 24:
+            if hour >= 14:
+                # Approaching deadline: escalate to urgent survival
+                feed_prio = PRIORITY_URGENT_SURVIVAL + 2
+            else:
+                feed_prio = PRIORITY_PROD_DAY_FEED
+            add(feed_prio, "FEED", t.pos, kind="feed_prod", meta={"wheat": 1})
             feed_now = True
-        elif not t.fed_today and hour < 20 and macro.feeding_enabled:
-            add(PRIORITY_CARE_ANIMAL - 5, "FEED", t.pos, kind="feed_off",
-                meta={"wheat": 1})
+        elif not t.fed_today and hour < 24 and macro.feeding_enabled:
+            # Off-day feeding: keep animals fed daily to prevent consecutive unfed days
+            if hour >= 18:
+                feed_prio = PRIORITY_URGENT_SURVIVAL + 1  # 101
+            elif hour >= 14:
+                feed_prio = PRIORITY_URGENT_SURVIVAL      # 100 (escalates above SW crop care)
+            else:
+                feed_prio = PRIORITY_CARE_ANIMAL - 5      # 60
+            add(feed_prio, "FEED", t.pos, kind="feed_off", meta={"wheat": 1})
             feed_now = True
-        feeds_due += 1 if feed_now else 0
+
+        if feed_now:
+            feeds_due += 1
+            if feed_prio > max_feed_prio:
+                max_feed_prio = feed_prio
+
         if t.yield_units > 0:
             add(PRIORITY_STANDARD_HARVEST + 5, "HARVEST", t.pos, kind="harvest_animal")
         if t.fertilizer_available:
@@ -651,12 +669,13 @@ def build_tasks(ctx, macro):
         shed_wheat = int(ctx["private"].shed.get("WHEAT", 0))
         needed = min(shed_wheat, max(feeds_due - held, 0))
         if needed > 0:
+            staging_prio = max(PRIORITY_FEED_STAGING, max_feed_prio + 1)
             chunk_size = 3
             n_chunks = (needed + chunk_size - 1) // chunk_size
             for c_idx in range(n_chunks):
                 take = min(chunk_size, needed - c_idx * chunk_size)
                 target = SHED_ACCESS_TILES[c_idx % len(SHED_ACCESS_TILES)]
-                add(PRIORITY_FEED_STAGING, "PICKUP", tuple(target),
+                add(staging_prio, "PICKUP", tuple(target),
                     args=["WHEAT", int(take)], kind="pickup_wheat")
 
     # ---------------- planting queue (seed-conflict-safe) ----------------
@@ -714,10 +733,6 @@ def get_home_quadrant(u_idx, n_units, unlocked):
     elif "NE" in unlocked:
         half = max(1, n_units // 2)
         return "NW" if u_idx < half else "NE"
-    else:
-        return "NW"
-
-
 def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
     """Stage 8B Phase 2B: Workload-aware dynamic zonal allocation.
     
@@ -1006,7 +1021,13 @@ def assign_tasks(tasks, ctx, extra_units=()):
         return None                                  # no restriction
 
     # Stage 8B Phase 1E / 2B: Adaptive Zonal Dispatch (Dynamic or Rule W1 static fallback)
-    if DYNAMIC_ZONAL_ALLOCATION:
+    try:
+        from config import STRATEGIC_SW_OWNERSHIP_ENABLED
+        strategic_sw = STRATEGIC_SW_OWNERSHIP_ENABLED
+    except Exception:
+        strategic_sw = False
+
+    if DYNAMIC_ZONAL_ALLOCATION or strategic_sw:
         home_quads = compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx)
     else:
         home_quads = {u_idx: get_home_quadrant(u_idx, n_units, farm.unlocked) for u_idx in range(n_units)}
@@ -1030,7 +1051,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         is_prod_feed = t.get("kind") == "feed_prod"
         is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or is_delivery
                      or is_prod_feed
-                     or t.get("kind") in ("feed_rescue", "harvest_decay"))
+                     or t.get("kind") in ("feed_rescue", "harvest_decay", "pickup_wheat"))
         if is_urgent:
             urgent_tasks.append(t)
         else:

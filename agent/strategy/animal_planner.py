@@ -69,7 +69,9 @@ def estimate_species_remaining_profit(day, cutoff_day=None):
 
 
 def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
-                       cutoff_day=None, max_sustainable=None):
+                       cutoff_day=None, max_sustainable=None,
+                       cow_cap=None, sheep_cap=None, herd_cap=None,
+                       town_shops=None, market_inventory=None):
     """Compute optimal target counts for COW and SHEEP (GOOSE always 0).
 
     Stage 8B C4 Policy: Enforces late-game livestock investment cap (cutoff_day=12).
@@ -77,6 +79,7 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
     Also enforces economic feasibility: an animal must produce primary product (milk/wool)
     to be considered viable; fertilizer alone cannot cover costs.
     Also enforces feed sustainability: total herd cannot exceed max_sustainable.
+    Also enforces authoritative species caps (cow_cap, sheep_cap, herd_cap).
 
     O(21**2) worst-case, O(1) extra space; no imports, I/O or randomness.
     Recompute after actual purchases; execute additions only when housing and
@@ -91,9 +94,25 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
     result = {"COW": c0, "SHEEP": s0, "GOOSE": 0}
     remaining = max(0, 29 - day)
     herd = c0 + s0 + g0
-    effective_herd_cap = min(HERD_CAP, int(max_pastures))
+
+    # Query runtime getter from config if caps not explicitly passed
+    try:
+        from config import get_active_livestock_caps
+        active_caps = get_active_livestock_caps()
+    except Exception:
+        active_caps = {"COW": COW_CAP, "SHEEP": SHEEP_CAP, "HERD": HERD_CAP}
+
+    eff_herd_cap = HERD_CAP if herd_cap is None else int(herd_cap)
+    eff_herd_cap = min(eff_herd_cap, active_caps.get("HERD", HERD_CAP))
+    effective_herd_cap = min(eff_herd_cap, int(max_pastures))
     if max_sustainable is not None:
         effective_herd_cap = min(effective_herd_cap, max(0, int(max_sustainable)))
+
+    eff_cow_cap = COW_CAP if cow_cap is None else int(cow_cap)
+    eff_cow_cap = min(eff_cow_cap, active_caps.get("COW", COW_CAP))
+
+    eff_sheep_cap = SHEEP_CAP if sheep_cap is None else int(sheep_cap)
+    eff_sheep_cap = min(eff_sheep_cap, active_caps.get("SHEEP", SHEEP_CAP))
     
     # C4: Late-game livestock investment cap
     effective_cutoff = C4_LIVESTOCK_CUTOFF_DAY if cutoff_day is None else int(cutoff_day)
@@ -105,23 +124,43 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
     wheat = max(0, int(shed_wheat))
     
     room = effective_herd_cap - herd
+    try:
+        from config import LIVESTOCK_EXPERIMENT_ARM
+    except ImportError:
+        LIVESTOCK_EXPERIMENT_ARM = "ArmA"
+
     if day >= effective_cutoff and SELECTIVE_LIVESTOCK_GATE_ENABLED:
         from strategy.marginal_livestock_valuator import estimate_realized_marginal_animal_value
         eval_c = estimate_realized_marginal_animal_value(
-            "COW", day, current_animals, empty_pastures=room
+            "COW", day, current_animals, empty_pastures=room,
+            town_shops=town_shops, market_inventory=market_inventory
         )
         eval_s = estimate_realized_marginal_animal_value(
-            "SHEEP", day, current_animals, empty_pastures=room
+            "SHEEP", day, current_animals, empty_pastures=room,
+            town_shops=town_shops, market_inventory=market_inventory
         )
         cow_profit = eval_c["net_realized_value"] if eval_c["net_realized_value"] >= SELECTIVE_LIVESTOCK_GATE_THRESHOLD else 0.0
         sheep_profit = eval_s["net_realized_value"] if eval_s["net_realized_value"] >= SELECTIVE_LIVESTOCK_GATE_THRESHOLD else 0.0
+    elif LIVESTOCK_EXPERIMENT_ARM == "ArmB":
+        from strategy.marginal_livestock_valuator import estimate_realized_marginal_animal_value
+        eval_c = estimate_realized_marginal_animal_value(
+            "COW", day, current_animals, empty_pastures=room,
+            town_shops=town_shops, market_inventory=market_inventory
+        )
+        eval_s = estimate_realized_marginal_animal_value(
+            "SHEEP", day, current_animals, empty_pastures=room,
+            town_shops=town_shops, market_inventory=market_inventory
+        )
+        cow_profit = eval_c["net_realized_value"] if eval_c["viable"] else 0.0
+        sheep_profit = eval_s["net_realized_value"] if eval_s["viable"] else 0.0
     else:
         species_profits = estimate_species_remaining_profit(day, cutoff_day=effective_cutoff)
         cow_profit = species_profits["COW"]
         sheep_profit = species_profits["SHEEP"]
+
     
-    max_c = min(room, max(0, COW_CAP - c0)) if cow_profit > 0 else 0
-    max_s = min(room, max(0, SHEEP_CAP - s0)) if sheep_profit > 0 else 0
+    max_c = min(room, max(0, eff_cow_cap - c0)) if cow_profit > 0 else 0
+    max_s = min(room, max(0, eff_sheep_cap - s0)) if sheep_profit > 0 else 0
     
     best_profit = 0
     best_spend = 0
@@ -139,3 +178,4 @@ def get_animal_targets(day, money, shed_wheat, current_animals, max_pastures=20,
                 best_spend = purchase_cost
                 result = {"COW": c0 + add_c, "SHEEP": s0 + add_s, "GOOSE": 0}
     return result
+

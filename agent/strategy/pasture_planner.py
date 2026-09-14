@@ -44,12 +44,15 @@ def get_marginal_animal_profit_sequence(
     current_animals: Optional[Dict[str, int]],
     n_slots: int,
     cutoff_day: Optional[int] = None,
+    cow_cap: Optional[int] = None,
+    sheep_cap: Optional[int] = None,
+    herd_cap: Optional[int] = None,
 ) -> List[Tuple[float, str]]:
     """Derive an ordered marginal-value sequence for successive pasture slots.
 
     Greedily assigns each slot to the species with highest remaining profit
-    that has not yet reached its species cap (SHEEP_CAP=12, COW_CAP=19).
-    Total herd cannot exceed HERD_CAP=20.
+    that has not yet reached its species cap (respecting active arm caps).
+    Total herd cannot exceed HERD_CAP.
     Returns: list of (profit, species_name) for each slot.
     """
     try:
@@ -57,11 +60,23 @@ def get_marginal_animal_profit_sequence(
             SELECTIVE_LIVESTOCK_GATE_ENABLED,
             SELECTIVE_LIVESTOCK_GATE_THRESHOLD,
             SELECTIVE_LIVESTOCK_MAX_DAY,
+            get_active_livestock_caps,
         )
+        active_caps = get_active_livestock_caps()
     except ImportError:
         SELECTIVE_LIVESTOCK_GATE_ENABLED = False
         SELECTIVE_LIVESTOCK_GATE_THRESHOLD = 500.0
         SELECTIVE_LIVESTOCK_MAX_DAY = 14
+        active_caps = {"COW": COW_CAP, "SHEEP": SHEEP_CAP, "HERD": HERD_CAP}
+
+    eff_herd_cap = HERD_CAP if herd_cap is None else int(herd_cap)
+    eff_herd_cap = min(eff_herd_cap, active_caps.get("HERD", HERD_CAP))
+
+    eff_cow_cap = COW_CAP if cow_cap is None else int(cow_cap)
+    eff_cow_cap = min(eff_cow_cap, active_caps.get("COW", COW_CAP))
+
+    eff_sheep_cap = SHEEP_CAP if sheep_cap is None else int(sheep_cap)
+    eff_sheep_cap = min(eff_sheep_cap, active_caps.get("SHEEP", SHEEP_CAP))
 
     effective_cutoff = C4_LIVESTOCK_CUTOFF_DAY if cutoff_day is None else int(cutoff_day)
     if day >= effective_cutoff and SELECTIVE_LIVESTOCK_GATE_ENABLED and day <= SELECTIVE_LIVESTOCK_MAX_DAY:
@@ -81,26 +96,27 @@ def get_marginal_animal_profit_sequence(
     slot_profits: List[Tuple[float, str]] = []
     for _ in range(max(0, n_slots)):
         total_herd = c_cur + s_cur
-        if total_herd >= HERD_CAP:
+        if total_herd >= eff_herd_cap:
             slot_profits.append((0.0, "HERD_CAP_REACHED"))
             continue
 
-        can_sheep = (s_cur < SHEEP_CAP and s_prof > 0.0)
-        can_cow = (c_cur < COW_CAP and c_prof > 0.0)
+        can_sheep = (s_cur < eff_sheep_cap and s_prof > 0.0)
+        can_cow = (c_cur < eff_cow_cap and c_prof > 0.0)
 
         if can_sheep and can_cow:
-            if s_prof >= c_prof:
-                slot_profits.append((s_prof, "SHEEP"))
-                s_cur += 1
-            else:
+            # Prioritize Cow over Sheep if Cow profit is >= Sheep profit, or if Cow has room
+            if c_prof >= s_prof:
                 slot_profits.append((c_prof, "COW"))
                 c_cur += 1
-        elif can_sheep:
-            slot_profits.append((s_prof, "SHEEP"))
-            s_cur += 1
+            else:
+                slot_profits.append((s_prof, "SHEEP"))
+                s_cur += 1
         elif can_cow:
             slot_profits.append((c_prof, "COW"))
             c_cur += 1
+        elif can_sheep:
+            slot_profits.append((s_prof, "SHEEP"))
+            s_cur += 1
         else:
             slot_profits.append((0.0, "NO_PROFITABLE_SPECIES"))
 
@@ -162,7 +178,10 @@ def evaluate_pasture_candidates(
     crop_name: Optional[str] = None,
     cutoff_day: Optional[int] = None,
     preferred_sw_tiles: Optional[Set[Tuple[int, int]]] = None,
-    preferred_early_tiles: Optional[List[Tuple[int, int]]] = None,
+    preferred_early_tiles: Optional[Set[Tuple[int, int]]] = None,
+    cow_cap: Optional[int] = None,
+    sheep_cap: Optional[int] = None,
+    herd_cap: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Scan and evaluate all eligible empty tiles for dynamic pasture capacity.
 
@@ -226,6 +245,9 @@ def evaluate_pasture_candidates(
         current_animals=current_animals,
         n_slots=unused_existing_capacity + len(raw_cands),
         cutoff_day=cutoff_day,
+        cow_cap=cow_cap,
+        sheep_cap=sheep_cap,
+        herd_cap=herd_cap,
     )
     candidate_sequence = full_sequence[unused_existing_capacity:]
 

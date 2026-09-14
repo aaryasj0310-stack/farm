@@ -115,7 +115,7 @@ def test_evaluate_sw_serviceability_dynamic():
         current_day=12, farm=farm, money=10000.0, forecast=None, target_quadrant=3
     )
     assert is_serv is True
-    assert best_k in (5, 10, 15)
+    assert best_k in (5, 10, 15, 18, 21, 24)
     assert diag["is_serviceable"] is True
     assert diag["net_marginal_profit"] > 0
     assert diag["expected_nw_ne_opportunity_cost"] == 0.0

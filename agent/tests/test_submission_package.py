@@ -138,6 +138,11 @@ def test_zip_clean_environment_isolation_and_import(repo_paths):
 
         finally:
             sys.path = orig_sys_path
+            # Remove any modules that were imported from temp_dir
+            for k, mod in list(sys.modules.items()):
+                mod_file = getattr(mod, "__file__", None)
+                if mod_file and temp_dir in mod_file:
+                    sys.modules.pop(k, None)
             # Restore saved modules
             sys.modules.update(saved_modules)
             sys.modules.pop("isolated_main", None)

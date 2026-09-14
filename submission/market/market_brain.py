@@ -148,7 +148,12 @@ class MarketBrain:
         endgame = day >= ENDGAME_START_DAY
 
         shed = ctx["private"].shed
-        animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal)
+        private = ctx.get("private")
+        held_animals = sum(
+            cnt for inv in (getattr(private, "inventories", None) or [])
+            for item, cnt in (inv or {}).items() if item in ("COW", "SHEEP", "CHICKEN")
+        ) if private else 0
+        animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal) + held_animals
         reserved_wheat = 0 if endgame else animals * FEED_WHEAT_BUFFER_DAYS
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP

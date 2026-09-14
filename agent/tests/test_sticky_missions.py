@@ -169,35 +169,39 @@ def test_mission_staleness_no_progress_timeout():
 
 def test_sticky_mission_progress_does_not_timeout_on_long_journey():
     """Worker walking >10 steps while making continuous progress is NOT dropped."""
+    target_pos = (9, 3)  # Within valid 10x10 board in unlocked NE (Manhattan distance from (0, 0) is 12)
     farm = MockFarm(unlocked=("NW", "NE", "SW"), hands=[], farmer=(0, 0))
-    plant_tile = MockTile(12, 0, kind="PLANT", is_plant=True, watered_today=False)
-    farm.set_tile((12, 0), plant_tile)
+    plant_tile = MockTile(target_pos[0], target_pos[1], kind="PLANT", is_plant=True, watered_today=False)
+    farm.set_tile(target_pos, plant_tile)
     ctx = {"farm": farm, "private": MockPrivate(), "day": 5, "hour": 0}
 
-    task = [{"priority": 70, "op": "WATER", "target": (12, 0), "kind": "water", "args": []}]
+    task = [{"priority": 70, "op": "WATER", "target": target_pos, "kind": "water", "args": []}]
     assign_tasks(task, ctx)
     assert 0 in get_active_missions()
 
-    # Move farmer 1 step closer each turn for 11 turns: (1, 0) -> (11, 0)
-    for step in range(1, 12):
-        farm.farmer = (step, 0)
+    # Move farmer 1 step closer each turn for 11 turns along valid 10x10 grid:
+    # (1, 0) -> (2, 0) -> ... -> (9, 0) -> (9, 1) -> (9, 2)
+    path = [(s, 0) for s in range(1, 10)] + [(9, 1), (9, 2)]
+    for step_idx, pos in enumerate(path, 1):
+        farm.farmer = pos
         assign_tasks(task, ctx)
         missions = get_active_missions()
         assert 0 in missions
-        assert missions[0]["steps_active"] == step
+        assert missions[0]["steps_active"] == step_idx
         assert missions[0]["consecutive_no_progress"] == 0
 
 
 def test_livestock_delivery_remains_sticky_until_placed():
     """Animal delivery remains sticky until placed on empty tile."""
+    target_pos = (9, 4)  # Within valid 10x10 board
     farm = MockFarm(unlocked=("NW", "NE", "SW"), hands=[], farmer=(0, 0))
-    empty_target = MockTile(10, 0, kind="EMPTY", is_plant=False, is_animal=False)
-    farm.set_tile((10, 0), empty_target)
+    empty_target = MockTile(target_pos[0], target_pos[1], kind="EMPTY", is_plant=False, is_animal=False)
+    farm.set_tile(target_pos, empty_target)
     priv = MockPrivate()
     priv.inventories = [{"COW": 1}]
     ctx = {"farm": farm, "private": priv, "day": 8, "hour": 0}
 
-    place_task = [{"priority": 85, "op": "PLACE", "target": (10, 0), "kind": "place_animal", "args": ["COW"]}]
+    place_task = [{"priority": 85, "op": "PLACE", "target": target_pos, "kind": "place_animal", "args": ["COW"]}]
     assign_tasks(place_task, ctx)
     assert 0 in get_active_missions()
 
@@ -207,4 +211,4 @@ def test_livestock_delivery_remains_sticky_until_placed():
     missions = get_active_missions()
     assert 0 in missions
     assert missions[0]["op"] == "PLACE"
-    assert missions[0]["target"] == (10, 0)
+    assert missions[0]["target"] == target_pos

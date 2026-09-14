@@ -113,6 +113,14 @@ try:
 except ImportError:
     from task_scheduler import get_sw_tile_breakdown
 
+try:
+    from strategy.marginal_livestock_valuator import estimate_realized_marginal_animal_value
+except ImportError:
+    try:
+        from marginal_livestock_valuator import estimate_realized_marginal_animal_value
+    except ImportError:
+        estimate_realized_marginal_animal_value = None
+
 # ---------------------------------------------------------------------------
 # Asset economics — imported from authoritative baked_economics artifact.
 # ---------------------------------------------------------------------------
@@ -134,6 +142,45 @@ except ImportError:
         MONEY_RESERVE,
         SHOP_BOOST_WEIGHT,
     )
+
+
+_LIVESTOCK_DECISION_LOGS: List[Dict[str, Any]] = []
+
+
+def get_livestock_decision_logs() -> List[Dict[str, Any]]:
+    """Return all recorded livestock purchase decision telemetry."""
+    return list(_LIVESTOCK_DECISION_LOGS)
+
+
+def clear_livestock_decision_logs() -> None:
+    """Clear recorded livestock purchase decision telemetry."""
+    global _LIVESTOCK_DECISION_LOGS
+    _LIVESTOCK_DECISION_LOGS = []
+
+
+def _log_livestock_decision(day: int, hour: int, town_shops: list, current_herd: dict, cands_eval: dict, selected: Optional[str], reason: str) -> None:
+    record = {
+        "day": int(day),
+        "hour": int(hour),
+        "town_shops": list(town_shops),
+        "current_herd": dict(current_herd),
+        "selected_species": selected,
+        "decision_reason": reason,
+        "candidates": {},
+    }
+    for sp, data in cands_eval.items():
+        ev = data.get("eval", {})
+        record["candidates"][sp] = {
+            "net_realized_value": ev.get("net_realized_value", 0.0),
+            "marginal_product_revenue": ev.get("marginal_product_revenue", 0.0),
+            "gross_fertilizer_revenue": ev.get("gross_fertilizer_revenue", 0.0),
+            "feed_cost": ev.get("feed_cost", 0.0),
+            "purchase_cost": data.get("cost", 0.0),
+            "housing_cost": data.get("housing_cost", 0.0),
+            "feed_reserve": data.get("feed_reserve", 0.0),
+            "labor_housing_deductions": data.get("housing_cost", 0.0),
+        }
+    _LIVESTOCK_DECISION_LOGS.append(record)
 
 
 @dataclass
@@ -536,6 +583,76 @@ def sw_plant_decision(day: int, free_tiles: int, wheat_stock: int, herd_size: in
     return {"WHEAT": n_wheat, "CARROT": n_carrot}
 
 
+def evaluate_dynamic_sw_crop_choice(
+    day: int,
+    wheat_have: int,
+    n_animals: int,
+    forecast: Any,
+    boosts: Any,
+    committed_counts: Dict[str, int],
+    opp_advice: Any = None,
+) -> str:
+    """Select the best crop for a single SW tile using authoritative _crop_score().
+
+    Dual valuation of wheat:
+      - feed wheat: min(SW wheat yield, unavoidable feed shortfall) * replacement_price ($30)
+      - sale wheat: excess reverts strictly to normal market sale economics
+    Spatial SW penalty:
+      - exceptional travel & labor overhead (~2.0 effective actions per tile-day)
+    """
+    days_left = max(1, 29 - day + 1)
+    feed_need = n_animals * days_left
+    unavoidable_shortfall = max(0, feed_need - wheat_have)
+
+    best_crop = "WHEAT"
+    best_ev = -1e9
+
+    candidate_crops = ["WHEAT", "CARROT", "TOMATO", "STRAWBERRY", "MELON"]
+
+    for crop in candidate_crops:
+        if not _crop_allowed_today(crop, day):
+            continue
+
+        per_day, details = _crop_score(
+            crop=crop,
+            day=day,
+            forecast=forecast,
+            boosts=boosts or {},
+            own_tiles=committed_counts.get(crop, 0),
+            feed_wheat_per_day=n_animals,
+            n_animals=n_animals,
+            opp_advice=opp_advice,
+        )
+        if per_day <= -1e8:
+            continue
+
+        total_net = per_day * max(1, 30 - day)
+
+        if crop == "WHEAT":
+            wheat_yield = 4
+            feed_units = min(wheat_yield, unavoidable_shortfall)
+            sale_units = max(0, wheat_yield - feed_units)
+            # Avoided market purchase cost ($30)
+            feed_val = feed_units * 30.0
+            eff_p = list(details.get("eff_prices", {}).values())
+            sale_price = eff_p[0] if eff_p else 25.0
+            sale_val = sale_units * sale_price
+            seed_cost = CROPS["WHEAT"]["seed"]
+            total_net = feed_val + sale_val - seed_cost
+
+        # Calibrated SW spatial penalty:
+        # 1.3 ops/tile/day + exceptional travel ~0.7 actions = 2.0 actions/tile/day
+        # Opportunity cost per action ≈ $1.0
+        sw_labor_penalty = 2.0 * 1.0 * max(1, 30 - day)
+        net_ev = total_net - sw_labor_penalty
+
+        if net_ev > best_ev:
+            best_ev = net_ev
+            best_crop = crop
+
+    return best_crop
+
+
 class MacroPlanner:
     """Produces the daily MacroPlan. Stateless w.r.t. previous calls."""
 
@@ -551,6 +668,16 @@ class MacroPlanner:
         farm = ctx["farm"]
         private = ctx["private"]
         plan = MacroPlan(day=day)
+
+        town_obj = ctx.get("town")
+        town_shops = []
+        if town_obj:
+            town_shops = list(getattr(town_obj, "unlocked_shops", None) or (town_obj.get("unlocked_shops", []) if isinstance(town_obj, dict) else []))
+
+        market_obj = ctx.get("market")
+        market_inv = {}
+        if market_obj:
+            market_inv = dict(getattr(market_obj, "inventory", None) or (market_obj.get("inventory", {}) if isinstance(market_obj, dict) else {}))
 
         # ---------------- phase gating ---------------------------------
         is_endgame = day >= ENDGAME_START_DAY
@@ -627,6 +754,14 @@ class MacroPlanner:
             opp_advice=opp_advice,
         )
 
+        try:
+            from config import get_active_livestock_caps, LIVESTOCK_OVERRIDE_ENABLED
+            active_caps = get_active_livestock_caps()
+            use_override = LIVESTOCK_OVERRIDE_ENABLED
+        except Exception:
+            active_caps = {}
+            use_override = False
+
         pasture_eval = evaluate_pasture_candidates(
             farm=farm,
             day=day,
@@ -635,6 +770,9 @@ class MacroPlanner:
             crop_opportunity_val=crop_opp_val,
             crop_name=best_crop_name,
             cutoff_day=C4_LIVESTOCK_CUTOFF_DAY,
+            cow_cap=active_caps.get("COW"),
+            sheep_cap=active_caps.get("SHEEP"),
+            herd_cap=active_caps.get("HERD"),
         )
         existing_pastures = pasture_eval["existing_pastures"]
         existing_empty_pastures = pasture_eval["existing_empty_pastures"]
@@ -649,13 +787,43 @@ class MacroPlanner:
         next_q_temp = n_extra_temp + 2 if n_extra_temp + 2 <= 4 else None
         seed_reserve = 0
         land_reserve = 0
+
+        try:
+            from config import SW_OWNERSHIP_MODE
+            use_experiment_sw = (SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic"))
+        except Exception:
+            use_experiment_sw = False
+
         if next_q_temp == 3 and "SW" not in farm.unlocked and day <= LAND_BUY_LAST_DAY:
-            if day in (8, 9) and ctx["farm"].money >= 2000:
-                land_reserve = 2000
-                seed_reserve = 150
-            elif day >= 11:
-                land_reserve = 2000
-                seed_reserve = 150
+            if use_experiment_sw:
+                # Near-term land shadow reserve:
+                # Protect SW money ONLY when SW is plausibly reachable within the next 24 turns
+                # based on current cash plus conservative near-term inflows.
+                # Never suppress profitable cows/sheep on Days 5-8 if SW is not yet reachable.
+                if day >= 7:
+                    try:
+                        from strategy.expansion_planner import compute_conservative_inflows_before_hire
+                        inflows_24h = compute_conservative_inflows_before_hire(farm, private)
+                    except Exception:
+                        inflows_24h = 0.0
+
+                    potential_cash_24h = float(ctx["farm"].money) + inflows_24h
+                    near_term_obligations = future_hire_cost + self.reserve
+                    if potential_cash_24h >= 2000.0 + near_term_obligations:
+                        # Plausibly reachable: protect SW money up to $2,000 from current cash after obligations
+                        land_reserve = min(2000.0, max(0.0, float(ctx["farm"].money) - near_term_obligations))
+                    else:
+                        land_reserve = 0.0
+                else:
+                    land_reserve = 0.0
+                seed_reserve = 0.0
+            else:
+                if day in (8, 9) and ctx["farm"].money >= 2000:
+                    land_reserve = 2000
+                    seed_reserve = 150
+                elif day >= 11:
+                    land_reserve = 2000
+                    seed_reserve = 150
         elif next_q_temp == 2 and "NE" not in farm.unlocked and 3 <= day <= LAND_BUY_LAST_DAY:
             if ctx["farm"].money >= 1000:
                 land_reserve = 1000
@@ -675,12 +843,55 @@ class MacroPlanner:
         except ImportError:
             pass
 
-        if is_endgame or not allow_livestock or day in (3, 4, 5):
+        try:
+            from config import LIVESTOCK_EXPERIMENT_ARM
+        except ImportError:
+            LIVESTOCK_EXPERIMENT_ARM = "ArmA"
+
+        if LIVESTOCK_EXPERIMENT_ARM == "ArmC":
+            if is_endgame or not allow_livestock:
+                dynamic_targets = {"COW": counts.get("COW", 0),
+                                   "SHEEP": counts.get("SHEEP", 0),
+                                   "GOOSE": 0}
+                target_pastures = counts.get("COW", 0) + counts.get("SHEEP", 0)
+                needed_new_pastures = 0
+            else:
+                from strategy.herd_planner import generate_dynamic_herd_plan, get_forward_housing_demand
+                herd_plan = generate_dynamic_herd_plan(
+                    day=day,
+                    hour=hour,
+                    current_herd=counts,
+                    town_shops=town_shops,
+                    market_inventory=market_inv,
+                    max_sustainable=sustainable,
+                    active_caps=active_caps,
+                    crop_opportunity_val=crop_opp_val,
+                    horizon_days=4,
+                )
+                target_pastures = max(
+                    herd_plan.required_pastures,
+                    counts.get("COW", 0) + counts.get("SHEEP", 0)
+                )
+                dynamic_targets = dict(herd_plan.desired_herd)
+                housing_demand = get_forward_housing_demand(
+                    herd_plan,
+                    existing_pastures,
+                    len(reserved_structure_tiles)
+                )
+                needed_new_pastures = housing_demand["needed_pastures"]
+            requested_herd_size = sum(dynamic_targets.values())
+            final_feed_capped_herd_size = min(requested_herd_size, sustainable)
+        elif is_endgame or not allow_livestock or day in (3, 4, 5):
             dynamic_targets = {"COW": counts.get("COW", 0),
                                "SHEEP": counts.get("SHEEP", 0),
                                "GOOSE": 0}
             requested_herd_size = sum(dynamic_targets.values())
             final_feed_capped_herd_size = min(requested_herd_size, sustainable)
+            target_pastures = max(
+                dynamic_targets.get("COW", 0) + dynamic_targets.get("SHEEP", 0),
+                counts.get("COW", 0) + counts.get("SHEEP", 0)
+            )
+            needed_new_pastures = max(0, target_pastures - existing_pastures)
         else:
             raw_targets = get_animal_targets(
                 day=day,
@@ -689,6 +900,11 @@ class MacroPlanner:
                 current_animals=counts,
                 max_pastures=max_pastures,
                 max_sustainable=sustainable,
+                cow_cap=active_caps.get("COW"),
+                sheep_cap=active_caps.get("SHEEP"),
+                herd_cap=active_caps.get("HERD"),
+                town_shops=town_shops,
+                market_inventory=market_inv,
             )
             requested_herd_size = sum(raw_targets.values())
             dynamic_targets = dict(raw_targets)
@@ -701,54 +917,189 @@ class MacroPlanner:
                     dynamic_targets[an] -= reduce_by
                     excess -= reduce_by
             final_feed_capped_herd_size = min(requested_herd_size, sustainable)
-
-        # Purchase affordable animals if empty pasture exists or is being built
-        # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
-        # Stage 8B C4: Cap animal purchases and pasture construction on or after C4_LIVESTOCK_CUTOFF_DAY
-        needed_new_pastures = 0
-        if not is_endgame and allow_livestock:
-            # Queue PASTURE construction if needed to reach targets or house owned animals
-            # Only pasture species (COW + SHEEP) count toward target_pastures
             target_pastures = max(
                 dynamic_targets.get("COW", 0) + dynamic_targets.get("SHEEP", 0),
                 counts.get("COW", 0) + counts.get("SHEEP", 0)
             )
-            # Correction 1: existing_pastures already includes empty pastures.
-            # Do NOT subtract existing_empty_pastures again.
             needed_new_pastures = max(0, target_pastures - existing_pastures)
 
-            existing_structs = existing_pastures + len(reserved_structure_tiles)
-            while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and positive_pasture_cands:
-                cand_info = positive_pasture_cands.pop(0)
-                cand_pos = cand_info["pos"]
-                reserved_structure_tiles.append((cand_pos, "BUILD_PASTURE"))
-                existing_structs += 1
+        # Proactive infrastructure reservation (All Arms):
+        # Enqueue near-shed pastures up to target_pastures (capped at 2 in queue, verified economically positive)
+        existing_structs = existing_pastures + len(reserved_structure_tiles)
+        while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and positive_pasture_cands:
+            cand_info = positive_pasture_cands.pop(0)
+            cand_pos = cand_info["pos"]
+            reserved_structure_tiles.append((cand_pos, "BUILD_PASTURE"))
+            existing_structs += 1
 
-            # Purchase affordable animals up to total available housing (existing + queued today)
-            total_pastures = existing_pastures + len(reserved_structure_tiles)
-            animals_owned_or_buying = sum(counts.values()) + sum(buy_animal.values())
-            housing_available = max(0, total_pastures - animals_owned_or_buying)
+        total_pastures = existing_pastures + len(reserved_structure_tiles)
 
-            for animal in ("SHEEP", "COW", "GOOSE"):
-                target = dynamic_targets.get(animal, 0)
-                info = ANIMALS[animal]
-                struct_kind = info["structure"]
-                free_struct = [pos for pos, k in structures_empty.items() if k == struct_kind]
-                while (housing_available > 0 and (counts.get(animal, 0) + buy_animal.get(animal, 0) < target)) or (animal == "GOOSE" and free_struct):
-                    total_now = sum(counts.values()) + sum(buy_animal.values())
-                    if total_now >= sustainable:
+        # Purchase affordable animals if empty pasture exists or is being built
+        # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
+        # Stage 8B C4: Cap animal purchases and pasture construction on or after C4_LIVESTOCK_CUTOFF_DAY
+        if not is_endgame and allow_livestock:
+            if LIVESTOCK_EXPERIMENT_ARM == "ArmC":
+                # Arm C: Fully dynamic shop-conditioned live purchase execution with transactional shadow state
+                shadow_counts = dict(counts)
+                shadow_cash = float(cash_for_animals)
+                shadow_buy_animal = {}
+                shadow_structures_empty = dict(structures_empty)
+
+                base_orders = 4  # conservative reserve for hire, land, seeds, wheat
+                consecutive_eval_seq = []
+
+                while True:
+                    total_herd = sum(shadow_counts.values()) + sum(shadow_buy_animal.values())
+                    eff_cap = min(active_caps.get("HERD", 20), int(max_pastures), max(0, int(sustainable)))
+                    if total_herd >= eff_cap:
                         break
-                    if feeding_days_left > 0 and (total_now + 1) * feeding_days_left > projected_feed_supply:
+                    if feeding_days_left > 0 and (total_herd + 1) * feeding_days_left > projected_feed_supply:
                         break
-                    if cash_for_animals >= info["cost"]:
-                        buy_animal[animal] = buy_animal.get(animal, 0) + 1
-                        cash_for_animals -= info["cost"]
-                        if free_struct:
-                            del structures_empty[free_struct[0]]
-                            free_struct.pop(0)
-                        housing_available = max(0, housing_available - 1)
+                    if day > 14:
+                        break
+                    if day in (3, 4, 5):
+                        # Protect NE unlock and early workforce ramp
+                        break
+
+                    threshold = 500.0 if day >= 12 else 0.0
+
+                    cands_eval = {}
+                    current_herd_combined = {
+                        sp: shadow_counts.get(sp, 0) + shadow_buy_animal.get(sp, 0)
+                        for sp in ("COW", "SHEEP", "GOOSE")
+                    }
+                    pasture_herd = current_herd_combined.get("COW", 0) + current_herd_combined.get("SHEEP", 0)
+
+                    for sp in ("COW", "SHEEP", "GOOSE"):
+                        curr_sp = current_herd_combined.get(sp, 0)
+                        if sp == "COW" and curr_sp >= active_caps.get("COW", 19):
+                            continue
+                        if sp == "SHEEP" and curr_sp >= active_caps.get("SHEEP", 12):
+                            continue
+                        if sp == "GOOSE" and curr_sp >= 20:
+                            continue
+
+                        # Strict Housing Check
+                        if sp in ("COW", "SHEEP"):
+                            if day >= 12:
+                                # Day 12–14 selective purchases: physically built + currently empty + unreserved housing only;
+                                # planned/queued/future housing gives zero late-purchase credit.
+                                physically_available = existing_pastures - pasture_herd
+                                if physically_available <= 0:
+                                    continue
+                            else:
+                                # Before Day 12: use existing production housing rules (existing + queued)
+                                if pasture_herd >= total_pastures:
+                                    continue
+                        else:  # GOOSE
+                            free_coop = [p for p, k in shadow_structures_empty.items() if k == "COOP"]
+                            if not free_coop:
+                                continue
+
+                        cost = ANIMALS[sp]["cost"]
+                        feed_reserve = 25.0 * max(
+                            0, min(FEED_WHEAT_BUFFER_DAYS, days_left) * (total_herd + 1) - wheat_have
+                        )
+                        if shadow_cash < (cost + feed_reserve):
+                            continue
+
+                        eval_res = estimate_realized_marginal_animal_value(
+                            species=sp,
+                            day=day,
+                            current_animals=current_herd_combined,
+                            empty_pastures=max(0, existing_pastures - pasture_herd),
+                            town_shops=town_shops,
+                            market_inventory=market_inv
+                        )
+                        cands_eval[sp] = {
+                            "eval": eval_res,
+                            "cost": cost,
+                            "feed_reserve": feed_reserve,
+                        }
+
+                    if not cands_eval:
+                        break
+
+                    best_sp = max(cands_eval.keys(), key=lambda s: cands_eval[s]["eval"]["net_realized_value"])
+                    best_cand = cands_eval[best_sp]
+                    best_val = best_cand["eval"]["net_realized_value"]
+                    curr_num = current_herd_combined.get(best_sp, 0) + 1
+
+                    if best_val < threshold:
+                        consecutive_eval_seq.append(f"{best_sp} #{curr_num}: ${best_val:.0f} -> STOP (threshold ${threshold:.0f})")
+                        _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=None, reason=f"below_threshold_{best_val:.0f}<{threshold:.0f}")
+                        break
+
+                    new_buy_animal = dict(shadow_buy_animal)
+                    new_buy_animal[best_sp] = new_buy_animal.get(best_sp, 0) + 1
+                    if (base_orders + len(new_buy_animal)) > 9:
+                        consecutive_eval_seq.append(f"{best_sp} #{curr_num}: ${best_val:.0f} -> STOP (order cap)")
+                        _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=None, reason="order_cap_reached")
+                        break
+
+                    # ACCEPTED: Update transactional shadow state
+                    consecutive_eval_seq.append(f"{best_sp} #{curr_num}: +${best_val:.0f}")
+                    _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=best_sp, reason="accepted")
+
+                    shadow_buy_animal[best_sp] = shadow_buy_animal.get(best_sp, 0) + 1
+                    shadow_cash -= best_cand["cost"]
+                    if best_sp in ("COW", "SHEEP"):
+                        free_p = [p for p, k in shadow_structures_empty.items() if k == "PASTURE"]
+                        if free_p:
+                            del shadow_structures_empty[free_p[0]]
+                    elif best_sp == "GOOSE":
+                        free_c = [p for p, k in shadow_structures_empty.items() if k == "COOP"]
+                        if free_c:
+                            del shadow_structures_empty[free_c[0]]
+
+                buy_animal = shadow_buy_animal
+                cash_for_animals = shadow_cash
+                dynamic_targets = {
+                    sp: counts.get(sp, 0) + buy_animal.get(sp, 0)
+                    for sp in ("COW", "SHEEP", "GOOSE")
+                }
+                if consecutive_eval_seq:
+                    plan.notes.append(f"ArmC sequence: {'; '.join(consecutive_eval_seq)}")
+            else:
+                # Arm A & Arm B: target-oriented structure
+                animals_owned_or_buying = sum(counts.values()) + sum(buy_animal.values())
+                housing_available = max(0, total_pastures - animals_owned_or_buying)
+
+                if LIVESTOCK_EXPERIMENT_ARM == "ArmB":
+                    eval_c = estimate_realized_marginal_animal_value("COW", day, counts, town_shops=town_shops, market_inventory=market_inv)
+                    eval_s = estimate_realized_marginal_animal_value("SHEEP", day, counts, town_shops=town_shops, market_inventory=market_inv)
+                    if eval_c["net_realized_value"] > eval_s["net_realized_value"]:
+                        species_order = ("COW", "SHEEP", "GOOSE")
                     else:
-                        break
+                        species_order = ("SHEEP", "COW", "GOOSE")
+                else:
+                    species_order = sorted(
+                        ["COW", "SHEEP"],
+                        key=lambda an: (dynamic_targets.get(an, 0) - counts.get(an, 0), 1 if an == "COW" else 0),
+                        reverse=True
+                    ) + ["GOOSE"] if use_override else ("SHEEP", "COW", "GOOSE")
+
+                for animal in species_order:
+                    target = dynamic_targets.get(animal, 0)
+                    info = ANIMALS[animal]
+                    struct_kind = info["structure"]
+                    free_struct = [pos for pos, k in structures_empty.items() if k == struct_kind]
+                    while (housing_available > 0 and (counts.get(animal, 0) + buy_animal.get(animal, 0) < target)) or (animal == "GOOSE" and free_struct):
+                        total_now = sum(counts.values()) + sum(buy_animal.values())
+                        if total_now >= sustainable:
+                            break
+                        if feeding_days_left > 0 and (total_now + 1) * feeding_days_left > projected_feed_supply:
+                            break
+                        if cash_for_animals >= info["cost"]:
+                            buy_animal[animal] = buy_animal.get(animal, 0) + 1
+                            cash_for_animals -= info["cost"]
+                            if free_struct:
+                                del structures_empty[free_struct[0]]
+                                free_struct.pop(0)
+                            housing_available = max(0, housing_available - 1)
+                        else:
+                            break
+
 
             # Maintain feed wheat buffer
             total_animals_planned = sum(counts.values()) + sum(buy_animal.values())
@@ -893,39 +1244,33 @@ class MacroPlanner:
                 ow_factor = opportunity_window_factor(next_quadrant, day)
                 adjusted_roi = land_roi * ow_factor
 
-                # Labor serviceability check
-                worker_count = 1 + (len(farm.hands) if hasattr(farm, "hands") else 0)
+                # Labor serviceability check (Fix 1: compute_projected_workers)
+                try:
+                    from strategy.land_serviceability_model import compute_projected_workers
+                    worker_count = compute_projected_workers(farm, day, money=money, hour=hour)
+                except Exception:
+                    worker_count = 1 + (len(farm.hands) if hasattr(farm, "hands") else 0)
                 current_active_tiles = 0
                 if hasattr(farm, "iter_tiles"):
                     current_active_tiles = sum(
                         1 for t in farm.iter_tiles()
                         if getattr(t, "is_plant", False) or getattr(t, "is_animal", False)
                     )
-                baseline_labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
-
-                if next_quadrant == 3:
-                    try:
-                        from strategy.land_serviceability_model import evaluate_sw_serviceability
-                        labor_adequate, _, _ = evaluate_sw_serviceability(
-                            day, farm, money, self.fc, target_quadrant=3
-                        )
-                    except Exception:
-                        labor_adequate = baseline_labor_adequate
-                else:
-                    labor_adequate = baseline_labor_adequate
+                labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
 
                 # Compute urgency for deadline tracking (does NOT gate or loosen purchases)
-                target_land_price = LAND_PRICES[n_extra_unlocked] if n_extra_unlocked < len(LAND_PRICES) else 0
                 sw_urgency, _, _ = compute_land_urgency(
-                    day, next_quadrant, money, target_land_price, self.fc
-                )
+                    next_quadrant, day, money, farm)
 
+                # Separate persistent land capital protection from deadline urgency
+                protection_start_day = 5 if next_quadrant == 2 else (7 if next_quadrant == 3 else 999)
                 is_early_ne = (next_quadrant == 2 and 3 <= day <= 6 and money >= 1000)
                 land_capital_protection_active = (
                     next_quadrant is not None
+                    and day >= protection_start_day
                     and day <= LAND_BUY_LAST_DAY
                     and (adjusted_roi > 0.0 or is_early_ne)
-                    and baseline_labor_adequate
+                    and labor_adequate
                     and next_quadrant not in _qhb
                 )
 
@@ -948,7 +1293,10 @@ class MacroPlanner:
                     actual_feed_shortfall_units=feed_shortfall_units,
                     urgency=sw_urgency,
                     treasury_protection_active=land_capital_protection_active,
-                    is_purchase_hour=(hour == 0),
+                    is_purchase_hour=True,
+                    already_committed_seed_cost=0.0,
+                    private=private,
+                    hour=hour,
                 )
                 if buy_land:
                     land_cost = LAND_PRICES[n_extra_unlocked]
@@ -1055,60 +1403,173 @@ class MacroPlanner:
                 # ---- SW Quadrant Dedicated Soil Planting Engine ----
                 # Whitelist: strictly WHEAT (D9-24) or CARROT (D25-27), 0 strawberries/melons/tomatoes
                 if "SW" in farm.unlocked:
-                    sw_soil_empty = [p for p in empty_tiles if p in SW_SOIL_TILES]
-                    empty_tiles = [p for p in empty_tiles if p not in SW_SOIL_TILES]
-                    if sw_soil_empty:
-                        from strategy.land_serviceability_model import (
-                            get_sorted_sw_soil_tiles,
-                            evaluate_sw_serviceability,
+                    try:
+                        from config import SW_ACTIVATION_MODE
+                    except Exception:
+                        SW_ACTIVATION_MODE = "production"
+
+                    if SW_ACTIVATION_MODE == "progressive":
+                        from strategy.land_serviceability_model import compute_progressive_sw_activation
+
+                        # Authoritative crop evaluation closure (Single Source of Truth)
+                        def crop_eval_cb(tile_pos, d):
+                            chosen = evaluate_dynamic_sw_crop_choice(
+                                day=d,
+                                wheat_have=wheat_have,
+                                n_animals=n_animals,
+                                forecast=self.fc,
+                                boosts=boosts,
+                                committed_counts=committed_counts,
+                                opp_advice=opp_advice,
+                            )
+                            c_cost = CROPS[chosen]["seed"]
+                            return chosen, 100.0, c_cost
+
+                        worker_pos = {0: tuple(getattr(farm, "farmer", (4, 4)))}
+                        if hasattr(farm, "hands"):
+                            for i_h, h in enumerate(farm.hands):
+                                worker_pos[i_h + 1] = tuple(h)
+
+                        activated_sw_tiles, prog_diag = compute_progressive_sw_activation(
+                            farm=farm,
+                            day=day,
+                            money=remaining_money,
+                            worker_positions=worker_pos,
+                            crop_eval_func=crop_eval_cb,
+                            horizon_turns=48,
+                            safety_margin_fraction=0.15,
+                            hour=hour,
+                            private=private,
                         )
-                        sorted_order = get_sorted_sw_soil_tiles()
-                        sw_soil_empty.sort(key=lambda p: sorted_order.index(p) if p in sorted_order else 999)
+                        plan.diagnostics["sw_progressive_activation"] = prog_diag
+                        plan.diagnostics["sw_tile_rejections"] = prog_diag.get("rejections", {})
+                        plan.diagnostics["sw_tile_rejection_counts"] = prog_diag.get("rejection_counts", {})
 
-                        _, best_k, _ = evaluate_sw_serviceability(day, farm, money, self.fc, target_quadrant=3)
-                        active_sw_soil = sw_soil_empty[:best_k]
+                        # Remove all SW empty tiles from general empty_tiles pool
+                        empty_tiles = [p for p in empty_tiles if farm.quadrant_of(p) != "SW"]
 
-                        sw_dec = sw_plant_decision(day, len(active_sw_soil), wheat_have, n_animals, max_tiles=best_k)
-                        sw_wheat = sw_dec.get("WHEAT", 0)
-                        sw_carrot = sw_dec.get("CARROT", 0)
-
-                        # Plant SW wheat
-                        for pos in active_sw_soil[:sw_wheat]:
-                            seed_cost = CROPS["WHEAT"]["seed"]
-                            if seeds.get("WHEAT", 0) > 0:
-                                seeds["WHEAT"] -= 1
+                        for pos in activated_sw_tiles:
+                            chosen_crop = evaluate_dynamic_sw_crop_choice(
+                                day=day,
+                                wheat_have=wheat_have,
+                                n_animals=n_animals,
+                                forecast=self.fc,
+                                boosts=boosts,
+                                committed_counts=committed_counts,
+                                opp_advice=opp_advice,
+                            )
+                            seed_cost = CROPS[chosen_crop]["seed"]
+                            if seeds.get(chosen_crop, 0) > 0:
+                                seeds[chosen_crop] -= 1
+                                plant_queue.append((pos, chosen_crop))
+                                planned[chosen_crop] = planned.get(chosen_crop, 0) + 1
+                                committed_counts[chosen_crop] = committed_counts.get(chosen_crop, 0) + 1
+                                if chosen_crop == "WHEAT":
+                                    wheat_have += 4
                             elif remaining_money >= seed_cost:
-                                buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + 1
+                                # Incremental seed demand: buy seeds first, queue planting once seeds arrive
+                                buy_seed[chosen_crop] = buy_seed.get(chosen_crop, 0) + 1
                                 remaining_money -= seed_cost
                             else:
                                 continue
-                            plant_queue.append((pos, "WHEAT"))
-                            planned["WHEAT"] = planned.get("WHEAT", 0) + 1
-                            committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
+                    else:
+                        # Discrete or Production SW activation
+                        sw_soil_empty = [p for p in empty_tiles if p in SW_SOIL_TILES]
+                        empty_tiles = [p for p in empty_tiles if p not in SW_SOIL_TILES]
+                        if sw_soil_empty:
+                            from strategy.land_serviceability_model import (
+                                get_sorted_sw_soil_tiles,
+                                evaluate_sw_serviceability,
+                            )
+                            sorted_order = get_sorted_sw_soil_tiles()
+                            sw_soil_empty.sort(key=lambda p: sorted_order.index(p) if p in sorted_order else 999)
 
-                        # Plant SW carrot (Carrot Blitz)
-                        for pos in active_sw_soil[sw_wheat:sw_wheat + sw_carrot]:
-                            seed_cost = CROPS["CARROT"]["seed"]
-                            if seeds.get("CARROT", 0) > 0:
-                                seeds["CARROT"] -= 1
-                            elif remaining_money >= seed_cost:
-                                buy_seed["CARROT"] = buy_seed.get("CARROT", 0) + 1
-                                remaining_money -= seed_cost
+                            _, best_k, _ = evaluate_sw_serviceability(day, farm, money, self.fc, target_quadrant=3)
+                            active_sw_soil = sw_soil_empty[:best_k]
+
+                            try:
+                                from config import DYNAMIC_SW_CROPS_ENABLED
+                                use_dyn_crops = DYNAMIC_SW_CROPS_ENABLED
+                            except Exception:
+                                use_dyn_crops = False
+
+                            if not use_dyn_crops:
+                                # Baseline exact 588b3f1 behavior
+                                sw_dec = sw_plant_decision(day, len(active_sw_soil), wheat_have, n_animals, max_tiles=best_k)
+                                sw_wheat = sw_dec.get("WHEAT", 0)
+                                sw_carrot = sw_dec.get("CARROT", 0)
+
+                                # Plant SW wheat
+                                for pos in active_sw_soil[:sw_wheat]:
+                                    seed_cost = CROPS["WHEAT"]["seed"]
+                                    if seeds.get("WHEAT", 0) > 0:
+                                        seeds["WHEAT"] -= 1
+                                    elif remaining_money >= seed_cost:
+                                        buy_seed["WHEAT"] = buy_seed.get("WHEAT", 0) + 1
+                                        remaining_money -= seed_cost
+                                    else:
+                                        continue
+                                    plant_queue.append((pos, "WHEAT"))
+                                    planned["WHEAT"] = planned.get("WHEAT", 0) + 1
+                                    committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
+
+                                # Plant SW carrot (Carrot Blitz)
+                                for pos in active_sw_soil[sw_wheat:sw_wheat + sw_carrot]:
+                                    seed_cost = CROPS["CARROT"]["seed"]
+                                    if seeds.get("CARROT", 0) > 0:
+                                        seeds["CARROT"] -= 1
+                                    elif remaining_money >= seed_cost:
+                                        buy_seed["CARROT"] = buy_seed.get("CARROT", 0) + 1
+                                        remaining_money -= seed_cost
+                                    else:
+                                        continue
+                                    plant_queue.append((pos, "CARROT"))
+                                    planned["CARROT"] = planned.get("CARROT", 0) + 1
+                                    committed_counts["CARROT"] = committed_counts.get("CARROT", 0) + 1
                             else:
-                                continue
-                            plant_queue.append((pos, "CARROT"))
-                            planned["CARROT"] = planned.get("CARROT", 0) + 1
-                            committed_counts["CARROT"] = committed_counts.get("CARROT", 0) + 1
+                                # Dynamic Authoritative SW Crop Evaluator
+                                for pos in active_sw_soil:
+                                    chosen_crop = evaluate_dynamic_sw_crop_choice(
+                                        day=day,
+                                        wheat_have=wheat_have,
+                                        n_animals=n_animals,
+                                        forecast=self.fc,
+                                        boosts=boosts,
+                                        committed_counts=committed_counts,
+                                        opp_advice=opp_advice,
+                                    )
+                                    seed_cost = CROPS[chosen_crop]["seed"]
+                                    if seeds.get(chosen_crop, 0) > 0:
+                                        seeds[chosen_crop] -= 1
+                                    elif remaining_money >= seed_cost:
+                                        buy_seed[chosen_crop] = buy_seed.get(chosen_crop, 0) + 1
+                                        remaining_money -= seed_cost
+                                    else:
+                                        continue
+                                    plant_queue.append((pos, chosen_crop))
+                                    planned[chosen_crop] = planned.get(chosen_crop, 0) + 1
+                                    committed_counts[chosen_crop] = committed_counts.get(chosen_crop, 0) + 1
+                                    if chosen_crop == "WHEAT":
+                                        wheat_have += 4
 
                 existing_wheat = committed_counts.get("WHEAT", 0)
                 # Continuous wheat replanting engine (Leader-Calibrated: 8/20/30 active wheat tiles)
                 # Days 6-9: Retain wheat target at 8 even if NE is unlocked
                 # Days 10-13: Retain wheat target at 20 even if SW is unlocked (n_quads=3), preserving tiles for Strawberry and Melon waves
                 n_quads = len(farm.unlocked)
-                quadrant_wheat_target = (
-                    8 if (n_quads == 1 or day <= 9)
-                    else (20 if (n_quads == 2 or day <= 13) else 30)
-                )
+                try:
+                    from config import STRATEGIC_SW_OWNERSHIP_ENABLED
+                    strategic_sw = STRATEGIC_SW_OWNERSHIP_ENABLED
+                except Exception:
+                    strategic_sw = False
+
+                if strategic_sw:
+                    quadrant_wheat_target = 8 if (n_quads == 1 or day <= 9) else 20
+                else:
+                    quadrant_wheat_target = (
+                        8 if (n_quads == 1 or day <= 9)
+                        else (20 if (n_quads == 2 or day <= 13) else 30)
+                    )
                 wheat_cap = min(len(empty_tiles) + existing_wheat, quadrant_wheat_target)
                 wheat_needed = max(0, wheat_cap - existing_wheat)
                 wheat_to_plant = min(wheat_needed, len(empty_tiles))

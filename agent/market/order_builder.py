@@ -81,12 +81,17 @@ class OrderBuilder:
             farm = ctx.get("farm")
             private = ctx.get("private")
 
-            physical_empty_pastures = 0
-            if farm:
-                for t in farm.iter_tiles():
-                    if t.kind == "PASTURE" and not t.is_animal:
-                        if not hasattr(farm, "unlocked") or not hasattr(farm, "quadrant_of") or farm.quadrant_of(t.pos) in farm.unlocked:
-                            physical_empty_pastures += 1
+            def _pasture_free(t):
+                t_kind = t.get("kind") if isinstance(t, dict) else getattr(t, "kind", "")
+                t_anim = t.get("is_animal") if isinstance(t, dict) else getattr(t, "is_animal", False)
+                if t_kind != "PASTURE" or t_anim:
+                    return False
+                if hasattr(farm, "unlocked") and hasattr(farm, "quadrant_of"):
+                    t_pos = tuple(t.get("pos")) if isinstance(t, dict) else tuple(t.pos)
+                    return farm.quadrant_of(t_pos) in farm.unlocked
+                return True
+
+            physical_empty_pastures = sum(1 for t in farm.iter_tiles() if _pasture_free(t)) if farm else 0
 
             shed_large = 0
             carried_large = 0
@@ -147,10 +152,40 @@ class OrderBuilder:
             return orders, ledger
 
         return self.build(ctx, {
-            "buy_animal": intents["buy_animal"],
+            "buy_animal": intents.get("buy_animal", {}),
             "buy_wheat": intents.get("buy_wheat", 0),
             "pending_structures": intents.get("pending_structures", {}),
         }, max_slots=max_slots)
+
+    def build_intraday(self, ctx, intents, max_slots=MAX_MARKET_ORDERS):
+        """Intraday market turn order compilation (hours 2-18).
+
+        Evaluates strictly in authoritative priority tier order:
+        1. survival / mandatory debt (survival feed wheat)
+        2. committed hires / feed / seeds (incremental seed demand)
+        3. safely profitable SW land (BUY_LAND if authorized)
+        4. discretionary livestock reinvestment (with SW shadow capital protection)
+
+        Does not repeat morning hires (hire=0).
+        """
+        # Determine permitted livestock under housing checks
+        capped_animal = intents.get("buy_animal", {})
+        if ctx["day"] >= C4_LIVESTOCK_CUTOFF_DAY:
+            _anim_orders, _anim_ledger = self.reinvest_livestock(ctx, intents, max_slots=max_slots)
+            if _anim_ledger and "queued" in _anim_ledger and isinstance(_anim_ledger["queued"], dict):
+                capped_animal = _anim_ledger["queued"].get("animal", {})
+            else:
+                capped_animal = {}
+
+        intents_intraday = {
+            "hire": 0,
+            "buy_wheat": intents.get("buy_wheat", 0),
+            "buy_land": bool(intents.get("buy_land", False)),
+            "buy_seed": intents.get("buy_seed", {}),
+            "buy_animal": capped_animal,
+            "pending_structures": intents.get("pending_structures", {}),
+        }
+        return self.build(ctx, intents_intraday, max_slots=max_slots)
 
     # ------------------------------------------------------------------
     def build(self, ctx, intents, max_slots=MAX_MARKET_ORDERS):
@@ -267,18 +302,44 @@ class OrderBuilder:
                     ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": "budget"})
 
         # Discretionary Tier: Animals
+        # Near-term SW protection: protect SW land capital ($2000) from discretionary animals
+        # ONLY when SW is currently affordable or conservatively reachable near-term.
+        sw_shadow_reserve = 0.0
+        discretionary_livestock_suppressed = False
+        try:
+            from config import SW_OWNERSHIP_MODE, LAND_BUY_LAST_DAY
+            use_experiment_sw = (SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic"))
+        except Exception:
+            use_experiment_sw = False
+            LAND_BUY_LAST_DAY = 18
+
+        if use_experiment_sw and "SW" not in farm.unlocked and not any(t[1] == "land" for t in kept) and 7 <= ctx.get("day", 0) <= LAND_BUY_LAST_DAY:
+            try:
+                from strategy.expansion_planner import compute_conservative_inflows_before_hire
+                inflows_24h = compute_conservative_inflows_before_hire(farm, ctx.get("private"))
+            except Exception:
+                inflows_24h = 0.0
+            near_term_obligations = mandatory_hire_budget + survival_feed_budget + self.reserve
+            if (money + inflows_24h) >= 2000.0 + near_term_obligations:
+                sw_shadow_reserve = 2000.0
+
         claimed_structures = {}
         for animal, k_anim in sorted(intents.get("buy_animal", {}).items()):
             k_anim = int(k_anim)
             if k_anim > 0 and animal in ANIMALS:
                 struct_type = ANIMALS[animal]["structure"]
                 pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
-                free_structures = sum(
-                    1 for t in farm.iter_tiles()
-                    if t.kind == struct_type and not t.is_animal and (
-                        not hasattr(farm, "unlocked") or not hasattr(farm, "quadrant_of") or farm.quadrant_of(t.pos) in farm.unlocked
-                    )
-                ) + pending_structures
+                def _tile_free(t):
+                    t_kind = t.get("kind") if isinstance(t, dict) else getattr(t, "kind", "")
+                    t_anim = t.get("is_animal") if isinstance(t, dict) else getattr(t, "is_animal", False)
+                    if t_kind != struct_type or t_anim:
+                        return False
+                    if hasattr(farm, "unlocked") and hasattr(farm, "quadrant_of"):
+                        t_pos = tuple(t.get("pos")) if isinstance(t, dict) else tuple(t.pos)
+                        return farm.quadrant_of(t_pos) in farm.unlocked
+                    return True
+
+                free_structures = sum(1 for t in farm.iter_tiles() if _tile_free(t)) + pending_structures
                 matching_animals = [a for a, info in ANIMALS.items() if info["structure"] == struct_type]
                 animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
                 claimed = claimed_structures.get(struct_type, 0)
@@ -293,8 +354,11 @@ class OrderBuilder:
                     continue
 
                 unit = ANIMALS[animal]["cost"]
-                n_max = int(remaining_discretionary // unit)
+                animal_discretionary = max(0.0, remaining_discretionary - sw_shadow_reserve)
+                n_max = int(animal_discretionary // unit)
                 actual_buy = min(room_limited, n_max)
+                if actual_buy < room_limited and sw_shadow_reserve > 0:
+                    discretionary_livestock_suppressed = True
                 if actual_buy > 0:
                     claimed_structures[struct_type] = claimed + actual_buy
                     remaining_shed_room = max(0, remaining_shed_room - actual_buy)
@@ -304,9 +368,15 @@ class OrderBuilder:
                         ledger["dropped"].append({
                             "kind": "animal", "animal": animal,
                             "trimmed_from": room_limited, "to": actual_buy,
+                            "reason": "sw_capital_protected" if sw_shadow_reserve > 0 else "budget",
                         })
                 else:
-                    ledger["dropped"].append({"kind": "animal", "animal": animal, "reason": "budget"})
+                    ledger["dropped"].append({
+                        "kind": "animal", "animal": animal,
+                        "reason": "sw_capital_protected" if (sw_shadow_reserve > 0 and int(remaining_discretionary // unit) > 0) else "budget"
+                    })
+
+        ledger["discretionary_livestock_suppressed_for_sw"] = discretionary_livestock_suppressed
 
         # ---- emit engine-format orders, honoring optional max_slots cap -----
         orders = []

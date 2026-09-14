@@ -13,6 +13,7 @@ Core invariants:
     not a competing planting system.
   - Land decision = economic ROI + time-window urgency + treasury feasibility.
 """
+import math
 from config import (
     CROPS,
     LAND_ORDER,
@@ -448,6 +449,28 @@ def compute_land_urgency(next_quadrant, current_day, money, farm,
     }
 
 
+def compute_conservative_inflows_before_hire(farm, private=None) -> float:
+    """Compute conservative cash inflows from shed inventory before tomorrow morning's hiring."""
+    shed = {}
+    if private is not None and hasattr(private, "shed") and isinstance(private.shed, dict):
+        shed = private.shed
+    elif hasattr(farm, "shed") and isinstance(farm.shed, dict):
+        shed = farm.shed
+    elif hasattr(farm, "private") and hasattr(farm.private, "shed"):
+        shed = farm.private.shed
+
+    base_prices = {
+        "MILK": 160.0, "WOOL": 200.0, "EGG": 50.0,
+        "STRAWBERRY": 120.0, "MELON": 250.0, "TOMATO": 60.0,
+        "CARROT": 35.0, "WHEAT": 25.0, "FERTILIZER": 100.0,
+    }
+    val = 0.0
+    for prod, cnt in shed.items():
+        if prod in base_prices and isinstance(cnt, (int, float)) and cnt > 0:
+            val += cnt * base_prices[prod] * 0.8  # conservative 80% market price factor
+    return val
+
+
 # ---------------------------------------------------------------------------
 # Purchase gate (non-negotiable treasury safety & dynamic economic gate)
 # ---------------------------------------------------------------------------
@@ -461,7 +484,10 @@ def should_buy_land(next_quadrant, current_day, money, farm,
                     wheat_on_hand=0, projected_wheat_requirement=0,
                     actual_feed_shortfall_units=0, urgency=0.0,
                     treasury_protection_active=False,
-                    is_purchase_hour=True):
+                    is_purchase_hour=True,
+                    already_committed_seed_cost=0.0,
+                    private=None,
+                    hour=0):
     """Determine if land should be purchased TODAY via dynamic economic gates.
 
     Requirements:
@@ -481,21 +507,48 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     if next_quadrant in _qhb:
         return False, "hard_blocked", {}
 
+    try:
+        from config import (
+            SW_OWNERSHIP_MODE,
+            SW_TIMING_PRIOR_ENABLED,
+            SW_SAFETY_RESERVE,
+            STRATEGIC_SW_OWNERSHIP_ENABLED,
+        )
+    except Exception:
+        SW_OWNERSHIP_MODE = "production"
+        SW_TIMING_PRIOR_ENABLED = False
+        SW_SAFETY_RESERVE = 300.0
+        STRATEGIC_SW_OWNERSHIP_ENABLED = False
+
     unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
     if next_quadrant == 3:
+        if SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic") or STRATEGIC_SW_OWNERSHIP_ENABLED:
+            unlock_day = 7
         try:
             from config import SW_DELAYED_UNLOCK_DAY
             if SW_DELAYED_UNLOCK_DAY is not None:
                 unlock_day = max(unlock_day, SW_DELAYED_UNLOCK_DAY)
         except Exception:
             pass
-    if current_day < unlock_day:
-        return False, f"before_day_{unlock_day}", {}
 
     n_extra = len(farm.unlocked) - 1
     if n_extra >= len(LAND_PRICES):
         return False, "all_unlocked", {}
     land_price = LAND_PRICES[n_extra]
+
+    if current_day < unlock_day:
+        diag = {
+            "day": current_day,
+            "next_quadrant": next_quadrant,
+            "money": round(float(money), 2),
+            "land_price": land_price,
+            "blocking_treasury_term": f"before_day_{unlock_day}",
+            "projected_post_buy_cash": round(float(money) - land_price, 2),
+            "mandatory_near_term_obligations": 0.0,
+            "post_sw_cash_minus_obligations": round(float(money) - land_price, 2),
+            "final_rejection_or_acceptance_reason": f"before_day_{unlock_day}",
+        }
+        return False, f"before_day_{unlock_day}", diag
 
     # Seed tranche cost — use dynamic targets if available, accounting for seeds already owned
     targets = expansion_seed_targets(next_quadrant, current_day, money)
@@ -516,11 +569,11 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         elif hasattr(seeds_owned, "get"):
             try:
                 val = seeds_owned.get(c, 0)
-                have = int(val) if isinstance(val, (int, float, str)) else 0
+                have = val if isinstance(val, (int, float)) else 0
             except Exception:
                 have = 0
-        needed = max(0, n - have)
-        seed_cost += CROPS[c]["seed"] * needed
+        diff = max(0, n - have)
+        seed_cost += CROPS[c]["seed"] * diff
 
     # Mandatory commitments: hires + actual unavoidable survival feed shortfall
     # Discretionary planned animals are excluded from mandatory commitments before land
@@ -540,14 +593,17 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     adjusted_roi = roi * ow_factor
 
     # Incremental support costs and explicit payback calculation:
-    # expected_remaining_profit_from_SW = marginal_revenue_gain = (1.0 + roi) * land_price
-    # incremental_support_costs = seed_cost
     incremental_support_costs = seed_cost
     expected_remaining_profit = (1.0 + roi) * land_price
     payback_surplus = expected_remaining_profit - (land_price + incremental_support_costs)
 
-    # Operational/labor serviceability check
-    worker_count = 1 + (len(farm.hands) if hasattr(farm, "hands") else 0)
+    # Operational/labor serviceability check (Fix 1: compute_projected_workers)
+    try:
+        from strategy.land_serviceability_model import compute_projected_workers
+        worker_count = compute_projected_workers(farm, current_day, money=money, hour=hour)
+    except Exception:
+        worker_count = 1 + (len(farm.hands) if hasattr(farm, "hands") else 0)
+
     current_active_tiles = 0
     if hasattr(farm, "iter_tiles"):
         for t in farm.iter_tiles():
@@ -560,11 +616,11 @@ def should_buy_land(next_quadrant, current_day, money, farm,
 
     best_k = 15
     sw_serv_diag = {}
-    if next_quadrant == 3 and is_purchase_hour:
+    if next_quadrant == 3:
         try:
             from strategy.land_serviceability_model import evaluate_sw_serviceability
             labor_adequate, best_k, sw_serv_diag = evaluate_sw_serviceability(
-                current_day, farm, money, forecast, target_quadrant=3
+                current_day, farm, money, forecast, target_quadrant=3, hour=hour, allow_hypothetical=True
             )
         except Exception:
             labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
@@ -626,6 +682,134 @@ def should_buy_land(next_quadrant, current_day, money, farm,
             diag["final_rejection_or_acceptance_reason"] = reason
             return True, reason, diag
 
+    # =========================================================================
+    # Authoritative Liquidity Gate for SW Ownership (Arms B, C, D)
+    # =========================================================================
+    is_experiment_sw = (next_quadrant == 3 and SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic"))
+
+    if is_experiment_sw:
+        # 1. Unavoidable hire commitment: today's unfinished hire + tomorrow morning's shortfall
+        try:
+            from config import get_target_hands
+            from strategy.macro_planner import hire_total_cost
+            tomorrow_hands = get_target_hands(current_day + 1)
+            tomorrow_hire_cost = float(hire_total_cost(tomorrow_hands))
+        except Exception:
+            tomorrow_hire_cost = 54.0
+
+        conservative_inflow = compute_conservative_inflows_before_hire(farm, private)
+        tomorrow_hire_shortfall = max(0.0, tomorrow_hire_cost - conservative_inflow)
+        unavoidable_hire_commitment = float(hire_cost) + tomorrow_hire_shortfall
+
+        # 2. Unavoidable feed shortfall
+        unavoidable_feed_shortfall = float(feed_cost)
+
+        # 3. Already committed seed cost (actual obligations only, strictly excludes future SW seeds)
+        committed_seed_cost = float(already_committed_seed_cost)
+
+        # 4. Safety reserve (frozen at $300 across all arms)
+        safety_reserve = float(SW_SAFETY_RESERVE)
+
+        # 5. Mandatory near-term obligations & post-buy cash
+        mandatory_near_term_obligations = unavoidable_hire_commitment + unavoidable_feed_shortfall + committed_seed_cost
+        projected_post_buy_cash = float(money) - land_price
+        post_sw_cash_minus_obligations = projected_post_buy_cash - mandatory_near_term_obligations
+        total_required_cash = land_price + mandatory_near_term_obligations + safety_reserve
+
+        # 6. Authoritative Treasury Safety Model Test:
+        # cash - SW_cost >= unavoidable_next_hire_commitment + unavoidable_feed_shortfall + already_committed_seed_cost + safety_reserve
+        if post_sw_cash_minus_obligations < safety_reserve:
+            if money < land_price:
+                blocking_term = "insufficient_cash_for_land"
+            elif projected_post_buy_cash < unavoidable_hire_commitment:
+                blocking_term = "insufficient_cash_for_hires"
+            elif projected_post_buy_cash < unavoidable_hire_commitment + unavoidable_feed_shortfall:
+                blocking_term = "insufficient_cash_for_feed"
+            elif projected_post_buy_cash < mandatory_near_term_obligations:
+                blocking_term = "insufficient_cash_for_seed_commitments"
+            else:
+                blocking_term = "insufficient_cash_for_safety_reserve"
+
+            diag = dict(diag_base)
+            diag["blocking_treasury_term"] = blocking_term
+            diag["projected_post_buy_cash"] = round(projected_post_buy_cash, 2)
+            diag["mandatory_near_term_obligations"] = round(mandatory_near_term_obligations, 2)
+            diag["post_sw_cash_minus_obligations"] = round(post_sw_cash_minus_obligations, 2)
+            diag["final_rejection_or_acceptance_reason"] = blocking_term
+            return False, blocking_term, diag
+
+        # 7. Labor Serviceability Check
+        is_sw_serv = sw_serv_diag.get("is_serviceable", labor_adequate)
+        if not (labor_adequate or is_sw_serv):
+            reason = "insufficient_labor_capacity"
+            diag = dict(diag_base)
+            diag["blocking_treasury_term"] = None
+            diag["projected_post_buy_cash"] = round(projected_post_buy_cash, 2)
+            diag["mandatory_near_term_obligations"] = round(mandatory_near_term_obligations, 2)
+            diag["post_sw_cash_minus_obligations"] = round(post_sw_cash_minus_obligations, 2)
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return False, reason, diag
+
+        # 8. Clean C vs D Economic Evaluation:
+        economic_value = payback_surplus
+        if SW_TIMING_PRIOR_ENABLED:  # Arm C: Dusta-informed prior
+            # Modest soft urgency bonus centered on Days 8-9 (peak at Day 8.5)
+            timing_prior = 250.0 * math.exp(-((current_day - 8.5) ** 2) / (2.0 * (1.0 ** 2)))
+            land_score = economic_value + timing_prior
+            economic_ok = (land_score > 0.0) and (adjusted_roi > -0.05)
+        else:  # Arm D / Arm B: Pure economics
+            timing_prior = 0.0
+            land_score = economic_value
+            economic_ok = (adjusted_roi > 0.0) and (economic_value > 0.0)
+
+        if not economic_ok:
+            reason = f"economic_score_{land_score:.0f}_non_positive"
+            diag = dict(diag_base)
+            diag["blocking_treasury_term"] = None
+            diag["land_score"] = round(land_score, 2)
+            diag["timing_prior"] = round(timing_prior, 2)
+            diag["projected_post_buy_cash"] = round(projected_post_buy_cash, 2)
+            diag["mandatory_near_term_obligations"] = round(mandatory_near_term_obligations, 2)
+            diag["post_sw_cash_minus_obligations"] = round(post_sw_cash_minus_obligations, 2)
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return False, reason, diag
+
+        # All treasury safety and economic criteria cleared!
+        reason = "sw_authorized_early_liquidity"
+        diag = dict(diag_base)
+        diag["blocking_treasury_term"] = None
+        diag["land_score"] = round(land_score, 2)
+        diag["timing_prior"] = round(timing_prior, 2)
+        diag["projected_post_buy_cash"] = round(projected_post_buy_cash, 2)
+        diag["mandatory_near_term_obligations"] = round(mandatory_near_term_obligations, 2)
+        diag["post_sw_cash_minus_obligations"] = round(post_sw_cash_minus_obligations, 2)
+        diag["final_rejection_or_acceptance_reason"] = reason
+        return True, reason, diag
+
+    # Legacy / Strategic SW Ownership fallback (if SW_OWNERSHIP_MODE == "production" and STRATEGIC_SW_OWNERSHIP_ENABLED)
+    if STRATEGIC_SW_OWNERSHIP_ENABLED and next_quadrant == 3 and 9 <= current_day <= 14:
+        mandatory_commitments = float(hire_cost) + float(feed_cost) + float(seed_cost) + float(planned_animal_cost) + 150.0
+        cash_after_land = money - land_price
+        if cash_after_land < mandatory_commitments:
+            shortfall = mandatory_commitments - cash_after_land
+            reason = f"strategic_sw_liquidity_short_{shortfall:.0f}"
+            diag = dict(diag_base)
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return False, reason, diag
+
+        is_sw_serv = sw_serv_diag.get("is_serviceable", labor_adequate)
+        if labor_adequate or is_sw_serv:
+            reason = "strategic_sw_ownership_cleared"
+            diag = dict(diag_base)
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return True, reason, diag
+        else:
+            reason = "insufficient_labor_capacity"
+            diag = dict(diag_base)
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return False, reason, diag
+
+    # Standard Production Policy (Arm A)
     # 1. Adjusted ROI must clear threshold (> 0.0)
     if adjusted_roi <= 0:
         reason = f"adjusted_roi_{adjusted_roi:.2f}_non_positive"
@@ -634,7 +818,6 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         return False, reason, diag
 
     # 2. Economic payback test:
-    # expected_remaining_profit_from_SW must exceed land_price + incremental_support_costs
     if payback_surplus <= 0:
         reason = f"insufficient_payback_{payback_surplus:.0f}"
         diag = dict(diag_base)

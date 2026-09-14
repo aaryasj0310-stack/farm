@@ -607,9 +607,12 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
                 limit = builder_max_slots if builder_max_slots is not None else hires_needed
                 for _ in range(min(hires_needed, limit)):
                     purchase_orders.append(["HIRE"])
+            if plan is not None and plan.intents.get("buy_land"):
+                if builder_max_slots is None or len(purchase_orders) < builder_max_slots:
+                    purchase_orders.append(["BUY_LAND"])
         else:
             if plan is not None:
-                purchase_orders, _ledger = builder.reinvest_livestock(ctx, plan.intents, max_slots=builder_max_slots)
+                purchase_orders, _ledger = builder.build_intraday(ctx, plan.intents, max_slots=builder_max_slots)
     except Exception:
         purchase_orders = []
         _ledger = None
@@ -689,6 +692,46 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         o[0] == "BUY_PRODUCT" and len(o) > 1 and o[1] == "WHEAT" for o in market
     )
 
+    farm_ctx = ctx["farm"]
+    day_val = ctx.get("day", 0)
+    hour_val = ctx.get("hour", 0)
+    cash_val = float(farm_ctx.money)
+    sw_cost_val = 2000.0
+
+    try:
+        from strategy.land_serviceability_model import compute_projected_workers
+        projected_workers_val = compute_projected_workers(farm_ctx, day_val, money=cash_val, hour=hour_val)
+    except Exception:
+        projected_workers_val = 1 + len(farm_ctx.hands)
+
+    sw_bought_this_turn = land_selected and (len(farm_ctx.unlocked) == 2 or ("SW" not in farm_ctx.unlocked and "NE" in farm_ctx.unlocked))
+    sw_diag = (plan.diagnostics.get("land_decision", {}) if plan and hasattr(plan, "diagnostics") else {})
+    sw_affordable = False
+    if sw_diag and sw_diag.get("next_quadrant") == 3:
+        sw_affordable = bool(sw_diag.get("post_sw_cash_minus_obligations", -999.0) >= sw_diag.get("reserve", 300.0))
+    elif cash_val >= sw_cost_val + 300.0:
+        sw_affordable = True
+
+    active_sw_target_tiles = 0
+    if plan and hasattr(plan, "diagnostics") and "sw_progressive_activation" in plan.diagnostics:
+        active_sw_target_tiles = plan.diagnostics["sw_progressive_activation"].get("total_active_target", 0)
+
+    sw_planted_tiles = 0
+    if hasattr(farm_ctx, "iter_tiles") and hasattr(farm_ctx, "quadrant_of"):
+        for t in farm_ctx.iter_tiles():
+            pos = tuple(t.pos) if hasattr(t, "pos") else (tuple(t.get("pos")) if isinstance(t, dict) and "pos" in t else (0, 0))
+            if farm_ctx.quadrant_of(pos) == "SW":
+                if getattr(t, "is_plant", False) or (isinstance(t, dict) and (t.get("is_plant") or t.get("plant"))):
+                    sw_planted_tiles += 1
+
+    discretionary_livestock_suppressed_for_sw = False
+    if _ledger and _ledger.get("discretionary_livestock_suppressed_for_sw"):
+        discretionary_livestock_suppressed_for_sw = True
+
+    reason_sw_not_bought = None
+    if cash_val >= sw_cost_val and "SW" not in farm_ctx.unlocked and not sw_bought_this_turn:
+        reason_sw_not_bought = sw_diag.get("final_rejection_or_acceptance_reason", "not_attempted")
+
     _LAST_TURN_TELEMETRY = {
         "step": ctx.get("step", 0),
         "day": ctx.get("day", 0),
@@ -709,9 +752,31 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         "land_selected": land_selected,
         "critical_wheat_proposed": critical_wheat_proposed,
         "critical_wheat_selected": critical_wheat_selected,
+        "projected_workers": projected_workers_val,
+        "sw_cost": sw_cost_val,
+        "sw_affordable": sw_affordable,
+        "sw_bought_this_turn": sw_bought_this_turn,
+        "active_sw_target_tiles": active_sw_target_tiles,
+        "sw_planted_tiles": sw_planted_tiles,
+        "discretionary_livestock_suppressed_for_sw": discretionary_livestock_suppressed_for_sw,
+        "reason_sw_not_bought": reason_sw_not_bought,
+        "sw_telemetry": {
+            "day": day_val,
+            "hour": hour_val,
+            "cash": cash_val,
+            "projected_workers": projected_workers_val,
+            "sw_cost": sw_cost_val,
+            "sw_affordable": sw_affordable,
+            "sw_bought_this_turn": sw_bought_this_turn,
+            "active_sw_target_tiles": active_sw_target_tiles,
+            "sw_planted_tiles": sw_planted_tiles,
+            "discretionary_livestock_suppressed_for_sw": discretionary_livestock_suppressed_for_sw,
+            "reason_sw_not_bought": reason_sw_not_bought,
+        },
         "wheat_telemetry": copy.deepcopy(_cp_diag.get("wheat_telemetry")) if (_cp_diag and "wheat_telemetry" in _cp_diag) else None,
         "sell_telemetry": copy.deepcopy(_cp_diag.get("sell_telemetry")) if (_cp_diag and "sell_telemetry" in _cp_diag) else None,
         "central_planner_diagnostic": copy.deepcopy(_cp_diag) if _cp_diag else None,
+        "macro_plan_diagnostic": copy.deepcopy(plan.diagnostics) if plan and hasattr(plan, "diagnostics") else None,
     }
 
     # 6. Action dict assembly
