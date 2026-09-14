@@ -50,7 +50,10 @@ except ImportError:
     from state.observation_parser import parse_observation
 
 try:
-    from config import QUADRANT_HARD_BLOCK, get_target_hands
+    from config import (
+        QUADRANT_HARD_BLOCK, get_target_hands,
+        set_opponent_intelligence_mode, get_opponent_intelligence_mode,
+    )
     from strategy.price_forecast import PriceForecast
     from strategy.macro_planner import MacroPlanner
     from strategy.endgame_liquidator import EndgameLiquidator
@@ -72,7 +75,10 @@ try:
         compute_opponent_sell_probabilities,
     )
 except ImportError:
-    from config import QUADRANT_HARD_BLOCK, get_target_hands
+    from config import (
+        QUADRANT_HARD_BLOCK, get_target_hands,
+        set_opponent_intelligence_mode, get_opponent_intelligence_mode,
+    )
     from price_forecast import PriceForecast
     from macro_planner import MacroPlanner
     from endgame_liquidator import EndgameLiquidator
@@ -133,6 +139,23 @@ def reset_opponent_model_state():
         "last_failure_step": None,
         "is_degraded": False,
     }
+    try:
+        from strategy.shadow_forecast import reset_shadow_forecaster
+        reset_shadow_forecaster()
+    except Exception:
+        pass
+
+
+def reset_agent_state():
+    """Reset module-level singletons and persistent state between matches."""
+    global _FC, _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR, _CENTRAL_PLANNER
+    _FC = None
+    _PLANNER = None
+    _BUILDER = None
+    _BRAIN = None
+    _LIQUIDATOR = None
+    _CENTRAL_PLANNER = None
+    reset_opponent_model_state()
 
 
 try:
@@ -243,9 +266,126 @@ def _build_opp_advice(ctx, mem):
     Returns OpponentAdvice (always safe — empty advice on any missing data).
     """
     try:
+        try:
+            from config import OPPONENT_INTELLIGENCE_MODE
+        except Exception:
+            OPPONENT_INTELLIGENCE_MODE = "O1"
+
+        # A0: Zero opponent advice (equivalent to O0)
+        if OPPONENT_INTELLIGENCE_MODE in ("O0", "A0"):
+            return OpponentAdvice()
+
         opp_farm = ctx.get("opponent_farm")
         if opp_farm is None:
             return OpponentAdvice()
+
+        # Shadow Forecasting (telemetry only)
+        try:
+            from config import SHADOW_OPPONENT_FORECAST_ENABLED
+            if SHADOW_OPPONENT_FORECAST_ENABLED or OPPONENT_INTELLIGENCE_MODE in ("O0_SHADOW", "O1_SHADOW", "A3", "A4"):
+                from strategy.shadow_forecast import get_shadow_forecaster
+                get_shadow_forecaster().update(opp_farm, ctx, mem)
+        except Exception:
+            pass
+
+        # O0_SHADOW: exact O0 behavior for live strategy (empty advice), shadow telemetry ran above
+        if OPPONENT_INTELLIGENCE_MODE == "O0_SHADOW":
+            return OpponentAdvice()
+
+        # A1: Directly observed commitments only (counter_pick from observed farm tiles/boosts)
+        if OPPONENT_INTELLIGENCE_MODE == "A1":
+            try:
+                town_obj = ctx.get("town")
+                unlocked_shops = getattr(town_obj, "unlocked_shops", None) or (town_obj.get("unlocked_shops", []) if isinstance(town_obj, dict) else [])
+                boosts = demand_boosts(unlocked_shops or [])
+                opp_products = set()
+                for t in opp_farm.iter_tiles():
+                    if t.is_plant:
+                        opp_products.add(t.crop)
+                    elif t.is_animal and t.animal in ANIMALS:
+                        opp_products.add(ANIMALS[t.animal]["product"])
+                counter_pick = [p for p in boosts if p not in opp_products and p in CROPS]
+                return OpponentAdvice(counter_pick=counter_pick)
+            except Exception:
+                return OpponentAdvice()
+
+        # A2: High-confidence recent inferred sales only (rolling 4-turn market sales -> delay_sell)
+        if OPPONENT_INTELLIGENCE_MODE == "A2":
+            try:
+                from strategy.repaired_opponent_advisor import compute_delay_sell_repaired
+                priv = ctx.get("private", {})
+                our_shed = priv.shed if hasattr(priv, "shed") else (priv.get("shed", {}) if isinstance(priv, dict) else {})
+                delayed = compute_delay_sell_repaired(mem, our_shed, ctx, max_steps=4)
+                return OpponentAdvice(delay_sell=delayed)
+            except Exception:
+                return OpponentAdvice()
+
+        # A3: Repaired forward production forecasts only (lifecycle schedules -> supply_adjustment)
+        if OPPONENT_INTELLIGENCE_MODE == "A3":
+            try:
+                from strategy.shadow_forecast import get_shadow_forecaster
+                forecaster = get_shadow_forecaster()
+                if forecaster.last_step != ctx.get("step", 0):
+                    forecaster.update(opp_farm, ctx, mem)
+                day = ctx.get("day", 0)
+                base_sched = forecaster.last_telemetry.get("production_forecast", {})
+                supply_adj = {}
+                from strategy.repaired_opponent_advisor import SUPPLY_PROJECTION_DAYS, SUPPLY_ADJUSTMENT_WEIGHT
+                horizon = day + SUPPLY_PROJECTION_DAYS
+                for prod, sched in base_sched.items():
+                    tot = sum(units for d, units in sched.items() if day <= d <= horizon)
+                    if tot > 0:
+                        supply_adj[prod] = round(tot * SUPPLY_ADJUSTMENT_WEIGHT, 4)
+                return OpponentAdvice(supply_adjustment=supply_adj)
+            except Exception:
+                return OpponentAdvice()
+
+        # A4: High-confidence inventory bounds only (Milk, Wool, Egg bounds where coverage >= 90%)
+        if OPPONENT_INTELLIGENCE_MODE == "A4":
+            try:
+                from strategy.shadow_forecast import get_shadow_forecaster
+                forecaster = get_shadow_forecaster()
+                if forecaster.last_step != ctx.get("step", 0):
+                    forecaster.update(opp_farm, ctx, mem)
+                shed_b = forecaster.last_telemetry.get("shed_bounds", {})
+                hi_stock_sum = sum(shed_b[p][1] for p in ("MILK", "WOOL", "EGG") if p in shed_b)
+                shed_pressure = hi_stock_sum / 50.0
+                return OpponentAdvice(opp_shed_pressure=shed_pressure)
+            except Exception:
+                return OpponentAdvice()
+
+        # If O1R mode active: generate repaired advice
+        if OPPONENT_INTELLIGENCE_MODE == "O1R":
+            try:
+                from strategy.shadow_forecast import get_shadow_forecaster
+                from strategy.repaired_opponent_advisor import build_repaired_opponent_advice
+                forecaster = get_shadow_forecaster()
+                if forecaster.last_step != ctx.get("step", 0):
+                    forecaster.update(opp_farm, ctx, mem)
+
+                town_obj = ctx.get("town")
+                unlocked_shops = getattr(town_obj, "unlocked_shops", None)
+                if unlocked_shops is None and isinstance(town_obj, dict):
+                    unlocked_shops = town_obj.get("unlocked_shops", [])
+                boosts = demand_boosts(unlocked_shops or [])
+
+                rep_advice = build_repaired_opponent_advice(
+                    opp_farm=opp_farm,
+                    inventory_tracking=forecaster.last_telemetry,
+                    repaired_forecast=forecaster.last_telemetry,
+                    ctx=ctx,
+                    mem=mem,
+                    boosts=boosts,
+                )
+                return OpponentAdvice(
+                    supply_adjustment=rep_advice.supply_adjustment,
+                    preempt_sell=rep_advice.preempt_sell,
+                    delay_sell=rep_advice.delay_sell,
+                    counter_pick=rep_advice.counter_pick,
+                    opp_shed_pressure=rep_advice.opp_shed_pressure,
+                )
+            except Exception:
+                pass
 
         # Phase 1: snapshot and detect deltas
         global _prev_opp_snapshot, _estimated_shed

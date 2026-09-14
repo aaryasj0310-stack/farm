@@ -114,12 +114,19 @@ except ImportError:
     from task_scheduler import get_sw_tile_breakdown
 
 try:
-    from strategy.marginal_livestock_valuator import estimate_realized_marginal_animal_value
+    from strategy.marginal_livestock_valuator import (
+        estimate_realized_marginal_animal_value,
+        select_guarded_livestock_candidate,
+    )
 except ImportError:
     try:
-        from marginal_livestock_valuator import estimate_realized_marginal_animal_value
+        from marginal_livestock_valuator import (
+            estimate_realized_marginal_animal_value,
+            select_guarded_livestock_candidate,
+        )
     except ImportError:
         estimate_realized_marginal_animal_value = None
+        select_guarded_livestock_candidate = None
 
 # ---------------------------------------------------------------------------
 # Asset economics — imported from authoritative baked_economics artifact.
@@ -158,7 +165,7 @@ def clear_livestock_decision_logs() -> None:
     _LIVESTOCK_DECISION_LOGS = []
 
 
-def _log_livestock_decision(day: int, hour: int, town_shops: list, current_herd: dict, cands_eval: dict, selected: Optional[str], reason: str) -> None:
+def _log_livestock_decision(day: int, hour: int, town_shops: list, current_herd: dict, cands_eval: dict, selected: Optional[str], reason: str, guard_diag: Optional[dict] = None) -> None:
     record = {
         "day": int(day),
         "hour": int(hour),
@@ -166,6 +173,7 @@ def _log_livestock_decision(day: int, hour: int, town_shops: list, current_herd:
         "current_herd": dict(current_herd),
         "selected_species": selected,
         "decision_reason": reason,
+        "guard_diag": guard_diag,
         "candidates": {},
     }
     for sp, data in cands_eval.items():
@@ -679,6 +687,24 @@ class MacroPlanner:
         if market_obj:
             market_inv = dict(getattr(market_obj, "inventory", None) or (market_obj.get("inventory", {}) if isinstance(market_obj, dict) else {}))
 
+        opp_farm = ctx.get("opponent_farm")
+        opp_livestock_supply = None
+        opp_stress_supply = None
+        guard_threshold = 0.15
+        try:
+            from config import LIVESTOCK_VALUATION_MODE, get_livestock_guard_threshold
+            guard_threshold = get_livestock_guard_threshold()
+            if opp_farm is not None:
+                if LIVESTOCK_VALUATION_MODE == "L1":
+                    from strategy.marginal_livestock_valuator import derive_opponent_committed_livestock_supply
+                    opp_livestock_supply = derive_opponent_committed_livestock_supply(opp_farm, day, scenario="BASE")
+                elif LIVESTOCK_VALUATION_MODE in ("L2", "L2A", "L2B", "L2C"):
+                    from strategy.marginal_livestock_valuator import derive_opponent_committed_livestock_stress_capacity
+                    opp_stress_supply = derive_opponent_committed_livestock_stress_capacity(opp_farm, day)
+        except Exception:
+            opp_livestock_supply = None
+            opp_stress_supply = None
+
         # ---------------- phase gating ---------------------------------
         is_endgame = day >= ENDGAME_START_DAY
         if is_endgame:
@@ -867,6 +893,9 @@ class MacroPlanner:
                     active_caps=active_caps,
                     crop_opportunity_val=crop_opp_val,
                     horizon_days=4,
+                    opponent_committed_supplies=opp_livestock_supply,
+                    opponent_stress_supplies=opp_stress_supply,
+                    guard_threshold=guard_threshold,
                 )
                 target_pastures = max(
                     herd_plan.required_pastures,
@@ -1041,43 +1070,78 @@ class MacroPlanner:
                         if shadow_cash < (cost + feed_reserve):
                             continue
 
+                        opp_cand_supply = (
+                            opp_livestock_supply.get(ANIMALS[sp]["product"])
+                            if opp_livestock_supply else None
+                        )
                         eval_res = estimate_realized_marginal_animal_value(
                             species=sp,
                             day=day,
                             current_animals=current_herd_combined,
                             empty_pastures=max(0, existing_pastures - pasture_herd),
                             town_shops=town_shops,
-                            market_inventory=market_inv
+                            market_inventory=market_inv,
+                            opponent_committed_supply=opp_cand_supply,
                         )
                         cands_eval[sp] = {
                             "eval": eval_res,
                             "cost": cost,
                             "feed_reserve": feed_reserve,
                         }
+                        if opp_stress_supply is not None:
+                            opp_cand_stress = opp_stress_supply.get(ANIMALS[sp]["product"])
+                            eval_stress = estimate_realized_marginal_animal_value(
+                                species=sp,
+                                day=day,
+                                current_animals=current_herd_combined,
+                                empty_pastures=max(0, existing_pastures - pasture_herd),
+                                town_shops=town_shops,
+                                market_inventory=market_inv,
+                                opponent_committed_supply=opp_cand_stress,
+                            )
+                            cands_eval[sp]["stress_eval"] = eval_stress
 
                     if not cands_eval:
                         break
 
-                    best_sp = max(cands_eval.keys(), key=lambda s: cands_eval[s]["eval"]["net_realized_value"])
-                    best_cand = cands_eval[best_sp]
-                    best_val = best_cand["eval"]["net_realized_value"]
+                    guard_diag = None
+                    if opp_stress_supply is not None and select_guarded_livestock_candidate is not None:
+                        base_evals = {s: cands_eval[s]["eval"] for s in cands_eval}
+                        stress_evals = {s: cands_eval[s]["stress_eval"] for s in cands_eval}
+                        best_sp, chosen_eval, guard_diag = select_guarded_livestock_candidate(
+                            base_evals, stress_evals, guard_threshold=guard_threshold
+                        )
+                        best_cand = cands_eval[best_sp]
+                        best_val = chosen_eval["net_realized_value"]
+                        if guard_diag.get("switched"):
+                            consecutive_eval_seq.append(
+                                f"[GUARD_SWITCH: {guard_diag['baseline_best']}->{best_sp} gap={guard_diag.get('baseline_gap', 0.0):.1f}%]"
+                            )
+                    else:
+                        best_sp = max(cands_eval.keys(), key=lambda s: cands_eval[s]["eval"]["net_realized_value"])
+                        best_cand = cands_eval[best_sp]
+                        best_val = best_cand["eval"]["net_realized_value"]
+
                     curr_num = current_herd_combined.get(best_sp, 0) + 1
 
                     if best_val < threshold:
                         consecutive_eval_seq.append(f"{best_sp} #{curr_num}: ${best_val:.0f} -> STOP (threshold ${threshold:.0f})")
-                        _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=None, reason=f"below_threshold_{best_val:.0f}<{threshold:.0f}")
+                        _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=None, reason=f"below_threshold_{best_val:.0f}<{threshold:.0f}", guard_diag=guard_diag)
                         break
 
                     new_buy_animal = dict(shadow_buy_animal)
                     new_buy_animal[best_sp] = new_buy_animal.get(best_sp, 0) + 1
                     if (base_orders + len(new_buy_animal)) > 9:
                         consecutive_eval_seq.append(f"{best_sp} #{curr_num}: ${best_val:.0f} -> STOP (order cap)")
-                        _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=None, reason="order_cap_reached")
+                        _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=None, reason="order_cap_reached", guard_diag=guard_diag)
                         break
 
                     # ACCEPTED: Update transactional shadow state
                     consecutive_eval_seq.append(f"{best_sp} #{curr_num}: +${best_val:.0f}")
-                    _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=best_sp, reason="accepted")
+                    accept_reason = "accepted"
+                    if guard_diag and guard_diag.get("switched"):
+                        accept_reason = f"accepted_guard_switch_{guard_diag['baseline_best']}_to_{best_sp}"
+                    _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=best_sp, reason=accept_reason, guard_diag=guard_diag)
 
                     shadow_buy_animal[best_sp] = shadow_buy_animal.get(best_sp, 0) + 1
                     shadow_cash -= best_cand["cost"]
@@ -1104,12 +1168,31 @@ class MacroPlanner:
                 housing_available = max(0, total_pastures - animals_owned_or_buying)
 
                 if LIVESTOCK_EXPERIMENT_ARM == "ArmB":
-                    eval_c = estimate_realized_marginal_animal_value("COW", day, counts, town_shops=town_shops, market_inventory=market_inv)
-                    eval_s = estimate_realized_marginal_animal_value("SHEEP", day, counts, town_shops=town_shops, market_inventory=market_inv)
-                    if eval_c["net_realized_value"] > eval_s["net_realized_value"]:
-                        species_order = ("COW", "SHEEP", "GOOSE")
+                    if opp_stress_supply is not None and select_guarded_livestock_candidate is not None:
+                        opp_m_stress = opp_stress_supply.get("MILK")
+                        opp_w_stress = opp_stress_supply.get("WOOL")
+                        base_c = estimate_realized_marginal_animal_value("COW", day, counts, town_shops=town_shops, market_inventory=market_inv)
+                        base_s = estimate_realized_marginal_animal_value("SHEEP", day, counts, town_shops=town_shops, market_inventory=market_inv)
+                        stress_c = estimate_realized_marginal_animal_value("COW", day, counts, town_shops=town_shops, market_inventory=market_inv, opponent_committed_supply=opp_m_stress)
+                        stress_s = estimate_realized_marginal_animal_value("SHEEP", day, counts, town_shops=town_shops, market_inventory=market_inv, opponent_committed_supply=opp_w_stress)
+                        best_sp, _, _ = select_guarded_livestock_candidate(
+                            {"COW": base_c, "SHEEP": base_s},
+                            {"COW": stress_c, "SHEEP": stress_s},
+                            guard_threshold=guard_threshold,
+                        )
+                        if best_sp == "COW":
+                            species_order = ("COW", "SHEEP", "GOOSE")
+                        else:
+                            species_order = ("SHEEP", "COW", "GOOSE")
                     else:
-                        species_order = ("SHEEP", "COW", "GOOSE")
+                        opp_m = opp_livestock_supply.get("MILK") if opp_livestock_supply else None
+                        opp_w = opp_livestock_supply.get("WOOL") if opp_livestock_supply else None
+                        eval_c = estimate_realized_marginal_animal_value("COW", day, counts, town_shops=town_shops, market_inventory=market_inv, opponent_committed_supply=opp_m)
+                        eval_s = estimate_realized_marginal_animal_value("SHEEP", day, counts, town_shops=town_shops, market_inventory=market_inv, opponent_committed_supply=opp_w)
+                        if eval_c["net_realized_value"] > eval_s["net_realized_value"]:
+                            species_order = ("COW", "SHEEP", "GOOSE")
+                        else:
+                            species_order = ("SHEEP", "COW", "GOOSE")
                 else:
                     species_order = sorted(
                         ["COW", "SHEEP"],

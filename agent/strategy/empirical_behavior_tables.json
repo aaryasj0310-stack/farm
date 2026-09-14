@@ -1,0 +1,4870 @@
+{
+  "metadata": {
+    "source_split": "calibration",
+    "games_count": 20,
+    "description": "Empirical hazard tables learned strictly from calibration split without future-leakage"
+  },
+  "collection_hazard_table": {
+    "MELON": {
+      "early": {
+        "0-4": 0.0024,
+        "5-12": 0.0012,
+        "13-24": 0.0008,
+        "25-48": 0.0004,
+        "49+": 0.0002
+      },
+      "mid": {
+        "49+": 0.0026,
+        "0-4": 0.0013,
+        "5-12": 0.0006,
+        "13-24": 0.0004,
+        "25-48": 0.0002
+      },
+      "late": {
+        "49+": 0.021,
+        "5-12": 0.0132,
+        "25-48": 0.0026,
+        "13-24": 0.0066,
+        "0-4": 0.025
+      },
+      "endgame": {
+        "49+": 0.0391
+      }
+    },
+    "WHEAT": {
+      "early": {
+        "0-4": 0.0009,
+        "5-12": 0.0005,
+        "13-24": 0.0003,
+        "25-48": 0.0002,
+        "49+": 0.0168
+      },
+      "mid": {
+        "0-4": 0.0002,
+        "49+": 0.0201,
+        "5-12": 0.0001,
+        "13-24": 0.0001,
+        "25-48": 0.0
+      },
+      "late": {
+        "49+": 0.022,
+        "25-48": 0.0,
+        "5-12": 0.0001,
+        "0-4": 0.0002,
+        "13-24": 0.0001
+      },
+      "endgame": {
+        "25-48": 0.0018,
+        "49+": 0.042
+      }
+    },
+    "WOOL": {
+      "mid": {
+        "0-4": 0.0362,
+        "5-12": 0.3022,
+        "13-24": 0.1333
+      },
+      "late": {
+        "0-4": 0.0186,
+        "5-12": 0.1969,
+        "13-24": 0.1747,
+        "25-48": 0.093
+      },
+      "endgame": {
+        "0-4": 0.0805,
+        "5-12": 0.1757,
+        "13-24": 0.1724,
+        "25-48": 0.0714
+      }
+    },
+    "MILK": {
+      "mid": {
+        "0-4": 0.0649,
+        "5-12": 0.3594,
+        "13-24": 0.1765
+      },
+      "late": {
+        "0-4": 0.0368,
+        "5-12": 0.1674,
+        "13-24": 0.1262,
+        "25-48": 0.0859,
+        "49+": 0.0638
+      },
+      "endgame": {
+        "13-24": 0.0744,
+        "0-4": 0.0705,
+        "25-48": 0.0811,
+        "5-12": 0.1872
+      }
+    },
+    "STRAWBERRY": {
+      "mid": {
+        "0-4": 0.0012,
+        "5-12": 0.0523,
+        "13-24": 0.2062,
+        "25-48": 0.0385
+      },
+      "late": {
+        "13-24": 0.1073,
+        "0-4": 0.0024,
+        "5-12": 0.0317,
+        "25-48": 0.0642,
+        "49+": 0.0414
+      },
+      "endgame": {
+        "0-4": 0.0132,
+        "5-12": 0.0864,
+        "13-24": 0.1017,
+        "25-48": 0.1176
+      }
+    },
+    "CARROT": {
+      "late": {
+        "0-4": 0.0003,
+        "5-12": 0.0002,
+        "13-24": 0.0001,
+        "25-48": 0.0001,
+        "49+": 0.0371
+      },
+      "endgame": {
+        "49+": 0.061,
+        "25-48": 0.0002
+      }
+    },
+    "EGG": {
+      "mid": {
+        "0-4": 0.0865,
+        "5-12": 0.1134,
+        "13-24": 0.1111
+      },
+      "late": {
+        "0-4": 0.0264,
+        "5-12": 0.1304,
+        "13-24": 0.1618,
+        "25-48": 0.0769
+      },
+      "endgame": {
+        "0-4": 0.0438,
+        "5-12": 0.1473,
+        "13-24": 0.1489
+      }
+    },
+    "TOMATO": {
+      "late": {
+        "0-4": 0.0014,
+        "5-12": 0.0007,
+        "13-24": 0.0005,
+        "25-48": 0.0618,
+        "49+": 0.0493
+      },
+      "endgame": {
+        "25-48": 0.0936,
+        "13-24": 0.0173,
+        "0-4": 0.0043,
+        "49+": 0.0566,
+        "5-12": 0.0233
+      }
+    }
+  },
+  "behavioral_manual_deposit_rate": 0.3137,
+  "conditional_sell_hazard": {
+    "WHEAT": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0033,
+              "False": 0.0038
+            },
+            "elevated": {
+              "False": 0.0278,
+              "True": 0.0526
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.0046,
+              "True": 0.0044
+            },
+            "elevated": {
+              "True": 0.0027,
+              "False": 0.0029
+            }
+          },
+          "5-10": {
+            "normal": {
+              "False": 0.0072,
+              "True": 0.0088
+            },
+            "elevated": {
+              "False": 0.0039,
+              "True": 0.0044
+            }
+          }
+        },
+        "mid": {
+          "21+": {
+            "elevated": {
+              "True": 0.5358,
+              "False": 0.5616
+            },
+            "normal": {
+              "True": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.0042,
+              "False": 0.0033
+            },
+            "normal": {
+              "True": 0.0031,
+              "False": 0.0033
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.0116,
+              "True": 0.0833
+            },
+            "normal": {
+              "False": 0.02,
+              "True": 0.0909
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.0479,
+              "False": 0.0129
+            },
+            "normal": {
+              "True": 0.7097
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "False": 0.0018,
+              "True": 0.0089
+            },
+            "normal": {
+              "False": 0.0089,
+              "True": 0.0439
+            }
+          }
+        },
+        "late": {
+          "21+": {
+            "elevated": {
+              "True": 0.4548,
+              "False": 0.3837
+            },
+            "normal": {
+              "True": 0.5,
+              "False": 0.4444
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.0023,
+              "True": 0.0033
+            },
+            "normal": {
+              "False": 0.0179,
+              "True": 0.0227
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.002,
+              "False": 0.0018
+            },
+            "normal": {
+              "True": 0.0213,
+              "False": 0.0182
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.0145,
+              "False": 0.0028
+            },
+            "normal": {
+              "True": 0.0143,
+              "False": 0.0141
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.0104,
+              "True": 0.0333
+            },
+            "normal": {
+              "False": 0.0556,
+              "True": 0.0769
+            }
+          }
+        },
+        "endgame": {
+          "21+": {
+            "elevated": {
+              "True": 0.3906
+            },
+            "normal": {
+              "True": 0.3158
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.0088,
+              "True": 0.01
+            },
+            "normal": {
+              "False": 0.0714,
+              "True": 0.0714
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.114,
+              "True": 0.1444
+            },
+            "normal": {
+              "False": 0.0741,
+              "True": 0.0702
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0606,
+              "False": 0.0312
+            },
+            "normal": {
+              "False": 0.0556,
+              "True": 0.0625
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.2941
+            },
+            "elevated": {
+              "True": 0.1875
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0033,
+              "False": 0.0038
+            },
+            "elevated": {
+              "False": 0.0278,
+              "True": 0.0526
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.0046,
+              "True": 0.0044
+            },
+            "elevated": {
+              "True": 0.0027,
+              "False": 0.0029
+            }
+          },
+          "5-10": {
+            "normal": {
+              "False": 0.0507,
+              "True": 0.0351
+            },
+            "elevated": {
+              "False": 0.1362,
+              "True": 0.0789
+            }
+          }
+        },
+        "mid": {
+          "21+": {
+            "elevated": {
+              "True": 0.886,
+              "False": 0.8886
+            },
+            "normal": {
+              "True": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.0678,
+              "False": 0.1867
+            },
+            "normal": {
+              "True": 0.0523,
+              "False": 0.1078
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.2907,
+              "True": 0.0833
+            },
+            "normal": {
+              "False": 0.02,
+              "True": 0.0909
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.5385,
+              "False": 0.6329
+            },
+            "normal": {
+              "True": 0.7097
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "False": 0.2291,
+              "True": 0.1406
+            },
+            "normal": {
+              "False": 0.1696,
+              "True": 0.1228
+            }
+          }
+        },
+        "late": {
+          "21+": {
+            "elevated": {
+              "True": 0.8203,
+              "False": 0.7724
+            },
+            "normal": {
+              "True": 0.7857,
+              "False": 0.6667
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.1881,
+              "True": 0.0033
+            },
+            "normal": {
+              "False": 0.1786,
+              "True": 0.0227
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0081,
+              "False": 0.1516
+            },
+            "normal": {
+              "True": 0.0213,
+              "False": 0.1273
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.1677,
+              "False": 0.3474
+            },
+            "normal": {
+              "True": 0.2429,
+              "False": 0.4507
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.1458,
+              "True": 0.0333
+            },
+            "normal": {
+              "False": 0.1111,
+              "True": 0.0769
+            }
+          }
+        },
+        "endgame": {
+          "21+": {
+            "elevated": {
+              "True": 0.8281
+            },
+            "normal": {
+              "True": 0.5263
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.1681,
+              "True": 0.01
+            },
+            "normal": {
+              "False": 0.0714,
+              "True": 0.0714
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.3728,
+              "True": 0.3529
+            },
+            "normal": {
+              "False": 0.2444,
+              "True": 0.2456
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0909,
+              "False": 0.2188
+            },
+            "normal": {
+              "False": 0.1667,
+              "True": 0.0625
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3529
+            },
+            "elevated": {
+              "True": 0.3125
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0033,
+              "False": 0.0038
+            },
+            "elevated": {
+              "False": 0.0278,
+              "True": 0.0526
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.0046,
+              "True": 0.0044
+            },
+            "elevated": {
+              "True": 0.0027,
+              "False": 0.0029
+            }
+          },
+          "5-10": {
+            "normal": {
+              "False": 0.0942,
+              "True": 0.0877
+            },
+            "elevated": {
+              "False": 0.2685,
+              "True": 0.2281
+            }
+          }
+        },
+        "mid": {
+          "21+": {
+            "elevated": {
+              "True": 0.9318,
+              "False": 0.9282
+            },
+            "normal": {
+              "True": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.1949,
+              "False": 0.2833
+            },
+            "normal": {
+              "True": 0.1508,
+              "False": 0.2124
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.3953,
+              "True": 0.0833
+            },
+            "normal": {
+              "False": 0.02,
+              "True": 0.0909
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.7128,
+              "False": 0.7923
+            },
+            "normal": {
+              "True": 0.7097
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "False": 0.3908,
+              "True": 0.3132
+            },
+            "normal": {
+              "False": 0.3304,
+              "True": 0.2807
+            }
+          }
+        },
+        "late": {
+          "21+": {
+            "elevated": {
+              "True": 0.8963,
+              "False": 0.8671
+            },
+            "normal": {
+              "True": 0.7857,
+              "False": 0.6667
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.25,
+              "True": 0.0828
+            },
+            "normal": {
+              "False": 0.2143,
+              "True": 0.0682
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.1748,
+              "False": 0.2996
+            },
+            "normal": {
+              "True": 0.1489,
+              "False": 0.2364
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.3872,
+              "False": 0.5427
+            },
+            "normal": {
+              "True": 0.4714,
+              "False": 0.6761
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.1458,
+              "True": 0.0333
+            },
+            "normal": {
+              "False": 0.1111,
+              "True": 0.0769
+            }
+          }
+        },
+        "endgame": {
+          "21+": {
+            "elevated": {
+              "True": 0.8281
+            },
+            "normal": {
+              "True": 0.5263
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.3274,
+              "True": 0.19
+            },
+            "normal": {
+              "False": 0.0714,
+              "True": 0.0714
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.4956,
+              "True": 0.5134
+            },
+            "normal": {
+              "False": 0.437,
+              "True": 0.4474
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.2727,
+              "False": 0.4062
+            },
+            "normal": {
+              "False": 0.2778,
+              "True": 0.1875
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3529
+            },
+            "elevated": {
+              "True": 0.3125
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0033,
+              "False": 0.0152
+            },
+            "elevated": {
+              "False": 0.5,
+              "True": 0.0526
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.0463,
+              "True": 0.0708
+            },
+            "elevated": {
+              "True": 0.2312,
+              "False": 0.149
+            }
+          },
+          "5-10": {
+            "normal": {
+              "False": 0.1812,
+              "True": 0.1667
+            },
+            "elevated": {
+              "False": 0.5331,
+              "True": 0.4518
+            }
+          }
+        },
+        "mid": {
+          "21+": {
+            "elevated": {
+              "True": 0.9824,
+              "False": 0.9795
+            },
+            "normal": {
+              "True": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.8008,
+              "False": 0.8267
+            },
+            "normal": {
+              "True": 0.7692,
+              "False": 0.7451
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.8256,
+              "True": 0.25
+            },
+            "normal": {
+              "False": 0.66,
+              "True": 0.1818
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.9744,
+              "False": 0.9791
+            },
+            "normal": {
+              "True": 0.7097
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "False": 0.9094,
+              "True": 0.879
+            },
+            "normal": {
+              "False": 0.625,
+              "True": 0.5439
+            }
+          }
+        },
+        "late": {
+          "21+": {
+            "elevated": {
+              "True": 0.9867,
+              "False": 0.985
+            },
+            "normal": {
+              "True": 0.7857,
+              "False": 0.6667
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.8853,
+              "True": 0.8344
+            },
+            "normal": {
+              "False": 0.5536,
+              "True": 0.4318
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.8537,
+              "False": 0.8664
+            },
+            "normal": {
+              "True": 0.5532,
+              "False": 0.5636
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.8913,
+              "False": 0.9052
+            },
+            "normal": {
+              "True": 0.8143,
+              "False": 0.8732
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.7188,
+              "True": 0.5
+            },
+            "normal": {
+              "False": 0.2222,
+              "True": 0.1538
+            }
+          }
+        },
+        "endgame": {
+          "21+": {
+            "elevated": {
+              "True": 0.8281
+            },
+            "normal": {
+              "True": 0.5263
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.9204,
+              "True": 0.91
+            },
+            "normal": {
+              "False": 0.3571,
+              "True": 0.3571
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.7544,
+              "True": 0.7861
+            },
+            "normal": {
+              "False": 0.6889,
+              "True": 0.7281
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.6667,
+              "False": 0.7188
+            },
+            "normal": {
+              "False": 0.5,
+              "True": 0.4375
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3529
+            },
+            "elevated": {
+              "True": 0.3125
+            }
+          }
+        }
+      }
+    },
+    "CARROT": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0005,
+              "False": 0.0005
+            },
+            "elevated": {
+              "True": 0.0022,
+              "False": 0.0022
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0014,
+              "False": 0.0014
+            },
+            "elevated": {
+              "True": 0.0005,
+              "False": 0.0011
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.1,
+              "True": 0.0417
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0286,
+              "False": 0.0556
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "False": 0.0606,
+              "True": 0.0159
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.0052,
+              "False": 0.0722
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "normal": {
+              "True": 0.0294,
+              "False": 0.0541
+            },
+            "elevated": {
+              "False": 0.124,
+              "True": 0.05
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.4336,
+              "False": 0.3474
+            },
+            "normal": {
+              "True": 0.25,
+              "False": 0.1818
+            }
+          },
+          "21+": {
+            "elevated": {
+              "False": 0.5093,
+              "True": 0.4019
+            },
+            "normal": {
+              "False": 0.25,
+              "True": 0.1818
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.4545,
+              "False": 0.3889
+            },
+            "normal": {
+              "True": 0.1818
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.5161,
+              "False": 0.4231
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0005,
+              "False": 0.0005
+            },
+            "elevated": {
+              "True": 0.0022,
+              "False": 0.0022
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0014,
+              "False": 0.0014
+            },
+            "elevated": {
+              "True": 0.0021,
+              "False": 0.0016
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.2,
+              "True": 0.25
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0857,
+              "False": 0.0833
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "False": 0.0909,
+              "True": 0.0794
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.1399,
+              "False": 0.1392
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "normal": {
+              "True": 0.0294,
+              "False": 0.0541
+            },
+            "elevated": {
+              "False": 0.2016,
+              "True": 0.14
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.4513,
+              "False": 0.4211
+            },
+            "normal": {
+              "True": 0.25,
+              "False": 0.1818
+            }
+          },
+          "21+": {
+            "elevated": {
+              "False": 0.5561,
+              "True": 0.5607
+            },
+            "normal": {
+              "False": 0.25,
+              "True": 0.1818
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.4773,
+              "False": 0.4444
+            },
+            "normal": {
+              "True": 0.1818
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.5161,
+              "False": 0.4231
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0005,
+              "False": 0.0005
+            },
+            "elevated": {
+              "True": 0.0022,
+              "False": 0.0022
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0014,
+              "False": 0.0014
+            },
+            "elevated": {
+              "True": 0.0074,
+              "False": 0.0037
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.4,
+              "True": 0.3333
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0857,
+              "False": 0.1389
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "False": 0.1212,
+              "True": 0.1111
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.2746,
+              "False": 0.2732
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "normal": {
+              "True": 0.0294,
+              "False": 0.0541
+            },
+            "elevated": {
+              "False": 0.2636,
+              "True": 0.22
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.5221,
+              "False": 0.5053
+            },
+            "normal": {
+              "True": 0.25,
+              "False": 0.1818
+            }
+          },
+          "21+": {
+            "elevated": {
+              "False": 0.6495,
+              "True": 0.6542
+            },
+            "normal": {
+              "False": 0.25,
+              "True": 0.1818
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.5227,
+              "False": 0.5
+            },
+            "normal": {
+              "True": 0.1818
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.5161,
+              "False": 0.4231
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0005,
+              "False": 0.0005
+            },
+            "elevated": {
+              "True": 0.0022,
+              "False": 0.0022
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0014,
+              "False": 0.0014
+            },
+            "elevated": {
+              "True": 0.0328,
+              "False": 0.0286
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.4333,
+              "True": 0.3333
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0857,
+              "False": 0.1389
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "False": 0.2424,
+              "True": 0.2381
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.8135,
+              "False": 0.8093
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "normal": {
+              "True": 0.0294,
+              "False": 0.0541
+            },
+            "elevated": {
+              "False": 0.5116,
+              "True": 0.54
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.885,
+              "False": 0.9053
+            },
+            "normal": {
+              "True": 0.25,
+              "False": 0.1818
+            }
+          },
+          "21+": {
+            "elevated": {
+              "False": 0.9579,
+              "True": 0.9579
+            },
+            "normal": {
+              "False": 0.25,
+              "True": 0.1818
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.75,
+              "False": 0.75
+            },
+            "normal": {
+              "True": 0.1818
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.6452,
+              "False": 0.6538
+            }
+          }
+        }
+      }
+    },
+    "TOMATO": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0004,
+              "False": 0.0004
+            },
+            "elevated": {
+              "True": 0.008,
+              "False": 0.0077
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0007,
+              "False": 0.0007
+            },
+            "elevated": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0556,
+              "False": 0.0556
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.0286,
+              "False": 0.0278
+            }
+          },
+          "21+": {
+            "elevated": {
+              "False": 0.0625,
+              "True": 0.0091
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.0714,
+              "True": 0.0769
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "normal": {
+              "True": 0.0087,
+              "False": 0.0088
+            },
+            "elevated": {
+              "True": 0.0038,
+              "False": 0.0181
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.1818,
+              "False": 0.2289
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "False": 0.7097,
+              "True": 0.6071
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.7097,
+              "False": 0.64
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.3077,
+              "False": 0.1818
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0004,
+              "False": 0.0004
+            },
+            "elevated": {
+              "True": 0.008,
+              "False": 0.0077
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0007,
+              "False": 0.0007
+            },
+            "elevated": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0556,
+              "False": 0.0556
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.0286,
+              "False": 0.0278
+            }
+          },
+          "21+": {
+            "elevated": {
+              "False": 0.1161,
+              "True": 0.1182
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.0714,
+              "True": 0.0769
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "normal": {
+              "True": 0.0087,
+              "False": 0.0088
+            },
+            "elevated": {
+              "True": 0.0038,
+              "False": 0.0181
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.3295,
+              "False": 0.2892
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "False": 0.7097,
+              "True": 0.6786
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.7097,
+              "False": 0.64
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.3077,
+              "False": 0.1818
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0004,
+              "False": 0.0004
+            },
+            "elevated": {
+              "True": 0.008,
+              "False": 0.0077
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0007,
+              "False": 0.0007
+            },
+            "elevated": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0556,
+              "False": 0.0556
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.0857,
+              "False": 0.0556
+            }
+          },
+          "21+": {
+            "elevated": {
+              "False": 0.2143,
+              "True": 0.2091
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.0714,
+              "True": 0.0769
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "normal": {
+              "True": 0.0087,
+              "False": 0.0088
+            },
+            "elevated": {
+              "True": 0.0038,
+              "False": 0.0181
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.4432,
+              "False": 0.4096
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "False": 0.7097,
+              "True": 0.6786
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.7097,
+              "False": 0.64
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.3077,
+              "False": 0.1818
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0004,
+              "False": 0.0004
+            },
+            "elevated": {
+              "True": 0.008,
+              "False": 0.0077
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0007,
+              "False": 0.0007
+            },
+            "elevated": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.0556,
+              "False": 0.0556
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.3143,
+              "False": 0.2778
+            }
+          },
+          "21+": {
+            "elevated": {
+              "False": 0.5714,
+              "True": 0.5727
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.0714,
+              "True": 0.0769
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "normal": {
+              "True": 0.0087,
+              "False": 0.0088
+            },
+            "elevated": {
+              "True": 0.0038,
+              "False": 0.0181
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.8977,
+              "False": 0.8916
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "False": 0.7097,
+              "True": 0.6786
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.7097,
+              "False": 0.64
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.3077,
+              "False": 0.1818
+            }
+          }
+        }
+      }
+    },
+    "STRAWBERRY": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.04,
+              "False": 0.0385
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0015,
+              "False": 0.0015
+            },
+            "elevated": {
+              "True": 0.0016,
+              "False": 0.0015
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.4314
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.3182
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.3889
+            },
+            "normal": {
+              "True": 0.1667
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "elevated": {
+              "True": 0.3036,
+              "False": 0.2353
+            },
+            "depressed": {
+              "True": 0.166,
+              "False": 0.107
+            },
+            "normal": {
+              "True": 0.2093,
+              "False": 0.2069
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.0379,
+              "True": 0.0264
+            },
+            "normal": {
+              "False": 0.0213,
+              "True": 0.0072
+            },
+            "depressed": {
+              "False": 0.0071,
+              "True": 0.0063
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.4078,
+              "False": 0.1818
+            },
+            "depressed": {
+              "True": 0.2574,
+              "False": 0.1429
+            },
+            "normal": {
+              "True": 0.3548,
+              "False": 0.1818
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.54,
+              "False": 0.4706
+            },
+            "depressed": {
+              "True": 0.1122,
+              "False": 0.1629
+            },
+            "normal": {
+              "True": 0.303,
+              "False": 0.1364
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.3333
+            },
+            "normal": {
+              "True": 0.1538
+            },
+            "depressed": {
+              "True": 0.3158
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "depressed": {
+              "True": 0.0046,
+              "False": 0.0138
+            },
+            "normal": {
+              "True": 0.0118,
+              "False": 0.0323
+            },
+            "elevated": {
+              "True": 0.0178,
+              "False": 0.0345
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.1667
+            },
+            "depressed": {
+              "True": 0.1667
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.2143,
+              "False": 0.25
+            },
+            "depressed": {
+              "False": 0.25,
+              "True": 0.1667
+            },
+            "normal": {
+              "True": 0.0714,
+              "False": 0.1538
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.5,
+              "True": 0.4444
+            },
+            "depressed": {
+              "False": 0.5,
+              "True": 0.4348
+            },
+            "normal": {
+              "True": 0.2667,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.04,
+              "False": 0.0385
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0015,
+              "False": 0.0076
+            },
+            "elevated": {
+              "True": 0.0052,
+              "False": 0.0523
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.8235
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.5909
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.75
+            },
+            "normal": {
+              "True": 0.25
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "elevated": {
+              "True": 0.5893,
+              "False": 0.4412
+            },
+            "depressed": {
+              "True": 0.3765,
+              "False": 0.2513
+            },
+            "normal": {
+              "True": 0.4419,
+              "False": 0.3103
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.2725,
+              "True": 0.1318
+            },
+            "normal": {
+              "False": 0.1768,
+              "True": 0.0719
+            },
+            "depressed": {
+              "False": 0.1219,
+              "True": 0.0244
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.835,
+              "False": 0.2727
+            },
+            "depressed": {
+              "True": 0.5347,
+              "False": 0.25
+            },
+            "normal": {
+              "True": 0.7097,
+              "False": 0.1818
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.82,
+              "False": 0.4706
+            },
+            "depressed": {
+              "True": 0.2829,
+              "False": 0.2303
+            },
+            "normal": {
+              "True": 0.4242,
+              "False": 0.1818
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.625
+            },
+            "normal": {
+              "True": 0.3077
+            },
+            "depressed": {
+              "True": 0.5263
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "depressed": {
+              "True": 0.0185,
+              "False": 0.0367
+            },
+            "normal": {
+              "True": 0.0353,
+              "False": 0.0645
+            },
+            "elevated": {
+              "True": 0.071,
+              "False": 0.0977
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.25
+            },
+            "depressed": {
+              "True": 0.25
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.3571,
+              "False": 0.25
+            },
+            "depressed": {
+              "False": 0.25,
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.2143,
+              "False": 0.2308
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.5,
+              "True": 0.5
+            },
+            "depressed": {
+              "False": 0.5,
+              "True": 0.6087
+            },
+            "normal": {
+              "True": 0.4,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.04,
+              "False": 0.0385
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0091,
+              "False": 0.0168
+            },
+            "elevated": {
+              "True": 0.0588,
+              "False": 0.1032
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.8235
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.5909
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.75
+            },
+            "normal": {
+              "True": 0.25
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "elevated": {
+              "True": 0.6607,
+              "False": 0.5588
+            },
+            "depressed": {
+              "True": 0.4939,
+              "False": 0.4118
+            },
+            "normal": {
+              "True": 0.5581,
+              "False": 0.4483
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.4882,
+              "True": 0.4036
+            },
+            "normal": {
+              "False": 0.378,
+              "True": 0.2698
+            },
+            "depressed": {
+              "False": 0.2296,
+              "True": 0.1555
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.8738,
+              "False": 0.4091
+            },
+            "depressed": {
+              "True": 0.6139,
+              "False": 0.3929
+            },
+            "normal": {
+              "True": 0.7097,
+              "False": 0.1818
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.82,
+              "False": 0.4706
+            },
+            "depressed": {
+              "True": 0.361,
+              "False": 0.309
+            },
+            "normal": {
+              "True": 0.4848,
+              "False": 0.2727
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.625
+            },
+            "normal": {
+              "True": 0.3077
+            },
+            "depressed": {
+              "True": 0.5263
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "depressed": {
+              "True": 0.0602,
+              "False": 0.0734
+            },
+            "normal": {
+              "True": 0.0588,
+              "False": 0.1075
+            },
+            "elevated": {
+              "True": 0.1479,
+              "False": 0.1609
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.25
+            },
+            "depressed": {
+              "True": 0.25
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.3571,
+              "False": 0.25
+            },
+            "depressed": {
+              "False": 0.25,
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.3571,
+              "False": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.5,
+              "True": 0.5
+            },
+            "depressed": {
+              "False": 0.5,
+              "True": 0.6087
+            },
+            "normal": {
+              "True": 0.4,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.04,
+              "False": 0.0385
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0593,
+              "False": 0.0719
+            },
+            "elevated": {
+              "True": 0.253,
+              "False": 0.2891
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.8235
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.5909
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.75
+            },
+            "normal": {
+              "True": 0.25
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "elevated": {
+              "True": 0.8393,
+              "False": 0.7353
+            },
+            "depressed": {
+              "True": 0.834,
+              "False": 0.8021
+            },
+            "normal": {
+              "True": 0.7907,
+              "False": 0.6897
+            }
+          },
+          "0": {
+            "elevated": {
+              "False": 0.9396,
+              "True": 0.9223
+            },
+            "normal": {
+              "False": 0.7744,
+              "True": 0.7266
+            },
+            "depressed": {
+              "False": 0.6085,
+              "True": 0.5732
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.9126,
+              "False": 0.5909
+            },
+            "depressed": {
+              "True": 0.8317,
+              "False": 0.7143
+            },
+            "normal": {
+              "True": 0.7097,
+              "False": 0.1818
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.82,
+              "False": 0.4706
+            },
+            "depressed": {
+              "True": 0.6585,
+              "False": 0.6292
+            },
+            "normal": {
+              "True": 0.6667,
+              "False": 0.5455
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.625
+            },
+            "normal": {
+              "True": 0.3077
+            },
+            "depressed": {
+              "True": 0.5263
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "depressed": {
+              "True": 0.1713,
+              "False": 0.1835
+            },
+            "normal": {
+              "True": 0.0824,
+              "False": 0.129
+            },
+            "elevated": {
+              "True": 0.3195,
+              "False": 0.3218
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.25
+            },
+            "depressed": {
+              "True": 0.25
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.3571,
+              "False": 0.25
+            },
+            "depressed": {
+              "False": 0.25,
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.3571,
+              "False": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "False": 0.5,
+              "True": 0.5
+            },
+            "depressed": {
+              "False": 0.5,
+              "True": 0.6087
+            },
+            "normal": {
+              "True": 0.4,
+              "False": 0.25
+            }
+          }
+        }
+      }
+    },
+    "MELON": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0195,
+              "False": 0.0242
+            },
+            "depressed": {
+              "True": 0.0178,
+              "False": 0.0019
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.1667
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.1869,
+              "False": 0.125
+            },
+            "depressed": {
+              "False": 0.0239,
+              "True": 0.0219
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "True": 0.2143
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.3333,
+              "False": 0.3077
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.2143
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "depressed": {
+              "True": 0.0042,
+              "False": 0.0062
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.4375,
+              "True": 0.4375
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "True": 0.3077,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0646,
+              "False": 0.0578
+            },
+            "depressed": {
+              "True": 0.0237,
+              "False": 0.0175
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.25
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.4299,
+              "False": 0.5
+            },
+            "depressed": {
+              "False": 0.0705,
+              "True": 0.0662
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "True": 0.3571
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.4,
+              "False": 0.3077
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.3571
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "depressed": {
+              "True": 0.0146,
+              "False": 0.0145
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.4375,
+              "True": 0.4375
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "True": 0.3077,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.086,
+              "False": 0.0783
+            },
+            "depressed": {
+              "True": 0.0237,
+              "False": 0.0214
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.25
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.6729,
+              "False": 0.7955
+            },
+            "depressed": {
+              "False": 0.1082,
+              "True": 0.1054
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "True": 0.3571
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.4,
+              "False": 0.3077
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.3571
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "depressed": {
+              "True": 0.027,
+              "False": 0.027
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.4375,
+              "True": 0.4375
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "True": 0.3077,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.2035,
+              "False": 0.2027
+            },
+            "depressed": {
+              "True": 0.1107,
+              "False": 0.1206
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.25
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.9159,
+              "False": 0.8977
+            },
+            "depressed": {
+              "False": 0.2058,
+              "True": 0.2079
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "True": 0.3571
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.4,
+              "False": 0.3077
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.3571
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "depressed": {
+              "True": 0.0728,
+              "False": 0.0705
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.4375,
+              "True": 0.4375
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "True": 0.3077,
+              "False": 0.25
+            }
+          }
+        }
+      }
+    },
+    "EGG": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0004,
+              "False": 0.0008
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.2143
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.3182
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0004,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.0033,
+              "False": 0.003
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.4328
+            },
+            "elevated": {
+              "True": 0.3333
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.3824
+            },
+            "elevated": {
+              "True": 0.3667
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "elevated": {
+              "True": 0.0348,
+              "False": 0.04
+            },
+            "normal": {
+              "True": 0.0085,
+              "False": 0.0111
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.1667
+            },
+            "normal": {
+              "True": 0.35,
+              "False": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.3913,
+              "False": 0.4
+            },
+            "normal": {
+              "False": 0.5,
+              "True": 0.4706
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0011,
+              "False": 0.0102
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.3571
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.5909
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0012,
+              "False": 0.0316
+            },
+            "elevated": {
+              "True": 0.0033,
+              "False": 0.1101
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.8657
+            },
+            "elevated": {
+              "True": 0.5714
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.7353
+            },
+            "elevated": {
+              "True": 0.7
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "elevated": {
+              "True": 0.0957,
+              "False": 0.152
+            },
+            "normal": {
+              "True": 0.0312,
+              "False": 0.039
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.55,
+              "False": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.6087,
+              "False": 0.4
+            },
+            "normal": {
+              "False": 0.5,
+              "True": 0.4706
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.011,
+              "False": 0.02
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.3571
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.5909
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0334,
+              "False": 0.0628
+            },
+            "elevated": {
+              "True": 0.1225,
+              "False": 0.2173
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.8657
+            },
+            "elevated": {
+              "True": 0.5714
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.7353
+            },
+            "elevated": {
+              "True": 0.7
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "elevated": {
+              "True": 0.2,
+              "False": 0.248
+            },
+            "normal": {
+              "True": 0.051,
+              "False": 0.0557
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.55,
+              "False": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.6087,
+              "False": 0.4
+            },
+            "normal": {
+              "False": 0.5,
+              "True": 0.4706
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0505,
+              "False": 0.0592
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.3571
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.5909
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.1685,
+              "False": 0.1962
+            },
+            "elevated": {
+              "True": 0.5331,
+              "False": 0.5744
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.8657
+            },
+            "elevated": {
+              "True": 0.5714
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.7353
+            },
+            "elevated": {
+              "True": 0.7
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "elevated": {
+              "True": 0.4696,
+              "False": 0.488
+            },
+            "normal": {
+              "True": 0.0907,
+              "False": 0.0975
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.55,
+              "False": 0.3077
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.6087,
+              "False": 0.4
+            },
+            "normal": {
+              "False": 0.5,
+              "True": 0.4706
+            }
+          }
+        }
+      }
+    },
+    "MILK": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.0263,
+              "False": 0.0238
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0146,
+              "False": 0.0262
+            },
+            "elevated": {
+              "True": 0.03,
+              "False": 0.0361
+            },
+            "depressed": {
+              "False": 0.0216,
+              "True": 0.0051
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.36
+            },
+            "normal": {
+              "True": 0.4062,
+              "False": 0.3125
+            },
+            "depressed": {
+              "True": 0.4062,
+              "False": 0.2353
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.4231
+            },
+            "normal": {
+              "True": 0.3953,
+              "False": 0.125
+            },
+            "depressed": {
+              "True": 0.4255
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.1667
+            },
+            "normal": {
+              "True": 0.1818
+            },
+            "depressed": {
+              "True": 0.1818
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.0307,
+              "False": 0.0276
+            },
+            "depressed": {
+              "False": 0.0297,
+              "True": 0.0167
+            },
+            "elevated": {
+              "True": 0.0515,
+              "False": 0.0545
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.2273,
+              "False": 0.0625
+            },
+            "depressed": {
+              "True": 0.3356,
+              "False": 0.1912
+            },
+            "elevated": {
+              "True": 0.2692,
+              "False": 0.2941
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.3188,
+              "False": 0.325
+            },
+            "depressed": {
+              "True": 0.3288,
+              "False": 0.3492
+            },
+            "elevated": {
+              "True": 0.4043,
+              "False": 0.4516
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.3602,
+              "False": 0.5182
+            },
+            "normal": {
+              "True": 0.2632,
+              "False": 0.3433
+            },
+            "elevated": {
+              "True": 0.3636,
+              "False": 0.3077
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.12,
+              "False": 0.087
+            },
+            "normal": {
+              "True": 0.0476,
+              "False": 0.1053
+            },
+            "depressed": {
+              "False": 0.0833,
+              "True": 0.1538
+            }
+          }
+        },
+        "endgame": {
+          "11-20": {
+            "depressed": {
+              "True": 0.4074,
+              "False": 0.4
+            },
+            "normal": {
+              "True": 0.1667
+            },
+            "elevated": {
+              "True": 0.1667,
+              "False": 0.1818
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.0428,
+              "True": 0.0504
+            },
+            "elevated": {
+              "False": 0.0323,
+              "True": 0.0364
+            },
+            "normal": {
+              "False": 0.15,
+              "True": 0.1
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.7857,
+              "True": 0.6327
+            },
+            "elevated": {
+              "True": 0.5769,
+              "False": 0.6087
+            },
+            "normal": {
+              "True": 0.1818
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.8269,
+              "True": 0.7284
+            },
+            "elevated": {
+              "False": 0.4375,
+              "True": 0.4211
+            },
+            "normal": {
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.0263,
+              "False": 0.0238
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0607,
+              "False": 0.1025
+            },
+            "elevated": {
+              "True": 0.1009,
+              "False": 0.1744
+            },
+            "depressed": {
+              "False": 0.1341,
+              "True": 0.058
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.64
+            },
+            "normal": {
+              "True": 0.6875,
+              "False": 0.4375
+            },
+            "depressed": {
+              "True": 0.5625,
+              "False": 0.2353
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.6538
+            },
+            "normal": {
+              "True": 0.7442,
+              "False": 0.3125
+            },
+            "depressed": {
+              "True": 0.8085
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.1818
+            },
+            "depressed": {
+              "True": 0.1818
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.1433,
+              "False": 0.273
+            },
+            "depressed": {
+              "False": 0.2293,
+              "True": 0.1006
+            },
+            "elevated": {
+              "True": 0.1838,
+              "False": 0.3697
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3182,
+              "False": 0.0625
+            },
+            "depressed": {
+              "True": 0.6781,
+              "False": 0.3824
+            },
+            "elevated": {
+              "True": 0.5769,
+              "False": 0.3529
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.7101,
+              "False": 0.575
+            },
+            "depressed": {
+              "True": 0.6577,
+              "False": 0.4524
+            },
+            "elevated": {
+              "True": 0.7234,
+              "False": 0.5806
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.7453,
+              "False": 0.6545
+            },
+            "normal": {
+              "True": 0.5658,
+              "False": 0.5373
+            },
+            "elevated": {
+              "True": 0.5455,
+              "False": 0.4231
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.28,
+              "False": 0.3043
+            },
+            "normal": {
+              "True": 0.1429,
+              "False": 0.1579
+            },
+            "depressed": {
+              "False": 0.0833,
+              "True": 0.2308
+            }
+          }
+        },
+        "endgame": {
+          "11-20": {
+            "depressed": {
+              "True": 0.6667,
+              "False": 0.4
+            },
+            "normal": {
+              "True": 0.25
+            },
+            "elevated": {
+              "True": 0.25,
+              "False": 0.1818
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.2355,
+              "True": 0.1655
+            },
+            "elevated": {
+              "False": 0.1774,
+              "True": 0.0909
+            },
+            "normal": {
+              "False": 0.3,
+              "True": 0.4
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.7857,
+              "True": 0.8163
+            },
+            "elevated": {
+              "True": 0.6538,
+              "False": 0.6087
+            },
+            "normal": {
+              "True": 0.1818
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.8269,
+              "True": 0.8889
+            },
+            "elevated": {
+              "False": 0.4375,
+              "True": 0.5263
+            },
+            "normal": {
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.0263,
+              "False": 0.0238
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.1491,
+              "False": 0.19
+            },
+            "elevated": {
+              "True": 0.2366,
+              "False": 0.3068
+            },
+            "depressed": {
+              "False": 0.2404,
+              "True": 0.186
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.64
+            },
+            "normal": {
+              "True": 0.7188,
+              "False": 0.4375
+            },
+            "depressed": {
+              "True": 0.5938,
+              "False": 0.3529
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.6538
+            },
+            "normal": {
+              "True": 0.7907,
+              "False": 0.4375
+            },
+            "depressed": {
+              "True": 0.8085
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.1818
+            },
+            "depressed": {
+              "True": 0.1818
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.4198,
+              "False": 0.5184
+            },
+            "depressed": {
+              "False": 0.4294,
+              "True": 0.331
+            },
+            "elevated": {
+              "True": 0.4632,
+              "False": 0.5818
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3182,
+              "False": 0.0625
+            },
+            "depressed": {
+              "True": 0.7397,
+              "False": 0.4706
+            },
+            "elevated": {
+              "True": 0.5769,
+              "False": 0.3529
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.7971,
+              "False": 0.725
+            },
+            "depressed": {
+              "True": 0.6982,
+              "False": 0.5159
+            },
+            "elevated": {
+              "True": 0.8085,
+              "False": 0.7097
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.8075,
+              "False": 0.7455
+            },
+            "normal": {
+              "True": 0.6447,
+              "False": 0.6418
+            },
+            "elevated": {
+              "True": 0.6667,
+              "False": 0.5769
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.44,
+              "False": 0.4783
+            },
+            "normal": {
+              "True": 0.2381,
+              "False": 0.2632
+            },
+            "depressed": {
+              "False": 0.0833,
+              "True": 0.2308
+            }
+          }
+        },
+        "endgame": {
+          "11-20": {
+            "depressed": {
+              "True": 0.6667,
+              "False": 0.4
+            },
+            "normal": {
+              "True": 0.25
+            },
+            "elevated": {
+              "True": 0.25,
+              "False": 0.1818
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.4037,
+              "True": 0.3669
+            },
+            "elevated": {
+              "False": 0.3387,
+              "True": 0.2727
+            },
+            "normal": {
+              "False": 0.4,
+              "True": 0.5
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.7857,
+              "True": 0.8163
+            },
+            "elevated": {
+              "True": 0.6538,
+              "False": 0.6087
+            },
+            "normal": {
+              "True": 0.1818
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.8269,
+              "True": 0.8889
+            },
+            "elevated": {
+              "False": 0.4375,
+              "True": 0.5263
+            },
+            "normal": {
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            },
+            "elevated": {
+              "True": 0.0263,
+              "False": 0.0238
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.4343,
+              "False": 0.4607
+            },
+            "elevated": {
+              "True": 0.623,
+              "False": 0.6677
+            },
+            "depressed": {
+              "False": 0.5809,
+              "True": 0.5734
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.64
+            },
+            "normal": {
+              "True": 0.7188,
+              "False": 0.4375
+            },
+            "depressed": {
+              "True": 0.7188,
+              "False": 0.4706
+            }
+          },
+          "5-10": {
+            "elevated": {
+              "True": 0.6538
+            },
+            "normal": {
+              "True": 0.7907,
+              "False": 0.4375
+            },
+            "depressed": {
+              "True": 0.8085
+            }
+          },
+          "11-20": {
+            "elevated": {
+              "True": 0.25
+            },
+            "normal": {
+              "True": 0.1818
+            },
+            "depressed": {
+              "True": 0.1818
+            }
+          }
+        },
+        "late": {
+          "0": {
+            "normal": {
+              "True": 0.9113,
+              "False": 0.9294
+            },
+            "depressed": {
+              "False": 0.8473,
+              "True": 0.8305
+            },
+            "elevated": {
+              "True": 0.9338,
+              "False": 0.9455
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.4545,
+              "False": 0.25
+            },
+            "depressed": {
+              "True": 0.7945,
+              "False": 0.5735
+            },
+            "elevated": {
+              "True": 0.6538,
+              "False": 0.4706
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.8696,
+              "False": 0.775
+            },
+            "depressed": {
+              "True": 0.7883,
+              "False": 0.6429
+            },
+            "elevated": {
+              "True": 0.8085,
+              "False": 0.7097
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.913,
+              "False": 0.8636
+            },
+            "normal": {
+              "True": 0.8158,
+              "False": 0.791
+            },
+            "elevated": {
+              "True": 0.7273,
+              "False": 0.6538
+            }
+          },
+          "21+": {
+            "elevated": {
+              "True": 0.64,
+              "False": 0.6087
+            },
+            "normal": {
+              "True": 0.5714,
+              "False": 0.5263
+            },
+            "depressed": {
+              "False": 0.25,
+              "True": 0.3077
+            }
+          }
+        },
+        "endgame": {
+          "11-20": {
+            "depressed": {
+              "True": 0.6667,
+              "False": 0.4
+            },
+            "normal": {
+              "True": 0.25
+            },
+            "elevated": {
+              "True": 0.25,
+              "False": 0.1818
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.7431,
+              "True": 0.7554
+            },
+            "elevated": {
+              "False": 0.5968,
+              "True": 0.5818
+            },
+            "normal": {
+              "False": 0.55,
+              "True": 0.55
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.7857,
+              "True": 0.8163
+            },
+            "elevated": {
+              "True": 0.6538,
+              "False": 0.6087
+            },
+            "normal": {
+              "True": 0.1818
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.8269,
+              "True": 0.8889
+            },
+            "elevated": {
+              "False": 0.4375,
+              "True": 0.5263
+            },
+            "normal": {
+              "False": 0.25
+            }
+          }
+        }
+      }
+    },
+    "WOOL": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.0271,
+              "False": 0.0248
+            },
+            "depressed": {
+              "True": 0.0187,
+              "False": 0.021
+            },
+            "elevated": {
+              "True": 0.0156,
+              "False": 0.1159
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.2,
+              "True": 0.6136
+            },
+            "depressed": {
+              "False": 0.2121,
+              "True": 0.2727
+            },
+            "elevated": {
+              "True": 0.2308
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.1429,
+              "True": 0.1111
+            },
+            "normal": {
+              "True": 0.625,
+              "False": 0.25
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3571
+            },
+            "elevated": {
+              "True": 0.1818
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "normal": {
+              "True": 0.4844,
+              "False": 0.1154
+            },
+            "elevated": {
+              "True": 0.4211
+            },
+            "depressed": {
+              "False": 0.2474,
+              "True": 0.3053
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.1071,
+              "True": 0.5745
+            },
+            "elevated": {
+              "True": 0.5417
+            },
+            "depressed": {
+              "True": 0.2646,
+              "False": 0.1667
+            }
+          },
+          "0": {
+            "normal": {
+              "False": 0.1122,
+              "True": 0.0369
+            },
+            "elevated": {
+              "True": 0.022,
+              "False": 0.1579
+            },
+            "depressed": {
+              "False": 0.0417,
+              "True": 0.0245
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.25
+            },
+            "depressed": {
+              "False": 0.1739,
+              "True": 0.2083
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "elevated": {
+              "True": 0.0938,
+              "False": 0.0833
+            },
+            "normal": {
+              "True": 0.0455,
+              "False": 0.0714
+            },
+            "depressed": {
+              "False": 0.0365,
+              "True": 0.0447
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.4118,
+              "False": 0.3077
+            },
+            "depressed": {
+              "True": 0.6607,
+              "False": 0.7353
+            },
+            "normal": {
+              "True": 0.6889,
+              "False": 0.7097
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.4375,
+              "True": 0.4091
+            },
+            "normal": {
+              "False": 0.6087,
+              "True": 0.5455
+            },
+            "elevated": {
+              "False": 0.3077,
+              "True": 0.4
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3571,
+              "False": 0.25
+            },
+            "elevated": {
+              "True": 0.1818,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.1007,
+              "False": 0.1259
+            },
+            "depressed": {
+              "True": 0.0733,
+              "False": 0.1091
+            },
+            "elevated": {
+              "True": 0.1953,
+              "False": 0.2681
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.5,
+              "True": 0.75
+            },
+            "depressed": {
+              "False": 0.3939,
+              "True": 0.5
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.4286,
+              "True": 0.2778
+            },
+            "normal": {
+              "True": 0.7188,
+              "False": 0.25
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3571
+            },
+            "elevated": {
+              "True": 0.1818
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "normal": {
+              "True": 0.7031,
+              "False": 0.2692
+            },
+            "elevated": {
+              "True": 0.5263
+            },
+            "depressed": {
+              "False": 0.4639,
+              "True": 0.5649
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.3214,
+              "True": 0.7979
+            },
+            "elevated": {
+              "True": 0.625
+            },
+            "depressed": {
+              "True": 0.4933,
+              "False": 0.2917
+            }
+          },
+          "0": {
+            "normal": {
+              "False": 0.3653,
+              "True": 0.2774
+            },
+            "elevated": {
+              "True": 0.3022,
+              "False": 0.4163
+            },
+            "depressed": {
+              "False": 0.195,
+              "True": 0.1074
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.25
+            },
+            "depressed": {
+              "False": 0.3478,
+              "True": 0.375
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "elevated": {
+              "True": 0.25,
+              "False": 0.3056
+            },
+            "normal": {
+              "True": 0.2,
+              "False": 0.2222
+            },
+            "depressed": {
+              "False": 0.1715,
+              "True": 0.1585
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.4706,
+              "False": 0.3077
+            },
+            "depressed": {
+              "True": 0.8393,
+              "False": 0.7353
+            },
+            "normal": {
+              "True": 0.8,
+              "False": 0.7097
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.4375,
+              "True": 0.5909
+            },
+            "normal": {
+              "False": 0.6087,
+              "True": 0.5909
+            },
+            "elevated": {
+              "False": 0.3077,
+              "True": 0.4
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3571,
+              "False": 0.25
+            },
+            "elevated": {
+              "True": 0.1818,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.2026,
+              "False": 0.2213
+            },
+            "depressed": {
+              "True": 0.1681,
+              "False": 0.2
+            },
+            "elevated": {
+              "True": 0.3828,
+              "False": 0.4203
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.55,
+              "True": 0.7955
+            },
+            "depressed": {
+              "False": 0.5152,
+              "True": 0.5682
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.5714,
+              "True": 0.5
+            },
+            "normal": {
+              "True": 0.7188,
+              "False": 0.25
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3571
+            },
+            "elevated": {
+              "True": 0.1818
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "normal": {
+              "True": 0.7344,
+              "False": 0.3462
+            },
+            "elevated": {
+              "True": 0.5263
+            },
+            "depressed": {
+              "False": 0.5773,
+              "True": 0.6565
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.3214,
+              "True": 0.8085
+            },
+            "elevated": {
+              "True": 0.625
+            },
+            "depressed": {
+              "True": 0.574,
+              "False": 0.4028
+            }
+          },
+          "0": {
+            "normal": {
+              "False": 0.5724,
+              "True": 0.5095
+            },
+            "elevated": {
+              "True": 0.544,
+              "False": 0.622
+            },
+            "depressed": {
+              "False": 0.3338,
+              "True": 0.2622
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.25
+            },
+            "depressed": {
+              "False": 0.4348,
+              "True": 0.4583
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "elevated": {
+              "True": 0.4688,
+              "False": 0.4167
+            },
+            "normal": {
+              "True": 0.3727,
+              "False": 0.3889
+            },
+            "depressed": {
+              "False": 0.3139,
+              "True": 0.3089
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.4706,
+              "False": 0.3077
+            },
+            "depressed": {
+              "True": 0.8393,
+              "False": 0.7353
+            },
+            "normal": {
+              "True": 0.8,
+              "False": 0.7097
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.4375,
+              "True": 0.5909
+            },
+            "normal": {
+              "False": 0.6087,
+              "True": 0.5909
+            },
+            "elevated": {
+              "False": 0.3077,
+              "True": 0.4
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3571,
+              "False": 0.25
+            },
+            "elevated": {
+              "True": 0.1818,
+              "False": 0.25
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0008,
+              "False": 0.0008
+            }
+          }
+        },
+        "mid": {
+          "0": {
+            "normal": {
+              "True": 0.5498,
+              "False": 0.5635
+            },
+            "depressed": {
+              "True": 0.4842,
+              "False": 0.5091
+            },
+            "elevated": {
+              "True": 0.875,
+              "False": 0.9058
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.55,
+              "True": 0.7955
+            },
+            "depressed": {
+              "False": 0.7273,
+              "True": 0.7955
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.5714,
+              "True": 0.5
+            },
+            "normal": {
+              "True": 0.7188,
+              "False": 0.25
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3571
+            },
+            "elevated": {
+              "True": 0.1818
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "normal": {
+              "True": 0.8594,
+              "False": 0.6538
+            },
+            "elevated": {
+              "True": 0.5263
+            },
+            "depressed": {
+              "False": 0.6804,
+              "True": 0.7634
+            }
+          },
+          "1-4": {
+            "normal": {
+              "False": 0.3214,
+              "True": 0.8085
+            },
+            "elevated": {
+              "True": 0.625
+            },
+            "depressed": {
+              "True": 0.7354,
+              "False": 0.6111
+            }
+          },
+          "0": {
+            "normal": {
+              "False": 0.9147,
+              "True": 0.9072
+            },
+            "elevated": {
+              "True": 0.9451,
+              "False": 0.9522
+            },
+            "depressed": {
+              "False": 0.7058,
+              "True": 0.6754
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.25
+            },
+            "depressed": {
+              "False": 0.6087,
+              "True": 0.625
+            },
+            "elevated": {
+              "True": 0.3077
+            }
+          }
+        },
+        "endgame": {
+          "0": {
+            "elevated": {
+              "True": 0.5,
+              "False": 0.4722
+            },
+            "normal": {
+              "True": 0.5545,
+              "False": 0.5556
+            },
+            "depressed": {
+              "False": 0.5803,
+              "True": 0.6016
+            }
+          },
+          "1-4": {
+            "elevated": {
+              "True": 0.4706,
+              "False": 0.3077
+            },
+            "depressed": {
+              "True": 0.8393,
+              "False": 0.7353
+            },
+            "normal": {
+              "True": 0.8,
+              "False": 0.7097
+            }
+          },
+          "5-10": {
+            "depressed": {
+              "False": 0.4375,
+              "True": 0.5909
+            },
+            "normal": {
+              "False": 0.6087,
+              "True": 0.5909
+            },
+            "elevated": {
+              "False": 0.3077,
+              "True": 0.4
+            }
+          },
+          "11-20": {
+            "normal": {
+              "True": 0.3571,
+              "False": 0.25
+            },
+            "elevated": {
+              "True": 0.1818,
+              "False": 0.25
+            }
+          }
+        }
+      }
+    },
+    "FERTILIZER": {
+      "1": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0009,
+              "False": 0.0008
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.8714
+            }
+          }
+        },
+        "mid": {
+          "5-10": {
+            "normal": {
+              "True": 0.8738
+            },
+            "depressed": {
+              "True": 0.475
+            }
+          },
+          "0": {
+            "normal": {
+              "True": 0.0009,
+              "False": 0.0008
+            },
+            "depressed": {
+              "False": 0.0007,
+              "True": 0.0008
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.7
+            },
+            "depressed": {
+              "True": 0.3571
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.4578
+            },
+            "normal": {
+              "True": 0.5
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "depressed": {
+              "True": 0.4829
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.0004,
+              "True": 0.0004
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.4701
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.8767,
+              "True": 0.593
+            }
+          }
+        },
+        "endgame": {
+          "5-10": {
+            "depressed": {
+              "True": 0.413
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.11,
+              "True": 0.1095
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.4444,
+              "False": 0.5
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.2778
+            }
+          }
+        }
+      },
+      "4": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.0704,
+              "False": 0.1331
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.8714
+            }
+          }
+        },
+        "mid": {
+          "5-10": {
+            "normal": {
+              "True": 0.9126
+            },
+            "depressed": {
+              "True": 0.925
+            }
+          },
+          "0": {
+            "normal": {
+              "True": 0.0841,
+              "False": 0.162
+            },
+            "depressed": {
+              "False": 0.1699,
+              "True": 0.0008
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.7
+            },
+            "depressed": {
+              "True": 0.6786
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.8916
+            },
+            "normal": {
+              "True": 0.55
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "depressed": {
+              "True": 0.9615
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.1878,
+              "True": 0.021
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.9328
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.8767,
+              "True": 0.9477
+            }
+          }
+        },
+        "endgame": {
+          "5-10": {
+            "depressed": {
+              "True": 0.8043
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.3983,
+              "True": 0.3333
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.8,
+              "False": 0.5
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.5
+            }
+          }
+        }
+      },
+      "8": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.2096,
+              "False": 0.2653
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.8714
+            }
+          }
+        },
+        "mid": {
+          "5-10": {
+            "normal": {
+              "True": 0.9126
+            },
+            "depressed": {
+              "True": 0.925
+            }
+          },
+          "0": {
+            "normal": {
+              "True": 0.2611,
+              "False": 0.3256
+            },
+            "depressed": {
+              "False": 0.3369,
+              "True": 0.2003
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.7
+            },
+            "depressed": {
+              "True": 0.6786
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.8916
+            },
+            "normal": {
+              "True": 0.55
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "depressed": {
+              "True": 0.9615
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.3555,
+              "True": 0.2214
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.9328
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.8767,
+              "True": 0.9477
+            }
+          }
+        },
+        "endgame": {
+          "5-10": {
+            "depressed": {
+              "True": 0.8043
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.5581,
+              "True": 0.5255
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.8,
+              "False": 0.5
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.5
+            }
+          }
+        }
+      },
+      "24": {
+        "early": {
+          "0": {
+            "normal": {
+              "True": 0.7661,
+              "False": 0.7942
+            }
+          },
+          "5-10": {
+            "normal": {
+              "True": 0.8714
+            }
+          }
+        },
+        "mid": {
+          "5-10": {
+            "normal": {
+              "True": 0.9126
+            },
+            "depressed": {
+              "True": 0.925
+            }
+          },
+          "0": {
+            "normal": {
+              "True": 0.9827,
+              "False": 0.9928
+            },
+            "depressed": {
+              "False": 0.9936,
+              "True": 0.9848
+            }
+          },
+          "1-4": {
+            "normal": {
+              "True": 0.7
+            },
+            "depressed": {
+              "True": 0.6786
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.8916
+            },
+            "normal": {
+              "True": 0.55
+            }
+          }
+        },
+        "late": {
+          "5-10": {
+            "depressed": {
+              "True": 0.9615
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.9795,
+              "True": 0.9761
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.9328
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "False": 0.8767,
+              "True": 0.9477
+            }
+          }
+        },
+        "endgame": {
+          "5-10": {
+            "depressed": {
+              "True": 0.8043
+            }
+          },
+          "0": {
+            "depressed": {
+              "False": 0.8734,
+              "True": 0.9148
+            }
+          },
+          "1-4": {
+            "depressed": {
+              "True": 0.8,
+              "False": 0.5
+            }
+          },
+          "11-20": {
+            "depressed": {
+              "True": 0.5
+            }
+          }
+        }
+      }
+    }
+  }
+}

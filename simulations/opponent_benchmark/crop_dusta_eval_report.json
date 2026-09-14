@@ -1,0 +1,718 @@
+{
+  "benchmark_metadata": {
+    "num_eval_games": 60,
+    "total_steps": 43200,
+    "total_eval_samples": 388800,
+    "calib_games": 20,
+    "calibration_parameters": {
+      "total_calibration_games": 20,
+      "total_steps": 14400,
+      "total_step_products": 129600,
+      "global_sale_rates": {
+        "1": 0.04474537037037037,
+        "4": 0.12583333333333332,
+        "8": 0.19935956790123457,
+        "24": 0.41683641975308644
+      },
+      "product_sale_rates": {
+        "WHEAT": {
+          "1": 0.11972222222222222,
+          "4": 0.3414583333333333,
+          "8": 0.45784722222222224,
+          "24": 0.7913194444444445
+        },
+        "CARROT": {
+          "1": 0.026180555555555554,
+          "4": 0.035555555555555556,
+          "8": 0.04638888888888889,
+          "24": 0.08965277777777778
+        },
+        "TOMATO": {
+          "1": 0.008333333333333333,
+          "4": 0.010972222222222222,
+          "8": 0.014027777777777778,
+          "24": 0.02625
+        },
+        "STRAWBERRY": {
+          "1": 0.03208333333333333,
+          "4": 0.10118055555555555,
+          "8": 0.183125,
+          "24": 0.40868055555555555
+        },
+        "MELON": {
+          "1": 0.019930555555555556,
+          "4": 0.05520833333333333,
+          "8": 0.08097222222222222,
+          "24": 0.16791666666666666
+        },
+        "EGG": {
+          "1": 0.008055555555555555,
+          "4": 0.025902777777777778,
+          "8": 0.04819444444444444,
+          "24": 0.13291666666666666
+        },
+        "MILK": {
+          "1": 0.06916666666666667,
+          "4": 0.18694444444444444,
+          "8": 0.3140277777777778,
+          "24": 0.6040277777777778
+        },
+        "WOOL": {
+          "1": 0.06625,
+          "4": 0.18597222222222223,
+          "8": 0.3001388888888889,
+          "24": 0.5790277777777778
+        },
+        "FERTILIZER": {
+          "1": 0.05298611111111111,
+          "4": 0.18930555555555556,
+          "8": 0.3495138888888889,
+          "24": 0.9517361111111111
+        }
+      }
+    }
+  },
+  "sales_brier_scores": {
+    "zero": {
+      "1": 0.04457561728395062,
+      "4": 0.12631430041152264,
+      "8": 0.20170781893004117,
+      "24": 0.4204989711934156
+    },
+    "global": {
+      "1": 0.042588660443819266,
+      "4": 0.11035922925240678,
+      "8": 0.16102728899543214,
+      "24": 0.2436930007017626
+    },
+    "prod": {
+      "1": 0.041670096915009364,
+      "4": 0.10137775027149125,
+      "8": 0.140680784357855,
+      "24": 0.15195599565614823
+    },
+    "legacy": {
+      "1": 0.08627352553966026,
+      "4": 0.1113967179264907,
+      "8": 0.1393629530087938,
+      "24": 0.2332029231734057
+    },
+    "repaired": {
+      "1": 0.05507768930949073,
+      "4": 0.11649244433773046,
+      "8": 0.14541669964557444,
+      "24": 0.13523288743274178
+    }
+  },
+  "brier_by_product_h4": {
+    "zero": {
+      "WHEAT": 0.32685185185185184,
+      "CARROT": 0.03453703703703704,
+      "TOMATO": 0.012430555555555556,
+      "STRAWBERRY": 0.12731481481481483,
+      "MELON": 0.05479166666666667,
+      "EGG": 0.04273148148148148,
+      "MILK": 0.19280092592592593,
+      "WOOL": 0.1622222222222222,
+      "FERTILIZER": 0.18314814814814814
+    },
+    "global": {
+      "WHEAT": 0.26042816358024384,
+      "CARROT": 0.04167924382716072,
+      "TOMATO": 0.02513622685185211,
+      "STRAWBERRY": 0.11110794753086364,
+      "MELON": 0.05683645833333357,
+      "EGG": 0.04781141975308658,
+      "MILK": 0.1601133873456777,
+      "WOOL": 0.13723032407407335,
+      "FERTILIZER": 0.15288989197530686
+    },
+    "prod": {
+      "WHEAT": 0.22023306809413654,
+      "CARROT": 0.03334526748971193,
+      "TOMATO": 0.012278163580246908,
+      "STRAWBERRY": 0.11178875225051456,
+      "MELON": 0.05178971354166694,
+      "EGG": 0.04118870724022621,
+      "MILK": 0.15566302726337397,
+      "WOOL": 0.13647023533950556,
+      "FERTILIZER": 0.1496428176440316
+    },
+    "legacy": {
+      "WHEAT": 0.22919759018657365,
+      "CARROT": 0.06161552172685179,
+      "TOMATO": 0.04244917452245362,
+      "STRAWBERRY": 0.12444431500300941,
+      "MELON": 0.05177401920115722,
+      "EGG": 0.06292517638680549,
+      "MILK": 0.14613567147291662,
+      "WOOL": 0.1293886166699074,
+      "FERTILIZER": 0.15464037616875015
+    },
+    "repaired": {
+      "WHEAT": 0.3513574057166676,
+      "CARROT": 0.02028995374212963,
+      "TOMATO": 0.007543080894907408,
+      "STRAWBERRY": 0.09504108487592584,
+      "MELON": 0.053154295477315226,
+      "EGG": 0.04459957198518512,
+      "MILK": 0.17796416846018503,
+      "WOOL": 0.16592514466041638,
+      "FERTILIZER": 0.13255729322685209
+    }
+  },
+  "brier_by_phase_h4": {
+    "zero": {
+      "early": 0.016666666666666666,
+      "mid": 0.1066358024691358,
+      "late": 0.16722608024691357,
+      "endgame": 0.26319444444444445
+    },
+    "global": {
+      "early": 0.0283062500000003,
+      "mid": 0.09563315329217797,
+      "late": 0.14097487782921278,
+      "endgame": 0.2127912037037026
+    },
+    "prod": {
+      "early": 0.035878442215363744,
+      "mid": 0.08099109166510761,
+      "late": 0.12918770397519463,
+      "endgame": 0.21039292052469089
+    },
+    "legacy": {
+      "early": 0.035796488043364216,
+      "mid": 0.09320284256523471,
+      "late": 0.1483270963635543,
+      "endgame": 0.17888133649884266
+    },
+    "repaired": {
+      "early": 0.042071069630401026,
+      "mid": 0.09782138864863818,
+      "late": 0.15361089223263774,
+      "endgame": 0.18252600002662003
+    }
+  },
+  "reliability_curves_h4": {
+    "repaired": [
+      {
+        "bin_range": [
+          0.0,
+          0.2
+        ],
+        "count": 274655,
+        "mean_predicted": 0.031244969507200605,
+        "observed_frequency": 0.05015382934954762
+      },
+      {
+        "bin_range": [
+          0.2,
+          0.4
+        ],
+        "count": 45375,
+        "mean_predicted": 0.29604520110192795,
+        "observed_frequency": 0.2604517906336088
+      },
+      {
+        "bin_range": [
+          0.4,
+          0.6
+        ],
+        "count": 18433,
+        "mean_predicted": 0.47559400531655144,
+        "observed_frequency": 0.2287202300222427
+      },
+      {
+        "bin_range": [
+          0.6,
+          0.8
+        ],
+        "count": 22395,
+        "mean_predicted": 0.717522576467963,
+        "observed_frequency": 0.2851529359231971
+      },
+      {
+        "bin_range": [
+          0.8,
+          1.0
+        ],
+        "count": 27942,
+        "mean_predicted": 0.8681018538400918,
+        "observed_frequency": 0.4622432180946246
+      }
+    ],
+    "legacy": [
+      {
+        "bin_range": [
+          0.0,
+          0.2
+        ],
+        "count": 113094,
+        "mean_predicted": 0.05581091304578501,
+        "observed_frequency": 0.05272605089571507
+      },
+      {
+        "bin_range": [
+          0.2,
+          0.4
+        ],
+        "count": 211210,
+        "mean_predicted": 0.22839016097723325,
+        "observed_frequency": 0.09467354765399366
+      },
+      {
+        "bin_range": [
+          0.4,
+          0.6
+        ],
+        "count": 52713,
+        "mean_predicted": 0.4753221065012404,
+        "observed_frequency": 0.35255060421527895
+      },
+      {
+        "bin_range": [
+          0.6,
+          0.8
+        ],
+        "count": 8203,
+        "mean_predicted": 0.6685742167499694,
+        "observed_frequency": 0.359258807753261
+      },
+      {
+        "bin_range": [
+          0.8,
+          1.0
+        ],
+        "count": 3580,
+        "mean_predicted": 0.829210782122905,
+        "observed_frequency": 0.45279329608938546
+      }
+    ]
+  },
+  "classification_metrics_h4": {
+    "zero": {
+      "0.2": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.4": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.5": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.6": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.8": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "global": {
+      "0.2": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.4": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.5": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.6": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.8": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "prod": {
+      "0.2": {
+        "tp": 14120,
+        "fp": 29080,
+        "fn": 34991,
+        "tn": 310609,
+        "precision": 0.3269,
+        "recall": 0.2875,
+        "f1": 0.3059
+      },
+      "0.4": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.5": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.6": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "0.8": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 49111,
+        "tn": 339689,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "legacy": {
+      "0.2": {
+        "tp": 43148,
+        "fp": 232558,
+        "fn": 5963,
+        "tn": 107131,
+        "precision": 0.1565,
+        "recall": 0.8786,
+        "f1": 0.2657
+      },
+      "0.4": {
+        "tp": 23152,
+        "fp": 41344,
+        "fn": 25959,
+        "tn": 298345,
+        "precision": 0.359,
+        "recall": 0.4714,
+        "f1": 0.4076
+      },
+      "0.5": {
+        "tp": 9188,
+        "fp": 13836,
+        "fn": 39923,
+        "tn": 325853,
+        "precision": 0.3991,
+        "recall": 0.1871,
+        "f1": 0.2547
+      },
+      "0.6": {
+        "tp": 4568,
+        "fp": 7215,
+        "fn": 44543,
+        "tn": 332474,
+        "precision": 0.3877,
+        "recall": 0.093,
+        "f1": 0.15
+      },
+      "0.8": {
+        "tp": 1621,
+        "fp": 1959,
+        "fn": 47490,
+        "tn": 337730,
+        "precision": 0.4528,
+        "recall": 0.033,
+        "f1": 0.0615
+      }
+    },
+    "repaired": {
+      "0.2": {
+        "tp": 35336,
+        "fp": 78809,
+        "fn": 13775,
+        "tn": 260880,
+        "precision": 0.3096,
+        "recall": 0.7195,
+        "f1": 0.4329
+      },
+      "0.4": {
+        "tp": 23518,
+        "fp": 45252,
+        "fn": 25593,
+        "tn": 294437,
+        "precision": 0.342,
+        "recall": 0.4789,
+        "f1": 0.399
+      },
+      "0.5": {
+        "tp": 21497,
+        "fp": 35580,
+        "fn": 27614,
+        "tn": 304109,
+        "precision": 0.3766,
+        "recall": 0.4377,
+        "f1": 0.4049
+      },
+      "0.6": {
+        "tp": 19302,
+        "fp": 31035,
+        "fn": 29809,
+        "tn": 308654,
+        "precision": 0.3835,
+        "recall": 0.393,
+        "f1": 0.3882
+      },
+      "0.8": {
+        "tp": 12916,
+        "fp": 15026,
+        "fn": 36195,
+        "tn": 324663,
+        "precision": 0.4622,
+        "recall": 0.263,
+        "f1": 0.3352
+      }
+    }
+  },
+  "hidden_inventory_evaluation": {
+    "macro_shed_active_coverage": 0.7992031333528364,
+    "macro_shed_unconditional_coverage": 0.9259799382716049,
+    "macro_shed_mae": 10.28423580215743,
+    "macro_carried_active_coverage": 0.8961303400793328,
+    "per_product_shed": {
+      "WHEAT": {
+        "active_samples": 41709,
+        "active_coverage": 0.49128485458773885,
+        "unconditional_coverage": 0.5088425925925926,
+        "mean_interval_width": 42.77621136924884,
+        "shed_mae": 26.849852549809395
+      },
+      "CARROT": {
+        "active_samples": 3304,
+        "active_coverage": 0.5048426150121066,
+        "unconditional_coverage": 0.9621296296296297,
+        "mean_interval_width": 26.64134382566586,
+        "shed_mae": 16.351240920096853
+      },
+      "TOMATO": {
+        "active_samples": 1660,
+        "active_coverage": 0.6933734939759036,
+        "unconditional_coverage": 0.9882175925925926,
+        "mean_interval_width": 30.47289156626506,
+        "shed_mae": 13.470180722891566
+      },
+      "STRAWBERRY": {
+        "active_samples": 8421,
+        "active_coverage": 0.787673672960456,
+        "unconditional_coverage": 0.9586111111111111,
+        "mean_interval_width": 6.019356370977318,
+        "shed_mae": 3.727882674266714
+      },
+      "MELON": {
+        "active_samples": 25754,
+        "active_coverage": 0.9999223421604411,
+        "unconditional_coverage": 0.9999537037037037,
+        "mean_interval_width": 29.042207035800264,
+        "shed_mae": 14.506115554865264
+      },
+      "EGG": {
+        "active_samples": 4723,
+        "active_coverage": 0.9879313995341944,
+        "unconditional_coverage": 0.9986805555555556,
+        "mean_interval_width": 7.285835274190133,
+        "shed_mae": 2.864387042134237
+      },
+      "MILK": {
+        "active_samples": 20936,
+        "active_coverage": 0.9455961024073366,
+        "unconditional_coverage": 0.9736342592592593,
+        "mean_interval_width": 10.836501719526176,
+        "shed_mae": 5.1981992739778375
+      },
+      "WOOL": {
+        "active_samples": 26939,
+        "active_coverage": 0.9502579902743234,
+        "unconditional_coverage": 0.9689814814814814,
+        "mean_interval_width": 12.450053825309032,
+        "shed_mae": 6.087642451464419
+      },
+      "FERTILIZER": {
+        "active_samples": 6486,
+        "active_coverage": 0.831945729263028,
+        "unconditional_coverage": 0.9747685185185185,
+        "mean_interval_width": 5.755473327166204,
+        "shed_mae": 3.5026210299105767
+      }
+    },
+    "per_product_carried": {
+      "WHEAT": {
+        "active_samples": 36779,
+        "active_coverage": 0.0651730607139944,
+        "unconditional_coverage": 0.20412037037037037,
+        "mean_interval_width": 5.683623807063814
+      },
+      "CARROT": {
+        "active_samples": 3227,
+        "active_coverage": 1.0,
+        "unconditional_coverage": 1.0,
+        "mean_interval_width": 21.6529284164859
+      },
+      "TOMATO": {
+        "active_samples": 1446,
+        "active_coverage": 1.0,
+        "unconditional_coverage": 1.0,
+        "mean_interval_width": 20.258644536652834
+      },
+      "STRAWBERRY": {
+        "active_samples": 12103,
+        "active_coverage": 1.0,
+        "unconditional_coverage": 1.0,
+        "mean_interval_width": 7.86780137156077
+      },
+      "MELON": {
+        "active_samples": 4143,
+        "active_coverage": 1.0,
+        "unconditional_coverage": 1.0,
+        "mean_interval_width": 19.611392710596185
+      },
+      "EGG": {
+        "active_samples": 5836,
+        "active_coverage": 1.0,
+        "unconditional_coverage": 1.0,
+        "mean_interval_width": 5.909527073337903
+      },
+      "MILK": {
+        "active_samples": 18554,
+        "active_coverage": 1.0,
+        "unconditional_coverage": 1.0,
+        "mean_interval_width": 10.568287161797995
+      },
+      "WOOL": {
+        "active_samples": 16219,
+        "active_coverage": 1.0,
+        "unconditional_coverage": 1.0,
+        "mean_interval_width": 9.56211850299032
+      },
+      "FERTILIZER": {
+        "active_samples": 36866,
+        "active_coverage": 1.0,
+        "unconditional_coverage": 1.0,
+        "mean_interval_width": 6.866950577768133
+      }
+    }
+  },
+  "collection_timing": {
+    "total_harvest_events": 24801,
+    "mean_latency_turns": 50.7108584331277,
+    "median_latency_turns": 22.0,
+    "p25": 9.0,
+    "p75": 93.0,
+    "p90": 101.0,
+    "collected_within_1_turn_pct": 0.0,
+    "collected_within_4_turns_pct": 0.051489859279867746
+  },
+  "delivery_timing": {
+    "total_deliveries_tracked": 23097,
+    "mean_latency_turns": 7.94540416504308,
+    "median_latency_turns": 6.0,
+    "p25": 2.0,
+    "p75": 12.0,
+    "eod_deposit_count": 15442,
+    "manual_deposit_count": 7655,
+    "eod_deposit_pct": 0.6685716759752349
+  },
+  "timing_and_volume_accuracy": {
+    "timing_error_samples": 47923,
+    "timing_mae_turns": 6.455522400517497,
+    "timing_median_turns": 4.0,
+    "volume_error_samples": 17331,
+    "volume_mae_units": 8.091281518665975,
+    "volume_median_units": 4.0
+  },
+  "floor_censoring_impact": {
+    "floor_censored_sales_count": 834,
+    "repaired_predicted_sale_count": 462,
+    "repaired_suppressed_count": 372,
+    "repaired_recall_on_floor_sales": 0.5539568345323741
+  },
+  "crop_dusta_behavior": {
+    "mean_score": 98115.0,
+    "median_score": 96126.5,
+    "min_score": 59302.0,
+    "max_score": 151380.0,
+    "total_units_sold_per_game_mean": {
+      "WHEAT": 1771.0666666666666,
+      "CARROT": 95.98333333333333,
+      "TOMATO": 36.083333333333336,
+      "STRAWBERRY": 173.75,
+      "MELON": 86.18333333333334,
+      "EGG": 39.233333333333334,
+      "MILK": 191.05,
+      "WOOL": 157.28333333333333,
+      "FERTILIZER": 206.7
+    },
+    "total_units_harvested_per_game_mean": {
+      "WHEAT": 539.5166666666667,
+      "CARROT": 102.23333333333333,
+      "TOMATO": 37.016666666666666,
+      "STRAWBERRY": 178.75,
+      "MELON": 86.53333333333333,
+      "EGG": 39.85,
+      "MILK": 192.03333333333333,
+      "WOOL": 157.53333333333333,
+      "FERTILIZER": 0.0
+    }
+  }
+}

@@ -1,0 +1,2670 @@
+{
+  "seeds": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109
+  ],
+  "opponents": [
+    "full_production_agent",
+    "cow_milk_engine",
+    "melon_sniper"
+  ],
+  "total_pairs": 60,
+  "mean_delta_our": -282.9166666666667,
+  "median_delta_our": -2375.5,
+  "ci_95_delta_our": [
+    -3230.8579166666664,
+    2700.8079166666653
+  ],
+  "p_val_delta_our": 0.8557730458542028,
+  "mean_delta_opp": -101.38333333333334,
+  "mean_delta_margin": -181.53333333333333,
+  "median_delta_margin": -1433.0,
+  "ci_95_delta_margin": [
+    -3202.8954166666663,
+    2880.8033333333324
+  ],
+  "p_val_delta_margin": 0.9086952173437779,
+  "l1_record": {
+    "wins": 60,
+    "ties": 0,
+    "losses": 0,
+    "win_rate": 1.0
+  },
+  "l0_record": {
+    "wins": 60,
+    "ties": 0,
+    "losses": 0,
+    "win_rate": 1.0
+  },
+  "win_rate_delta": 0.0,
+  "by_opponent": {
+    "full_production_agent": {
+      "n_pairs": 20,
+      "l1_mean_score": 91364.75,
+      "l0_mean_score": 95515.15,
+      "mean_delta_our": -4150.4,
+      "median_delta_our": -6489.5,
+      "ci_95_delta_our": [
+        -8326.64,
+        -121.59750000000003
+      ],
+      "p_val_delta_our": 0.06697453307746551,
+      "mean_delta_opp": -219.7,
+      "median_delta_opp": 340.0,
+      "mean_delta_margin": -3930.7,
+      "median_delta_margin": -6722.5,
+      "ci_95_delta_margin": [
+        -8384.478749999998,
+        455.3174999999983
+      ],
+      "p_val_delta_margin": 0.1076098303797761,
+      "l1_record": {
+        "wins": 20,
+        "ties": 0,
+        "losses": 0,
+        "win_rate": 1.0
+      },
+      "l0_record": {
+        "wins": 20,
+        "ties": 0,
+        "losses": 0,
+        "win_rate": 1.0
+      },
+      "win_rate_delta": 0.0,
+      "avg_purchases": {
+        "l1": {
+          "COW": 3.55,
+          "SHEEP": 3.75,
+          "GOOSE": 0.0
+        },
+        "l0": {
+          "COW": 4.8,
+          "SHEEP": 2.75,
+          "GOOSE": 0.0
+        },
+        "delta": {
+          "COW": -1.25,
+          "SHEEP": 1.0,
+          "GOOSE": 0.0
+        }
+      },
+      "paired_records": [
+        {
+          "seed": 100,
+          "seat": 0,
+          "l1_our": 95281.0,
+          "l0_our": 97678.0,
+          "d_our": -2397.0,
+          "l1_opp": 12176.0,
+          "l0_opp": 9244.0,
+          "d_opp": 2932.0,
+          "l1_margin": 83105.0,
+          "l0_margin": 88434.0,
+          "d_margin": -5329.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 9,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1476,
+          "l0_wheat_bought": 1530
+        },
+        {
+          "seed": 100,
+          "seat": 1,
+          "l1_our": 101250.0,
+          "l0_our": 109216.0,
+          "d_our": -7966.0,
+          "l1_opp": 7282.0,
+          "l0_opp": 7059.0,
+          "d_opp": 223.0,
+          "l1_margin": 93968.0,
+          "l0_margin": 102157.0,
+          "d_margin": -8189.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 2,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 6,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 9,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1524,
+          "l0_wheat_bought": 1329
+        },
+        {
+          "seed": 101,
+          "seat": 0,
+          "l1_our": 88385.0,
+          "l0_our": 91113.0,
+          "d_our": -2728.0,
+          "l1_opp": 7879.0,
+          "l0_opp": 10905.0,
+          "d_opp": -3026.0,
+          "l1_margin": 80506.0,
+          "l0_margin": 80208.0,
+          "d_margin": 298.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 7,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1435,
+          "l0_wheat_bought": 1430
+        },
+        {
+          "seed": 101,
+          "seat": 1,
+          "l1_our": 87380.0,
+          "l0_our": 95415.0,
+          "d_our": -8035.0,
+          "l1_opp": 10481.0,
+          "l0_opp": 8680.0,
+          "d_opp": 1801.0,
+          "l1_margin": 76899.0,
+          "l0_margin": 86735.0,
+          "d_margin": -9836.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 3,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 4,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1499,
+          "l0_wheat_bought": 1550
+        },
+        {
+          "seed": 102,
+          "seat": 0,
+          "l1_our": 92959.0,
+          "l0_our": 99720.0,
+          "d_our": -6761.0,
+          "l1_opp": 8832.0,
+          "l0_opp": 8267.0,
+          "d_opp": 565.0,
+          "l1_margin": 84127.0,
+          "l0_margin": 91453.0,
+          "d_margin": -7326.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 2,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 10,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1453,
+          "l0_wheat_bought": 1447
+        },
+        {
+          "seed": 102,
+          "seat": 1,
+          "l1_our": 90932.0,
+          "l0_our": 100616.0,
+          "d_our": -9684.0,
+          "l1_opp": 8408.0,
+          "l0_opp": 10509.0,
+          "d_opp": -2101.0,
+          "l1_margin": 82524.0,
+          "l0_margin": 90107.0,
+          "d_margin": -7583.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 2,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1463,
+          "l0_wheat_bought": 1414
+        },
+        {
+          "seed": 103,
+          "seat": 0,
+          "l1_our": 83548.0,
+          "l0_our": 80061.0,
+          "d_our": 3487.0,
+          "l1_opp": 11268.0,
+          "l0_opp": 8140.0,
+          "d_opp": 3128.0,
+          "l1_margin": 72280.0,
+          "l0_margin": 71921.0,
+          "d_margin": 359.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 5,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 4,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1504,
+          "l0_wheat_bought": 1470
+        },
+        {
+          "seed": 103,
+          "seat": 1,
+          "l1_our": 90881.0,
+          "l0_our": 99426.0,
+          "d_our": -8545.0,
+          "l1_opp": 8861.0,
+          "l0_opp": 9482.0,
+          "d_opp": -621.0,
+          "l1_margin": 82020.0,
+          "l0_margin": 89944.0,
+          "d_margin": -7924.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 1,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 2,
+            "SHEEP": 8,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 10,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1502,
+          "l0_wheat_bought": 1603
+        },
+        {
+          "seed": 104,
+          "seat": 0,
+          "l1_our": 86503.0,
+          "l0_our": 92030.0,
+          "d_our": -5527.0,
+          "l1_opp": 13220.0,
+          "l0_opp": 10463.0,
+          "d_opp": 2757.0,
+          "l1_margin": 73283.0,
+          "l0_margin": 81567.0,
+          "d_margin": -8284.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1476,
+          "l0_wheat_bought": 1556
+        },
+        {
+          "seed": 104,
+          "seat": 1,
+          "l1_our": 98667.0,
+          "l0_our": 90753.0,
+          "d_our": 7914.0,
+          "l1_opp": 10247.0,
+          "l0_opp": 13864.0,
+          "d_opp": -3617.0,
+          "l1_margin": 88420.0,
+          "l0_margin": 76889.0,
+          "d_margin": 11531.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 5,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 9,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1444,
+          "l0_wheat_bought": 1476
+        },
+        {
+          "seed": 105,
+          "seat": 0,
+          "l1_our": 91022.0,
+          "l0_our": 102852.0,
+          "d_our": -11830.0,
+          "l1_opp": 8800.0,
+          "l0_opp": 7358.0,
+          "d_opp": 1442.0,
+          "l1_margin": 82222.0,
+          "l0_margin": 95494.0,
+          "d_margin": -13272.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 9,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1539,
+          "l0_wheat_bought": 1476
+        },
+        {
+          "seed": 105,
+          "seat": 1,
+          "l1_our": 104105.0,
+          "l0_our": 92673.0,
+          "d_our": 11432.0,
+          "l1_opp": 7661.0,
+          "l0_opp": 6686.0,
+          "d_opp": 975.0,
+          "l1_margin": 96444.0,
+          "l0_margin": 85987.0,
+          "d_margin": 10457.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 2,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 10,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 4,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1517,
+          "l0_wheat_bought": 1557
+        },
+        {
+          "seed": 106,
+          "seat": 0,
+          "l1_our": 85079.0,
+          "l0_our": 72406.0,
+          "d_our": 12673.0,
+          "l1_opp": 7750.0,
+          "l0_opp": 12206.0,
+          "d_opp": -4456.0,
+          "l1_margin": 77329.0,
+          "l0_margin": 60200.0,
+          "d_margin": 17129.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 1,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 2,
+            "SHEEP": 9,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 5,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1488,
+          "l0_wheat_bought": 1487
+        },
+        {
+          "seed": 106,
+          "seat": 1,
+          "l1_our": 94729.0,
+          "l0_our": 85428.0,
+          "d_our": 9301.0,
+          "l1_opp": 7305.0,
+          "l0_opp": 8549.0,
+          "d_opp": -1244.0,
+          "l1_margin": 87424.0,
+          "l0_margin": 76879.0,
+          "d_margin": 10545.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1575,
+          "l0_wheat_bought": 1416
+        },
+        {
+          "seed": 107,
+          "seat": 0,
+          "l1_our": 97600.0,
+          "l0_our": 101966.0,
+          "d_our": -4366.0,
+          "l1_opp": 9729.0,
+          "l0_opp": 11949.0,
+          "d_opp": -2220.0,
+          "l1_margin": 87871.0,
+          "l0_margin": 90017.0,
+          "d_margin": -2146.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 5,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 7,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 9,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 11,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1577,
+          "l0_wheat_bought": 1664
+        },
+        {
+          "seed": 107,
+          "seat": 1,
+          "l1_our": 87967.0,
+          "l0_our": 94376.0,
+          "d_our": -6409.0,
+          "l1_opp": 8150.0,
+          "l0_opp": 10498.0,
+          "d_opp": -2348.0,
+          "l1_margin": 79817.0,
+          "l0_margin": 83878.0,
+          "d_margin": -4061.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 1,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 2,
+            "SHEEP": 8,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 5,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1386,
+          "l0_wheat_bought": 1509
+        },
+        {
+          "seed": 108,
+          "seat": 0,
+          "l1_our": 98655.0,
+          "l0_our": 106054.0,
+          "d_our": -7399.0,
+          "l1_opp": 9496.0,
+          "l0_opp": 8745.0,
+          "d_opp": 751.0,
+          "l1_margin": 89159.0,
+          "l0_margin": 97309.0,
+          "d_margin": -8150.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 10,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 10,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1603,
+          "l0_wheat_bought": 1471
+        },
+        {
+          "seed": 108,
+          "seat": 1,
+          "l1_our": 85179.0,
+          "l0_our": 91749.0,
+          "d_our": -6570.0,
+          "l1_opp": 8083.0,
+          "l0_opp": 8534.0,
+          "d_opp": -451.0,
+          "l1_margin": 77096.0,
+          "l0_margin": 83215.0,
+          "d_margin": -6119.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 3,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 2,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 5,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1574,
+          "l0_wheat_bought": 1543
+        },
+        {
+          "seed": 109,
+          "seat": 0,
+          "l1_our": 77667.0,
+          "l0_our": 106394.0,
+          "d_our": -28727.0,
+          "l1_opp": 10820.0,
+          "l0_opp": 10363.0,
+          "d_opp": 457.0,
+          "l1_margin": 66847.0,
+          "l0_margin": 96031.0,
+          "d_margin": -29184.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 5,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1523,
+          "l0_wheat_bought": 1441
+        },
+        {
+          "seed": 109,
+          "seat": 1,
+          "l1_our": 89506.0,
+          "l0_our": 100377.0,
+          "d_our": -10871.0,
+          "l1_opp": 10517.0,
+          "l0_opp": 9858.0,
+          "d_opp": 659.0,
+          "l1_margin": 78989.0,
+          "l0_margin": 90519.0,
+          "d_margin": -11530.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1510,
+          "l0_wheat_bought": 1489
+        }
+      ]
+    },
+    "cow_milk_engine": {
+      "n_pairs": 20,
+      "l1_mean_score": 96587.65,
+      "l0_mean_score": 94028.65,
+      "mean_delta_our": 2559.0,
+      "median_delta_our": 4996.5,
+      "ci_95_delta_our": [
+        -3727.934999999999,
+        8552.962499999998
+      ],
+      "p_val_delta_our": 0.4321091460717087,
+      "mean_delta_opp": -84.45,
+      "median_delta_opp": -41.0,
+      "mean_delta_margin": 2643.45,
+      "median_delta_margin": 5114.5,
+      "ci_95_delta_margin": [
+        -3618.8949999999977,
+        8626.1225
+      ],
+      "p_val_delta_margin": 0.416768333533257,
+      "l1_record": {
+        "wins": 20,
+        "ties": 0,
+        "losses": 0,
+        "win_rate": 1.0
+      },
+      "l0_record": {
+        "wins": 20,
+        "ties": 0,
+        "losses": 0,
+        "win_rate": 1.0
+      },
+      "win_rate_delta": 0.0,
+      "avg_purchases": {
+        "l1": {
+          "COW": 4.95,
+          "SHEEP": 2.8,
+          "GOOSE": 0.0
+        },
+        "l0": {
+          "COW": 4.9,
+          "SHEEP": 3.3,
+          "GOOSE": 0.0
+        },
+        "delta": {
+          "COW": 0.04999999999999982,
+          "SHEEP": -0.5,
+          "GOOSE": 0.0
+        }
+      },
+      "paired_records": [
+        {
+          "seed": 100,
+          "seat": 0,
+          "l1_our": 96570.0,
+          "l0_our": 92269.0,
+          "d_our": 4301.0,
+          "l1_opp": 1305.0,
+          "l0_opp": 1793.0,
+          "d_opp": -488.0,
+          "l1_margin": 95265.0,
+          "l0_margin": 90476.0,
+          "d_margin": 4789.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 4,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1615,
+          "l0_wheat_bought": 1476
+        },
+        {
+          "seed": 100,
+          "seat": 1,
+          "l1_our": 92235.0,
+          "l0_our": 100535.0,
+          "d_our": -8300.0,
+          "l1_opp": 1692.0,
+          "l0_opp": 1719.0,
+          "d_opp": -27.0,
+          "l1_margin": 90543.0,
+          "l0_margin": 98816.0,
+          "d_margin": -8273.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 5,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 9,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1495,
+          "l0_wheat_bought": 1463
+        },
+        {
+          "seed": 101,
+          "seat": 0,
+          "l1_our": 97530.0,
+          "l0_our": 71723.0,
+          "d_our": 25807.0,
+          "l1_opp": 1172.0,
+          "l0_opp": 1010.0,
+          "d_opp": 162.0,
+          "l1_margin": 96358.0,
+          "l0_margin": 70713.0,
+          "d_margin": 25645.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 3,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 2,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 4,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1509,
+          "l0_wheat_bought": 1594
+        },
+        {
+          "seed": 101,
+          "seat": 1,
+          "l1_our": 83564.0,
+          "l0_our": 101225.0,
+          "d_our": -17661.0,
+          "l1_opp": 1665.0,
+          "l0_opp": 1362.0,
+          "d_opp": 303.0,
+          "l1_margin": 81899.0,
+          "l0_margin": 99863.0,
+          "d_margin": -17964.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 7,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 5,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 9,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1632,
+          "l0_wheat_bought": 1352
+        },
+        {
+          "seed": 102,
+          "seat": 0,
+          "l1_our": 100322.0,
+          "l0_our": 94630.0,
+          "d_our": 5692.0,
+          "l1_opp": 1603.0,
+          "l0_opp": 1351.0,
+          "d_opp": 252.0,
+          "l1_margin": 98719.0,
+          "l0_margin": 93279.0,
+          "d_margin": 5440.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 9,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 5,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1510,
+          "l0_wheat_bought": 1615
+        },
+        {
+          "seed": 102,
+          "seat": 1,
+          "l1_our": 104834.0,
+          "l0_our": 96330.0,
+          "d_our": 8504.0,
+          "l1_opp": 518.0,
+          "l0_opp": 1671.0,
+          "d_opp": -1153.0,
+          "l1_margin": 104316.0,
+          "l0_margin": 94659.0,
+          "d_margin": 9657.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 9,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 4,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1519,
+          "l0_wheat_bought": 1552
+        },
+        {
+          "seed": 103,
+          "seat": 0,
+          "l1_our": 115945.0,
+          "l0_our": 92930.0,
+          "d_our": 23015.0,
+          "l1_opp": 1678.0,
+          "l0_opp": 1443.0,
+          "d_opp": 235.0,
+          "l1_margin": 114267.0,
+          "l0_margin": 91487.0,
+          "d_margin": 22780.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 8,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 11,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1463,
+          "l0_wheat_bought": 1493
+        },
+        {
+          "seed": 103,
+          "seat": 1,
+          "l1_our": 101542.0,
+          "l0_our": 88689.0,
+          "d_our": 12853.0,
+          "l1_opp": 1749.0,
+          "l0_opp": 1586.0,
+          "d_opp": 163.0,
+          "l1_margin": 99793.0,
+          "l0_margin": 87103.0,
+          "d_margin": 12690.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 7,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 6,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 8,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 8,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1453,
+          "l0_wheat_bought": 1513
+        },
+        {
+          "seed": 104,
+          "seat": 0,
+          "l1_our": 84036.0,
+          "l0_our": 108283.0,
+          "d_our": -24247.0,
+          "l1_opp": 1672.0,
+          "l0_opp": 1706.0,
+          "d_opp": -34.0,
+          "l1_margin": 82364.0,
+          "l0_margin": 106577.0,
+          "d_margin": -24213.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 5,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1511,
+          "l0_wheat_bought": 1501
+        },
+        {
+          "seed": 104,
+          "seat": 1,
+          "l1_our": 88603.0,
+          "l0_our": 101536.0,
+          "d_our": -12933.0,
+          "l1_opp": 1664.0,
+          "l0_opp": 1818.0,
+          "d_opp": -154.0,
+          "l1_margin": 86939.0,
+          "l0_margin": 99718.0,
+          "d_margin": -12779.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 2,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 3,
+            "SHEEP": 8,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1667,
+          "l0_wheat_bought": 1585
+        },
+        {
+          "seed": 105,
+          "seat": 0,
+          "l1_our": 107945.0,
+          "l0_our": 90074.0,
+          "d_our": 17871.0,
+          "l1_opp": 1268.0,
+          "l0_opp": 1667.0,
+          "d_opp": -399.0,
+          "l1_margin": 106677.0,
+          "l0_margin": 88407.0,
+          "d_margin": 18270.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1644,
+          "l0_wheat_bought": 1560
+        },
+        {
+          "seed": 105,
+          "seat": 1,
+          "l1_our": 96858.0,
+          "l0_our": 96447.0,
+          "d_our": 411.0,
+          "l1_opp": 1702.0,
+          "l0_opp": 1750.0,
+          "d_opp": -48.0,
+          "l1_margin": 95156.0,
+          "l0_margin": 94697.0,
+          "d_margin": 459.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 2,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1499,
+          "l0_wheat_bought": 1579
+        },
+        {
+          "seed": 106,
+          "seat": 0,
+          "l1_our": 92731.0,
+          "l0_our": 99002.0,
+          "d_our": -6271.0,
+          "l1_opp": 1340.0,
+          "l0_opp": 1869.0,
+          "d_opp": -529.0,
+          "l1_margin": 91391.0,
+          "l0_margin": 97133.0,
+          "d_margin": -5742.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 7,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 9,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 11,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1455,
+          "l0_wheat_bought": 1568
+        },
+        {
+          "seed": 106,
+          "seat": 1,
+          "l1_our": 104239.0,
+          "l0_our": 97479.0,
+          "d_our": 6760.0,
+          "l1_opp": 1666.0,
+          "l0_opp": 1759.0,
+          "d_opp": -93.0,
+          "l1_margin": 102573.0,
+          "l0_margin": 95720.0,
+          "d_margin": 6853.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 9,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1542,
+          "l0_wheat_bought": 1526
+        },
+        {
+          "seed": 107,
+          "seat": 0,
+          "l1_our": 94055.0,
+          "l0_our": 97307.0,
+          "d_our": -3252.0,
+          "l1_opp": 1678.0,
+          "l0_opp": 1870.0,
+          "d_opp": -192.0,
+          "l1_margin": 92377.0,
+          "l0_margin": 95437.0,
+          "d_margin": -3060.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1566,
+          "l0_wheat_bought": 1487
+        },
+        {
+          "seed": 107,
+          "seat": 1,
+          "l1_our": 106493.0,
+          "l0_our": 90956.0,
+          "d_our": 15537.0,
+          "l1_opp": 1664.0,
+          "l0_opp": 1728.0,
+          "d_opp": -64.0,
+          "l1_margin": 104829.0,
+          "l0_margin": 89228.0,
+          "d_margin": 15601.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 10,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 4,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1583,
+          "l0_wheat_bought": 1613
+        },
+        {
+          "seed": 108,
+          "seat": 0,
+          "l1_our": 90465.0,
+          "l0_our": 98090.0,
+          "d_our": -7625.0,
+          "l1_opp": 1775.0,
+          "l0_opp": 1546.0,
+          "d_opp": 229.0,
+          "l1_margin": 88690.0,
+          "l0_margin": 96544.0,
+          "d_margin": -7854.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1527,
+          "l0_wheat_bought": 1609
+        },
+        {
+          "seed": 108,
+          "seat": 1,
+          "l1_our": 89421.0,
+          "l0_our": 80980.0,
+          "d_our": 8441.0,
+          "l1_opp": 1718.0,
+          "l0_opp": 1226.0,
+          "d_opp": 492.0,
+          "l1_margin": 87703.0,
+          "l0_margin": 79754.0,
+          "d_margin": 7949.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 2,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 4,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1441,
+          "l0_wheat_bought": 1641
+        },
+        {
+          "seed": 109,
+          "seat": 0,
+          "l1_our": 111317.0,
+          "l0_our": 93076.0,
+          "d_our": 18241.0,
+          "l1_opp": 1742.0,
+          "l0_opp": 1750.0,
+          "d_opp": -8.0,
+          "l1_margin": 109575.0,
+          "l0_margin": 91326.0,
+          "d_margin": 18249.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 8,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 11,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 8,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1482,
+          "l0_wheat_bought": 1503
+        },
+        {
+          "seed": 109,
+          "seat": 1,
+          "l1_our": 73048.0,
+          "l0_our": 89012.0,
+          "d_our": -15964.0,
+          "l1_opp": 1447.0,
+          "l0_opp": 1783.0,
+          "d_opp": -336.0,
+          "l1_margin": 71601.0,
+          "l0_margin": 87229.0,
+          "d_margin": -15628.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 1,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 2,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1378,
+          "l0_wheat_bought": 1615
+        }
+      ]
+    },
+    "melon_sniper": {
+      "n_pairs": 20,
+      "l1_mean_score": 94256.5,
+      "l0_mean_score": 93513.85,
+      "mean_delta_our": 742.65,
+      "median_delta_our": 391.5,
+      "ci_95_delta_our": [
+        -4271.164999999998,
+        5538.169999999999
+      ],
+      "p_val_delta_our": 0.7719198272664086,
+      "mean_delta_opp": 0.0,
+      "median_delta_opp": 0.0,
+      "mean_delta_margin": 742.65,
+      "median_delta_margin": 391.5,
+      "ci_95_delta_margin": [
+        -4271.164999999998,
+        5538.169999999999
+      ],
+      "p_val_delta_margin": 0.7719198272664086,
+      "l1_record": {
+        "wins": 20,
+        "ties": 0,
+        "losses": 0,
+        "win_rate": 1.0
+      },
+      "l0_record": {
+        "wins": 20,
+        "ties": 0,
+        "losses": 0,
+        "win_rate": 1.0
+      },
+      "win_rate_delta": 0.0,
+      "avg_purchases": {
+        "l1": {
+          "COW": 4.2,
+          "SHEEP": 2.85,
+          "GOOSE": 0.0
+        },
+        "l0": {
+          "COW": 3.8,
+          "SHEEP": 3.35,
+          "GOOSE": 0.0
+        },
+        "delta": {
+          "COW": 0.40000000000000036,
+          "SHEEP": -0.5,
+          "GOOSE": 0.0
+        }
+      },
+      "paired_records": [
+        {
+          "seed": 100,
+          "seat": 0,
+          "l1_our": 75368.0,
+          "l0_our": 78306.0,
+          "d_our": -2938.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 73833.0,
+          "l0_margin": 76771.0,
+          "d_margin": -2938.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 5,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 6,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 5,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1565,
+          "l0_wheat_bought": 1405
+        },
+        {
+          "seed": 100,
+          "seat": 1,
+          "l1_our": 89398.0,
+          "l0_our": 104655.0,
+          "d_our": -15257.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 87863.0,
+          "l0_margin": 103120.0,
+          "d_margin": -15257.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 5,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1436,
+          "l0_wheat_bought": 1479
+        },
+        {
+          "seed": 101,
+          "seat": 0,
+          "l1_our": 85706.0,
+          "l0_our": 101045.0,
+          "d_our": -15339.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 84171.0,
+          "l0_margin": 99510.0,
+          "d_margin": -15339.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 2,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1436,
+          "l0_wheat_bought": 1486
+        },
+        {
+          "seed": 101,
+          "seat": 1,
+          "l1_our": 96708.0,
+          "l0_our": 95450.0,
+          "d_our": 1258.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 95173.0,
+          "l0_margin": 93915.0,
+          "d_margin": 1258.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 9,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1471,
+          "l0_wheat_bought": 1498
+        },
+        {
+          "seed": 102,
+          "seat": 0,
+          "l1_our": 88475.0,
+          "l0_our": 96653.0,
+          "d_our": -8178.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 86940.0,
+          "l0_margin": 95118.0,
+          "d_margin": -8178.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 1,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 6,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 2,
+            "SHEEP": 9,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 9,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1566,
+          "l0_wheat_bought": 1471
+        },
+        {
+          "seed": 102,
+          "seat": 1,
+          "l1_our": 94316.0,
+          "l0_our": 94791.0,
+          "d_our": -475.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 92781.0,
+          "l0_margin": 93256.0,
+          "d_margin": -475.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 3,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 2,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 4,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1512,
+          "l0_wheat_bought": 1449
+        },
+        {
+          "seed": 103,
+          "seat": 0,
+          "l1_our": 99032.0,
+          "l0_our": 94926.0,
+          "d_our": 4106.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 97497.0,
+          "l0_margin": 93391.0,
+          "d_margin": 4106.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 5,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 6,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1577,
+          "l0_wheat_bought": 1566
+        },
+        {
+          "seed": 103,
+          "seat": 1,
+          "l1_our": 105131.0,
+          "l0_our": 87620.0,
+          "d_our": 17511.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 103596.0,
+          "l0_margin": 86085.0,
+          "d_margin": 17511.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 8,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 11,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 5,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1479,
+          "l0_wheat_bought": 1513
+        },
+        {
+          "seed": 104,
+          "seat": 0,
+          "l1_our": 84472.0,
+          "l0_our": 110108.0,
+          "d_our": -25636.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 82937.0,
+          "l0_margin": 108573.0,
+          "d_margin": -25636.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 3,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 5,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 10,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1457,
+          "l0_wheat_bought": 1483
+        },
+        {
+          "seed": 104,
+          "seat": 1,
+          "l1_our": 113844.0,
+          "l0_our": 95199.0,
+          "d_our": 18645.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 112309.0,
+          "l0_margin": 93664.0,
+          "d_margin": 18645.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 10,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1477,
+          "l0_wheat_bought": 1475
+        },
+        {
+          "seed": 105,
+          "seat": 0,
+          "l1_our": 94464.0,
+          "l0_our": 87420.0,
+          "d_our": 7044.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 92929.0,
+          "l0_margin": 85885.0,
+          "d_margin": 7044.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 1,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 2,
+            "SHEEP": 8,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1471,
+          "l0_wheat_bought": 1484
+        },
+        {
+          "seed": 105,
+          "seat": 1,
+          "l1_our": 85655.0,
+          "l0_our": 89006.0,
+          "d_our": -3351.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 84120.0,
+          "l0_margin": 87471.0,
+          "d_margin": -3351.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 1,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 2,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 2,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 3,
+            "SHEEP": 6,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1229,
+          "l0_wheat_bought": 1400
+        },
+        {
+          "seed": 106,
+          "seat": 0,
+          "l1_our": 95721.0,
+          "l0_our": 96441.0,
+          "d_our": -720.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 94186.0,
+          "l0_margin": 94906.0,
+          "d_margin": -720.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 8,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 12,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1582,
+          "l0_wheat_bought": 1471
+        },
+        {
+          "seed": 106,
+          "seat": 1,
+          "l1_our": 87610.0,
+          "l0_our": 80621.0,
+          "d_our": 6989.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 86075.0,
+          "l0_margin": 79086.0,
+          "d_margin": 6989.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 3,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 4,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 4,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1496,
+          "l0_wheat_bought": 1402
+        },
+        {
+          "seed": 107,
+          "seat": 0,
+          "l1_our": 97977.0,
+          "l0_our": 91659.0,
+          "d_our": 6318.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 96442.0,
+          "l0_margin": 90124.0,
+          "d_margin": 6318.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 3,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 4,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 4,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 6,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1577,
+          "l0_wheat_bought": 1479
+        },
+        {
+          "seed": 107,
+          "seat": 1,
+          "l1_our": 102899.0,
+          "l0_our": 85566.0,
+          "d_our": 17333.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 101364.0,
+          "l0_margin": 84031.0,
+          "d_margin": 17333.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 1,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 10,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 2,
+            "SHEEP": 8,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1504,
+          "l0_wheat_bought": 1443
+        },
+        {
+          "seed": 108,
+          "seat": 0,
+          "l1_our": 109815.0,
+          "l0_our": 105966.0,
+          "d_our": 3849.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 108280.0,
+          "l0_margin": 104431.0,
+          "d_margin": 3849.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 6,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 5,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 9,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 9,
+            "SHEEP": 1,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1653,
+          "l0_wheat_bought": 1519
+        },
+        {
+          "seed": 108,
+          "seat": 1,
+          "l1_our": 86770.0,
+          "l0_our": 89124.0,
+          "d_our": -2354.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 85235.0,
+          "l0_margin": 87589.0,
+          "d_margin": -2354.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 1,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 3,
+            "SHEEP": 5,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 2,
+            "SHEEP": 8,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 3,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1471,
+          "l0_wheat_bought": 1484
+        },
+        {
+          "seed": 109,
+          "seat": 0,
+          "l1_our": 95989.0,
+          "l0_our": 86955.0,
+          "d_our": 9034.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 94454.0,
+          "l0_margin": 85420.0,
+          "d_margin": 9034.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 2,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 1,
+            "SHEEP": 7,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 7,
+            "SHEEP": 3,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 2,
+            "SHEEP": 9,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1535,
+          "l0_wheat_bought": 1450
+        },
+        {
+          "seed": 109,
+          "seat": 1,
+          "l1_our": 95780.0,
+          "l0_our": 98766.0,
+          "d_our": -2986.0,
+          "l1_opp": 1535.0,
+          "l0_opp": 1535.0,
+          "d_opp": 0.0,
+          "l1_margin": 94245.0,
+          "l0_margin": 97231.0,
+          "d_margin": -2986.0,
+          "l1_won": true,
+          "l0_won": true,
+          "l1_tie": false,
+          "l0_tie": false,
+          "l1_purchases": {
+            "COW": 4,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_purchases": {
+            "COW": 8,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l1_final_animals": {
+            "COW": 6,
+            "SHEEP": 4,
+            "GOOSE": 0
+          },
+          "l0_final_animals": {
+            "COW": 11,
+            "SHEEP": 0,
+            "GOOSE": 0
+          },
+          "l1_first_day": 0,
+          "l0_first_day": 0,
+          "l1_wheat_bought": 1458,
+          "l0_wheat_bought": 1530
+        }
+      ]
+    }
+  },
+  "recommendation": "REVISE: Mixed outcomes across opponents."
+}

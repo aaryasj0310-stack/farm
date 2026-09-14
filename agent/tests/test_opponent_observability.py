@@ -4,6 +4,8 @@ import main as agent_main
 
 
 def setup_function():
+    import config
+    config.set_opponent_intelligence_mode("O1")
     agent_main.reset_opponent_model_state()
 
 

@@ -1,0 +1,45 @@
+{
+  "n_matches": 90,
+  "shed_interval_coverage_pct": 61.87,
+  "shed_point_estimate_mae": 4.0,
+  "brier_score_all": 0.0482,
+  "brier_score_uncensored": 0.0482,
+  "brier_score_floor_censored": NaN,
+  "reliability_curve": [
+    {
+      "bin": "0.0-0.2",
+      "count": 529172,
+      "avg_predicted_prob": 0.001,
+      "empirical_sale_frequency": 0.001,
+      "calibration_error": 0.0
+    },
+    {
+      "bin": "0.2-0.4",
+      "count": 3487,
+      "avg_predicted_prob": 0.344,
+      "empirical_sale_frequency": 0.157,
+      "calibration_error": 0.187
+    },
+    {
+      "bin": "0.4-0.6",
+      "count": 7601,
+      "avg_predicted_prob": 0.494,
+      "empirical_sale_frequency": 0.085,
+      "calibration_error": 0.41
+    },
+    {
+      "bin": "0.6-0.8",
+      "count": 16499,
+      "avg_predicted_prob": 0.697,
+      "empirical_sale_frequency": 0.158,
+      "calibration_error": 0.539
+    },
+    {
+      "bin": "0.8-1.0",
+      "count": 25631,
+      "avg_predicted_prob": 0.892,
+      "empirical_sale_frequency": 0.099,
+      "calibration_error": 0.793
+    }
+  ]
+}

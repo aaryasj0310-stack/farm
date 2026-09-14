@@ -1,5 +1,5 @@
 """Persistent cross-turn memory: episode detection, drain ledger, deadlines."""
-from collections import deque
+from collections import deque, defaultdict
 from config import PRODUCTS, SHOPS, TURNS_PER_DAY, PRICE_FLOOR, log
 from observation_parser import parse_observation
 try:
@@ -19,6 +19,7 @@ _STATE = {
     "town_drain_seen": {},       # product -> units inferred drained by town
     "opp_sales_inferred": {},    # product -> units inferred sold by opponent
     "opp_sales_step": {},        # product -> units inferred sold by opponent on latest step
+    "opp_sales_history": deque(maxlen=100),  # (step, product, units) step-stamped history
     "opp_market_inference": {},  # product -> latest step inference dict
     "our_units_sold": {},        # product -> total units we sold (cumulative)
     "our_units_sold_last_step": {},  # product -> units sold on immediate previous step
@@ -81,6 +82,7 @@ def reset_memory(mem=None):
     mem["town_drain_seen"] = {}
     mem["opp_sales_inferred"] = {}
     mem["opp_sales_step"] = {}
+    mem["opp_sales_history"] = deque(maxlen=100)
     mem["opp_market_inference"] = {}
     mem["our_units_sold"] = {}
     mem["our_units_sold_last_step"] = {}
@@ -294,6 +296,11 @@ def _update_drain_ledger(ctx, mem):
 
     mem["opp_market_inference"] = step_inferences
     mem["opp_sales_step"] = step_sales
+    cur_step = ctx.get("step", 0) if ctx else 0
+    history = mem.setdefault("opp_sales_history", deque(maxlen=100))
+    for item, units in step_sales.items():
+        if units > 0:
+            history.append((cur_step, item, units))
     mem["prev_inventory"] = dict(inv_now)
     # Clear step-level sales and buys for next turn
     mem["our_units_sold_last_step"] = {}
@@ -394,3 +401,18 @@ def diagnostics():
         "opp_money_deltas": deltas,
         "opp_money_delta_sum": sum(deltas),
     }
+
+
+def get_recent_opp_sales(mem, max_steps=4, current_step=None):
+    """Return dict {product: units} sold by opponent within the last max_steps turns."""
+    res = defaultdict(float)
+    history = mem.get("opp_sales_history", []) if mem else []
+    if not history:
+        return dict(res)
+    if current_step is None:
+        current_step = max((s for s, _, _ in history), default=0)
+    cutoff = current_step - max_steps
+    for step, item, qty in history:
+        if step > cutoff and qty > 0:
+            res[item] += qty
+    return dict(res)

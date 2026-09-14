@@ -857,6 +857,59 @@ def set_livestock_experiment_arm(arm: str) -> None:
                 pass
 
 
+# Livestock Opponent Commitment Valuation Mode
+# L0: Unconstrained counterfactual valuation (O0 baseline, ignores opponent animal commitments)
+# L1: Unguarded commitment-aware livestock valuation (derives future supply scenarios from visible opponent animals)
+# L2a: Guarded commitment awareness (conservative: relative_gap <= 0.05)
+# L2b: Guarded commitment awareness (medium: relative_gap <= 0.15)
+# L2c: Guarded commitment awareness (permissive: relative_gap <= 0.30)
+# L2: Guarded commitment awareness with explicit LIVESTOCK_GUARD_THRESHOLD
+LIVESTOCK_VALUATION_MODE: str = "L0"
+LIVESTOCK_GUARD_THRESHOLD: float = 0.15
+
+
+def set_livestock_valuation_mode(mode: str, guard_threshold: Optional[float] = None) -> None:
+    """Configure livestock valuation mode: 'L0', 'L1', 'L2a', 'L2b', 'L2c', or 'L2'."""
+    global LIVESTOCK_VALUATION_MODE, LIVESTOCK_GUARD_THRESHOLD
+    mode_clean = str(mode).strip()
+    mode_upper = mode_clean.upper()
+    valid_modes = ("L0", "L1", "L2", "L2A", "L2B", "L2C")
+    if mode_upper not in valid_modes:
+        raise ValueError(f"Unknown livestock valuation mode: {mode}. Expected one of {valid_modes}")
+
+    LIVESTOCK_VALUATION_MODE = mode_upper
+    if mode_upper == "L2A":
+        LIVESTOCK_GUARD_THRESHOLD = 0.05
+    elif mode_upper == "L2B":
+        LIVESTOCK_GUARD_THRESHOLD = 0.15
+    elif mode_upper == "L2C":
+        LIVESTOCK_GUARD_THRESHOLD = 0.30
+    elif guard_threshold is not None:
+        LIVESTOCK_GUARD_THRESHOLD = float(guard_threshold)
+
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.herd_planner", "strategy.herd_planner", "herd_planner",
+        "agent.strategy.marginal_livestock_valuator", "strategy.marginal_livestock_valuator", "marginal_livestock_valuator",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "LIVESTOCK_VALUATION_MODE", LIVESTOCK_VALUATION_MODE)
+                setattr(sys.modules[mod_name], "LIVESTOCK_GUARD_THRESHOLD", LIVESTOCK_GUARD_THRESHOLD)
+            except Exception:
+                pass
+
+
+def get_livestock_valuation_mode() -> str:
+    return LIVESTOCK_VALUATION_MODE
+
+
+def get_livestock_guard_threshold() -> float:
+    return LIVESTOCK_GUARD_THRESHOLD
+
+
+
 def get_sw_experiment_settings() -> Dict[str, Any]:
     """Return immutable snapshot of current SW experiment settings."""
     return {
@@ -869,4 +922,46 @@ def get_sw_experiment_settings() -> Dict[str, Any]:
         "persistent_worker_locality": PERSISTENT_WORKER_LOCALITY_ENABLED,
         "sw_cell_housing_enabled": SW_CELL_HOUSING_ENABLED,
     }
+
+
+# ====================================================================
+# Opponent Intelligence Experiment Modes (O0, O0_SHADOW, O1, O1_SHADOW, O1R)
+# ====================================================================
+# O0 = opponent advice completely disabled (empty OpponentAdvice) - SAFE COMPETITION DEFAULT
+# O0_SHADOW = exact O0 live decisions + repaired opponent model runs shadow telemetry only
+# O1 = exact current opponent behavior (untouched baseline)
+# O1_SHADOW = O1 still controls strategy + repaired forecasts run telemetry-only
+# O1R = repaired intelligence affects strategy; disabled until calibration passes
+OPPONENT_INTELLIGENCE_MODE: str = "O0_SHADOW"
+SHADOW_OPPONENT_FORECAST_ENABLED: bool = True
+
+
+def set_opponent_intelligence_mode(mode: str) -> None:
+    """Configure opponent intelligence mode: O0, O0_SHADOW, O1, O1_SHADOW, O1R, A0, A1, A2, A3, A4."""
+    global OPPONENT_INTELLIGENCE_MODE, SHADOW_OPPONENT_FORECAST_ENABLED
+    mode_clean = str(mode).strip()
+    valid_modes = ("O0", "O0_SHADOW", "O1", "O1_SHADOW", "O1R", "A0", "A1", "A2", "A3", "A4")
+    if mode_clean not in valid_modes:
+        raise ValueError(f"Unknown opponent intelligence mode: {mode}. Expected one of {valid_modes}")
+    OPPONENT_INTELLIGENCE_MODE = mode_clean
+    if mode_clean in ("O0_SHADOW", "O1_SHADOW", "A3", "A4"):
+        SHADOW_OPPONENT_FORECAST_ENABLED = True
+    elif mode_clean in ("O0", "O1", "A0", "A1", "A2"):
+        SHADOW_OPPONENT_FORECAST_ENABLED = False
+
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.strategy.opponent_advisor", "strategy.opponent_advisor", "opponent_advisor",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "OPPONENT_INTELLIGENCE_MODE", OPPONENT_INTELLIGENCE_MODE)
+                setattr(mod, "SHADOW_OPPONENT_FORECAST_ENABLED", SHADOW_OPPONENT_FORECAST_ENABLED)
+            except Exception:
+                pass
+
+
+def get_opponent_intelligence_mode() -> str:
+    return OPPONENT_INTELLIGENCE_MODE
 
