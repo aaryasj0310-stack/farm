@@ -1,0 +1,2770 @@
+{
+  "analysis": {
+    "n_pairs": 30,
+    "control_arm": "ArmA",
+    "treatment_arm": "ArmA-DynWheat",
+    "score_control_mean": 97918.6,
+    "score_treatment_mean": 101088.03333333334,
+    "score_delta_mean": 3169.4333333333334,
+    "score_delta_median": 1182.0,
+    "score_delta_trimmed_mean": 2548.1666666666665,
+    "score_delta_std": 11260.56139252003,
+    "score_delta_ci_95": [
+      -802.0216666666662,
+      7240.398333333331
+    ],
+    "win_count": 18,
+    "tie_count": 0,
+    "loss_count": 12,
+    "win_rate": 0.6,
+    "paired_t_stat": 1.5416372866885635,
+    "paired_t_pval": 0.13400428658456762,
+    "wilcoxon_pval": 0.2710056286305189,
+    "prod_ops_control_mean": 2142.1666666666665,
+    "prod_ops_treatment_mean": 2037.2,
+    "prod_ops_delta_mean": -104.96666666666667,
+    "move_ratio_control_mean": 2.197606198737495,
+    "move_ratio_treatment_mean": 2.3266377268516236,
+    "move_ratio_delta_mean": 0.12903152811412827,
+    "wheat_produced_ctrl_mean": 420.1666666666667,
+    "wheat_produced_treat_mean": 232.33333333333334,
+    "wheat_consumed_ctrl_mean": 206.4,
+    "wheat_consumed_treat_mean": 160.3,
+    "wheat_sold_ctrl_mean": 1697.4333333333334,
+    "wheat_sold_treat_mean": 1422.4666666666667,
+    "wheat_bought_ctrl_mean": 1528.7666666666667,
+    "wheat_bought_treat_mean": 1373.8333333333333,
+    "wheat_buy_cost_ctrl_mean": 38219.166666666664,
+    "wheat_buy_cost_treat_mean": 34345.833333333336,
+    "feed_shortages_ctrl_total": 285.0,
+    "feed_shortages_treat_total": 558.0,
+    "starvation_deaths_ctrl_total": 0.0,
+    "starvation_deaths_treat_total": 0.0,
+    "max_unfed_ctrl": 1,
+    "max_unfed_treat": 1,
+    "herd_size_ctrl_mean": 10.666666666666666,
+    "herd_size_treat_mean": 8.466666666666667,
+    "animal_rev_ctrl_mean": 37464.0,
+    "animal_rev_treat_mean": 30800.0,
+    "planted_mix_control": {
+      "WHEAT": 111.7,
+      "CARROT": 12.033333333333333,
+      "TOMATO": 4.533333333333333,
+      "STRAWBERRY": 15.133333333333333,
+      "MELON": 14.266666666666667
+    },
+    "planted_mix_treatment": {
+      "WHEAT": 61.766666666666666,
+      "CARROT": 23.066666666666666,
+      "TOMATO": 10.3,
+      "STRAWBERRY": 19.733333333333334,
+      "MELON": 23.833333333333332
+    }
+  },
+  "raw_results": {
+    "ArmA": [
+      {
+        "arm": "ArmA",
+        "seed": 101,
+        "final_score": 88850.0,
+        "productive_actions": 2191,
+        "movement_actions": 4550,
+        "idle_passes": 618,
+        "move_ratio": 2.07667731629393,
+        "total_actions_available": 7359,
+        "idle_rate": 0.08397880146759071,
+        "crop_planted": {
+          "WHEAT": 117,
+          "CARROT": 5,
+          "TOMATO": 3,
+          "STRAWBERRY": 13,
+          "MELON": 16
+        },
+        "crop_harvested": {
+          "WHEAT": 453,
+          "CARROT": 12,
+          "TOMATO": 13,
+          "STRAWBERRY": 85,
+          "MELON": 96
+        },
+        "wheat_produced": 453,
+        "wheat_consumed_feed": 226,
+        "wheat_sold": 1708,
+        "wheat_bought": 1537,
+        "wheat_buy_cost": 38425.0,
+        "feed_shortage_incidents": 10,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 12,
+        "animals_by_species": {
+          "COW": 3,
+          "SHEEP": 9,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 88,
+          "WOOL": 151,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 44280.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 100,
+        "final_score": 100492.0,
+        "productive_actions": 2168,
+        "movement_actions": 4462,
+        "idle_passes": 762,
+        "move_ratio": 2.0581180811808117,
+        "total_actions_available": 7392,
+        "idle_rate": 0.10308441558441558,
+        "crop_planted": {
+          "WHEAT": 116,
+          "CARROT": 7,
+          "TOMATO": 5,
+          "STRAWBERRY": 13,
+          "MELON": 17
+        },
+        "crop_harvested": {
+          "WHEAT": 449,
+          "CARROT": 18,
+          "TOMATO": 28,
+          "STRAWBERRY": 80,
+          "MELON": 108
+        },
+        "wheat_produced": 449,
+        "wheat_consumed_feed": 196,
+        "wheat_sold": 1712,
+        "wheat_bought": 1500,
+        "wheat_buy_cost": 37500.0,
+        "feed_shortage_incidents": 6,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 174,
+          "WOOL": 54,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 38640.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 102,
+        "final_score": 99441.0,
+        "productive_actions": 2108,
+        "movement_actions": 4764,
+        "idle_passes": 512,
+        "move_ratio": 2.259962049335863,
+        "total_actions_available": 7384,
+        "idle_rate": 0.06933911159263272,
+        "crop_planted": {
+          "WHEAT": 108,
+          "CARROT": 8,
+          "TOMATO": 5,
+          "STRAWBERRY": 17,
+          "MELON": 13
+        },
+        "crop_harvested": {
+          "WHEAT": 411,
+          "CARROT": 21,
+          "TOMATO": 32,
+          "STRAWBERRY": 99,
+          "MELON": 78
+        },
+        "wheat_produced": 411,
+        "wheat_consumed_feed": 197,
+        "wheat_sold": 1664,
+        "wheat_bought": 1478,
+        "wheat_buy_cost": 36950.0,
+        "feed_shortage_incidents": 9,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 164,
+          "WOOL": 54,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 37040.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 103,
+        "final_score": 99238.0,
+        "productive_actions": 2154,
+        "movement_actions": 4656,
+        "idle_passes": 567,
+        "move_ratio": 2.161559888579387,
+        "total_actions_available": 7377,
+        "idle_rate": 0.07686051240341603,
+        "crop_planted": {
+          "WHEAT": 108,
+          "CARROT": 20,
+          "TOMATO": 4,
+          "STRAWBERRY": 17,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 402,
+          "CARROT": 49,
+          "TOMATO": 24,
+          "STRAWBERRY": 110,
+          "MELON": 84
+        },
+        "wheat_produced": 402,
+        "wheat_consumed_feed": 190,
+        "wheat_sold": 1699,
+        "wheat_bought": 1513,
+        "wheat_buy_cost": 37825.0,
+        "feed_shortage_incidents": 13,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 154,
+          "WOOL": 57,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 36040.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 104,
+        "final_score": 95358.0,
+        "productive_actions": 2152,
+        "movement_actions": 4667,
+        "idle_passes": 558,
+        "move_ratio": 2.1686802973977697,
+        "total_actions_available": 7377,
+        "idle_rate": 0.07564050427002847,
+        "crop_planted": {
+          "WHEAT": 108,
+          "CARROT": 20,
+          "TOMATO": 4,
+          "STRAWBERRY": 17,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 403,
+          "CARROT": 49,
+          "TOMATO": 24,
+          "STRAWBERRY": 110,
+          "MELON": 84
+        },
+        "wheat_produced": 403,
+        "wheat_consumed_feed": 190,
+        "wheat_sold": 1699,
+        "wheat_bought": 1513,
+        "wheat_buy_cost": 37825.0,
+        "feed_shortage_incidents": 13,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 154,
+          "WOOL": 57,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 36040.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 105,
+        "final_score": 81288.0,
+        "productive_actions": 2161,
+        "movement_actions": 4706,
+        "idle_passes": 495,
+        "move_ratio": 2.177695511337344,
+        "total_actions_available": 7362,
+        "idle_rate": 0.06723716381418093,
+        "crop_planted": {
+          "WHEAT": 117,
+          "CARROT": 11,
+          "TOMATO": 6,
+          "STRAWBERRY": 12,
+          "MELON": 16
+        },
+        "crop_harvested": {
+          "WHEAT": 439,
+          "CARROT": 27,
+          "TOMATO": 35,
+          "STRAWBERRY": 85,
+          "MELON": 96
+        },
+        "wheat_produced": 439,
+        "wheat_consumed_feed": 208,
+        "wheat_sold": 1793,
+        "wheat_bought": 1601,
+        "wheat_buy_cost": 40025.0,
+        "feed_shortage_incidents": 8,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 5,
+          "SHEEP": 6,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 121,
+          "WOOL": 104,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 40160.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 106,
+        "final_score": 101550.0,
+        "productive_actions": 2130,
+        "movement_actions": 4796,
+        "idle_passes": 454,
+        "move_ratio": 2.2516431924882627,
+        "total_actions_available": 7380,
+        "idle_rate": 0.061517615176151765,
+        "crop_planted": {
+          "WHEAT": 112,
+          "CARROT": 15,
+          "TOMATO": 4,
+          "STRAWBERRY": 15,
+          "MELON": 16
+        },
+        "crop_harvested": {
+          "WHEAT": 404,
+          "CARROT": 43,
+          "TOMATO": 20,
+          "STRAWBERRY": 91,
+          "MELON": 96
+        },
+        "wheat_produced": 404,
+        "wheat_consumed_feed": 197,
+        "wheat_sold": 1565,
+        "wheat_bought": 1411,
+        "wheat_buy_cost": 35275.0,
+        "feed_shortage_incidents": 11,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 9,
+          "SHEEP": 1,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 206,
+          "WOOL": 17,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 36360.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 107,
+        "final_score": 87469.0,
+        "productive_actions": 2121,
+        "movement_actions": 4649,
+        "idle_passes": 612,
+        "move_ratio": 2.191890617633192,
+        "total_actions_available": 7382,
+        "idle_rate": 0.08290436196152805,
+        "crop_planted": {
+          "WHEAT": 110,
+          "CARROT": 10,
+          "TOMATO": 4,
+          "STRAWBERRY": 18,
+          "MELON": 13
+        },
+        "crop_harvested": {
+          "WHEAT": 408,
+          "CARROT": 24,
+          "TOMATO": 21,
+          "STRAWBERRY": 105,
+          "MELON": 78
+        },
+        "wheat_produced": 408,
+        "wheat_consumed_feed": 193,
+        "wheat_sold": 1748,
+        "wheat_bought": 1569,
+        "wheat_buy_cost": 39225.0,
+        "feed_shortage_incidents": 7,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 3,
+          "SHEEP": 7,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 89,
+          "WOOL": 127,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 39640.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 108,
+        "final_score": 91339.0,
+        "productive_actions": 2072,
+        "movement_actions": 4848,
+        "idle_passes": 475,
+        "move_ratio": 2.33976833976834,
+        "total_actions_available": 7395,
+        "idle_rate": 0.06423258958755916,
+        "crop_planted": {
+          "WHEAT": 112,
+          "CARROT": 11,
+          "TOMATO": 3,
+          "STRAWBERRY": 18,
+          "MELON": 12
+        },
+        "crop_harvested": {
+          "WHEAT": 419,
+          "CARROT": 26,
+          "TOMATO": 19,
+          "STRAWBERRY": 92,
+          "MELON": 72
+        },
+        "wheat_produced": 419,
+        "wheat_consumed_feed": 192,
+        "wheat_sold": 1575,
+        "wheat_bought": 1385,
+        "wheat_buy_cost": 34625.0,
+        "feed_shortage_incidents": 10,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 4,
+          "SHEEP": 6,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 109,
+          "WOOL": 98,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 37040.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 109,
+        "final_score": 96996.0,
+        "productive_actions": 2123,
+        "movement_actions": 4711,
+        "idle_passes": 543,
+        "move_ratio": 2.2190296749882243,
+        "total_actions_available": 7377,
+        "idle_rate": 0.07360715738104921,
+        "crop_planted": {
+          "WHEAT": 111,
+          "CARROT": 14,
+          "TOMATO": 3,
+          "STRAWBERRY": 18,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 401,
+          "CARROT": 37,
+          "TOMATO": 11,
+          "STRAWBERRY": 96,
+          "MELON": 84
+        },
+        "wheat_produced": 401,
+        "wheat_consumed_feed": 196,
+        "wheat_sold": 1637,
+        "wheat_bought": 1471,
+        "wheat_buy_cost": 36775.0,
+        "feed_shortage_incidents": 10,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 161,
+          "WOOL": 53,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 36360.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 110,
+        "final_score": 92313.0,
+        "productive_actions": 2133,
+        "movement_actions": 4754,
+        "idle_passes": 492,
+        "move_ratio": 2.2287857477730895,
+        "total_actions_available": 7379,
+        "idle_rate": 0.06667570131454127,
+        "crop_planted": {
+          "WHEAT": 102,
+          "CARROT": 19,
+          "TOMATO": 4,
+          "STRAWBERRY": 18,
+          "MELON": 12
+        },
+        "crop_harvested": {
+          "WHEAT": 374,
+          "CARROT": 48,
+          "TOMATO": 26,
+          "STRAWBERRY": 99,
+          "MELON": 72
+        },
+        "wheat_produced": 374,
+        "wheat_consumed_feed": 212,
+        "wheat_sold": 1614,
+        "wheat_bought": 1484,
+        "wheat_buy_cost": 37100.0,
+        "feed_shortage_incidents": 12,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 178,
+          "WOOL": 49,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 38280.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 111,
+        "final_score": 103596.0,
+        "productive_actions": 2132,
+        "movement_actions": 4531,
+        "idle_passes": 737,
+        "move_ratio": 2.125234521575985,
+        "total_actions_available": 7400,
+        "idle_rate": 0.09959459459459459,
+        "crop_planted": {
+          "WHEAT": 110,
+          "CARROT": 10,
+          "TOMATO": 3,
+          "STRAWBERRY": 17,
+          "MELON": 15
+        },
+        "crop_harvested": {
+          "WHEAT": 425,
+          "CARROT": 27,
+          "TOMATO": 15,
+          "STRAWBERRY": 113,
+          "MELON": 90
+        },
+        "wheat_produced": 425,
+        "wheat_consumed_feed": 194,
+        "wheat_sold": 1696,
+        "wheat_bought": 1505,
+        "wheat_buy_cost": 37625.0,
+        "feed_shortage_incidents": 11,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 5,
+          "SHEEP": 5,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 124,
+          "WOOL": 87,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 37240.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 112,
+        "final_score": 96888.0,
+        "productive_actions": 2244,
+        "movement_actions": 4676,
+        "idle_passes": 440,
+        "move_ratio": 2.0837789661319075,
+        "total_actions_available": 7360,
+        "idle_rate": 0.059782608695652176,
+        "crop_planted": {
+          "WHEAT": 116,
+          "CARROT": 11,
+          "TOMATO": 5,
+          "STRAWBERRY": 12,
+          "MELON": 15
+        },
+        "crop_harvested": {
+          "WHEAT": 439,
+          "CARROT": 25,
+          "TOMATO": 22,
+          "STRAWBERRY": 86,
+          "MELON": 90
+        },
+        "wheat_produced": 439,
+        "wheat_consumed_feed": 249,
+        "wheat_sold": 1670,
+        "wheat_bought": 1570,
+        "wheat_buy_cost": 39250.0,
+        "feed_shortage_incidents": 11,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 13,
+        "animals_by_species": {
+          "COW": 11,
+          "SHEEP": 2,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 206,
+          "WOOL": 36,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 40160.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 113,
+        "final_score": 88434.0,
+        "productive_actions": 2123,
+        "movement_actions": 4827,
+        "idle_passes": 437,
+        "move_ratio": 2.2736693358455016,
+        "total_actions_available": 7387,
+        "idle_rate": 0.05915798023554894,
+        "crop_planted": {
+          "WHEAT": 110,
+          "CARROT": 24,
+          "TOMATO": 5,
+          "STRAWBERRY": 16,
+          "MELON": 13
+        },
+        "crop_harvested": {
+          "WHEAT": 398,
+          "CARROT": 53,
+          "TOMATO": 28,
+          "STRAWBERRY": 97,
+          "MELON": 78
+        },
+        "wheat_produced": 398,
+        "wheat_consumed_feed": 194,
+        "wheat_sold": 1560,
+        "wheat_bought": 1423,
+        "wheat_buy_cost": 35575.0,
+        "feed_shortage_incidents": 14,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 152,
+          "WOOL": 48,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 33920.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 114,
+        "final_score": 92243.0,
+        "productive_actions": 2117,
+        "movement_actions": 4743,
+        "idle_passes": 529,
+        "move_ratio": 2.240434577231932,
+        "total_actions_available": 7389,
+        "idle_rate": 0.07159290837731763,
+        "crop_planted": {
+          "WHEAT": 112,
+          "CARROT": 12,
+          "TOMATO": 3,
+          "STRAWBERRY": 17,
+          "MELON": 15
+        },
+        "crop_harvested": {
+          "WHEAT": 420,
+          "CARROT": 31,
+          "TOMATO": 18,
+          "STRAWBERRY": 98,
+          "MELON": 90
+        },
+        "wheat_produced": 420,
+        "wheat_consumed_feed": 195,
+        "wheat_sold": 1703,
+        "wheat_bought": 1511,
+        "wheat_buy_cost": 37775.0,
+        "feed_shortage_incidents": 13,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 6,
+          "SHEEP": 4,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 135,
+          "WOOL": 67,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 35000.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 115,
+        "final_score": 110596.0,
+        "productive_actions": 2130,
+        "movement_actions": 4785,
+        "idle_passes": 466,
+        "move_ratio": 2.2464788732394365,
+        "total_actions_available": 7381,
+        "idle_rate": 0.06313507654789324,
+        "crop_planted": {
+          "WHEAT": 114,
+          "CARROT": 8,
+          "TOMATO": 6,
+          "STRAWBERRY": 13,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 438,
+          "CARROT": 19,
+          "TOMATO": 33,
+          "STRAWBERRY": 88,
+          "MELON": 84
+        },
+        "wheat_produced": 438,
+        "wheat_consumed_feed": 213,
+        "wheat_sold": 1743,
+        "wheat_bought": 1568,
+        "wheat_buy_cost": 39200.0,
+        "feed_shortage_incidents": 7,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 11,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 222,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 35520.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 116,
+        "final_score": 105067.0,
+        "productive_actions": 2136,
+        "movement_actions": 4838,
+        "idle_passes": 404,
+        "move_ratio": 2.2649812734082397,
+        "total_actions_available": 7378,
+        "idle_rate": 0.05475738682569802,
+        "crop_planted": {
+          "WHEAT": 115,
+          "CARROT": 10,
+          "TOMATO": 4,
+          "STRAWBERRY": 13,
+          "MELON": 15
+        },
+        "crop_harvested": {
+          "WHEAT": 423,
+          "CARROT": 23,
+          "TOMATO": 17,
+          "STRAWBERRY": 92,
+          "MELON": 90
+        },
+        "wheat_produced": 423,
+        "wheat_consumed_feed": 212,
+        "wheat_sold": 1647,
+        "wheat_bought": 1484,
+        "wheat_buy_cost": 37100.0,
+        "feed_shortage_incidents": 12,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 186,
+          "WOOL": 56,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 40960.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 117,
+        "final_score": 115379.0,
+        "productive_actions": 2130,
+        "movement_actions": 4785,
+        "idle_passes": 466,
+        "move_ratio": 2.2464788732394365,
+        "total_actions_available": 7381,
+        "idle_rate": 0.06313507654789324,
+        "crop_planted": {
+          "WHEAT": 114,
+          "CARROT": 8,
+          "TOMATO": 6,
+          "STRAWBERRY": 13,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 438,
+          "CARROT": 19,
+          "TOMATO": 33,
+          "STRAWBERRY": 88,
+          "MELON": 84
+        },
+        "wheat_produced": 438,
+        "wheat_consumed_feed": 213,
+        "wheat_sold": 1743,
+        "wheat_bought": 1568,
+        "wheat_buy_cost": 39200.0,
+        "feed_shortage_incidents": 7,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 11,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 222,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 35520.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 118,
+        "final_score": 102839.0,
+        "productive_actions": 2209,
+        "movement_actions": 4646,
+        "idle_passes": 506,
+        "move_ratio": 2.1032141240380264,
+        "total_actions_available": 7361,
+        "idle_rate": 0.06874066023638092,
+        "crop_planted": {
+          "WHEAT": 124,
+          "CARROT": 6,
+          "TOMATO": 5,
+          "STRAWBERRY": 12,
+          "MELON": 16
+        },
+        "crop_harvested": {
+          "WHEAT": 460,
+          "CARROT": 14,
+          "TOMATO": 27,
+          "STRAWBERRY": 84,
+          "MELON": 96
+        },
+        "wheat_produced": 460,
+        "wheat_consumed_feed": 228,
+        "wheat_sold": 1804,
+        "wheat_bought": 1660,
+        "wheat_buy_cost": 41500.0,
+        "feed_shortage_incidents": 8,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 12,
+        "animals_by_species": {
+          "COW": 12,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 239,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 38240.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 119,
+        "final_score": 112887.0,
+        "productive_actions": 2129,
+        "movement_actions": 4802,
+        "idle_passes": 455,
+        "move_ratio": 2.2555190230155002,
+        "total_actions_available": 7386,
+        "idle_rate": 0.06160303276468995,
+        "crop_planted": {
+          "WHEAT": 114,
+          "CARROT": 8,
+          "TOMATO": 6,
+          "STRAWBERRY": 13,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 438,
+          "CARROT": 20,
+          "TOMATO": 34,
+          "STRAWBERRY": 88,
+          "MELON": 84
+        },
+        "wheat_produced": 438,
+        "wheat_consumed_feed": 213,
+        "wheat_sold": 1721,
+        "wheat_bought": 1551,
+        "wheat_buy_cost": 38775.0,
+        "feed_shortage_incidents": 7,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 11,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 220,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 35200.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 120,
+        "final_score": 108748.0,
+        "productive_actions": 2130,
+        "movement_actions": 4785,
+        "idle_passes": 466,
+        "move_ratio": 2.2464788732394365,
+        "total_actions_available": 7381,
+        "idle_rate": 0.06313507654789324,
+        "crop_planted": {
+          "WHEAT": 114,
+          "CARROT": 8,
+          "TOMATO": 6,
+          "STRAWBERRY": 13,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 438,
+          "CARROT": 19,
+          "TOMATO": 33,
+          "STRAWBERRY": 88,
+          "MELON": 84
+        },
+        "wheat_produced": 438,
+        "wheat_consumed_feed": 213,
+        "wheat_sold": 1743,
+        "wheat_bought": 1568,
+        "wheat_buy_cost": 39200.0,
+        "feed_shortage_incidents": 7,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 11,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 222,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 35520.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 121,
+        "final_score": 116101.0,
+        "productive_actions": 2106,
+        "movement_actions": 4687,
+        "idle_passes": 595,
+        "move_ratio": 2.225546058879392,
+        "total_actions_available": 7388,
+        "idle_rate": 0.08053600433134814,
+        "crop_planted": {
+          "WHEAT": 111,
+          "CARROT": 11,
+          "TOMATO": 4,
+          "STRAWBERRY": 15,
+          "MELON": 16
+        },
+        "crop_harvested": {
+          "WHEAT": 422,
+          "CARROT": 29,
+          "TOMATO": 18,
+          "STRAWBERRY": 86,
+          "MELON": 96
+        },
+        "wheat_produced": 422,
+        "wheat_consumed_feed": 194,
+        "wheat_sold": 1803,
+        "wheat_bought": 1604,
+        "wheat_buy_cost": 40100.0,
+        "feed_shortage_incidents": 14,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 10,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 222,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 35520.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 122,
+        "final_score": 107360.0,
+        "productive_actions": 2133,
+        "movement_actions": 4745,
+        "idle_passes": 502,
+        "move_ratio": 2.2245663384903893,
+        "total_actions_available": 7380,
+        "idle_rate": 0.06802168021680217,
+        "crop_planted": {
+          "WHEAT": 111,
+          "CARROT": 7,
+          "TOMATO": 6,
+          "STRAWBERRY": 13,
+          "MELON": 15
+        },
+        "crop_harvested": {
+          "WHEAT": 429,
+          "CARROT": 17,
+          "TOMATO": 37,
+          "STRAWBERRY": 78,
+          "MELON": 90
+        },
+        "wheat_produced": 429,
+        "wheat_consumed_feed": 215,
+        "wheat_sold": 1709,
+        "wheat_bought": 1534,
+        "wheat_buy_cost": 38350.0,
+        "feed_shortage_incidents": 8,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 10,
+          "SHEEP": 1,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 218,
+          "WOOL": 20,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 38880.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 123,
+        "final_score": 87054.0,
+        "productive_actions": 2189,
+        "movement_actions": 4683,
+        "idle_passes": 503,
+        "move_ratio": 2.139333028780265,
+        "total_actions_available": 7375,
+        "idle_rate": 0.06820338983050847,
+        "crop_planted": {
+          "WHEAT": 107,
+          "CARROT": 16,
+          "TOMATO": 4,
+          "STRAWBERRY": 18,
+          "MELON": 12
+        },
+        "crop_harvested": {
+          "WHEAT": 388,
+          "CARROT": 48,
+          "TOMATO": 26,
+          "STRAWBERRY": 112,
+          "MELON": 72
+        },
+        "wheat_produced": 388,
+        "wheat_consumed_feed": 211,
+        "wheat_sold": 1652,
+        "wheat_bought": 1529,
+        "wheat_buy_cost": 38225.0,
+        "feed_shortage_incidents": 13,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 172,
+          "WOOL": 53,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 38120.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 124,
+        "final_score": 84537.0,
+        "productive_actions": 2107,
+        "movement_actions": 4737,
+        "idle_passes": 554,
+        "move_ratio": 2.248220218319886,
+        "total_actions_available": 7398,
+        "idle_rate": 0.07488510408218438,
+        "crop_planted": {
+          "WHEAT": 108,
+          "CARROT": 13,
+          "TOMATO": 4,
+          "STRAWBERRY": 18,
+          "MELON": 13
+        },
+        "crop_harvested": {
+          "WHEAT": 399,
+          "CARROT": 33,
+          "TOMATO": 25,
+          "STRAWBERRY": 105,
+          "MELON": 78
+        },
+        "wheat_produced": 399,
+        "wheat_consumed_feed": 188,
+        "wheat_sold": 1715,
+        "wheat_bought": 1531,
+        "wheat_buy_cost": 38275.0,
+        "feed_shortage_incidents": 11,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 3,
+          "SHEEP": 7,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 82,
+          "WOOL": 108,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 34720.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 125,
+        "final_score": 102718.0,
+        "productive_actions": 2177,
+        "movement_actions": 4651,
+        "idle_passes": 540,
+        "move_ratio": 2.1364262746899403,
+        "total_actions_available": 7368,
+        "idle_rate": 0.0732899022801303,
+        "crop_planted": {
+          "WHEAT": 113,
+          "CARROT": 10,
+          "TOMATO": 5,
+          "STRAWBERRY": 14,
+          "MELON": 15
+        },
+        "crop_harvested": {
+          "WHEAT": 440,
+          "CARROT": 25,
+          "TOMATO": 27,
+          "STRAWBERRY": 88,
+          "MELON": 90
+        },
+        "wheat_produced": 440,
+        "wheat_consumed_feed": 217,
+        "wheat_sold": 1699,
+        "wheat_bought": 1502,
+        "wheat_buy_cost": 37550.0,
+        "feed_shortage_incidents": 10,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 173,
+          "WOOL": 54,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 38480.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 126,
+        "final_score": 93938.0,
+        "productive_actions": 2096,
+        "movement_actions": 4772,
+        "idle_passes": 522,
+        "move_ratio": 2.2767175572519083,
+        "total_actions_available": 7390,
+        "idle_rate": 0.07063599458728011,
+        "crop_planted": {
+          "WHEAT": 108,
+          "CARROT": 20,
+          "TOMATO": 3,
+          "STRAWBERRY": 18,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 392,
+          "CARROT": 45,
+          "TOMATO": 20,
+          "STRAWBERRY": 98,
+          "MELON": 84
+        },
+        "wheat_produced": 392,
+        "wheat_consumed_feed": 199,
+        "wheat_sold": 1641,
+        "wheat_bought": 1488,
+        "wheat_buy_cost": 37200.0,
+        "feed_shortage_incidents": 8,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 146,
+          "WOOL": 49,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 33160.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 127,
+        "final_score": 99969.0,
+        "productive_actions": 2114,
+        "movement_actions": 4718,
+        "idle_passes": 567,
+        "move_ratio": 2.2317880794701987,
+        "total_actions_available": 7399,
+        "idle_rate": 0.07663197729422895,
+        "crop_planted": {
+          "WHEAT": 103,
+          "CARROT": 20,
+          "TOMATO": 5,
+          "STRAWBERRY": 17,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 381,
+          "CARROT": 45,
+          "TOMATO": 27,
+          "STRAWBERRY": 93,
+          "MELON": 84
+        },
+        "wheat_produced": 381,
+        "wheat_consumed_feed": 199,
+        "wheat_sold": 1628,
+        "wheat_bought": 1478,
+        "wheat_buy_cost": 36950.0,
+        "feed_shortage_incidents": 5,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 9,
+          "SHEEP": 1,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 188,
+          "WOOL": 22,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 34480.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 128,
+        "final_score": 84812.0,
+        "productive_actions": 2209,
+        "movement_actions": 4424,
+        "idle_passes": 741,
+        "move_ratio": 2.0027161611588955,
+        "total_actions_available": 7374,
+        "idle_rate": 0.10048820179007323,
+        "crop_planted": {
+          "WHEAT": 117,
+          "CARROT": 10,
+          "TOMATO": 5,
+          "STRAWBERRY": 13,
+          "MELON": 14
+        },
+        "crop_harvested": {
+          "WHEAT": 458,
+          "CARROT": 26,
+          "TOMATO": 22,
+          "STRAWBERRY": 87,
+          "MELON": 84
+        },
+        "wheat_produced": 458,
+        "wheat_consumed_feed": 215,
+        "wheat_sold": 1812,
+        "wheat_bought": 1639,
+        "wheat_buy_cost": 40975.0,
+        "feed_shortage_incidents": 5,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 11,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 189,
+          "WOOL": 58,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 41840.0
+      },
+      {
+        "arm": "ArmA",
+        "seed": 129,
+        "final_score": 90058.0,
+        "productive_actions": 2141,
+        "movement_actions": 4759,
+        "idle_passes": 460,
+        "move_ratio": 2.2227930873423634,
+        "total_actions_available": 7360,
+        "idle_rate": 0.0625,
+        "crop_planted": {
+          "WHEAT": 109,
+          "CARROT": 9,
+          "TOMATO": 6,
+          "STRAWBERRY": 13,
+          "MELON": 13
+        },
+        "crop_harvested": {
+          "WHEAT": 416,
+          "CARROT": 24,
+          "TOMATO": 28,
+          "STRAWBERRY": 82,
+          "MELON": 78
+        },
+        "wheat_produced": 416,
+        "wheat_consumed_feed": 233,
+        "wheat_sold": 1820,
+        "wheat_bought": 1688,
+        "wheat_buy_cost": 42200.0,
+        "feed_shortage_incidents": 5,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 12,
+        "animals_by_species": {
+          "COW": 9,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 186,
+          "WOOL": 59,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 41560.0
+      }
+    ],
+    "ArmA-DynWheat": [
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 101,
+        "final_score": 89662.0,
+        "productive_actions": 2083,
+        "movement_actions": 4830,
+        "idle_passes": 482,
+        "move_ratio": 2.3187710033605375,
+        "total_actions_available": 7395,
+        "idle_rate": 0.06517917511832319,
+        "crop_planted": {
+          "WHEAT": 64,
+          "CARROT": 24,
+          "TOMATO": 8,
+          "STRAWBERRY": 18,
+          "MELON": 23
+        },
+        "crop_harvested": {
+          "WHEAT": 248,
+          "CARROT": 68,
+          "TOMATO": 54,
+          "STRAWBERRY": 117,
+          "MELON": 138
+        },
+        "wheat_produced": 248,
+        "wheat_consumed_feed": 184,
+        "wheat_sold": 1448,
+        "wheat_bought": 1417,
+        "wheat_buy_cost": 35425.0,
+        "feed_shortage_incidents": 22,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 5,
+          "SHEEP": 5,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 114,
+          "WOOL": 90,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 36240.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 100,
+        "final_score": 89653.0,
+        "productive_actions": 1982,
+        "movement_actions": 5070,
+        "idle_passes": 340,
+        "move_ratio": 2.5580221997981836,
+        "total_actions_available": 7392,
+        "idle_rate": 0.04599567099567099,
+        "crop_planted": {
+          "WHEAT": 74,
+          "CARROT": 12,
+          "TOMATO": 7,
+          "STRAWBERRY": 18,
+          "MELON": 22
+        },
+        "crop_harvested": {
+          "WHEAT": 283,
+          "CARROT": 33,
+          "TOMATO": 42,
+          "STRAWBERRY": 103,
+          "MELON": 132
+        },
+        "wheat_produced": 283,
+        "wheat_consumed_feed": 181,
+        "wheat_sold": 1576,
+        "wheat_bought": 1517,
+        "wheat_buy_cost": 37925.0,
+        "feed_shortage_incidents": 27,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 6,
+          "SHEEP": 4,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 128,
+          "WOOL": 59,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 32280.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 102,
+        "final_score": 107607.0,
+        "productive_actions": 2033,
+        "movement_actions": 4782,
+        "idle_passes": 541,
+        "move_ratio": 2.352188883423512,
+        "total_actions_available": 7356,
+        "idle_rate": 0.07354540511147363,
+        "crop_planted": {
+          "WHEAT": 53,
+          "CARROT": 27,
+          "TOMATO": 11,
+          "STRAWBERRY": 18,
+          "MELON": 23
+        },
+        "crop_harvested": {
+          "WHEAT": 205,
+          "CARROT": 75,
+          "TOMATO": 78,
+          "STRAWBERRY": 98,
+          "MELON": 138
+        },
+        "wheat_produced": 205,
+        "wheat_consumed_feed": 168,
+        "wheat_sold": 1470,
+        "wheat_bought": 1431,
+        "wheat_buy_cost": 35775.0,
+        "feed_shortage_incidents": 20,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 9,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 185,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 29600.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 103,
+        "final_score": 94919.0,
+        "productive_actions": 2076,
+        "movement_actions": 4748,
+        "idle_passes": 555,
+        "move_ratio": 2.2870905587668595,
+        "total_actions_available": 7379,
+        "idle_rate": 0.0752134435560374,
+        "crop_planted": {
+          "WHEAT": 75,
+          "CARROT": 13,
+          "TOMATO": 7,
+          "STRAWBERRY": 18,
+          "MELON": 22
+        },
+        "crop_harvested": {
+          "WHEAT": 284,
+          "CARROT": 36,
+          "TOMATO": 50,
+          "STRAWBERRY": 127,
+          "MELON": 132
+        },
+        "wheat_produced": 284,
+        "wheat_consumed_feed": 187,
+        "wheat_sold": 1559,
+        "wheat_bought": 1497,
+        "wheat_buy_cost": 37425.0,
+        "feed_shortage_incidents": 18,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 5,
+          "SHEEP": 5,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 120,
+          "WOOL": 90,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 37200.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 104,
+        "final_score": 96552.0,
+        "productive_actions": 2001,
+        "movement_actions": 4599,
+        "idle_passes": 815,
+        "move_ratio": 2.2983508245877062,
+        "total_actions_available": 7415,
+        "idle_rate": 0.10991233985165205,
+        "crop_planted": {
+          "WHEAT": 44,
+          "CARROT": 45,
+          "TOMATO": 11,
+          "STRAWBERRY": 18,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 170,
+          "CARROT": 129,
+          "TOMATO": 80,
+          "STRAWBERRY": 101,
+          "MELON": 144
+        },
+        "wheat_produced": 170,
+        "wheat_consumed_feed": 138,
+        "wheat_sold": 1282,
+        "wheat_bought": 1253,
+        "wheat_buy_cost": 31325.0,
+        "feed_shortage_incidents": 17,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 7,
+        "animals_by_species": {
+          "COW": 4,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 103,
+          "WOOL": 49,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 26280.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 105,
+        "final_score": 91886.0,
+        "productive_actions": 1997,
+        "movement_actions": 4590,
+        "idle_passes": 833,
+        "move_ratio": 2.298447671507261,
+        "total_actions_available": 7420,
+        "idle_rate": 0.11226415094339623,
+        "crop_planted": {
+          "WHEAT": 49,
+          "CARROT": 46,
+          "TOMATO": 14,
+          "STRAWBERRY": 20,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 146,
+          "CARROT": 133,
+          "TOMATO": 100,
+          "STRAWBERRY": 102,
+          "MELON": 144
+        },
+        "wheat_produced": 146,
+        "wheat_consumed_feed": 126,
+        "wheat_sold": 1130,
+        "wheat_bought": 1114,
+        "wheat_buy_cost": 27850.0,
+        "feed_shortage_incidents": 10,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 6,
+        "animals_by_species": {
+          "COW": 3,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 86,
+          "WOOL": 62,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 26160.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 106,
+        "final_score": 116357.0,
+        "productive_actions": 2064,
+        "movement_actions": 4782,
+        "idle_passes": 555,
+        "move_ratio": 2.316860465116279,
+        "total_actions_available": 7401,
+        "idle_rate": 0.07498986623429266,
+        "crop_planted": {
+          "WHEAT": 73,
+          "CARROT": 13,
+          "TOMATO": 9,
+          "STRAWBERRY": 18,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 283,
+          "CARROT": 37,
+          "TOMATO": 53,
+          "STRAWBERRY": 104,
+          "MELON": 144
+        },
+        "wheat_produced": 283,
+        "wheat_consumed_feed": 182,
+        "wheat_sold": 1450,
+        "wheat_bought": 1405,
+        "wheat_buy_cost": 35125.0,
+        "feed_shortage_incidents": 11,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 9,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 212,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 33920.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 107,
+        "final_score": 90864.0,
+        "productive_actions": 2011,
+        "movement_actions": 4745,
+        "idle_passes": 668,
+        "move_ratio": 2.359522625559423,
+        "total_actions_available": 7424,
+        "idle_rate": 0.08997844827586207,
+        "crop_planted": {
+          "WHEAT": 50,
+          "CARROT": 35,
+          "TOMATO": 14,
+          "STRAWBERRY": 18,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 189,
+          "CARROT": 99,
+          "TOMATO": 95,
+          "STRAWBERRY": 117,
+          "MELON": 144
+        },
+        "wheat_produced": 189,
+        "wheat_consumed_feed": 121,
+        "wheat_sold": 1297,
+        "wheat_bought": 1250,
+        "wheat_buy_cost": 31250.0,
+        "feed_shortage_incidents": 30,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 7,
+        "animals_by_species": {
+          "COW": 4,
+          "SHEEP": 3,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 96,
+          "WOOL": 50,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 25360.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 108,
+        "final_score": 102990.0,
+        "productive_actions": 2010,
+        "movement_actions": 4738,
+        "idle_passes": 669,
+        "move_ratio": 2.3572139303482587,
+        "total_actions_available": 7417,
+        "idle_rate": 0.09019819333962519,
+        "crop_planted": {
+          "WHEAT": 45,
+          "CARROT": 38,
+          "TOMATO": 13,
+          "STRAWBERRY": 19,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 188,
+          "CARROT": 102,
+          "TOMATO": 90,
+          "STRAWBERRY": 105,
+          "MELON": 144
+        },
+        "wheat_produced": 188,
+        "wheat_consumed_feed": 135,
+        "wheat_sold": 1388,
+        "wheat_bought": 1359,
+        "wheat_buy_cost": 33975.0,
+        "feed_shortage_incidents": 19,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 7,
+        "animals_by_species": {
+          "COW": 6,
+          "SHEEP": 1,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 141,
+          "WOOL": 18,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 26160.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 109,
+        "final_score": 112740.0,
+        "productive_actions": 2100,
+        "movement_actions": 4659,
+        "idle_passes": 640,
+        "move_ratio": 2.2185714285714284,
+        "total_actions_available": 7399,
+        "idle_rate": 0.08649817542911205,
+        "crop_planted": {
+          "WHEAT": 67,
+          "CARROT": 12,
+          "TOMATO": 8,
+          "STRAWBERRY": 26,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 264,
+          "CARROT": 32,
+          "TOMATO": 46,
+          "STRAWBERRY": 140,
+          "MELON": 144
+        },
+        "wheat_produced": 264,
+        "wheat_consumed_feed": 176,
+        "wheat_sold": 1439,
+        "wheat_bought": 1385,
+        "wheat_buy_cost": 34625.0,
+        "feed_shortage_incidents": 16,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 1,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 187,
+          "WOOL": 17,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 33320.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 110,
+        "final_score": 113089.0,
+        "productive_actions": 2025,
+        "movement_actions": 4496,
+        "idle_passes": 870,
+        "move_ratio": 2.220246913580247,
+        "total_actions_available": 7391,
+        "idle_rate": 0.1177107292653227,
+        "crop_planted": {
+          "WHEAT": 37,
+          "CARROT": 39,
+          "TOMATO": 13,
+          "STRAWBERRY": 20,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 145,
+          "CARROT": 113,
+          "TOMATO": 86,
+          "STRAWBERRY": 135,
+          "MELON": 144
+        },
+        "wheat_produced": 145,
+        "wheat_consumed_feed": 139,
+        "wheat_sold": 1181,
+        "wheat_bought": 1179,
+        "wheat_buy_cost": 29475.0,
+        "feed_shortage_incidents": 13,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 7,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 168,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 26880.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 111,
+        "final_score": 98273.0,
+        "productive_actions": 2011,
+        "movement_actions": 4733,
+        "idle_passes": 662,
+        "move_ratio": 2.353555445052213,
+        "total_actions_available": 7406,
+        "idle_rate": 0.0893869835268701,
+        "crop_planted": {
+          "WHEAT": 62,
+          "CARROT": 29,
+          "TOMATO": 8,
+          "STRAWBERRY": 20,
+          "MELON": 22
+        },
+        "crop_harvested": {
+          "WHEAT": 222,
+          "CARROT": 82,
+          "TOMATO": 49,
+          "STRAWBERRY": 121,
+          "MELON": 132
+        },
+        "wheat_produced": 222,
+        "wheat_consumed_feed": 165,
+        "wheat_sold": 1596,
+        "wheat_bought": 1562,
+        "wheat_buy_cost": 39050.0,
+        "feed_shortage_incidents": 12,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 2,
+          "SHEEP": 7,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 69,
+          "WOOL": 111,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 33240.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 112,
+        "final_score": 87711.0,
+        "productive_actions": 2070,
+        "movement_actions": 4753,
+        "idle_passes": 575,
+        "move_ratio": 2.296135265700483,
+        "total_actions_available": 7398,
+        "idle_rate": 0.07772370911057043,
+        "crop_planted": {
+          "WHEAT": 60,
+          "CARROT": 38,
+          "TOMATO": 7,
+          "STRAWBERRY": 19,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 223,
+          "CARROT": 105,
+          "TOMATO": 48,
+          "STRAWBERRY": 112,
+          "MELON": 144
+        },
+        "wheat_produced": 223,
+        "wheat_consumed_feed": 169,
+        "wheat_sold": 1361,
+        "wheat_bought": 1349,
+        "wheat_buy_cost": 33725.0,
+        "feed_shortage_incidents": 19,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 2,
+          "SHEEP": 7,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 69,
+          "WOOL": 112,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 33440.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 113,
+        "final_score": 95023.0,
+        "productive_actions": 2006,
+        "movement_actions": 4796,
+        "idle_passes": 614,
+        "move_ratio": 2.390827517447657,
+        "total_actions_available": 7416,
+        "idle_rate": 0.08279395900755124,
+        "crop_planted": {
+          "WHEAT": 69,
+          "CARROT": 13,
+          "TOMATO": 8,
+          "STRAWBERRY": 20,
+          "MELON": 22
+        },
+        "crop_harvested": {
+          "WHEAT": 269,
+          "CARROT": 34,
+          "TOMATO": 53,
+          "STRAWBERRY": 116,
+          "MELON": 132
+        },
+        "wheat_produced": 269,
+        "wheat_consumed_feed": 160,
+        "wheat_sold": 1448,
+        "wheat_bought": 1357,
+        "wheat_buy_cost": 33925.0,
+        "feed_shortage_incidents": 24,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 3,
+          "SHEEP": 6,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 82,
+          "WOOL": 94,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 31920.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 114,
+        "final_score": 90694.0,
+        "productive_actions": 2054,
+        "movement_actions": 4727,
+        "idle_passes": 637,
+        "move_ratio": 2.3013631937682573,
+        "total_actions_available": 7418,
+        "idle_rate": 0.0858722027500674,
+        "crop_planted": {
+          "WHEAT": 53,
+          "CARROT": 27,
+          "TOMATO": 14,
+          "STRAWBERRY": 18,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 209,
+          "CARROT": 71,
+          "TOMATO": 86,
+          "STRAWBERRY": 95,
+          "MELON": 144
+        },
+        "wheat_produced": 209,
+        "wheat_consumed_feed": 147,
+        "wheat_sold": 1325,
+        "wheat_bought": 1273,
+        "wheat_buy_cost": 31825.0,
+        "feed_shortage_incidents": 24,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 8,
+        "animals_by_species": {
+          "COW": 4,
+          "SHEEP": 4,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 98,
+          "WOOL": 61,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 27880.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 115,
+        "final_score": 111741.0,
+        "productive_actions": 2057,
+        "movement_actions": 4754,
+        "idle_passes": 594,
+        "move_ratio": 2.31113271754983,
+        "total_actions_available": 7405,
+        "idle_rate": 0.08021607022282241,
+        "crop_planted": {
+          "WHEAT": 68,
+          "CARROT": 30,
+          "TOMATO": 11,
+          "STRAWBERRY": 18,
+          "MELON": 28
+        },
+        "crop_harvested": {
+          "WHEAT": 228,
+          "CARROT": 81,
+          "TOMATO": 76,
+          "STRAWBERRY": 100,
+          "MELON": 144
+        },
+        "wheat_produced": 228,
+        "wheat_consumed_feed": 151,
+        "wheat_sold": 1330,
+        "wheat_bought": 1265,
+        "wheat_buy_cost": 31625.0,
+        "feed_shortage_incidents": 21,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 8,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 180,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 28800.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 116,
+        "final_score": 96970.0,
+        "productive_actions": 1989,
+        "movement_actions": 4851,
+        "idle_passes": 576,
+        "move_ratio": 2.4389140271493215,
+        "total_actions_available": 7416,
+        "idle_rate": 0.07766990291262135,
+        "crop_planted": {
+          "WHEAT": 51,
+          "CARROT": 27,
+          "TOMATO": 12,
+          "STRAWBERRY": 19,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 199,
+          "CARROT": 77,
+          "TOMATO": 70,
+          "STRAWBERRY": 125,
+          "MELON": 144
+        },
+        "wheat_produced": 199,
+        "wheat_consumed_feed": 140,
+        "wheat_sold": 1404,
+        "wheat_bought": 1360,
+        "wheat_buy_cost": 34000.0,
+        "feed_shortage_incidents": 28,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 8,
+        "animals_by_species": {
+          "COW": 3,
+          "SHEEP": 5,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 75,
+          "WOOL": 78,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 27600.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 117,
+        "final_score": 98360.0,
+        "productive_actions": 2018,
+        "movement_actions": 4785,
+        "idle_passes": 591,
+        "move_ratio": 2.371159563924678,
+        "total_actions_available": 7394,
+        "idle_rate": 0.07992967270760076,
+        "crop_planted": {
+          "WHEAT": 59,
+          "CARROT": 19,
+          "TOMATO": 12,
+          "STRAWBERRY": 25,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 228,
+          "CARROT": 49,
+          "TOMATO": 72,
+          "STRAWBERRY": 87,
+          "MELON": 144
+        },
+        "wheat_produced": 228,
+        "wheat_consumed_feed": 159,
+        "wheat_sold": 1401,
+        "wheat_bought": 1353,
+        "wheat_buy_cost": 33825.0,
+        "feed_shortage_incidents": 14,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 8,
+        "animals_by_species": {
+          "COW": 6,
+          "SHEEP": 2,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 142,
+          "WOOL": 37,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 30120.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 118,
+        "final_score": 99145.0,
+        "productive_actions": 2099,
+        "movement_actions": 4829,
+        "idle_passes": 462,
+        "move_ratio": 2.3006193425440684,
+        "total_actions_available": 7390,
+        "idle_rate": 0.0625169147496617,
+        "crop_planted": {
+          "WHEAT": 60,
+          "CARROT": 20,
+          "TOMATO": 9,
+          "STRAWBERRY": 23,
+          "MELON": 22
+        },
+        "crop_harvested": {
+          "WHEAT": 231,
+          "CARROT": 54,
+          "TOMATO": 51,
+          "STRAWBERRY": 128,
+          "MELON": 132
+        },
+        "wheat_produced": 231,
+        "wheat_consumed_feed": 178,
+        "wheat_sold": 1573,
+        "wheat_bought": 1539,
+        "wheat_buy_cost": 38475.0,
+        "feed_shortage_incidents": 28,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 9,
+          "SHEEP": 1,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 186,
+          "WOOL": 18,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 33360.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 119,
+        "final_score": 107412.0,
+        "productive_actions": 2066,
+        "movement_actions": 4656,
+        "idle_passes": 667,
+        "move_ratio": 2.2536302032913844,
+        "total_actions_available": 7389,
+        "idle_rate": 0.09026931925835702,
+        "crop_planted": {
+          "WHEAT": 76,
+          "CARROT": 10,
+          "TOMATO": 10,
+          "STRAWBERRY": 26,
+          "MELON": 22
+        },
+        "crop_harvested": {
+          "WHEAT": 281,
+          "CARROT": 28,
+          "TOMATO": 68,
+          "STRAWBERRY": 116,
+          "MELON": 132
+        },
+        "wheat_produced": 281,
+        "wheat_consumed_feed": 176,
+        "wheat_sold": 1550,
+        "wheat_bought": 1473,
+        "wheat_buy_cost": 36825.0,
+        "feed_shortage_incidents": 13,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 7,
+          "SHEEP": 2,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 171,
+          "WOOL": 30,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 33360.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 120,
+        "final_score": 104236.0,
+        "productive_actions": 1970,
+        "movement_actions": 4820,
+        "idle_passes": 604,
+        "move_ratio": 2.446700507614213,
+        "total_actions_available": 7394,
+        "idle_rate": 0.08168785501758183,
+        "crop_planted": {
+          "WHEAT": 57,
+          "CARROT": 20,
+          "TOMATO": 12,
+          "STRAWBERRY": 19,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 219,
+          "CARROT": 51,
+          "TOMATO": 70,
+          "STRAWBERRY": 105,
+          "MELON": 144
+        },
+        "wheat_produced": 219,
+        "wheat_consumed_feed": 144,
+        "wheat_sold": 1396,
+        "wheat_bought": 1330,
+        "wheat_buy_cost": 33250.0,
+        "feed_shortage_incidents": 27,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 8,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 161,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 25760.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 121,
+        "final_score": 117574.0,
+        "productive_actions": 2048,
+        "movement_actions": 4711,
+        "idle_passes": 630,
+        "move_ratio": 2.30029296875,
+        "total_actions_available": 7389,
+        "idle_rate": 0.08526187576126674,
+        "crop_planted": {
+          "WHEAT": 76,
+          "CARROT": 16,
+          "TOMATO": 9,
+          "STRAWBERRY": 22,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 251,
+          "CARROT": 43,
+          "TOMATO": 54,
+          "STRAWBERRY": 112,
+          "MELON": 144
+        },
+        "wheat_produced": 251,
+        "wheat_consumed_feed": 172,
+        "wheat_sold": 1455,
+        "wheat_bought": 1398,
+        "wheat_buy_cost": 34950.0,
+        "feed_shortage_incidents": 16,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 9,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 201,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 32160.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 122,
+        "final_score": 96562.0,
+        "productive_actions": 2076,
+        "movement_actions": 4748,
+        "idle_passes": 555,
+        "move_ratio": 2.2870905587668595,
+        "total_actions_available": 7379,
+        "idle_rate": 0.0752134435560374,
+        "crop_planted": {
+          "WHEAT": 75,
+          "CARROT": 13,
+          "TOMATO": 7,
+          "STRAWBERRY": 18,
+          "MELON": 22
+        },
+        "crop_harvested": {
+          "WHEAT": 284,
+          "CARROT": 36,
+          "TOMATO": 50,
+          "STRAWBERRY": 127,
+          "MELON": 132
+        },
+        "wheat_produced": 284,
+        "wheat_consumed_feed": 187,
+        "wheat_sold": 1559,
+        "wheat_bought": 1497,
+        "wheat_buy_cost": 37425.0,
+        "feed_shortage_incidents": 18,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 10,
+        "animals_by_species": {
+          "COW": 5,
+          "SHEEP": 5,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 120,
+          "WOOL": 90,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 37200.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 123,
+        "final_score": 108849.0,
+        "productive_actions": 2034,
+        "movement_actions": 4578,
+        "idle_passes": 788,
+        "move_ratio": 2.2507374631268435,
+        "total_actions_available": 7400,
+        "idle_rate": 0.10648648648648648,
+        "crop_planted": {
+          "WHEAT": 67,
+          "CARROT": 9,
+          "TOMATO": 10,
+          "STRAWBERRY": 20,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 257,
+          "CARROT": 25,
+          "TOMATO": 69,
+          "STRAWBERRY": 127,
+          "MELON": 144
+        },
+        "wheat_produced": 257,
+        "wheat_consumed_feed": 160,
+        "wheat_sold": 1458,
+        "wheat_bought": 1384,
+        "wheat_buy_cost": 34600.0,
+        "feed_shortage_incidents": 11,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 8,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 187,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 29920.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 124,
+        "final_score": 100878.0,
+        "productive_actions": 1999,
+        "movement_actions": 4783,
+        "idle_passes": 629,
+        "move_ratio": 2.392696348174087,
+        "total_actions_available": 7411,
+        "idle_rate": 0.08487383618944812,
+        "crop_planted": {
+          "WHEAT": 62,
+          "CARROT": 18,
+          "TOMATO": 12,
+          "STRAWBERRY": 22,
+          "MELON": 32
+        },
+        "crop_harvested": {
+          "WHEAT": 230,
+          "CARROT": 51,
+          "TOMATO": 82,
+          "STRAWBERRY": 106,
+          "MELON": 144
+        },
+        "wheat_produced": 230,
+        "wheat_consumed_feed": 150,
+        "wheat_sold": 1460,
+        "wheat_bought": 1395,
+        "wheat_buy_cost": 34875.0,
+        "feed_shortage_incidents": 22,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 8,
+        "animals_by_species": {
+          "COW": 6,
+          "SHEEP": 2,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 131,
+          "WOOL": 34,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 27760.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 125,
+        "final_score": 104127.0,
+        "productive_actions": 2040,
+        "movement_actions": 4778,
+        "idle_passes": 584,
+        "move_ratio": 2.342156862745098,
+        "total_actions_available": 7402,
+        "idle_rate": 0.07889759524452851,
+        "crop_planted": {
+          "WHEAT": 61,
+          "CARROT": 17,
+          "TOMATO": 9,
+          "STRAWBERRY": 20,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 235,
+          "CARROT": 47,
+          "TOMATO": 59,
+          "STRAWBERRY": 101,
+          "MELON": 144
+        },
+        "wheat_produced": 235,
+        "wheat_consumed_feed": 177,
+        "wheat_sold": 1461,
+        "wheat_bought": 1434,
+        "wheat_buy_cost": 35850.0,
+        "feed_shortage_incidents": 11,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 4,
+          "SHEEP": 5,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 108,
+          "WOOL": 90,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 35280.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 126,
+        "final_score": 109130.0,
+        "productive_actions": 1991,
+        "movement_actions": 4863,
+        "idle_passes": 544,
+        "move_ratio": 2.4424912104470113,
+        "total_actions_available": 7398,
+        "idle_rate": 0.07353338740200054,
+        "crop_planted": {
+          "WHEAT": 60,
+          "CARROT": 21,
+          "TOMATO": 11,
+          "STRAWBERRY": 18,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 233,
+          "CARROT": 56,
+          "TOMATO": 64,
+          "STRAWBERRY": 113,
+          "MELON": 144
+        },
+        "wheat_produced": 233,
+        "wheat_consumed_feed": 151,
+        "wheat_sold": 1466,
+        "wheat_bought": 1399,
+        "wheat_buy_cost": 34975.0,
+        "feed_shortage_incidents": 17,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 8,
+        "animals_by_species": {
+          "COW": 8,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 172,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 27520.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 127,
+        "final_score": 93585.0,
+        "productive_actions": 2067,
+        "movement_actions": 4594,
+        "idle_passes": 741,
+        "move_ratio": 2.222544750846638,
+        "total_actions_available": 7402,
+        "idle_rate": 0.10010807889759525,
+        "crop_planted": {
+          "WHEAT": 63,
+          "CARROT": 36,
+          "TOMATO": 12,
+          "STRAWBERRY": 18,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 220,
+          "CARROT": 99,
+          "TOMATO": 85,
+          "STRAWBERRY": 93,
+          "MELON": 144
+        },
+        "wheat_produced": 220,
+        "wheat_consumed_feed": 139,
+        "wheat_sold": 1236,
+        "wheat_bought": 1193,
+        "wheat_buy_cost": 29825.0,
+        "feed_shortage_incidents": 14,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 7,
+        "animals_by_species": {
+          "COW": 5,
+          "SHEEP": 2,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 121,
+          "WOOL": 39,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 27160.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 128,
+        "final_score": 114824.0,
+        "productive_actions": 2079,
+        "movement_actions": 4672,
+        "idle_passes": 652,
+        "move_ratio": 2.247234247234247,
+        "total_actions_available": 7403,
+        "idle_rate": 0.0880724030798325,
+        "crop_planted": {
+          "WHEAT": 72,
+          "CARROT": 10,
+          "TOMATO": 10,
+          "STRAWBERRY": 18,
+          "MELON": 24
+        },
+        "crop_harvested": {
+          "WHEAT": 273,
+          "CARROT": 28,
+          "TOMATO": 70,
+          "STRAWBERRY": 124,
+          "MELON": 144
+        },
+        "wheat_produced": 273,
+        "wheat_consumed_feed": 169,
+        "wheat_sold": 1508,
+        "wheat_bought": 1426,
+        "wheat_buy_cost": 35650.0,
+        "feed_shortage_incidents": 20,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 9,
+          "SHEEP": 0,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 194,
+          "WOOL": 0,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 31040.0
+      },
+      {
+        "arm": "ArmA-DynWheat",
+        "seed": 129,
+        "final_score": 91228.0,
+        "productive_actions": 2060,
+        "movement_actions": 4665,
+        "idle_passes": 645,
+        "move_ratio": 2.2645631067961167,
+        "total_actions_available": 7370,
+        "idle_rate": 0.08751696065128901,
+        "crop_planted": {
+          "WHEAT": 71,
+          "CARROT": 15,
+          "TOMATO": 11,
+          "STRAWBERRY": 18,
+          "MELON": 23
+        },
+        "crop_harvested": {
+          "WHEAT": 273,
+          "CARROT": 39,
+          "TOMATO": 60,
+          "STRAWBERRY": 109,
+          "MELON": 138
+        },
+        "wheat_produced": 273,
+        "wheat_consumed_feed": 178,
+        "wheat_sold": 1467,
+        "wheat_bought": 1421,
+        "wheat_buy_cost": 35525.0,
+        "feed_shortage_incidents": 16,
+        "max_consecutive_unfed": 1,
+        "starvation_deaths": 0,
+        "herd_size_eod": 9,
+        "animals_by_species": {
+          "COW": 2,
+          "SHEEP": 7,
+          "GOOSE": 0
+        },
+        "animal_product_units": {
+          "MILK": 68,
+          "WOOL": 131,
+          "FEATHER": 0
+        },
+        "animal_product_revenue": 37080.0
+      }
+    ]
+  }
+}

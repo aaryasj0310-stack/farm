@@ -926,6 +926,44 @@ class MacroPlanner:
         # Proactive infrastructure reservation (All Arms):
         # Enqueue near-shed pastures up to target_pastures (capped at 2 in queue, verified economically positive)
         existing_structs = existing_pastures + len(reserved_structure_tiles)
+
+        # ArmC-Cell: Check if already-justified pasture demand should have location allocated in SW
+        sw_cell_allocated_tiles = []
+        try:
+            from config import SW_CELL_HOUSING_ENABLED, SW_CELL_MAX_PASTURES
+        except Exception:
+            SW_CELL_HOUSING_ENABLED = False
+            SW_CELL_MAX_PASTURES = 1
+
+        if SW_CELL_HOUSING_ENABLED and "SW" in farm.unlocked and day < C4_LIVESTOCK_CUTOFF_DAY:
+            existing_sw_pastures = sum(1 for t in farm.iter_tiles() if getattr(t, "kind", None) == "PASTURE" and farm.quadrant_of(t.pos) == "SW")
+            reserved_sw_pastures = sum(1 for pos, _ in reserved_structure_tiles if farm.quadrant_of(pos) == "SW")
+            needed_slots = max(0, target_pastures - (existing_pastures + len(reserved_structure_tiles)))
+            if needed_slots > 0 and (existing_sw_pastures + reserved_sw_pastures) < SW_CELL_MAX_PASTURES:
+                from strategy.sw_cell_allocator import allocate_sw_pasture_locations
+                sw_locs, sw_diag = allocate_sw_pasture_locations(
+                    farm=farm,
+                    day=day,
+                    needed_slots=needed_slots,
+                    existing_sw_pastures=existing_sw_pastures,
+                    reserved_sw_pastures=reserved_sw_pastures,
+                    empty_tiles=list(empty_tiles),
+                    reserved_crop_tiles=set(),
+                    sw_cell_enabled=True,
+                    max_sw_pastures=SW_CELL_MAX_PASTURES,
+                )
+                sw_cell_allocated_tiles = sw_locs
+                plan.diagnostics["sw_cell_allocation"] = sw_diag
+
+        # ONE Authoritative Reservation Budget:
+        # 1. Allocate justified SW cell pasture location if approved
+        for sw_tile in sw_cell_allocated_tiles:
+            if existing_structs < target_pastures and len(reserved_structure_tiles) < 2:
+                reserved_structure_tiles.append((sw_tile, "BUILD_PASTURE"))
+                existing_structs += 1
+                positive_pasture_cands = [c for c in positive_pasture_cands if c["pos"] != sw_tile]
+
+        # 2. Allocate remaining justified slots through existing NW/NE candidate path
         while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and positive_pasture_cands:
             cand_info = positive_pasture_cands.pop(0)
             cand_pos = cand_info["pos"]
@@ -1720,18 +1758,35 @@ class MacroPlanner:
         
         all_empty_structures = {t.pos: t.kind for t in farm.iter_tiles()
                                 if t.kind in ("COOP", "PASTURE") and not t.is_animal}
+        try:
+            from config import SW_CELL_HOUSING_ENABLED
+        except Exception:
+            SW_CELL_HOUSING_ENABLED = False
+
         for animal in ANIMAL_LIST:
             struct = ANIMALS[animal]["structure"]
             free = [pos for pos, k in all_empty_structures.items() if k == struct]
             if not free:
                 continue
+
+            # Point 5: If SW cell housing is active and animal is COW/SHEEP,
+            # prefer physically built empty SW pasture so the SW cell is occupied
+            if SW_CELL_HOUSING_ENABLED and animal in ("COW", "SHEEP"):
+                sw_free = [p for p in free if farm.quadrant_of(p) == "SW"]
+                other_free = [p for p in free if farm.quadrant_of(p) != "SW"]
+                ordered_free = sorted(sw_free) + sorted(other_free)
+            else:
+                ordered_free = sorted(free)
+
             held = inv_hold.get(animal, [])
             if held:
-                for target_pos in sorted(free)[:len(held)]:
+                for target_pos in ordered_free[:len(held)]:
                     place_queue.append({"op": "PLACE", "target": target_pos,
                                         "args": [animal]})
+                    if target_pos in all_empty_structures:
+                        del all_empty_structures[target_pos]
             elif private.shed.get(animal, 0) > 0:
-                grab_qty = min(int(private.shed.get(animal, 0)), len(free))
+                grab_qty = min(int(private.shed.get(animal, 0)), len(ordered_free))
                 for _ in range(grab_qty):
                     place_queue.append({"op": "PICKUP",
                                         "target": (4, 4), "args": [animal]})

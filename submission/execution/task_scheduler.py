@@ -21,6 +21,7 @@ Engine facts encoded here:
   - fertilizer_available flips True at end-of-day; collect it any time next day.
 """
 import math
+import copy
 from config import (
     ANIMAL_LIST,
     ANIMALS,
@@ -44,6 +45,8 @@ from config import (
     TURNS_PER_DAY,
     EFFECTIVE_ACTIONS_PER_UNIT,
     DYNAMIC_ZONAL_ALLOCATION,
+    PERSISTENT_WORKER_LOCALITY_ENABLED,
+    LOCALITY_ZONE_SWITCH_PENALTY,
     C2_MAX_SPILLOVER_DIST,
     C2_SPILLOVER_PRIORITY_FLOOR,
     C6_CLUSTER_RADIUS,
@@ -89,6 +92,68 @@ def reset_blocked_task_tracker():
     """Reset blocked task tracker."""
     global _BLOCKED_TASK_TRACKER
     _BLOCKED_TASK_TRACKER = {}
+
+# Persistent Worker Locality State (Layer 1: Zone capacity across days, Layer 2: Worker roles within day)
+_ZONE_HOME_CAPACITY = {"NW": 1, "NE": 0, "SW": 0}
+_WORKER_HOME_STATE = {}           # unit_idx -> home_quadrant
+_LOCALITY_DAY = -1               # current day for detecting day boundaries
+_LOCALITY_WORKER_METRICS = {}    # unit_idx -> metrics dict for today
+_LOCALITY_DAILY_LOG = {}         # day -> aggregated metrics dict
+_LOCALITY_RAW_RECORDS = []       # list of per-worker per-day dicts for replay analysis
+_LOCALITY_PREV_POS = {}          # unit_idx -> (x, y) for distance tracking
+_LOCALITY_LAST_FIELD_QUAD = {}   # unit_idx -> last non-shed field quadrant ("NW", "NE", "SW", "SE")
+_LOCALITY_SEASON_SUMMARY = {
+    "total_within_day_reassignments": 0,
+    "total_ne_sw_home_changes": 0,
+    "total_physical_ne_sw_traversals": 0,
+    "total_temporary_spillovers": 0,
+    "total_emergency_preemptions": 0,
+    "total_travel_distance": 0,
+    "total_moves": 0,
+    "total_ops": 0,
+}
+
+def get_worker_home_state():
+    """Return copy of currently assigned worker home quadrants."""
+    return dict(_WORKER_HOME_STATE)
+
+def get_zone_home_capacity():
+    """Return copy of current persistent zone workforce capacity."""
+    return dict(_ZONE_HOME_CAPACITY)
+
+def get_locality_telemetry():
+    """Return copy of locality telemetry daily log, summary, and state."""
+    return {
+        "daily_log": copy.deepcopy(_LOCALITY_DAILY_LOG),
+        "raw_records": list(_LOCALITY_RAW_RECORDS),
+        "summary": dict(_LOCALITY_SEASON_SUMMARY),
+        "worker_state": dict(_WORKER_HOME_STATE),
+        "zone_capacity": dict(_ZONE_HOME_CAPACITY),
+    }
+
+def reset_worker_locality():
+    """Reset persistent worker home locality state at start of new episode."""
+    global _ZONE_HOME_CAPACITY, _WORKER_HOME_STATE, _LOCALITY_DAY
+    global _LOCALITY_WORKER_METRICS, _LOCALITY_DAILY_LOG, _LOCALITY_RAW_RECORDS
+    global _LOCALITY_PREV_POS, _LOCALITY_LAST_FIELD_QUAD, _LOCALITY_SEASON_SUMMARY
+    _ZONE_HOME_CAPACITY = {"NW": 1, "NE": 0, "SW": 0}
+    _WORKER_HOME_STATE = {}
+    _LOCALITY_DAY = -1
+    _LOCALITY_WORKER_METRICS = {}
+    _LOCALITY_DAILY_LOG = {}
+    _LOCALITY_RAW_RECORDS = []
+    _LOCALITY_PREV_POS = {}
+    _LOCALITY_LAST_FIELD_QUAD = {}
+    _LOCALITY_SEASON_SUMMARY = {
+        "total_within_day_reassignments": 0,
+        "total_ne_sw_home_changes": 0,
+        "total_physical_ne_sw_traversals": 0,
+        "total_temporary_spillovers": 0,
+        "total_emergency_preemptions": 0,
+        "total_travel_distance": 0,
+        "total_moves": 0,
+        "total_ops": 0,
+    }
 
 _SW_SEASONAL_TRACKER = {
     "first_sw_unlock_day": None,
@@ -299,8 +364,47 @@ def reset_daily_log():
     }
     reset_sticky_missions()
     reset_blocked_task_tracker()
+    reset_worker_locality()
 
-def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_blocked=None, turn_sw=None):
+def classify_task_action(act, task, farm):
+    """Classify action semantically into (category, quadrant)."""
+    if not act:
+        return "pass", None
+    op = act[0]
+    if op == "PASS":
+        return "pass", None
+    if op in ("NORTH", "SOUTH", "EAST", "WEST"):
+        return "move", None
+
+    tgt = task.get("target") if task else None
+    kind = task.get("kind", "") if task else ""
+    args = task.get("args", []) if task else []
+
+    shed_tiles = {(4, 4), (5, 4), (4, 5), (5, 5)}
+    if op in ("PICKUP", "DROP") or (tgt and tuple(tgt) in shed_tiles and op in ("PICKUP", "DROP")):
+        return "logistics", "CENTRAL"
+
+    tgt_quad = farm.quadrant_of(tgt) if (tgt and hasattr(farm, "quadrant_of")) else "NW"
+
+    if op in ("PLANT", "WATER", "FERTILIZE"):
+        return "crop", tgt_quad
+    if op == "HARVEST":
+        is_anim = "animal" in kind
+        if not is_anim and tgt and hasattr(farm, "tile_at"):
+            tile = farm.tile_at(tgt)
+            if tile and (getattr(tile, "is_animal", False) or getattr(tile, "kind", "") == "ANIMAL"):
+                is_anim = True
+        return ("livestock" if is_anim else "crop"), tgt_quad
+    if op in ("FEED", "CARE", "COLLECT_FERTILIZER"):
+        return "livestock", tgt_quad
+    if op in ("BUILD_PASTURE", "BUILD_COOP") or (op == "PLACE" and args and args[0] in ANIMALS):
+        return "housing", tgt_quad
+    if op == "DIG":
+        return "maintenance", tgt_quad
+    return "other", tgt_quad
+
+
+def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_blocked=None, turn_sw=None, home_quads=None, pos_by_idx=None):
     """Accumulate hourly utilization and finalize daily log at hour 23."""
     day, hour = ctx["day"], ctx["hour"]
     if day not in _daily_accum:
@@ -330,13 +434,13 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
                 "max_blocked_duration": 0,
             },
         }
-    
+
     used = sum(1 for a in actions_taken.values() if a != ["PASS"])
     avail = n_units
     idle = max(0, avail - used)
     moves = sum(1 for a in actions_taken.values() if a and a[0] in ("NORTH", "SOUTH", "EAST", "WEST"))
     completions = sum(1 for a in actions_taken.values() if a != ["PASS"] and a and a[0] not in ("NORTH", "SOUTH", "EAST", "WEST"))
-    
+
     _daily_accum[day]["available"] += avail
     _daily_accum[day]["used"] += used
     _daily_accum[day]["idle"] += idle
@@ -362,6 +466,82 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
                     _daily_accum[day]["quad_attempts"][q] += 1
                     if is_comp:
                         _daily_accum[day]["quad_completions"][q] += 1
+
+    # Turn-by-turn locality telemetry tracking
+    global _LOCALITY_WORKER_METRICS, _LOCALITY_DAILY_LOG, _LOCALITY_RAW_RECORDS
+    global _LOCALITY_PREV_POS, _LOCALITY_LAST_FIELD_QUAD, _LOCALITY_SEASON_SUMMARY, _LOCALITY_DAY
+    if day != _LOCALITY_DAY:
+        _LOCALITY_DAY = day
+        _LOCALITY_PREV_POS.clear()
+        _LOCALITY_LAST_FIELD_QUAD.clear()
+
+    farm = ctx.get("farm")
+    shed_tiles = {(4, 4), (5, 4), (4, 5), (5, 5)}
+    if home_quads and pos_by_idx and farm and hasattr(farm, "quadrant_of"):
+        for u in range(n_units):
+            h_q = home_quads.get(u, "NW")
+            u_pos = pos_by_idx.get(u, (4, 4))
+            phys_q = farm.quadrant_of(u_pos)
+
+            if u not in _LOCALITY_WORKER_METRICS:
+                _LOCALITY_WORKER_METRICS[u] = {
+                    "unit_idx": u,
+                    "day": day,
+                    "home_quadrant": h_q,
+                    "turns_in_home": 0,
+                    "home_changes": 0,
+                    "ne_sw_changes": 0,
+                    "temporary_spillovers": 0,
+                    "quadrants_worked": set(),
+                    "moves": 0,
+                    "productive_ops": 0,
+                    "travel_distance": 0,
+                    "productive_by_zone": {"NW": 0, "NE": 0, "SW": 0, "SE": 0},
+                    "ops_by_category": {
+                        "crop": 0, "livestock": 0, "housing": 0, "logistics": 0, "maintenance": 0, "other": 0
+                    },
+                    "ops_by_quad_and_type": {
+                        q: {"crop": 0, "livestock": 0, "housing": 0, "logistics": 0, "maintenance": 0, "other": 0}
+                        for q in ("NW", "NE", "SW", "SE")
+                    },
+                }
+            m = _LOCALITY_WORKER_METRICS[u]
+            if phys_q == h_q:
+                m["turns_in_home"] += 1
+
+            prev_pos = _LOCALITY_PREV_POS.get(u, u_pos)
+            step_d = abs(u_pos[0] - prev_pos[0]) + abs(u_pos[1] - prev_pos[1])
+            _LOCALITY_PREV_POS[u] = u_pos
+            m["travel_distance"] += step_d
+            _LOCALITY_SEASON_SUMMARY["total_travel_distance"] += step_d
+
+            # True field-to-field traversal tracking (excluding shed-adjacent transit & spawn)
+            is_on_shed = (u_pos in shed_tiles)
+            if not is_on_shed:
+                last_field_q = _LOCALITY_LAST_FIELD_QUAD.get(u)
+                if last_field_q is not None and last_field_q != phys_q:
+                    if (last_field_q == "NE" and phys_q == "SW") or (last_field_q == "SW" and phys_q == "NE"):
+                        _LOCALITY_SEASON_SUMMARY["total_physical_ne_sw_traversals"] += 1
+                        m["ne_sw_traversals"] = m.get("ne_sw_traversals", 0) + 1
+                _LOCALITY_LAST_FIELD_QUAD[u] = phys_q
+
+            act = actions_taken.get(u, ["PASS"])
+            if act and act[0] in ("NORTH", "SOUTH", "EAST", "WEST"):
+                m["moves"] += 1
+                _LOCALITY_SEASON_SUMMARY["total_moves"] += 1
+            elif act != ["PASS"] and act:
+                m["productive_ops"] += 1
+                _LOCALITY_SEASON_SUMMARY["total_ops"] += 1
+                task = assignment.get(u, {}) if assignment else {}
+                cat, act_quad = classify_task_action(act, task, farm)
+                m["ops_by_category"][cat] = m["ops_by_category"].get(cat, 0) + 1
+                if act_quad in ("NW", "NE", "SW", "SE"):
+                    m["quadrants_worked"].add(act_quad)
+                    m["productive_by_zone"][act_quad] = m["productive_by_zone"].get(act_quad, 0) + 1
+                    m["ops_by_quad_and_type"][act_quad][cat] = m["ops_by_quad_and_type"][act_quad].get(cat, 0) + 1
+                    if act_quad != h_q:
+                        m["temporary_spillovers"] += 1
+                        _LOCALITY_SEASON_SUMMARY["total_temporary_spillovers"] += 1
 
     if turn_sw:
         _daily_accum[day]["sw_tasks_created"] += turn_sw.get("created", 0)
@@ -434,6 +614,57 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
 
         sw_comp_rate = round(d_completed / d_assigned, 4) if d_assigned > 0 else None
         sw_asgn_rate = round(d_assigned / d_created, 4) if d_created > 0 else None
+
+        # Compute and finalize daily locality metrics
+        tot_home_changes = sum(m["home_changes"] for m in _LOCALITY_WORKER_METRICS.values())
+        tot_turns_in_home = sum(m["turns_in_home"] for m in _LOCALITY_WORKER_METRICS.values())
+        tot_worker_turns = max(1, len(_LOCALITY_WORKER_METRICS) * 24)
+        pct_in_home = round(tot_turns_in_home / tot_worker_turns, 4)
+
+        workers_both_ne_sw = sum(
+            1 for m in _LOCALITY_WORKER_METRICS.values()
+            if "NE" in m["quadrants_worked"] and "SW" in m["quadrants_worked"]
+        )
+
+        for u_m in _LOCALITY_WORKER_METRICS.values():
+            rec = dict(u_m)
+            rec["quadrants_worked"] = sorted(list(u_m["quadrants_worked"]))
+            _LOCALITY_RAW_RECORDS.append(rec)
+
+        day_locality = {
+            "within_day_home_changes_per_worker": round(tot_home_changes / max(1, len(_LOCALITY_WORKER_METRICS)), 4),
+            "ne_sw_home_changes": sum(m["ne_sw_changes"] for m in _LOCALITY_WORKER_METRICS.values()),
+            "physical_ne_sw_traversals": _LOCALITY_SEASON_SUMMARY["total_physical_ne_sw_traversals"],
+            "same_home_retention_pct": round(1.0 - (tot_home_changes / max(1, tot_worker_turns)), 4),
+            "workers_both_ne_sw_same_day": workers_both_ne_sw,
+            "pct_time_in_home_quadrant": pct_in_home,
+            "total_travel_distance": sum(m["travel_distance"] for m in _LOCALITY_WORKER_METRICS.values()),
+            "moves_per_productive_op": round(
+                sum(m["moves"] for m in _LOCALITY_WORKER_METRICS.values()) /
+                max(1, sum(m["productive_ops"] for m in _LOCALITY_WORKER_METRICS.values())), 4
+            ),
+            "temporary_spillovers": sum(m["temporary_spillovers"] for m in _LOCALITY_WORKER_METRICS.values()),
+            "emergency_preemptions": _LOCALITY_SEASON_SUMMARY["total_emergency_preemptions"],
+            "productive_ops_by_zone": {
+                q: sum(m["productive_by_zone"].get(q, 0) for m in _LOCALITY_WORKER_METRICS.values())
+                for q in ("NW", "NE", "SW", "SE")
+            },
+            "ops_by_category": {
+                cat: sum(m.get("ops_by_category", {}).get(cat, 0) for m in _LOCALITY_WORKER_METRICS.values())
+                for cat in ("crop", "livestock", "housing", "logistics", "maintenance", "other")
+            },
+            "ops_by_quad_and_type": {
+                q: {cat: sum(m.get("ops_by_quad_and_type", {}).get(q, {}).get(cat, 0) for m in _LOCALITY_WORKER_METRICS.values())
+                    for cat in ("crop", "livestock", "housing", "logistics", "maintenance", "other")}
+                for q in ("NW", "NE", "SW", "SE")
+            },
+            "unassigned_task_turns_by_zone": {
+                q: sum(info["consecutive_duration"] for info in _BLOCKED_TASK_TRACKER.values() if info.get("quadrant") == q)
+                for q in ("NW", "NE", "SW", "SE")
+            },
+        }
+        _LOCALITY_DAILY_LOG[day] = day_locality
+        _LOCALITY_WORKER_METRICS = {}
         
         _daily_log[day] = {
             "actions_available": tot_avail,
@@ -467,6 +698,7 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
                 "sw_assignment_rate": sw_asgn_rate,
                 "sw_completion_rate": sw_comp_rate,
             },
+            "locality_telemetry": day_locality,
         }
 
 
@@ -733,7 +965,7 @@ def get_home_quadrant(u_idx, n_units, unlocked):
     elif "NE" in unlocked:
         half = max(1, n_units // 2)
         return "NW" if u_idx < half else "NE"
-def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
+def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx, ctx=None):
     """Stage 8B Phase 2B: Workload-aware dynamic zonal allocation.
     
     Dynamically sizes zonal squads based on live task demand and priority classes:
@@ -745,6 +977,12 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
        u_SW = min(surplus, ceil(demand(SW) / EFFECTIVE_ACTIONS_PER_UNIT)).
     6. Distribute remaining surplus to NW/NE discretionary tasks.
     7. Map specific worker IDs u_idx to quadrants based on minimum transit distance from current positions.
+    When PERSISTENT_WORKER_LOCALITY_ENABLED is active:
+    - Layer 1: Zone capacity across days. Asymmetric capacity hysteresis preserves justified
+      SW capacity across intra-day task lulls when supporting productive assets (crops/animals) exist.
+      Capacity shrinks slowly on day boundaries or when assets disappear.
+    - Layer 2: Worker home roles within day. Units retain persistent home quadrants with
+      switch penalty hysteresis, preventing intra-day bouncing.
     """
     if n_units <= 0:
         return {}
@@ -752,6 +990,39 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
     unlocked = getattr(farm, "unlocked", ["NW"])
     if "SW" not in unlocked and "NE" not in unlocked:
         return {u: "NW" for u in range(n_units)}
+
+    global _ZONE_HOME_CAPACITY, _WORKER_HOME_STATE, _LOCALITY_DAY
+
+    # Check active productive assets in SW
+    has_sw_assets = False
+    if "SW" in unlocked:
+        try:
+            sw_breakdown = get_sw_tile_breakdown(farm)
+            has_sw_assets = bool(
+                sw_breakdown.get("active", 0) > 0
+                or sw_breakdown.get("crops", 0) > 0
+                or sw_breakdown.get("animals", 0) > 0
+                or sw_breakdown.get("structures", 0) > 0
+            )
+        except Exception:
+            if hasattr(farm, "iter_tiles") and hasattr(farm, "quadrant_of"):
+                for t in farm.iter_tiles():
+                    if farm.quadrant_of(t.pos) == "SW":
+                        if getattr(t, "is_plant", False) or getattr(t, "is_animal", False) or getattr(t, "kind", "") in ("PASTURE", "COOP"):
+                            has_sw_assets = True
+                            break
+
+    curr_day = ctx.get("day", 0) if (ctx and isinstance(ctx, dict)) else 0
+    curr_hour = ctx.get("hour", 0) if (ctx and isinstance(ctx, dict)) else 0
+
+    if PERSISTENT_WORKER_LOCALITY_ENABLED:
+        if curr_day != _LOCALITY_DAY:
+            _LOCALITY_DAY = curr_day
+            # Day boundary: if SW productive assets disappeared, allow SW capacity to reset to 0
+            if not has_sw_assets:
+                _ZONE_HOME_CAPACITY["SW"] = 0
+            # Reset worker roles mapping for the new day's hands roster
+            _WORKER_HOME_STATE = {}
 
     # 1. Live task demand by zone and priority class
     demand_mand = {"NW": 0.0, "NE": 0.0, "SW": 0.0}
@@ -805,7 +1076,16 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
     if "SW" in unlocked and surplus > 0:
         sw_total_demand = demand_mand["SW"] + demand_disc["SW"]
         sw_req = math.ceil(sw_total_demand / eff_ap)
-        alloc_sw = min(surplus, sw_req)
+        if PERSISTENT_WORKER_LOCALITY_ENABLED:
+            # Asymmetric persistence: live demand increases SW capacity quickly;
+            # active recurring assets preserve existing capacity through temporary task lulls!
+            if has_sw_assets:
+                sw_target = max(sw_req, _ZONE_HOME_CAPACITY.get("SW", 0))
+            else:
+                sw_target = sw_req
+            alloc_sw = min(surplus, sw_target)
+        else:
+            alloc_sw = min(surplus, sw_req)
         alloc["SW"] = alloc_sw
         surplus -= alloc_sw
 
@@ -843,6 +1123,11 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
     diff = n_units - sum(alloc.values())
     alloc["NW"] += diff
 
+    if PERSISTENT_WORKER_LOCALITY_ENABLED:
+        _ZONE_HOME_CAPACITY["NW"] = alloc["NW"]
+        _ZONE_HOME_CAPACITY["NE"] = alloc["NE"]
+        _ZONE_HOME_CAPACITY["SW"] = alloc["SW"]
+
     # Map worker IDs u_idx to quadrants based on minimum transit distance
     zone_hubs = {
         "NW": (4, 4),
@@ -858,14 +1143,27 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
     for u in range(n_units):
         u_pos = pos_by_idx.get(u, (4, 4))
         u_curr_q = farm.quadrant_of(u_pos) if hasattr(farm, "quadrant_of") else "NW"
+        u_prev_home = _WORKER_HOME_STATE.get(u) if PERSISTENT_WORKER_LOCALITY_ENABLED else None
         row = []
         for target_q in slots:
-            if u_curr_q == target_q:
-                cost = 0
-            elif (u_curr_q == "SW" and target_q == "NE") or (u_curr_q == "NE" and target_q == "SW"):
-                cost = 1000 + abs(u_pos[0] - zone_hubs[target_q][0]) + abs(u_pos[1] - zone_hubs[target_q][1])
+            dist = abs(u_pos[0] - zone_hubs[target_q][0]) + abs(u_pos[1] - zone_hubs[target_q][1])
+            is_diag = (u_curr_q == "SW" and target_q == "NE") or (u_curr_q == "NE" and target_q == "SW")
+            if PERSISTENT_WORKER_LOCALITY_ENABLED and u_prev_home:
+                is_diag = is_diag or (u_prev_home == "SW" and target_q == "NE") or (u_prev_home == "NE" and target_q == "SW")
+
+            if is_diag:
+                cost = 1000 + dist
+            elif PERSISTENT_WORKER_LOCALITY_ENABLED:
+                # Retain persistent home with hysteresis
+                if u_prev_home == target_q:
+                    cost = dist  # no switch penalty
+                else:
+                    cost = dist + (LOCALITY_ZONE_SWITCH_PENALTY if u_prev_home is not None else 0)
             else:
-                cost = abs(u_pos[0] - zone_hubs[target_q][0]) + abs(u_pos[1] - zone_hubs[target_q][1])
+                if u_curr_q == target_q:
+                    cost = 0
+                else:
+                    cost = dist
             row.append(cost)
         cost_matrix.append(row)
 
@@ -892,7 +1190,25 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx):
             if u not in home_quads:
                 home_quads[u] = "NW"
 
+    if PERSISTENT_WORKER_LOCALITY_ENABLED:
+        for u in range(n_units):
+            new_h = home_quads.get(u, "NW")
+            old_h = _WORKER_HOME_STATE.get(u)
+            if old_h is not None and old_h != new_h:
+                _record_home_switch(u, old_h, new_h, curr_day, curr_hour)
+            _WORKER_HOME_STATE[u] = new_h
+
     return home_quads
+
+def _record_home_switch(u, old_h, new_h, day, hour):
+    global _LOCALITY_SEASON_SUMMARY, _LOCALITY_WORKER_METRICS
+    _LOCALITY_SEASON_SUMMARY["total_within_day_reassignments"] += 1
+    if (old_h == "SW" and new_h == "NE") or (old_h == "NE" and new_h == "SW"):
+        _LOCALITY_SEASON_SUMMARY["total_ne_sw_home_changes"] += 1
+    if u in _LOCALITY_WORKER_METRICS:
+        _LOCALITY_WORKER_METRICS[u]["home_changes"] += 1
+        if (old_h == "SW" and new_h == "NE") or (old_h == "NE" and new_h == "SW"):
+            _LOCALITY_WORKER_METRICS[u]["ne_sw_changes"] += 1
 
 
 def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
@@ -1028,7 +1344,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         strategic_sw = False
 
     if DYNAMIC_ZONAL_ALLOCATION or strategic_sw:
-        home_quads = compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx)
+        home_quads = compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx, ctx=ctx)
     else:
         home_quads = {u_idx: get_home_quadrant(u_idx, n_units, farm.unlocked) for u_idx in range(n_units)}
     sw_units = {u_idx for u_idx, q in home_quads.items() if q == "SW"}
@@ -1436,6 +1752,8 @@ def assign_tasks(tasks, ctx, extra_units=()):
         assignment=assignment,
         turn_blocked=turn_blocked_diagnostics,
         turn_sw=turn_sw_telemetry,
+        home_quads=home_quads,
+        pos_by_idx=pos_by_idx,
     )
 
     # Bookkeeping: PLANT intents count as seed reservations whether or not the

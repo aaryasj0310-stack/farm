@@ -182,11 +182,12 @@ def evaluate_pasture_candidates(
     cow_cap: Optional[int] = None,
     sheep_cap: Optional[int] = None,
     herd_cap: Optional[int] = None,
+    allowed_sw_tiles: Optional[Set[Tuple[int, int]]] = None,
 ) -> Dict[str, Any]:
     """Scan and evaluate all eligible empty tiles for dynamic pasture capacity.
 
     Pipeline:
-    1. Filter empty tiles in unlocked NW, NE, SW (SE strictly excluded).
+    1. Filter empty tiles in unlocked NW, NE (and explicitly authorized SW cell tiles).
     2. Exclude SHED_ACCESS_TILES and PORT_SW.
     3. Calculate Manhattan distance to nearest shed access.
     4. Derive species-specific marginal animal profit sequence.
@@ -203,14 +204,23 @@ def evaluate_pasture_candidates(
         if getattr(t, "kind", None) == "PASTURE" and not getattr(t, "is_animal", False)
     )
 
+    try:
+        from config import SW_CELL_HOUSING_ENABLED
+    except Exception:
+        SW_CELL_HOUSING_ENABLED = False
+
     # 1. Filter valid empty candidate tiles
     raw_cands = []
     for pos in empty_tiles:
         if pos in protected_positions:
             continue
         quad = farm.quadrant_of(pos)
-        if quad not in farm.unlocked or quad in ("SE", "SW"):
+        if quad not in farm.unlocked or quad == "SE":
             continue
+        if quad == "SW":
+            # SW strictly closed globally unless ArmC-Cell is active AND tile is explicitly authorized
+            if not SW_CELL_HOUSING_ENABLED or not allowed_sw_tiles or pos not in allowed_sw_tiles:
+                continue
         dist = distance_to_shed(pos)
         raw_cands.append({
             "pos": pos,

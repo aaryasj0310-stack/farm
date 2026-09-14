@@ -217,7 +217,7 @@ QUADRANT_MONEY_THRESHOLDS = {
 NE_EARLY_UNLOCK_MAX_DAY = 6
 NE_EARLY_UNLOCK_THRESHOLD_DAY3_5 = 1400
 NE_EARLY_UNLOCK_THRESHOLD_DAY6 = 1200
-QUADRANT_HARD_BLOCK = {4}  # NEVER buy quadrant 4 — intensive farming on 75 tiles
+QUADRANT_HARD_BLOCK = {4}  # Production default: SE (4) hard-blocked; SW (3) controlled via experiment arm
 
 
 def get_quadrant_hard_block() -> set:
@@ -465,6 +465,17 @@ def set_strategic_sw_ownership(enabled: bool) -> None:
     """Configure strategic SW ownership policy."""
     global STRATEGIC_SW_OWNERSHIP_ENABLED
     STRATEGIC_SW_OWNERSHIP_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.expansion_planner", "strategy.expansion_planner", "expansion_planner",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.land_serviceability_model", "strategy.land_serviceability_model", "land_serviceability_model",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "STRATEGIC_SW_OWNERSHIP_ENABLED", bool(enabled))
+            except Exception:
+                pass
 
 
 SW_FORCE_K_TILES: Optional[int] = None
@@ -515,31 +526,70 @@ def set_dynamic_zonal_allocation(enabled: bool) -> None:
     """Configure workload-aware dynamic zonal allocation (replaces Rule W1 squad partition)."""
     global DYNAMIC_ZONAL_ALLOCATION
     DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
-    try:
-        import execution.task_scheduler as ts
-        ts.DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
-    except Exception:
-        pass
-    try:
-        import task_scheduler as ts
-        ts.DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
-    except Exception:
-        pass
-    try:
-        import strategy.land_serviceability_model as lsm
-        lsm.DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
-    except Exception:
-        pass
-    try:
-        import land_serviceability_model as lsm
-        lsm.DYNAMIC_ZONAL_ALLOCATION = bool(enabled)
-    except Exception:
-        pass
+    for mod_name in (
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.strategy.land_serviceability_model", "strategy.land_serviceability_model", "land_serviceability_model",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "DYNAMIC_ZONAL_ALLOCATION", bool(enabled))
+            except Exception:
+                pass
 
 
 def get_dynamic_zonal_allocation() -> bool:
     """Return whether workload-aware dynamic zonal allocation is enabled."""
     return DYNAMIC_ZONAL_ALLOCATION
+
+
+# Persistent Worker Home Locality with Hysteresis
+PERSISTENT_WORKER_LOCALITY_ENABLED = False
+LOCALITY_ZONE_SWITCH_PENALTY = 15.0
+
+
+def set_persistent_worker_locality(enabled: bool) -> None:
+    """Configure persistent worker home locality with hysteresis."""
+    global PERSISTENT_WORKER_LOCALITY_ENABLED
+    PERSISTENT_WORKER_LOCALITY_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "PERSISTENT_WORKER_LOCALITY_ENABLED", bool(enabled))
+            except Exception:
+                pass
+
+
+def get_persistent_worker_locality() -> bool:
+    """Return whether persistent worker locality is enabled."""
+    return PERSISTENT_WORKER_LOCALITY_ENABLED
+
+
+# SW Controlled Mixed Livestock Housing Cell (ArmC-Cell)
+SW_CELL_HOUSING_ENABLED = False
+SW_CELL_MAX_PASTURES = 1
+
+
+def set_sw_cell_housing(enabled: bool) -> None:
+    """Configure controlled SW livestock housing allocation."""
+    global SW_CELL_HOUSING_ENABLED
+    SW_CELL_HOUSING_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.pasture_planner", "strategy.pasture_planner", "pasture_planner",
+        "agent.strategy.sw_cell_allocator", "strategy.sw_cell_allocator", "sw_cell_allocator",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_CELL_HOUSING_ENABLED", bool(enabled))
+            except Exception:
+                pass
+
+
+def get_sw_cell_housing() -> bool:
+    """Return whether SW cell housing allocation is enabled."""
+    return SW_CELL_HOUSING_ENABLED
 
 
 # SW delayed unlock day (e.g. Day 14 for delayed SW arm)
@@ -677,11 +727,12 @@ SW_SAFETY_RESERVE: float = 300.0            # Frozen at $300 across all arms
 
 
 def set_sw_experiment_arm(arm: str) -> None:
-    """Configure authoritative flags for SW experiment arms A, B, C, D."""
+    """Configure authoritative flags for SW experiment arms A, B, B-P, C-Cell, C, D."""
     global SW_OWNERSHIP_MODE, SW_TIMING_PRIOR_ENABLED, SW_ACTIVATION_MODE
     global STRATEGIC_SW_OWNERSHIP_ENABLED, DYNAMIC_ZONAL_ALLOCATION, DYNAMIC_SW_CROPS_ENABLED
+    global PERSISTENT_WORKER_LOCALITY_ENABLED, SW_CELL_HOUSING_ENABLED
     arm_clean = str(arm).strip()
-    if "ArmA" in arm_clean:
+    if arm_clean == "ArmA":
         # Arm A — Fresh Production Control: Current strategy with SW expansion disabled/frozen
         set_quadrant_hard_block({3, 4})
         SW_OWNERSHIP_MODE = "production"
@@ -690,8 +741,10 @@ def set_sw_experiment_arm(arm: str) -> None:
         STRATEGIC_SW_OWNERSHIP_ENABLED = False
         DYNAMIC_ZONAL_ALLOCATION = False
         DYNAMIC_SW_CROPS_ENABLED = False
-    elif "ArmB" in arm_clean:
-        # Arm B — Working SW + Discrete Activation
+        PERSISTENT_WORKER_LOCALITY_ENABLED = False
+        SW_CELL_HOUSING_ENABLED = False
+    elif arm_clean == "ArmC-Cell":
+        # Arm C-Cell — Exactly Arm B-P + Controlled SW Mixed Livestock Housing Cell
         set_quadrant_hard_block({4})
         SW_OWNERSHIP_MODE = "early_liquidity"
         SW_TIMING_PRIOR_ENABLED = False
@@ -699,7 +752,31 @@ def set_sw_experiment_arm(arm: str) -> None:
         STRATEGIC_SW_OWNERSHIP_ENABLED = True
         DYNAMIC_ZONAL_ALLOCATION = True
         DYNAMIC_SW_CROPS_ENABLED = True
-    elif "ArmC" in arm_clean:
+        PERSISTENT_WORKER_LOCALITY_ENABLED = True
+        SW_CELL_HOUSING_ENABLED = True
+    elif arm_clean == "ArmB-P":
+        # Arm B-P — Exactly Arm B + Persistent Worker Locality
+        set_quadrant_hard_block({4})
+        SW_OWNERSHIP_MODE = "early_liquidity"
+        SW_TIMING_PRIOR_ENABLED = False
+        SW_ACTIVATION_MODE = "discrete"
+        STRATEGIC_SW_OWNERSHIP_ENABLED = True
+        DYNAMIC_ZONAL_ALLOCATION = True
+        DYNAMIC_SW_CROPS_ENABLED = True
+        PERSISTENT_WORKER_LOCALITY_ENABLED = True
+        SW_CELL_HOUSING_ENABLED = False
+    elif arm_clean == "ArmB":
+        # Arm B — Working SW + Discrete Activation (baseline dynamic allocation without persistent locality)
+        set_quadrant_hard_block({4})
+        SW_OWNERSHIP_MODE = "early_liquidity"
+        SW_TIMING_PRIOR_ENABLED = False
+        SW_ACTIVATION_MODE = "discrete"
+        STRATEGIC_SW_OWNERSHIP_ENABLED = True
+        DYNAMIC_ZONAL_ALLOCATION = True
+        DYNAMIC_SW_CROPS_ENABLED = True
+        PERSISTENT_WORKER_LOCALITY_ENABLED = False
+        SW_CELL_HOUSING_ENABLED = False
+    elif arm_clean == "ArmC":
         # Arm C — Primary Treatment: Working SW + Survival-Aware Progressive Activation (no Dusta prior)
         set_quadrant_hard_block({4})
         SW_OWNERSHIP_MODE = "early_liquidity"
@@ -708,7 +785,9 @@ def set_sw_experiment_arm(arm: str) -> None:
         STRATEGIC_SW_OWNERSHIP_ENABLED = True
         DYNAMIC_ZONAL_ALLOCATION = True
         DYNAMIC_SW_CROPS_ENABLED = True
-    elif "ArmD" in arm_clean:
+        PERSISTENT_WORKER_LOCALITY_ENABLED = False
+        SW_CELL_HOUSING_ENABLED = False
+    elif arm_clean == "ArmD":
         # Arm D — Dusta Prior + Survival-Aware Progressive Activation (differs from C by Dusta prior only)
         set_quadrant_hard_block({4})
         SW_OWNERSHIP_MODE = "early_liquidity"
@@ -717,6 +796,8 @@ def set_sw_experiment_arm(arm: str) -> None:
         STRATEGIC_SW_OWNERSHIP_ENABLED = True
         DYNAMIC_ZONAL_ALLOCATION = True
         DYNAMIC_SW_CROPS_ENABLED = True
+        PERSISTENT_WORKER_LOCALITY_ENABLED = False
+        SW_CELL_HOUSING_ENABLED = False
     else:
         raise ValueError(f"Unknown SW experiment arm: {arm}")
 
@@ -724,6 +805,8 @@ def set_sw_experiment_arm(arm: str) -> None:
     for mod_name in (
         "agent.strategy.expansion_planner", "strategy.expansion_planner", "expansion_planner",
         "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.pasture_planner", "strategy.pasture_planner", "pasture_planner",
+        "agent.strategy.sw_cell_allocator", "strategy.sw_cell_allocator", "sw_cell_allocator",
         "agent.strategy.land_serviceability_model", "strategy.land_serviceability_model", "land_serviceability_model",
         "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
     ):
@@ -738,6 +821,8 @@ def set_sw_experiment_arm(arm: str) -> None:
                     ("STRATEGIC_SW_OWNERSHIP_ENABLED", STRATEGIC_SW_OWNERSHIP_ENABLED),
                     ("DYNAMIC_ZONAL_ALLOCATION", DYNAMIC_ZONAL_ALLOCATION),
                     ("DYNAMIC_SW_CROPS_ENABLED", DYNAMIC_SW_CROPS_ENABLED),
+                    ("PERSISTENT_WORKER_LOCALITY_ENABLED", PERSISTENT_WORKER_LOCALITY_ENABLED),
+                    ("SW_CELL_HOUSING_ENABLED", SW_CELL_HOUSING_ENABLED),
                 ):
                     setattr(mod, attr, val)
             except Exception:
@@ -781,5 +866,7 @@ def get_sw_experiment_settings() -> Dict[str, Any]:
         "safety_reserve": SW_SAFETY_RESERVE,
         "strategic_sw_ownership": STRATEGIC_SW_OWNERSHIP_ENABLED,
         "dynamic_zonal_allocation": DYNAMIC_ZONAL_ALLOCATION,
+        "persistent_worker_locality": PERSISTENT_WORKER_LOCALITY_ENABLED,
+        "sw_cell_housing_enabled": SW_CELL_HOUSING_ENABLED,
     }
 
