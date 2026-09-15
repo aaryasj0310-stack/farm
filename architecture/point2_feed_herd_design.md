@@ -302,7 +302,7 @@ Then evaluate the stress price:
 
 ```text
 stress_raw_price =
-    market_price("WHEAT", max(1, stressed_wheat_inventory))
+    market_price("WHEAT", stressed_wheat_inventory)
 
 stress_buffered_price =
     ceil(stress_raw_price * WHEAT_BUY_PRICE_BUFFER)
@@ -390,6 +390,12 @@ Therefore:
 
 *(Note: The following numbers are illustrative to demonstrate sequential ledger progression; they are not engine-guaranteed outputs).*
 
+For the engine WHEAT pricing parameters (base = 25, I0 = 10,000, T = 400, below_target = 0.80, below_func = "sqrt"):
+```text
+amp = below_target × base / sqrt(T) = 0.80 × 25 / sqrt(400) = 20 / 20 = 1.0
+market_price("WHEAT", inventory) ≈ 25 + sqrt(10,000 - inventory) [for inventory < 10,000 before integer rounding]
+```
+
 ```text
 Assume at Day 10, Hour 0:
 current_observed_wheat_market_inventory = 9,500
@@ -400,14 +406,15 @@ opponent_wheat_stress_allowance = max(300, 200) = 300
 
 Baseline stress state before candidates:
 stressed_inventory_0 = 9,500 - 1,200 - 200 - 300 = 7,800
-stress_raw_price_0 = market_price("WHEAT", 7,800) ≈ $28.35
-stress_buffered_price_0 = ceil(28.35 * 1.10) = $32.00
-lifetime_wheat_price_0 = max(executable=$28, stress=$32) = $32.00
+raw price = 25 + sqrt(10,000 - 7,800) = 25 + sqrt(2,200) ≈ 71.90
+stress_raw_price_0 ≈ $72 (engine integer quote)
+stress_buffered_price_0 = ceil(72 × 1.10) = $80.00
+lifetime_wheat_price_0 = max(current_executable_buffered_price, $80.00) = $80.00
 
 Candidate #1 (COW):
 - Needs 18 lifetime feed units beyond operational window.
-- Evaluated at lifetime price $32.00 → feed hold = 18 × $32 = $576.00.
-- Sward cash and feed cash available → candidate #1 feasible.
+- Evaluated at lifetime price $80.00 → feed hold = 18 × $80 = $1,440.00.
+- Purchase cash and feed cash available → candidate #1 feasible.
 - Candidate #1 accepted and committed:
   our_committed_future_market_feed_requirement rises from 200 to 218 (+18).
   opponent_wheat_stress_allowance = max(300, 218) = 300.
@@ -416,9 +423,10 @@ Candidate #2 (COW) evaluation:
 - our_committed_future_market_feed_requirement is now 218.
 - Candidate #2 would add another 18 units (total 236).
 - stressed_inventory_1 = 9,500 - 1,200 - 236 - 300 = 7,764.
-- stress_raw_price_1 = market_price("WHEAT", 7,764) ≈ $28.42.
-- stress_buffered_price_1 = ceil(28.42 * 1.10) = $32.00 (or higher if inventory crosses pricing threshold).
-- Candidate #2 is evaluated against the updated residual cash balance ($original - purchase_cost_1 - feed_hold_1) at the updated stress price ($32.00+).
+- raw price = 25 + sqrt(10,000 - 7,764) = 25 + sqrt(2,236) ≈ 72.29
+- stress_raw_price_1 ≈ $72 (engine integer quote)
+- stress_buffered_price_1 = ceil(72 × 1.10) = $80.00 (or higher if cumulative drain lowers inventory further).
+- Candidate #2 is evaluated against the updated residual cash balance ($original - purchase_cost_1 - feed_hold_1) at the updated stress price ($80.00+).
 - Sibling candidates never reuse original cash or ignore prior candidates' market impact.
 ```
 
