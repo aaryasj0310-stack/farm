@@ -92,8 +92,8 @@ def legacy_compose_market(
             hour = int(getattr(ctx, "hour", 0))
 
     purchases_first = (hour in (0, 1))
-    buys = [list(o) for o in (purchase_orders or [])]
-    sells = [list(o) for o in (sell_orders or [])]
+    buys = [list(o[:3]) if (isinstance(o, (list, tuple)) and len(o) > 3) else list(o) for o in (purchase_orders or [])]
+    sells = [list(o[:3]) if (isinstance(o, (list, tuple)) and len(o) > 3) else list(o) for o in (sell_orders or [])]
 
     if MarketBrain is not None:
         return MarketBrain.compose(
@@ -253,7 +253,7 @@ class CentralPlanner:
             return True, None
 
         elif op == "BUY_PRODUCT":
-            if len(order) != 3:
+            if len(order) not in (3, 4):
                 return False, "buy_product_exact_shape_violation"
             product, qty = order[1], order[2]
             if product not in ("WHEAT", "FERTILIZER"):
@@ -284,6 +284,7 @@ class CentralPlanner:
         ctx: Any,
         macro_plan: Any,
         purchase_ledger: Any,
+        purchases: Optional[List[List[Any]]] = None,
     ) -> ProposalCandidate:
         order_copy = list(order)
         op = order_copy[0] if order_copy else "UNKNOWN"
@@ -329,16 +330,54 @@ class CentralPlanner:
                 if macro_plan and hasattr(macro_plan, "intents") and isinstance(macro_plan.intents, dict):
                     macro_buy_wheat_intent = int(macro_plan.intents.get("buy_wheat", 0))
 
-                # Identify if this proposal is specifically for optional feed buffer
-                is_optional_buffer = False
-                if isinstance(purchase_ledger, dict):
-                    w_opt = int(purchase_ledger.get("w_opt_buyable", 0))
-                    w_prot = int(purchase_ledger.get("w_protected_buyable", 0))
-                    if w_opt > 0 and qty == w_opt and (idx > 0 or w_prot > 0):
-                        if w_opt == w_prot:
-                            is_optional_buffer = (idx > 0)
+                # Extract explicit semantic identity (Single Source of Truth)
+                explicit_meta = {}
+                if len(order_copy) > 3:
+                    raw_m = order_copy[3]
+                    if isinstance(raw_m, dict):
+                        explicit_meta = dict(raw_m)
+                    elif isinstance(raw_m, str):
+                        explicit_meta = {"kind": raw_m, "feed_class": "protected" if "protect" in raw_m else "optional"}
+                    elif isinstance(raw_m, bool):
+                        explicit_meta = {"is_protected": raw_m, "feed_class": "protected" if raw_m else "optional"}
+
+                if not explicit_meta and isinstance(purchase_ledger, dict):
+                    om_list = purchase_ledger.get("order_metadata", [])
+                    if isinstance(om_list, list) and idx < len(om_list) and isinstance(om_list[idx], dict):
+                        explicit_meta = dict(om_list[idx])
+
+                is_protected = None
+                if "feed_class" in explicit_meta:
+                    is_protected = (explicit_meta["feed_class"] == "protected")
+                elif "is_protected" in explicit_meta:
+                    is_protected = bool(explicit_meta["is_protected"])
+                elif "kind" in explicit_meta:
+                    if explicit_meta["kind"] == "wheat_protected":
+                        is_protected = True
+                    elif explicit_meta["kind"] == "wheat_optional":
+                        is_protected = False
+
+                # Backwards-compatible fallback only if NO explicit metadata exists
+                if is_protected is None:
+                    if isinstance(purchase_ledger, dict):
+                        w_opt = int(purchase_ledger.get("w_opt_buyable", 0))
+                        w_prot = int(purchase_ledger.get("w_protected_buyable", 0))
+                        if w_prot > 0 and w_opt > 0:
+                            wheat_stream = purchases if purchases is not None else []
+                            wheat_positions = [
+                                j for j, p in enumerate(wheat_stream)
+                                if isinstance(p, (list, tuple)) and len(p) >= 2 and p[0] == "BUY_PRODUCT" and p[1] == "WHEAT"
+                            ]
+                            if idx in wheat_positions:
+                                is_protected = (wheat_positions.index(idx) == 0)
+                            else:
+                                is_protected = True
+                        elif w_opt > 0 and w_prot == 0:
+                            is_protected = False
                         else:
-                            is_optional_buffer = True
+                            is_protected = True
+                    else:
+                        is_protected = True
 
                 immediate_shortage = feed_risk.get("immediate_shortage")
                 if immediate_shortage is None:
@@ -349,11 +388,13 @@ class CentralPlanner:
                     feed_days_covered = (wheat_have // n_animals) if n_animals > 0 else 999
                     near_term_shortage = (n_animals > 0 and not immediate_shortage and feed_days_covered < 2)
 
-                if is_optional_buffer:
+                if not is_protected:
+                    # OPTIONAL WHEAT: routine feed buffer -> always P2_STRATEGIC
                     prio = P2_STRATEGIC
                     urg = 0.5
                     reason = "routine_feed_buffer"
                 else:
+                    # PROTECTED WHEAT: survival / unavoidable feed -> P0 or P1 when applicable
                     if immediate_shortage:
                         prio = P0_CRITICAL
                         urg = 2.0
@@ -372,7 +413,11 @@ class CentralPlanner:
                     macro_plan.diagnostics.get("projected_wheat_supply") if (macro_plan and hasattr(macro_plan, "diagnostics")) else None,
                 )
 
+                feed_class_str = "protected" if is_protected else "optional"
+                sem_kind = "wheat_protected" if is_protected else "wheat_optional"
                 meta = {
+                    "feed_class": feed_class_str,
+                    "is_protected": is_protected,
                     "wheat_priority": prio,
                     "wheat_priority_reason": reason,
                     "animals": n_animals,
@@ -380,12 +425,14 @@ class CentralPlanner:
                     "projected_feed_supply": projected_supply,
                     "projected_feed_deficit": feed_risk.get("projected_deficit", None),
                     "near_term_feed_risk": near_term_shortage,
+                    "immediate_starvation_risk": immediate_shortage,
                     "macro_buy_wheat_intent": macro_buy_wheat_intent,
                 }
 
+                clean_order = [order_copy[0], order_copy[1], order_copy[2]]
                 return ProposalCandidate(
                     proposal_id=proposal_id,
-                    order=order_copy,
+                    order=clean_order,
                     source="purchase",
                     kind="feed_wheat",
                     priority_class=prio,
@@ -770,12 +817,18 @@ class CentralPlanner:
             if len(wheat_orders) == 1 and wheat_orders[0][2] > w_prot:
                 idx = purchases.index(wheat_orders[0])
                 total_n = wheat_orders[0][2]
-                purchases[idx] = ["BUY_PRODUCT", "WHEAT", w_prot]
-                purchases.insert(idx + 1, ["BUY_PRODUCT", "WHEAT", total_n - w_prot])
+                purchases[idx] = ["BUY_PRODUCT", "WHEAT", w_prot, {"kind": "wheat_protected", "feed_class": "protected", "is_protected": True, "n": w_prot}]
+                purchases.insert(idx + 1, ["BUY_PRODUCT", "WHEAT", total_n - w_prot, {"kind": "wheat_optional", "feed_class": "optional", "is_protected": False, "n": total_n - w_prot}])
                 if isinstance(purchase_ledger, dict):
                     purchase_ledger = dict(purchase_ledger)
                     purchase_ledger["w_protected_buyable"] = w_prot
                     purchase_ledger["w_opt_buyable"] = total_n - w_prot
+                    if "order_metadata" in purchase_ledger and isinstance(purchase_ledger["order_metadata"], list):
+                        om_list = list(purchase_ledger["order_metadata"])
+                        if idx < len(om_list):
+                            om_list[idx] = {"kind": "wheat_protected", "feed_class": "protected", "is_protected": True, "n": w_prot}
+                            om_list.insert(idx + 1, {"kind": "wheat_optional", "feed_class": "optional", "is_protected": False, "n": total_n - w_prot})
+                            purchase_ledger["order_metadata"] = om_list
         hour = self._get_hour(ctx)
         day = self._get_day(ctx)
         effective_cap = max(0, cap)
@@ -880,7 +933,7 @@ class CentralPlanner:
                 )
                 all_rejected.append(c)
             else:
-                c = self._classify_purchase(o, i, ctx, macro_plan, purchase_ledger)
+                c = self._classify_purchase(o, i, ctx, macro_plan, purchase_ledger, purchases=purchases)
                 purchase_candidates.append(c)
 
         sell_candidates: List[ProposalCandidate] = []
@@ -932,7 +985,7 @@ class CentralPlanner:
 
         # 2c. Hard Conflict Resolution: Critical Feed Wheat Buy vs Sell Wheat
         has_critical_wheat_buy = any(
-            c.kind == "feed_wheat" and c.priority_class == P0_CRITICAL
+            c.kind in ("feed_wheat", "wheat_protected") and c.priority_class == P0_CRITICAL
             for c in active_purchases
         )
         active_sells: List[ProposalCandidate] = []
@@ -1140,16 +1193,18 @@ class CentralPlanner:
 
         # Wheat-specific telemetry compilation
         all_proposals = execution_candidates + all_rejected
-        wheat_proposals = [c for c in all_proposals if c.kind == "feed_wheat"]
+        wheat_proposals = [c for c in all_proposals if c.kind in ("feed_wheat", "wheat_protected", "wheat_optional")]
         wheat_P0_count = sum(1 for c in wheat_proposals if c.priority_class == P0_CRITICAL)
         wheat_P1_count = sum(1 for c in wheat_proposals if c.priority_class == P1_URGENT)
         wheat_P2_count = sum(1 for c in wheat_proposals if c.priority_class == P2_STRATEGIC)
-        wheat_selected_count = sum(1 for c in execution_candidates if c.kind == "feed_wheat")
-        wheat_rejected_count = sum(1 for c in all_rejected if c.kind == "feed_wheat")
-        critical_wheat_rejected_count = sum(1 for c in all_rejected if c.kind == "feed_wheat" and c.priority_class == P0_CRITICAL)
+        wheat_selected_count = sum(1 for c in execution_candidates if c.kind in ("feed_wheat", "wheat_protected", "wheat_optional"))
+        wheat_rejected_count = sum(1 for c in all_rejected if c.kind in ("feed_wheat", "wheat_protected", "wheat_optional"))
+        critical_wheat_rejected_count = sum(1 for c in all_rejected if c.kind in ("feed_wheat", "wheat_protected", "wheat_optional") and c.priority_class == P0_CRITICAL)
+        wheat_protected_count = sum(1 for c in wheat_proposals if c.metadata.get("feed_class") == "protected")
+        wheat_optional_count = sum(1 for c in wheat_proposals if c.metadata.get("feed_class") == "optional")
 
         # Check if routine wheat preempted any sells
-        has_routine_wheat_accepted = any(c.kind == "feed_wheat" and c.priority_class >= P2_STRATEGIC for c in execution_candidates)
+        has_routine_wheat_accepted = any(c.kind in ("feed_wheat", "wheat_protected", "wheat_optional") and c.priority_class >= P2_STRATEGIC for c in execution_candidates)
         sells_rejected_by_cap = sum(1 for c in all_rejected if c.source == "sell" and c.rejection_reason == "slot_cap")
         routine_wheat_preempted_sell_count = sells_rejected_by_cap if has_routine_wheat_accepted else 0
 
@@ -1157,6 +1212,8 @@ class CentralPlanner:
             "wheat_P0_count": wheat_P0_count,
             "wheat_P1_count": wheat_P1_count,
             "wheat_P2_count": wheat_P2_count,
+            "wheat_protected_count": wheat_protected_count,
+            "wheat_optional_count": wheat_optional_count,
             "wheat_selected_count": wheat_selected_count,
             "wheat_rejected_count": wheat_rejected_count,
             "critical_wheat_rejected_count": critical_wheat_rejected_count,

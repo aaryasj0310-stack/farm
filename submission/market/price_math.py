@@ -54,18 +54,45 @@ def estimate_wheat_buy_price(market_or_ctx=None, default_price=25.0) -> float:
     """
     if market_or_ctx is not None:
         inv = None
+        market = None
         if isinstance(market_or_ctx, dict):
-            if "market" in market_or_ctx and isinstance(market_or_ctx["market"], dict):
-                inv = market_or_ctx["market"].get("inventory", {}).get("WHEAT")
-            elif "inventory" in market_or_ctx and isinstance(market_or_ctx["inventory"], dict):
-                inv = market_or_ctx["inventory"].get("WHEAT")
+            if "market" in market_or_ctx:
+                market = market_or_ctx["market"]
+            elif "inventory" in market_or_ctx:
+                market = market_or_ctx
+            elif "WHEAT" in market_or_ctx:
+                inv = market_or_ctx.get("WHEAT")
         elif hasattr(market_or_ctx, "market"):
-            m = getattr(market_or_ctx, "market")
-            if hasattr(m, "inventory"):
-                inv = getattr(m.inventory, "WHEAT", None) or (m.inventory.get("WHEAT") if isinstance(m.inventory, dict) else None)
+            market = getattr(market_or_ctx, "market")
+        else:
+            market = market_or_ctx
+
+        if inv is None and market is not None:
+            if hasattr(market, "inventory"):
+                m_inv = getattr(market, "inventory")
+                if isinstance(m_inv, dict):
+                    inv = m_inv.get("WHEAT")
+                elif hasattr(m_inv, "get"):
+                    inv = m_inv.get("WHEAT")
+                elif hasattr(m_inv, "WHEAT"):
+                    inv = getattr(m_inv, "WHEAT")
+            elif isinstance(market, dict):
+                m_inv = market.get("inventory")
+                if isinstance(m_inv, dict):
+                    inv = m_inv.get("WHEAT")
+                elif hasattr(m_inv, "get"):
+                    inv = m_inv.get("WHEAT")
+                elif "WHEAT" in market:
+                    inv = market.get("WHEAT")
+
         if inv is not None:
-            raw_px = market_price("WHEAT", inv)
-            return float(math.ceil(raw_px * WHEAT_BUY_PRICE_BUFFER))
+            try:
+                inv_val = float(inv)
+                raw_px = market_price("WHEAT", inv_val)
+                return float(math.ceil(raw_px * WHEAT_BUY_PRICE_BUFFER))
+            except Exception:
+                pass
+
     return float(math.ceil(default_price * WHEAT_BUY_PRICE_BUFFER))
 
 

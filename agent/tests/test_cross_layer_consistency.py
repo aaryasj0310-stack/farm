@@ -611,3 +611,181 @@ def test_t13_central_planner_priority_isolation_and_consolidation():
     assert len(wheat_orders) <= 1
     if wheat_orders:
         assert wheat_orders[0][2] == 10
+
+
+# ============================================================================
+# T14: Non-base wheat price propagation across parsed runtime context
+# ============================================================================
+def test_t14_non_base_wheat_price_propagation():
+    """Verify estimate_wheat_buy_price correctly reads parsed runtime context
+    when market inventory != 10000 (price != 25) without falling back to 28.0,
+    and that compute_unavoidable_feed_shortfall and OrderBuilder both use it.
+    """
+    # 1. Construct a parsed runtime context with non-base inventory
+    market_inv = 4000
+    ctx = make_test_ctx(money=3000.0, market_inventory={"WHEAT": market_inv})
+
+    # Verify ctx has the parsed MarketView structure
+    assert hasattr(ctx["market"], "inventory")
+    assert ctx["market"].inventory["WHEAT"] == market_inv
+
+    # 2. Verify raw price and buffered expected price
+    raw_px = market_price("WHEAT", market_inv)
+    assert raw_px != 25.0, f"Expected non-base price for inv={market_inv}, got {raw_px}"
+    expected_buffered_price = float(math.ceil(raw_px * config.WHEAT_BUY_PRICE_BUFFER))
+    fallback_price = float(math.ceil(25.0 * config.WHEAT_BUY_PRICE_BUFFER))
+    assert expected_buffered_price != fallback_price, "Test requires expected != fallback"
+
+    # 3. Verify estimate_wheat_buy_price reads live inventory from ctx
+    live_unit_price = estimate_wheat_buy_price(ctx)
+    assert live_unit_price == expected_buffered_price
+    assert live_unit_price != fallback_price
+
+    # 4. Verify compute_unavoidable_feed_shortfall uses the live buffered price
+    # 2 animals, 0 wheat on hand, 3-day buffer -> 6 units deficit
+    w_have, w_req, deficit, cost = compute_unavoidable_feed_shortfall(
+        farm=ctx["farm"],
+        private=ctx["private"],
+        day=10,
+        n_animals=2,
+        feed_buffer=3,
+        ctx=ctx,
+    )
+    assert deficit == 6
+    assert cost == float(6 * expected_buffered_price)
+    assert cost != float(6 * fallback_price)
+
+    # 5. Verify OrderBuilder uses this exact buffered live price for feed budgeting
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_animal": {},
+        "buy_wheat": 6,
+        "protected_feed_wheat": 6,
+        "optional_feed_wheat": 0,
+    }
+    orders, ledger = builder.build(ctx, intents)
+    assert ledger["protected_feed_budget"] == float(6 * expected_buffered_price)
+    assert ledger["protected_feed_budget"] != float(6 * fallback_price)
+    assert ledger["w_protected_buyable"] == 6
+
+
+# ============================================================================
+# T15: Protected vs optional wheat disambiguation with equal quantities and preceding orders
+# ============================================================================
+def test_t15_wheat_disambiguation_equal_quantities_and_preceding_orders():
+    """Verify CentralPlanner correctly classifies protected vs optional wheat
+    when w_prot == w_opt and preceding purchase orders exist, using explicit
+    metadata rather than index or quantity heuristics.
+    """
+    # Setup context with near-term feed risk:
+    # 2 animals, shed wheat = 2 -> feed_days_covered = 1 < 2, immediate shortage = False
+    ctx = make_test_ctx(money=5000.0, shed={"WHEAT": 2})
+    ctx["farm"].hands = []  # ensure clean hands
+    # Place 2 animals on farm tiles
+    ctx["farm"].tiles[1][1] = "COW"
+    ctx["farm"].tiles[1][2] = "COW"
+
+    # 1. Build orders through OrderBuilder with w_prot == w_opt == 4 and preceding HIRE orders
+    builder = OrderBuilder()
+    intents = {
+        "hire": 2,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_animal": {},
+        "buy_wheat": 8,
+        "protected_feed_wheat": 4,
+        "optional_feed_wheat": 4,
+    }
+    built_orders, ledger = builder.build(ctx, intents)
+
+    # Verify preceding orders exist and equal quantities are present in stream
+    # Orders should be: [HIRE], [HIRE], [BUY_PRODUCT, WHEAT, 4], [BUY_PRODUCT, WHEAT, 4]
+    assert len(built_orders) == 4
+    assert built_orders[0] == ["HIRE"]
+    assert built_orders[1] == ["HIRE"]
+    assert built_orders[2] == ["BUY_PRODUCT", "WHEAT", 4]
+    assert built_orders[3] == ["BUY_PRODUCT", "WHEAT", 4]
+
+    # Verify OrderBuilder attached explicit order_metadata
+    assert "order_metadata" in ledger
+    assert len(ledger["order_metadata"]) == 4
+    assert ledger["order_metadata"][2]["feed_class"] == "protected"
+    assert ledger["order_metadata"][2]["is_protected"] is True
+    assert ledger["order_metadata"][3]["feed_class"] == "optional"
+    assert ledger["order_metadata"][3]["is_protected"] is False
+
+    # 2. Plan market in CentralPlanner:
+    # At hour 0, HIRE is P1. Under near-term feed danger, protected wheat is P1. Optional wheat is P2.
+    planner = CentralPlanner()
+    plan = MacroPlan(day=10)
+    plan.intents = intents
+    plan.diagnostics["feed_risk"] = {
+        "immediate_shortage": False,
+        "near_term_shortage": True,
+        "protected_feed_wheat": 4,
+        "optional_feed_wheat": 4,
+    }
+
+    # Scenario A: Truncation under slot cap: cap = 3
+    # Top 3 candidates (all P1: 2 HIREs + 1 Protected Wheat) must be accepted.
+    # Optional wheat (P2) must be truncated by slot_cap.
+    final_orders_cap3, diag_cap3 = planner.plan_market(
+        ctx=ctx,
+        macro_plan=plan,
+        purchase_orders=built_orders,
+        purchase_ledger=ledger,
+        cap=3,
+    )
+
+    accepted_cap3 = diag_cap3["accepted_details"]
+    rejected_cap3 = diag_cap3["rejected_details"]
+
+    # Verify protected wheat survived and optional wheat was rejected
+    prot_accepted = [c for c in accepted_cap3 if c.get("metadata", {}).get("feed_class") == "protected"]
+    opt_rejected = [c for c in rejected_cap3 if c.get("metadata", {}).get("feed_class") == "optional"]
+    assert len(prot_accepted) == 1, "Protected wheat must survive cap truncation"
+    assert prot_accepted[0]["priority_class"] == P1_URGENT
+    assert len(opt_rejected) == 1, "Optional wheat must be truncated under slot cap"
+    assert opt_rejected[0]["priority_class"] == P2_STRATEGIC
+    assert opt_rejected[0]["rejection_reason"] == "slot_cap"
+
+    # Engine orders must contain exactly the 4-unit protected wheat (and 2 HIREs)
+    assert final_orders_cap3.count(["HIRE"]) == 2
+    assert ["BUY_PRODUCT", "WHEAT", 4] in final_orders_cap3
+
+    # Scenario B: Both survive arbitration (cap = 4 or 10):
+    # Both protected and optional wheat survive and MUST be consolidated into BUY_PRODUCT WHEAT 8
+    final_orders_cap4, diag_cap4 = planner.plan_market(
+        ctx=ctx,
+        macro_plan=plan,
+        purchase_orders=built_orders,
+        purchase_ledger=ledger,
+        cap=4,
+    )
+
+    assert ["BUY_PRODUCT", "WHEAT", 8] in final_orders_cap4, "Both accepted wheat buys must consolidate to 8"
+    assert not any(o[0] == "BUY_PRODUCT" and o[1] == "WHEAT" and o[2] == 4 for o in final_orders_cap4)
+    # Telemetry distinguishes protected vs optional counts
+    wheat_tel = diag_cap4["wheat_telemetry"]
+    assert wheat_tel["wheat_protected_count"] == 1
+    assert wheat_tel["wheat_optional_count"] == 1
+    assert wheat_tel["wheat_P1_count"] == 1
+    assert wheat_tel["wheat_P2_count"] == 1
+
+    # Scenario C: Direct 4-element proposals with explicit metadata
+    # Even if orders carry explicit metadata in the 4th element directly without ledger
+    direct_orders = [
+        ["HIRE"],
+        ["BUY_PRODUCT", "WHEAT", 4, {"feed_class": "protected", "is_protected": True}],
+        ["BUY_PRODUCT", "WHEAT", 4, {"feed_class": "optional", "is_protected": False}],
+    ]
+    cand_prot = planner._classify_purchase(direct_orders[1], 1, ctx, plan, None)
+    cand_opt = planner._classify_purchase(direct_orders[2], 2, ctx, plan, None)
+    assert cand_prot.priority_class == P1_URGENT
+    assert cand_prot.metadata["feed_class"] == "protected"
+    assert cand_opt.priority_class == P2_STRATEGIC
+    assert cand_opt.metadata["feed_class"] == "optional"
+

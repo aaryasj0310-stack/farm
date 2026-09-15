@@ -181,6 +181,8 @@ class OrderBuilder:
         intents_intraday = {
             "hire": 0,
             "buy_wheat": intents.get("buy_wheat", 0),
+            "protected_feed_wheat": intents.get("protected_feed_wheat", 0),
+            "optional_feed_wheat": intents.get("optional_feed_wheat", 0),
             "buy_land": bool(intents.get("buy_land", False)),
             "buy_seed": intents.get("buy_seed", {}),
             "buy_animal": capped_animal,
@@ -441,6 +443,7 @@ class OrderBuilder:
         else:
             max_hire_slots = None
 
+        order_metadata = []
         for tier, kind, payload, est in sorted(kept, key=lambda t: t[0]):
             if kind == "hire":
                 emitted = 0
@@ -448,6 +451,7 @@ class OrderBuilder:
                        (slots is None or slots > 0) and
                        (max_hire_slots is None or emitted < max_hire_slots)):
                     orders.append(["HIRE"])
+                    order_metadata.append({"kind": "hire", "tier": tier, "feed_class": None})
                     if slots is not None:
                         slots -= 1
                     emitted += 1
@@ -462,6 +466,16 @@ class OrderBuilder:
                     })
             elif kind in ("wheat", "wheat_protected", "wheat_optional"):
                 if take(None):
+                    feed_class = "protected" if (kind == "wheat_protected" or payload.get("feed_class") == "protected" or payload.get("is_protected", False)) else "optional"
+                    is_prot = (feed_class == "protected")
+                    sem_kind = "wheat_protected" if is_prot else "wheat_optional"
+                    order_metadata.append({
+                        "kind": sem_kind,
+                        "feed_class": feed_class,
+                        "is_protected": is_prot,
+                        "tier": tier,
+                        "n": int(payload["n"]),
+                    })
                     orders.append(["BUY_PRODUCT", "WHEAT", int(payload["n"])])
                     queued["wheat"] = int(queued.get("wheat", 0)) + int(payload["n"])
                 else:
@@ -476,6 +490,7 @@ class OrderBuilder:
                 assert next_quadrant != 4, "Quadrant 4 (SE) is permanently hard-blocked and must NEVER be purchased!"
                 if take(None):
                     orders.append(["BUY_LAND"])
+                    order_metadata.append({"kind": "land", "tier": tier, "feed_class": None})
                     queued["land"] = True
                 else:
                     ledger["dropped"].append({
@@ -486,6 +501,7 @@ class OrderBuilder:
             elif kind == "seed":
                 if take(None):
                     orders.append(["BUY_SEED", payload["crop"], int(payload["n"])])
+                    order_metadata.append({"kind": "seed", "crop": payload["crop"], "tier": tier, "n": int(payload["n"]), "feed_class": None})
                     queued["seed"][payload["crop"]] = int(payload["n"])
                 else:
                     ledger["dropped"].append({
@@ -498,6 +514,7 @@ class OrderBuilder:
             elif kind == "animal":
                 if take(None):
                     orders.append(["BUY_ANIMAL", payload["animal"], int(payload["n"])])
+                    order_metadata.append({"kind": "animal", "animal": payload["animal"], "tier": tier, "n": int(payload["n"]), "feed_class": None})
                     queued["animal"][payload["animal"]] = int(payload["n"])
                 else:
                     ledger["dropped"].append({
@@ -510,6 +527,7 @@ class OrderBuilder:
 
         ledger["queued"] = queued
         ledger["orders"] = [list(o) for o in orders]
+        ledger["order_metadata"] = order_metadata
         ledger["spent_estimate"] = round(spent, 2)
         ledger["upstream_slots_limited"] = any(d.get("kind", "").endswith("_slots") for d in ledger["dropped"])
         return orders, ledger
