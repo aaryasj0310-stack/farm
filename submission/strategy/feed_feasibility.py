@@ -122,6 +122,7 @@ class FeedResourceLedger:
     strategic_cash_hold: float = 0.0
     candidate_feed_cash_hold: float = 0.0
     candidate_purchase_cash_spent: float = 0.0
+    candidate_storage_slots_reserved: int = 0
 
     unfed_placed_today: int = 0
 
@@ -154,6 +155,7 @@ class FeedResourceLedger:
             strategic_cash_hold=self.strategic_cash_hold,
             candidate_feed_cash_hold=self.candidate_feed_cash_hold,
             candidate_purchase_cash_spent=self.candidate_purchase_cash_spent,
+            candidate_storage_slots_reserved=self.candidate_storage_slots_reserved,
             unfed_placed_today=self.unfed_placed_today,
             wheat_in_shed=self.wheat_in_shed,
             wheat_on_workers=self.wheat_on_workers,
@@ -182,6 +184,7 @@ class FeedResourceLedger:
             "strategic_cash_hold": self.strategic_cash_hold,
             "candidate_feed_cash_hold": self.candidate_feed_cash_hold,
             "candidate_purchase_cash_spent": self.candidate_purchase_cash_spent,
+            "candidate_storage_slots_reserved": self.candidate_storage_slots_reserved,
             "available_cash_for_candidates": self.available_cash_for_candidates,
             "unfed_placed_today": self.unfed_placed_today,
             "wheat_in_shed": self.wheat_in_shed,
@@ -542,6 +545,7 @@ def build_feed_resource_ledger(
         strategic_cash_hold=float(strategic_cash_hold),
         candidate_feed_cash_hold=0.0,
         candidate_purchase_cash_spent=0.0,
+        candidate_storage_slots_reserved=0,
         unfed_placed_today=unfed_placed_today,
         wheat_in_shed=wheat_in_shed,
         wheat_on_workers=wheat_on_workers,
@@ -626,9 +630,18 @@ def evaluate_existing_herd_feasibility(
     feed_consumed_prior = 0
     cumulative_market_purchased_prior = 0
 
+    existing_scheduled_by_day: Dict[int, int] = {}
+    for buy in ledger.scheduled_market_purchases:
+        b_day = buy.get("day")
+        if b_day is not None:
+            existing_scheduled_by_day[b_day] = existing_scheduled_by_day.get(b_day, 0) + int(buy.get("units", 0))
+
     for target_day in operational_days:
         new_deliveries = sum(d.units for d in ledger.secured_wheat_deliveries if d.day == target_day)
         cumulative_physical_deliveries += new_deliveries
+
+        new_scheduled = existing_scheduled_by_day.get(target_day, 0)
+        cumulative_market_purchased += new_scheduled
 
         if target_day == day:
             needed_day = ledger.unfed_placed_today
@@ -643,6 +656,16 @@ def evaluate_existing_herd_feasibility(
         )
         deficit = max(0, cumulative_needed - available_before_buy)
 
+        shed_feed_consumed_prior = max(0, feed_consumed_prior - ledger.wheat_on_workers)
+        prior_shed_wheat = max(0, ledger.wheat_in_shed + cumulative_market_purchased_prior - shed_feed_consumed_prior)
+        current_shed_load = ledger.shed_other_units + ledger.candidate_storage_slots_reserved + prior_shed_wheat
+
+        total_arriving_today = new_scheduled + deficit
+        if current_shed_load + total_arriving_today > ledger.shed_capacity:
+            blocking_reason = "shed_capacity"
+            blocking_day = target_day
+            break
+
         if deficit > 0:
             if target_day == day and not can_help_today:
                 blocking_reason = "late_hour_purchase"
@@ -652,15 +675,6 @@ def evaluate_existing_herd_feasibility(
             purchase_cost = float(deficit * ledger.wheat_price_current)
             if purchase_cost > current_cash:
                 blocking_reason = "insufficient_cash"
-                blocking_day = target_day
-                break
-
-            shed_feed_consumed_prior = max(0, feed_consumed_prior - ledger.wheat_on_workers)
-            prior_shed_wheat = max(0, ledger.wheat_in_shed + cumulative_market_purchased_prior - shed_feed_consumed_prior)
-            current_shed_load = ledger.shed_other_units + prior_shed_wheat
-
-            if current_shed_load + deficit > ledger.shed_capacity:
-                blocking_reason = "shed_capacity"
                 blocking_day = target_day
                 break
 
@@ -800,8 +814,12 @@ def evaluate_incremental_candidate(
             execution_confidence=ledger.execution_snapshot.execution_confidence if ledger.execution_snapshot else "guarded",
         )
 
-    existing_ok, existing_res = evaluate_existing_herd_feasibility(ledger)
-    exec_conf = ledger.execution_snapshot.execution_confidence if ledger.execution_snapshot is not None else "guarded"
+    # Pure candidate evaluation: operate strictly on working clone without mutating caller's ledger
+    working = ledger.clone()
+    existing_ok, existing_res = evaluate_existing_herd_feasibility(working)
+    working.existing_feed_cash_hold = float(existing_res.existing_feed_cash_hold)
+
+    exec_conf = working.execution_snapshot.execution_confidence if working.execution_snapshot is not None else "guarded"
     if not existing_ok:
         return FeedFeasibilityResult(
             feasible=False,
@@ -815,13 +833,13 @@ def evaluate_incremental_candidate(
     if purchase_cost is None:
         purchase_cost = float(ANIMALS[candidate_species]["cost"])
 
-    available_candidate_cash = ledger.available_cash_for_candidates
+    available_candidate_cash = working.available_cash_for_candidates
     if purchase_cost > available_candidate_cash:
         return FeedFeasibilityResult(
             feasible=False,
             existing_herd_feasible=True,
             candidate_species=candidate_species,
-            blocking_day=ledger.day,
+            blocking_day=working.day,
             blocking_reason="insufficient_cash",
             minimum_cash_slack=available_candidate_cash - purchase_cost,
             existing_feed_cash_hold=existing_res.existing_feed_cash_hold,
@@ -829,17 +847,14 @@ def evaluate_incremental_candidate(
             execution_confidence=exec_conf,
         )
 
-    shadow = ledger.clone()
-    # Candidate does NOT enter shadow.placed_herd today! (Semantic distinction)
-
-    day = shadow.day
-    hour = shadow.hour
-    horizon = shadow.operational_horizon_days
+    day = working.day
+    hour = working.hour
+    horizon = working.operational_horizon_days
     operational_days = [d for d in range(day, day + horizon) if d < ANIMAL_FEED_CUTOFF_DAY]
 
     can_help_today = True
-    if shadow.execution_snapshot is not None:
-        can_help_today = shadow.execution_snapshot.market_purchase_can_help_today
+    if working.execution_snapshot is not None:
+        can_help_today = working.execution_snapshot.market_purchase_can_help_today
     elif hour >= 23:
         can_help_today = False
 
@@ -848,7 +863,7 @@ def evaluate_incremental_candidate(
     for buy in existing_res.scheduled_market_purchases:
         b_day = buy["day"]
         existing_scheduled_units_by_day[b_day] = existing_scheduled_units_by_day.get(b_day, 0) + buy["units"]
-    for buy in shadow.scheduled_market_purchases:
+    for buy in working.scheduled_market_purchases:
         b_day = buy["day"]
         existing_scheduled_units_by_day[b_day] = existing_scheduled_units_by_day.get(b_day, 0) + buy["units"]
 
@@ -868,10 +883,11 @@ def evaluate_incremental_candidate(
     running_candidate_cash = cash_after_purchase
 
     feed_consumed_prior = 0
-    cumulative_market_purchased_prior = 0
+    cumulative_existing_market_prior = 0
+    cumulative_cand_market_prior = 0
 
     for target_day in operational_days:
-        new_deliveries = sum(d.units for d in shadow.secured_wheat_deliveries if d.day == target_day)
+        new_deliveries = sum(d.units for d in working.secured_wheat_deliveries if d.day == target_day)
         cumulative_deliveries += new_deliveries
 
         # Prefix timing: only market purchases scheduled for target_day
@@ -882,18 +898,34 @@ def evaluate_incremental_candidate(
         # Today: unfed placed animals need feed; candidate and prior candidates do NOT eat today (unplaced).
         # Future days: baseline placed herd + prior committed candidates + current candidate eat 1 each.
         if target_day == day:
-            needed_day = shadow.unfed_placed_today
+            needed_day = working.unfed_placed_today
         else:
-            needed_day = shadow.total_placed_animals + len(shadow.candidate_reservations) + 1
+            needed_day = working.total_placed_animals + len(working.candidate_reservations) + 1
 
         cumulative_needed += needed_day
 
         available_before_cand_buy = (
-            shadow.current_total_wheat_on_hand
+            working.current_total_wheat_on_hand
             + cumulative_deliveries
             + cumulative_market_purchased
         )
         deficit = max(0, cumulative_needed - available_before_cand_buy)
+
+        # Shed capacity check on target_day at acquisition:
+        # Must account for:
+        # 1. Non-wheat items + reserved candidate animal storage slots
+        # 2. Wheat in shed before today's arrivals (initial wheat + market wheat arrived BEFORE target_day - feed consumed from shed BEFORE target_day)
+        # 3. All market wheat arriving on target_day (previously committed arriving today + candidate's deficit)
+        shed_feed_consumed_prior = max(0, feed_consumed_prior - working.wheat_on_workers)
+        market_arrived_prior = cumulative_existing_market_prior + cumulative_cand_market_prior
+        prior_shed_wheat = max(0, working.wheat_in_shed + market_arrived_prior - shed_feed_consumed_prior)
+        base_shed_load = working.shed_other_units + working.candidate_storage_slots_reserved + prior_shed_wheat
+
+        total_arriving_today = new_existing_market_wheat + deficit
+        if base_shed_load + total_arriving_today > working.shed_capacity:
+            blocking_reason = "shed_capacity"
+            blocking_day = target_day
+            break
 
         if deficit > 0:
             if target_day == day and not can_help_today:
@@ -901,19 +933,9 @@ def evaluate_incremental_candidate(
                 blocking_day = day
                 break
 
-            buy_cost = float(deficit * shadow.wheat_price_current)
+            buy_cost = float(deficit * working.wheat_price_current)
             if buy_cost > running_candidate_cash:
                 blocking_reason = "insufficient_cash"
-                blocking_day = target_day
-                break
-
-            # Shed capacity check at acquisition time on target_day:
-            shed_feed_consumed_prior = max(0, feed_consumed_prior - shadow.wheat_on_workers)
-            prior_shed_wheat = max(0, shadow.wheat_in_shed + cumulative_market_purchased_prior - shed_feed_consumed_prior)
-            current_shed_load = shadow.shed_other_units + prior_shed_wheat
-
-            if current_shed_load + deficit > shadow.shed_capacity:
-                blocking_reason = "shed_capacity"
                 blocking_day = target_day
                 break
 
@@ -928,10 +950,11 @@ def evaluate_incremental_candidate(
             running_candidate_cash -= buy_cost
 
         feed_consumed_prior += needed_day
-        cumulative_market_purchased_prior = cumulative_market_purchased
+        cumulative_existing_market_prior += new_existing_market_wheat
+        cumulative_cand_market_prior = cand_cumulative_market_purchased
 
         slack = (
-            shadow.current_total_wheat_on_hand
+            working.current_total_wheat_on_hand
             + cumulative_deliveries
             + cumulative_market_purchased
             - cumulative_needed
@@ -966,7 +989,7 @@ def evaluate_incremental_candidate(
     last_op_day = operational_days[-1] if operational_days else day - 1
     cand_lifetime_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
     cand_lifetime_units = cand_lifetime_days_beyond * 1
-    cand_lifetime_cost = float(cand_lifetime_units * shadow.wheat_price_current)
+    cand_lifetime_cost = float(cand_lifetime_units * working.wheat_price_current)
 
     cand_near_term_market_cost = sum(b["cost"] for b in cand_scheduled_buys)
     total_cand_feed_cash_required = cand_near_term_market_cost + cand_lifetime_cost
@@ -1052,12 +1075,14 @@ def commit_candidate_reservation(
     # Distinct semantic holds: committed candidate feed liability belongs to candidate_feed_cash_hold
     ledger.candidate_purchase_cash_spent += float(purchase_cost)
     ledger.candidate_feed_cash_hold += float(result.candidate_feed_cash_hold)
+    ledger.candidate_storage_slots_reserved += 1
     ledger.scheduled_market_purchases.extend(result.scheduled_market_purchases)
 
     reservation_record = {
         "species": candidate_species,
         "purchase_cost": purchase_cost,
         "candidate_feed_cash_hold": result.candidate_feed_cash_hold,
+        "candidate_storage_slots_reserved": 1,
         "near_term_market_wheat_required": result.near_term_market_wheat_required,
         "remaining_lifetime_feed_units": result.remaining_lifetime_feed_units,
         "scheduled_market_purchases": copy.deepcopy(result.scheduled_market_purchases),
