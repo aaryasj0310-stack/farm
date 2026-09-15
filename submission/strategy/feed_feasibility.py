@@ -641,18 +641,24 @@ def evaluate_existing_herd_feasibility(
         cumulative_physical_deliveries += new_deliveries
 
         new_scheduled = existing_scheduled_by_day.get(target_day, 0)
-        cumulative_market_purchased += new_scheduled
 
         if target_day == day:
             needed_day = ledger.unfed_placed_today
+            # Engine timing: unit actions occur BEFORE market actions.
+            # If same-day market purchases cannot help today before the feeding deadline,
+            # new_scheduled arriving today gives ZERO credit toward today's feed obligation.
+            market_usable_for_needed = new_scheduled if can_help_today else 0
         else:
             needed_day = n_placed
+            market_usable_for_needed = new_scheduled
+
         cumulative_needed += needed_day
 
         available_before_buy = (
             ledger.current_total_wheat_on_hand
             + cumulative_physical_deliveries
             + cumulative_market_purchased
+            + market_usable_for_needed
         )
         deficit = max(0, cumulative_needed - available_before_buy)
 
@@ -688,6 +694,9 @@ def evaluate_existing_herd_feasibility(
             current_cash -= purchase_cost
 
         feed_consumed_prior += needed_day
+        # After today's feed deadline is resolved, same-day scheduled wheat enters inventory
+        # and can count for following days.
+        cumulative_market_purchased += new_scheduled
         cumulative_market_purchased_prior = cumulative_market_purchased
 
         slack = (
@@ -847,6 +856,26 @@ def evaluate_incremental_candidate(
             execution_confidence=exec_conf,
         )
 
+    # Prospective candidate storage accounting:
+    # A newly purchased animal conservatively occupies 1 storage slot in the shed upon acquisition.
+    # We do NOT mutate the caller's ledger; we reserve this prospective slot on working.
+    prospective_candidate_storage_slots = working.candidate_storage_slots_reserved + 1
+
+    # Immediate shed capacity check for prospective candidate animal:
+    initial_shed_load = working.shed_other_units + working.wheat_in_shed + prospective_candidate_storage_slots
+    if initial_shed_load > working.shed_capacity:
+        return FeedFeasibilityResult(
+            feasible=False,
+            existing_herd_feasible=True,
+            candidate_species=candidate_species,
+            blocking_day=working.day,
+            blocking_reason="shed_capacity",
+            minimum_cash_slack=available_candidate_cash - purchase_cost,
+            existing_feed_cash_hold=existing_res.existing_feed_cash_hold,
+            candidate_feed_cash_hold=0.0,
+            execution_confidence=exec_conf,
+        )
+
     day = working.day
     hour = working.hour
     horizon = working.operational_horizon_days
@@ -890,17 +919,21 @@ def evaluate_incremental_candidate(
         new_deliveries = sum(d.units for d in working.secured_wheat_deliveries if d.day == target_day)
         cumulative_deliveries += new_deliveries
 
-        # Prefix timing: only market purchases scheduled for target_day
+        # Prefix timing: market purchases scheduled for target_day
         new_existing_market_wheat = existing_scheduled_units_by_day.get(target_day, 0)
-        cumulative_market_purchased += new_existing_market_wheat
 
         # Day-by-day feed requirements:
         # Today: unfed placed animals need feed; candidate and prior candidates do NOT eat today (unplaced).
         # Future days: baseline placed herd + prior committed candidates + current candidate eat 1 each.
         if target_day == day:
             needed_day = working.unfed_placed_today
+            # Engine timing: unit actions occur BEFORE market actions.
+            # If same-day market purchases cannot help today before the feeding deadline,
+            # new_existing_market_wheat arriving today gives ZERO credit toward today's feed obligation.
+            market_usable_for_needed = new_existing_market_wheat if can_help_today else 0
         else:
             needed_day = working.total_placed_animals + len(working.candidate_reservations) + 1
+            market_usable_for_needed = new_existing_market_wheat
 
         cumulative_needed += needed_day
 
@@ -908,18 +941,19 @@ def evaluate_incremental_candidate(
             working.current_total_wheat_on_hand
             + cumulative_deliveries
             + cumulative_market_purchased
+            + market_usable_for_needed
         )
         deficit = max(0, cumulative_needed - available_before_cand_buy)
 
         # Shed capacity check on target_day at acquisition:
         # Must account for:
-        # 1. Non-wheat items + reserved candidate animal storage slots
+        # 1. Non-wheat items + prospective candidate animal storage slots (+1 for currently evaluated candidate)
         # 2. Wheat in shed before today's arrivals (initial wheat + market wheat arrived BEFORE target_day - feed consumed from shed BEFORE target_day)
         # 3. All market wheat arriving on target_day (previously committed arriving today + candidate's deficit)
         shed_feed_consumed_prior = max(0, feed_consumed_prior - working.wheat_on_workers)
         market_arrived_prior = cumulative_existing_market_prior + cumulative_cand_market_prior
         prior_shed_wheat = max(0, working.wheat_in_shed + market_arrived_prior - shed_feed_consumed_prior)
-        base_shed_load = working.shed_other_units + working.candidate_storage_slots_reserved + prior_shed_wheat
+        base_shed_load = working.shed_other_units + prospective_candidate_storage_slots + prior_shed_wheat
 
         total_arriving_today = new_existing_market_wheat + deficit
         if base_shed_load + total_arriving_today > working.shed_capacity:
@@ -950,6 +984,9 @@ def evaluate_incremental_candidate(
             running_candidate_cash -= buy_cost
 
         feed_consumed_prior += needed_day
+        # After today's feed deadline is resolved, same-day scheduled wheat enters inventory
+        # and can count for following days.
+        cumulative_market_purchased += new_existing_market_wheat
         cumulative_existing_market_prior += new_existing_market_wheat
         cumulative_cand_market_prior = cand_cumulative_market_purchased
 

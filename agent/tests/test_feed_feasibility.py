@@ -350,7 +350,7 @@ def test_existing_herd_infeasible_blocks_all_candidates():
 
 def test_separation_of_economics():
     """Feasibility evaluator does NOT reject candidates for low ROI or poor town shop demand."""
-    ctx = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=100, placed_animals=[])
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=20, placed_animals=[])
     ledger = build_feed_resource_ledger(ctx)
 
     cow_res = evaluate_incremental_candidate(ledger, "COW")
@@ -588,8 +588,9 @@ def test_future_market_wheat_prefix_timing():
     assert cand_res12.blocking_day == 11
     assert cand_res12.blocking_reason == "insufficient_cash"
 
-    # 2. Now move that exact same purchase to Day 10:
-    ledger_day10 = build_feed_resource_ledger(ctx)
+    # 2. At Hour 0 (where market purchases can help today), moving that same purchase to Day 10 satisfies Day 10:
+    ctx_hour0 = make_mock_farm_ctx(day=10, hour=0, money=1000.0, shed_wheat=0, placed_animals=["COW"])
+    ledger_day10 = build_feed_resource_ledger(ctx_hour0)
     ledger_day10.scheduled_market_purchases = [
         {
             "day": 10,
@@ -788,31 +789,60 @@ def test_shed_capacity_later_consumption_cannot_rescue_earlier_overflow():
 
 
 def test_candidate_storage_slots_reserved_accounting():
-    """Committed candidate animal reserves a storage slot in shadow ledger until placement.
+    """Exact prospective candidate animal shed capacity cases (Cases A, B, C, D).
 
-    Case A: shed load 99/100 + 1 committed candidate animal -> effective shadow load = 100.
-            Next candidate requiring +1 feed wheat storage must fail!
-    Case B: shed load 98/100 + 1 candidate animal + 1 wheat -> fits exactly at 100.
+    Case A: Shed load 100/100, 0 reserved candidate slots -> candidate evaluation immediately fails
+            with blocking_reason = 'shed_capacity'.
+    Case B: Shed load 99/100, 0 reserved candidate slots, 0 feed wheat needed -> candidate occupies 100th slot, feasible.
+    Case C: Shed load 98/100, 0 reserved candidate slots, 1 feed wheat arrives -> candidate occupies 99th slot,
+            wheat arrives into 100th slot, fits exactly.
+    Case D: Shed load 99/100, 0 reserved candidate slots, 1 feed wheat arrives -> candidate occupies 100th slot,
+            wheat cannot fit, fails with blocking_reason = 'shed_capacity'.
     """
-    # Case A:
+    # Case A: Shed load 100/100, 0 reserved candidate slots -> immediately fails
     ctx_a = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=0, placed_animals=[])
     ledger_a = build_feed_resource_ledger(ctx_a)
-    ledger_a.shed_other_units = 99
-    ledger_a.candidate_storage_slots_reserved = 1  # One committed unplaced candidate animal
-    # Candidate 2 (COW) needs feed wheat on Day 11 (+1 wheat deficit) -> 99 + 1 + 1 = 101 > 100!
-    res_cand2 = evaluate_incremental_candidate(ledger_a, "COW")
-    assert res_cand2.feasible is False
-    assert res_cand2.blocking_reason == "shed_capacity"
+    ledger_a.shed_other_units = 100
+    ledger_a.candidate_storage_slots_reserved = 0
+    res_a = evaluate_incremental_candidate(ledger_a, "COW")
+    assert res_a.feasible is False
+    assert res_a.blocking_day == 10
+    assert res_a.blocking_reason == "shed_capacity"
 
-    # Case B:
-    ctx_b = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=0, placed_animals=[])
+    # Case B: Shed load 99/100, 0 reserved candidate slots, 0 feed wheat needed -> fits exactly
+    # Day 29 is ANIMAL_FEED_CUTOFF_DAY, so operational days requiring feed is empty.
+    ctx_b = make_mock_farm_ctx(day=29, hour=0, money=5000.0, shed_wheat=0, placed_animals=[])
     ledger_b = build_feed_resource_ledger(ctx_b)
-    ledger_b.shed_other_units = 98
-    ledger_b.candidate_storage_slots_reserved = 1  # One committed unplaced candidate animal
-    # Candidate 2 (COW) needs feed wheat on Day 11 (+1 wheat deficit) -> 98 + 1 + 1 = 100 <= 100!
+    ledger_b.shed_other_units = 99
+    ledger_b.candidate_storage_slots_reserved = 0
     res_b = evaluate_incremental_candidate(ledger_b, "COW")
     assert res_b.feasible is True
     assert res_b.blocking_reason is None
+
+    # Case C: Shed load 98/100, 0 reserved candidate slots, 1 feed wheat arrives -> fits exactly at 100
+    # Day 27, operational horizon 2 days: candidate evaluated Day 27, eats 1 wheat on Day 28 (Day 29 cutoff).
+    ctx_c = make_mock_farm_ctx(day=27, hour=0, money=5000.0, shed_wheat=0, placed_animals=[])
+    ledger_c = build_feed_resource_ledger(ctx_c)
+    ledger_c.shed_other_units = 98
+    ledger_c.candidate_storage_slots_reserved = 0
+    ledger_c.operational_horizon_days = 2
+    res_c = evaluate_incremental_candidate(ledger_c, "COW")
+    assert res_c.feasible is True
+    assert res_c.blocking_reason is None
+
+    # Case D: Shed load 99/100, 0 reserved candidate slots, 1 feed wheat arrives -> 99 + 1 + 1 = 101 > 100 fails
+    ctx_d = make_mock_farm_ctx(day=27, hour=0, money=5000.0, shed_wheat=0, placed_animals=[])
+    ledger_d = build_feed_resource_ledger(ctx_d)
+    ledger_d.shed_other_units = 99
+    ledger_d.candidate_storage_slots_reserved = 0
+    ledger_d.operational_horizon_days = 2
+    res_d = evaluate_incremental_candidate(ledger_d, "COW")
+    assert res_d.feasible is False
+    assert res_d.blocking_day == 28
+    assert res_d.blocking_reason == "shed_capacity"
+
+    # Purity check: ledger_d.candidate_storage_slots_reserved was NOT mutated by evaluation
+    assert ledger_d.candidate_storage_slots_reserved == 0
 
 
 # ===========================================================================
@@ -1044,3 +1074,71 @@ def test_subprocess_720_step_baseline_equivalence():
     # Verify action-by-action equality
     for step_idx, (act_off, act_shadow) in enumerate(zip(res_off["actions"], res_shadow["actions"])):
         assert act_off == act_shadow, f"Action divergence at step {step_idx}: off={act_off} != shadow={act_shadow}"
+
+
+# ===========================================================================
+# 19. Issue 1 Timing Regressions: Unit-Before-Market Boundary
+# ===========================================================================
+
+def test_hour23_same_day_scheduled_wheat_cannot_rescue_today():
+    """Prefix test:
+    Day 10, Hour 23, 1 unfed COW, 0 wheat physically available, 5 scheduled market wheat arriving Day 10:
+    - must evaluate as infeasible on Day 10 (blocking_day == 10, blocking_reason == 'late_hour_purchase');
+    - must NOT credit the 5 units toward Day 10's unfed COW.
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=23, money=1000.0, shed_wheat=0, placed_animals=["COW"])
+    ledger = build_feed_resource_ledger(ctx)
+    ledger.scheduled_market_purchases = [
+        {
+            "day": 10,
+            "units": 5,
+            "cost": 140.0,
+            "purpose": "test_same_day_scheduled",
+        }
+    ]
+    feasible, res = evaluate_existing_herd_feasibility(ledger)
+    assert feasible is False
+    assert res.blocking_day == 10
+    assert res.blocking_reason == "late_hour_purchase"
+
+
+def test_hour23_same_day_scheduled_wheat_retained_for_day11_plus():
+    """Day 11+ test:
+    Same setup, but if today's feed is already satisfied (1 wheat on hand today, 0 unfed today),
+    the 5 scheduled Day 10 wheat MUST count toward Day 11+ feed requirements.
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=23, money=1000.0, shed_wheat=1, placed_animals=["COW"])
+    ledger = build_feed_resource_ledger(ctx)
+    ledger.unfed_placed_today = 0  # Today's feed obligation already satisfied!
+    ledger.scheduled_market_purchases = [
+        {
+            "day": 10,
+            "units": 5,
+            "cost": 140.0,
+            "purpose": "test_same_day_scheduled",
+        }
+    ]
+    feasible, res = evaluate_existing_herd_feasibility(ledger)
+    assert feasible is True
+    # The 5 scheduled wheat units on Day 10 enter inventory at turn end and cover Day 11+ requirements
+    assert res.minimum_wheat_slack >= 1.0
+
+
+def test_hour0_same_day_scheduled_wheat_can_rescue_today():
+    """Earlier hour test:
+    Same setup at Day 10, Hour 0 (where market_purchase_can_help_today is True):
+    Day 10 scheduled market wheat CAN help satisfy Day 10 feed.
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=1000.0, shed_wheat=0, placed_animals=["COW"])
+    ledger = build_feed_resource_ledger(ctx)
+    ledger.scheduled_market_purchases = [
+        {
+            "day": 10,
+            "units": 5,
+            "cost": 140.0,
+            "purpose": "test_same_day_scheduled",
+        }
+    ]
+    feasible, res = evaluate_existing_herd_feasibility(ledger)
+    assert feasible is True
+    assert res.minimum_wheat_slack >= 1.0
