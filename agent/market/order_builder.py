@@ -187,6 +187,7 @@ class OrderBuilder:
             "buy_seed": intents.get("buy_seed", {}),
             "buy_animal": capped_animal,
             "pending_structures": intents.get("pending_structures", {}),
+            "execution_snapshot": intents.get("execution_snapshot"),
         }
         return self.build(ctx, intents_intraday, max_slots=max_slots)
 
@@ -240,8 +241,65 @@ class OrderBuilder:
         survival_feed_budget = protected_feed_budget
         remaining_shed_room = max(0, remaining_shed_room - w_protected_buyable)
 
+        # ---- Point 2 Live Treasury Hold & Fresh Live Ledger ----
+        try:
+            from config import get_point2_feed_mode
+            _feed_mode = get_point2_feed_mode()
+        except Exception:
+            _feed_mode = "shadow"
+
+        is_live_feed_mode = (_feed_mode == "live")
+        remaining_existing_feed_hold = 0.0
+        live_ledger = None
+        existing_herd_feasible = True
+        is_safe_exec = True
+        live_execution_status = "safe"
+        live_execution_reason = ""
+        live_failure_reason = None
+        snapshot = None
+
+        if is_live_feed_mode:
+            try:
+                from strategy.feed_feasibility import (
+                    build_fresh_live_ledger,
+                    compute_remaining_existing_feed_hold,
+                    check_live_livestock_execution_safety,
+                )
+                snapshot = intents.get("execution_snapshot") or (
+                    ctx.get("feed_execution_snapshot") if isinstance(ctx, dict) else getattr(ctx, "feed_execution_snapshot", None)
+                )
+                live_ledger = build_fresh_live_ledger(
+                    ctx=ctx,
+                    hard_cash_hold=self.reserve + mandatory_hire_budget,
+                    strategic_cash_hold=0.0,
+                    execution_snapshot=snapshot,
+                    market_inventory=inv,
+                )
+                existing_ok, existing_res, remaining_existing_feed_hold = compute_remaining_existing_feed_hold(
+                    ledger=live_ledger,
+                    retained_wheat=w_protected_buyable,
+                    unit_price=unit_wheat_px,
+                )
+                existing_herd_feasible = existing_ok
+                unfed_placed = live_ledger.unfed_placed_today
+                is_safe_exec, exec_status, exec_reason = check_live_livestock_execution_safety(
+                    snapshot=snapshot, unfed_placed_today=unfed_placed
+                )
+                live_execution_status = exec_status
+                live_execution_reason = exec_reason
+            except Exception as exc:
+                live_failure_reason = str(exc)
+                existing_herd_feasible = False
+                is_safe_exec = False
+                live_execution_status = "feed_execution_unverified"
+                live_execution_reason = f"Phase-C exception: {exc}"
+                remaining_existing_feed_hold = 0.0
+
         # ---- 3. Discretionary budget: land, optional feed buffer, seeds, animals ----
-        discretionary_budget = max(0.0, available_for_purchases - protected_feed_budget)
+        if is_live_feed_mode:
+            discretionary_budget = max(0.0, available_for_purchases - protected_feed_budget - remaining_existing_feed_hold)
+        else:
+            discretionary_budget = max(0.0, available_for_purchases - protected_feed_budget)
 
         ledger = {
             "budget": round(budget, 2),
@@ -253,11 +311,26 @@ class OrderBuilder:
             "w_opt_buyable": 0,
             "w_buyable": w_protected_buyable,
             "discretionary_budget": round(discretionary_budget, 2),
+            "remaining_existing_feed_hold": round(remaining_existing_feed_hold, 2),
             "spent_estimate": 0.0,
             "queued": [],
             "dropped": [],
             "orders": [],
         }
+        if is_live_feed_mode:
+            ledger["point2_live_authority"] = True
+            ledger["existing_herd_feasible"] = existing_herd_feasible
+            ledger["remaining_existing_feed_hold"] = round(remaining_existing_feed_hold, 2)
+            ledger["is_live_livestock_safe"] = is_safe_exec
+            ledger["live_execution_status"] = live_execution_status
+            ledger["live_execution_reason"] = live_execution_reason
+            ledger["live_failure_reason"] = live_failure_reason
+            ledger["retained_protected_wheat"] = w_protected_buyable
+            ledger["retained_optional_wheat"] = 0
+            if snapshot:
+                ledger["execution_confidence"] = snapshot.execution_confidence
+                ledger["verified_feed_targets"] = list(snapshot.verified_feed_targets)
+                ledger["verified_feed_count"] = snapshot.verified_feed_count
 
         if affordable_hires < k:
             ledger["dropped"].append({
@@ -364,10 +437,23 @@ class OrderBuilder:
             if (money + inflows_24h) >= 2000.0 + near_term_obligations:
                 sw_shadow_reserve = 2000.0
 
+        can_buy_animals = True
+        if is_live_feed_mode:
+            if not existing_herd_feasible or not is_safe_exec or live_failure_reason is not None:
+                can_buy_animals = False
+
         claimed_structures = {}
         for animal, k_anim in sorted(intents.get("buy_animal", {}).items()):
             k_anim = int(k_anim)
             if k_anim > 0 and animal in ANIMALS:
+                if is_live_feed_mode and not can_buy_animals:
+                    reason = "feed_execution_unverified" if not is_safe_exec else ("existing_herd_infeasible" if not existing_herd_feasible else "live_failure")
+                    ledger["dropped"].append({
+                        "kind": "animal",
+                        "animal": animal,
+                        "reason": reason,
+                    })
+                    continue
                 struct_type = ANIMALS[animal]["structure"]
                 pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
                 def _tile_free(t):

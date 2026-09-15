@@ -712,11 +712,17 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         asg = assign_tasks(tasks, ctx)
         if build_feed_execution_snapshot is not None:
             try:
+                actions_dict = asg.get("actions", {}) if isinstance(asg, dict) else {}
+                asg_dict = asg.get("assignment", {}) if isinstance(asg, dict) else asg
                 feed_execution_snapshot = build_feed_execution_snapshot(
-                    ctx, tasks=tasks, assignment=asg.get("assignment", {}) if isinstance(asg, dict) else asg
+                    ctx, tasks=tasks, assignment=asg_dict, actions=actions_dict
                 )
             except Exception:
                 feed_execution_snapshot = None
+        if plan is not None and feed_execution_snapshot is not None:
+            plan.intents["execution_snapshot"] = feed_execution_snapshot
+        if isinstance(ctx, dict):
+            ctx["feed_execution_snapshot"] = feed_execution_snapshot
     except Exception as exc:
         # Fallback to survival tasks when planner or task scheduler fails
         global _LAST_FALLBACK_DIAGNOSTIC
@@ -753,22 +759,75 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             if plan is not None:
                 purchase_orders, _ledger = builder.build(ctx, plan.intents, max_slots=builder_max_slots)
         elif ctx["hour"] == 1:
-            target_h = get_target_hands(ctx["day"])
-            hires_so_far = ctx["farm"].hires_today
-            hires_needed = max(0, target_h - hires_so_far)
-            if hires_needed > 0:
-                limit = builder_max_slots if builder_max_slots is not None else hires_needed
-                for _ in range(min(hires_needed, limit)):
-                    purchase_orders.append(["HIRE"])
-            if plan is not None and plan.intents.get("buy_land"):
-                if builder_max_slots is None or len(purchase_orders) < builder_max_slots:
-                    purchase_orders.append(["BUY_LAND"])
+            from config import POINT2_FEED_MODE
+            if POINT2_FEED_MODE == "live":
+                target_h = get_target_hands(ctx["day"])
+                hires_so_far = ctx["farm"].hires_today
+                hires_needed = max(0, target_h - hires_so_far)
+                h1_intents = {
+                    "hire": hires_needed,
+                    "buy_land": bool(plan.intents.get("buy_land")) if plan else False,
+                    "buy_wheat": plan.intents.get("buy_wheat", 0) if plan else 0,
+                    "protected_feed_wheat": plan.intents.get("protected_feed_wheat", 0) if plan else 0,
+                    "execution_snapshot": feed_execution_snapshot,
+                }
+                purchase_orders, _ledger = builder.build(ctx, h1_intents, max_slots=builder_max_slots)
+            else:
+                target_h = get_target_hands(ctx["day"])
+                hires_so_far = ctx["farm"].hires_today
+                hires_needed = max(0, target_h - hires_so_far)
+                if hires_needed > 0:
+                    limit = builder_max_slots if builder_max_slots is not None else hires_needed
+                    for _ in range(min(hires_needed, limit)):
+                        purchase_orders.append(["HIRE"])
+                if plan is not None and plan.intents.get("buy_land"):
+                    if builder_max_slots is None or len(purchase_orders) < builder_max_slots:
+                        purchase_orders.append(["BUY_LAND"])
         else:
             if plan is not None:
                 purchase_orders, _ledger = builder.build_intraday(ctx, plan.intents, max_slots=builder_max_slots)
-    except Exception:
-        purchase_orders = []
-        _ledger = None
+    except Exception as exc:
+        from config import POINT2_FEED_MODE
+        if POINT2_FEED_MODE == "live":
+            # Phase-C Failure Isolation:
+            # Drop new livestock, keep survival purchases (hires, survival wheat).
+            # Do NOT silently fall back to legacy live animal buying.
+            try:
+                from market.order_builder import _fib
+                from market.price_math import estimate_wheat_buy_price
+                survival_intents = {
+                    "hire": plan.intents.get("hire", 0) if plan else 0,
+                    "buy_wheat": plan.intents.get("buy_wheat", 0) if plan else 0,
+                    "protected_feed_wheat": plan.intents.get("protected_feed_wheat", 0) if plan else 0,
+                }
+                farm = ctx["farm"]
+                money = float(farm.money)
+                k = int(survival_intents.get("hire", 0))
+                start_hires = getattr(farm, "hires_today", 0)
+                hire_cost = 0.0
+                affordable_hires = 0
+                for i in range(k):
+                    c = float(_fib(start_hires + i))
+                    if hire_cost + c <= money:
+                        hire_cost += c
+                        affordable_hires += 1
+                    else:
+                        break
+                purchase_orders = [["HIRE"] for _ in range(affordable_hires)]
+                unit_wheat_px = estimate_wheat_buy_price(ctx)
+                avail_wheat_money = max(0.0, money - hire_cost - builder.reserve)
+                w_req = int(survival_intents.get("protected_feed_wheat", survival_intents.get("buy_wheat", 0)))
+                rem_shed = max(0, 100 - sum(ctx["private"].shed.values())) if ctx.get("private") and hasattr(ctx["private"], "shed") else 100
+                w_buyable = min(w_req, int(avail_wheat_money // unit_wheat_px), rem_shed) if unit_wheat_px > 0 else 0
+                if w_buyable > 0:
+                    purchase_orders.append(["BUY_PRODUCT", "WHEAT", w_buyable])
+                _ledger = {"live_failure_reason": str(exc), "survival_isolated": True}
+            except Exception:
+                purchase_orders = []
+                _ledger = None
+        else:
+            purchase_orders = []
+            _ledger = None
 
     # 4. Market layer: sell-side intent compilation (domain isolated)
     sell_orders = []

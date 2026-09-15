@@ -106,6 +106,21 @@ class FeedExecutionSnapshot:
     n_active_units: int
     market_purchase_can_help_today: bool
     execution_confidence: str = "high"
+    # Phase C2A execution verification & diagnostics
+    unfed_placed_today: int = 0
+    verified_feed_targets: List[Tuple[int, int]] = field(default_factory=list)
+    verified_feed_count: int = 0
+    feed_assignments: int = 0
+    feed_actions_emitted: int = 0
+    actual_place_actions: int = 0
+    actual_pickups: int = 0
+    actual_drops: int = 0
+    post_unit_worker_inventory: int = 0
+    post_unit_shed_delta: int = 0
+    snapshot_valid: bool = True
+    is_live_livestock_safe: bool = True
+    live_execution_status: str = "safe"  # "safe" or "feed_execution_unverified"
+    live_execution_reason: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -489,6 +504,7 @@ def build_feed_execution_snapshot(
     ctx: Any,
     tasks: Any = None,
     assignment: Any = None,
+    actions: Any = None,
 ) -> FeedExecutionSnapshot:
     """Summarizes current-turn execution state and scheduler reality.
 
@@ -500,12 +516,13 @@ def build_feed_execution_snapshot(
       - At Hour 23, turns_remaining_today == 1 (the current turn), meaning zero
         subsequent unit-action turns exist today; same-turn market wheat cannot
         rescue today's unmet feed deadline.
+      - Moving toward an animal emits movement (not FEED) and is not certified feeding.
     """
     day = int(ctx.get("day", 0)) if isinstance(ctx, dict) else int(getattr(ctx, "day", 0))
     hour = int(ctx.get("hour", 0)) if isinstance(ctx, dict) else int(getattr(ctx, "hour", 0))
     turns_remaining = max(0, 24 - hour)
 
-    farm = ctx["farm"] if isinstance(ctx, dict) else getattr(ctx, "farm", None)
+    farm = ctx.get("farm") if isinstance(ctx, dict) else getattr(ctx, "farm", None)
     private = ctx.get("private") if isinstance(ctx, dict) else getattr(ctx, "private", None)
 
     shed_wheat = 0
@@ -528,13 +545,23 @@ def build_feed_execution_snapshot(
         if hands and hasattr(hands, "__len__"):
             n_active_units += len(hands)
 
+    # Unpack assignment and actions
     asg_map = {}
+    actions_map = {}
     if assignment is not None:
         if isinstance(assignment, dict):
             if "assignment" in assignment and isinstance(assignment["assignment"], dict):
                 asg_map = assignment["assignment"]
             else:
                 asg_map = assignment
+            if actions is None and "actions" in assignment and isinstance(assignment["actions"], dict):
+                actions_map = assignment["actions"]
+
+    if actions is not None:
+        if isinstance(actions, dict):
+            actions_map = actions
+        elif isinstance(actions, (list, tuple)):
+            actions_map = {i: act for i, act in enumerate(actions)}
 
     feeds_assigned = 0
     wheat_pickups_assigned = 0
@@ -545,36 +572,117 @@ def build_feed_execution_snapshot(
         kind = task.get("kind", "")
         args = task.get("args") or []
 
-        if op == "FEED" or kind.startswith("feed"):
+        if op == "FEED" or (isinstance(kind, str) and kind.startswith("feed")):
             feeds_assigned += 1
         elif op == "PICKUP":
-            if (args and args[0] == "WHEAT") or "wheat" in kind:
+            if (args and args[0] == "WHEAT") or ("wheat" in kind if isinstance(kind, str) else False):
                 wheat_pickups_assigned += 1
 
-    feeds_due_today = 0
-    if tasks and isinstance(tasks, list):
+    # Extract actions telemetry
+    feed_actions_emitted = 0
+    actual_place_actions = 0
+    actual_pickups = 0
+    actual_drops = 0
+    for act in actions_map.values():
+        if not act or not isinstance(act, (list, tuple)):
+            continue
+        op_act = act[0] if len(act) > 0 else "PASS"
+        if op_act == "FEED":
+            feed_actions_emitted += 1
+        elif op_act == "PLACE":
+            actual_place_actions += 1
+        elif op_act == "PICKUP":
+            actual_pickups += 1
+        elif op_act == "DROP":
+            actual_drops += 1
+
+    # Find unfed placed animals and their target positions
+    unfed_placed_positions: List[Tuple[int, int]] = []
+    if farm is not None and hasattr(farm, "iter_tiles"):
+        for t in farm.iter_tiles():
+            if t is not None and getattr(t, "is_animal", False):
+                if not getattr(t, "fed_today", False):
+                    p = getattr(t, "pos", None)
+                    if p is not None:
+                        unfed_placed_positions.append(tuple(p))
+    elif farm is not None and isinstance(farm, dict) and "tiles" in farm:
+        tiles = farm.get("tiles")
+        if isinstance(tiles, list):
+            for row in tiles:
+                if isinstance(row, list):
+                    for t in row:
+                        if isinstance(t, dict) and (t.get("is_animal") or t.get("kind") in ("COW", "SHEEP", "GOOSE")):
+                            if not t.get("fed_today", False):
+                                unfed_placed_positions.append(tuple(t.get("pos", (0, 0))))
+
+    feeds_due_today = len(unfed_placed_positions)
+    if feeds_due_today == 0 and tasks and isinstance(tasks, list):
         for t in tasks:
             if isinstance(t, dict):
                 if t.get("op") == "FEED" or str(t.get("kind", "")).startswith("feed"):
                     feeds_due_today += 1
-    else:
-        if farm and hasattr(farm, "iter_tiles"):
-            for t in farm.iter_tiles():
-                if t and getattr(t, "is_animal", False):
-                    if not getattr(t, "fed_today", False):
-                        feeds_due_today += 1
+                    tgt = t.get("target")
+                    if tgt is not None:
+                        unfed_placed_positions.append(tuple(tgt))
 
+    unfed_placed_today = feeds_due_today
+
+    # Verify feeds: distinct units emitting FEED toward due animals
+    verified_feed_targets: List[Tuple[int, int]] = []
+    targets_remaining = list(unfed_placed_positions)
+    for u_idx, act in actions_map.items():
+        if act and isinstance(act, (list, tuple)) and len(act) > 0 and act[0] == "FEED":
+            u_task = asg_map.get(u_idx) if isinstance(asg_map, dict) else None
+            tgt = None
+            if isinstance(u_task, dict) and u_task.get("target") is not None:
+                tgt = tuple(u_task["target"])
+            if tgt is not None and tgt in targets_remaining:
+                targets_remaining.remove(tgt)
+                verified_feed_targets.append(tgt)
+            elif targets_remaining:
+                matched = targets_remaining.pop(0)
+                verified_feed_targets.append(tgt if tgt is not None else matched)
+            else:
+                verified_feed_targets.append(tgt if tgt is not None else (0, 0))
+
+    verified_feed_count = len(verified_feed_targets)
     market_purchase_can_help_today = (hour < 23)
 
     confidence = "high"
-    if tasks is None and assignment is None:
+    if tasks is None and assignment is None and actions is None:
         confidence = "guarded"
-    elif hour >= 23 and feeds_due_today > feeds_assigned:
+    elif hour >= 23 and (unfed_placed_today > verified_feed_count if actions_map else feeds_due_today > feeds_assigned):
         confidence = "conditional"
-    elif hour >= 22 and feeds_due_today > (feeds_assigned + worker_wheat):
+    elif hour >= 22 and (unfed_placed_today > (verified_feed_count + worker_wheat) if actions_map else feeds_due_today > (feeds_assigned + worker_wheat)):
         confidence = "guarded"
-    elif hour >= 20 and feeds_due_today > (feeds_assigned + worker_wheat):
+    elif hour >= 20 and (unfed_placed_today > (verified_feed_count + worker_wheat) if actions_map else feeds_due_today > (feeds_assigned + worker_wheat)):
         confidence = "guarded"
+    elif unfed_placed_today > 0 and actions_map and verified_feed_count < unfed_placed_today:
+        confidence = "guarded"
+
+    # Derive live execution status and safety
+    if unfed_placed_today > 0:
+        if hour >= 23 and verified_feed_count < unfed_placed_today:
+            is_live_livestock_safe = False
+            live_execution_status = "feed_execution_unverified"
+            live_execution_reason = "Hour 23 unresolved feed cannot be rescued by market wheat"
+        elif confidence != "high":
+            is_live_livestock_safe = False
+            live_execution_status = "feed_execution_unverified"
+            live_execution_reason = f"Execution confidence is {confidence}"
+        elif verified_feed_count < unfed_placed_today:
+            is_live_livestock_safe = False
+            live_execution_status = "feed_execution_unverified"
+            live_execution_reason = f"Verified feed count {verified_feed_count} < unfed placed {unfed_placed_today}"
+        else:
+            is_live_livestock_safe = True
+            live_execution_status = "safe"
+            live_execution_reason = "All unfed placed animals have verified FEED actions"
+    else:
+        # All placed animals already fed today
+        is_live_livestock_safe = True
+        live_execution_status = "safe"
+        live_execution_reason = "All placed animals already fed today"
 
     return FeedExecutionSnapshot(
         day=day,
@@ -588,7 +696,99 @@ def build_feed_execution_snapshot(
         n_active_units=n_active_units,
         market_purchase_can_help_today=market_purchase_can_help_today,
         execution_confidence=confidence,
+        unfed_placed_today=unfed_placed_today,
+        verified_feed_targets=verified_feed_targets,
+        verified_feed_count=verified_feed_count,
+        feed_assignments=feeds_assigned,
+        feed_actions_emitted=feed_actions_emitted,
+        actual_place_actions=actual_place_actions,
+        actual_pickups=actual_pickups,
+        actual_drops=actual_drops,
+        is_live_livestock_safe=is_live_livestock_safe,
+        live_execution_status=live_execution_status,
+        live_execution_reason=live_execution_reason,
     )
+
+
+def check_live_livestock_execution_safety(
+    snapshot: Optional[FeedExecutionSnapshot],
+    unfed_placed_today: int = 0,
+) -> Tuple[bool, str, str]:
+    """Evaluate live execution safety rule for live BUY_ANIMAL authority.
+
+    Returns:
+      (is_safe, live_execution_status, live_execution_reason)
+    """
+    if unfed_placed_today > 0:
+        if snapshot is None:
+            return False, "feed_execution_unverified", "Missing execution snapshot with unfed placed animals"
+        if not snapshot.is_live_livestock_safe:
+            return False, snapshot.live_execution_status, snapshot.live_execution_reason
+        if snapshot.execution_confidence != "high":
+            return False, "feed_execution_unverified", f"Execution confidence is {snapshot.execution_confidence}"
+        if snapshot.verified_feed_count < unfed_placed_today:
+            return False, "feed_execution_unverified", f"Verified feed count {snapshot.verified_feed_count} < unfed placed {unfed_placed_today}"
+    return True, "safe", "Herd feed execution verified or already fed"
+
+
+def build_fresh_live_ledger(
+    ctx: Any,
+    hard_cash_hold: float = 0.0,
+    strategic_cash_hold: float = 0.0,
+    execution_snapshot: Optional[FeedExecutionSnapshot] = None,
+    market_inventory: Optional[Dict[str, float]] = None,
+    town_shops: Optional[List[str]] = None,
+    opponent_farm: Any = None,
+) -> FeedResourceLedger:
+    """Constructs a fresh FeedResourceLedger for live market authorization.
+
+    In live mode:
+      - Lifetime pricing uses engine_stress_bound_v1.
+      - Current wheat price uses estimate_wheat_buy_price(ctx).
+      - Attaches the verified FeedExecutionSnapshot.
+      - Built purely from observed state; does NOT import Macro candidate reservations.
+    """
+    return build_feed_resource_ledger(
+        ctx=ctx,
+        current_herd=None,  # Purely observed from ctx
+        hard_cash_hold=hard_cash_hold,
+        strategic_cash_hold=strategic_cash_hold,
+        execution_snapshot=execution_snapshot,
+        lifetime_price_policy="engine_stress_bound_v1",
+        market_inventory=market_inventory,
+        town_shops=town_shops,
+        opponent_farm=opponent_farm,
+    )
+
+
+def compute_remaining_existing_feed_hold(
+    ledger: FeedResourceLedger,
+    retained_wheat: int = 0,
+    unit_price: float = 0.0,
+) -> Tuple[bool, FeedFeasibilityResult, float]:
+    """Compute existing-herd feasibility and remaining future feed cash hold.
+
+    When retained_wheat > 0 is scheduled/retained on the current turn:
+      - The physical wheat is added to trial ledger scheduled purchases on day.
+      - Cash available for future feed is reduced by the current turn spending (retained_wheat * unit_price).
+      - Future feed liability is recomputed on the remaining deficit.
+      - Anti-double-counting invariant preserved:
+        retained_spending + remaining_existing_feed_hold reflects the total required feed budget.
+    """
+    trial_ledger = ledger.clone()
+    if retained_wheat > 0:
+        cost = float(retained_wheat * unit_price)
+        trial_ledger.scheduled_market_purchases.append({
+            "day": trial_ledger.day,
+            "units": retained_wheat,
+            "cost": cost,
+            "purpose": "retained_protected_wheat",
+        })
+        trial_ledger.observed_cash = max(0.0, trial_ledger.observed_cash - cost)
+
+    ok, res = evaluate_existing_herd_feasibility(trial_ledger)
+    remaining_hold = float(res.existing_feed_cash_hold) if hasattr(res, "existing_feed_cash_hold") else 0.0
+    return ok, res, remaining_hold
 
 
 # ============================================================================
