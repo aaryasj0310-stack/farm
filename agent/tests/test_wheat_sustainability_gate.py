@@ -8,6 +8,7 @@ Verifies:
    sustainable herd size, requested herd size, and final feed-capped herd size.
 """
 import pytest
+import config
 
 from strategy.animal_planner import get_animal_targets
 from strategy.macro_planner import (
@@ -126,8 +127,9 @@ def test_direct_feed_capacity_calculation():
     assert info["sustainable_herd_size"] == info["projected_wheat_supply"] // 19
 
 
-def test_no_early_game_unfunded_exception():
+def test_no_early_game_unfunded_exception(monkeypatch):
     """On Day 1, an agent with 0 wheat and insufficient cash cannot buy animals."""
+    monkeypatch.setattr(config, "LIVESTOCK_EXPERIMENT_ARM", "ArmA")
     reset_memory()
     # Day 1, barely any money, 0 wheat
     ctx = _make_farm_ctx(day=1, money=100.0, shed_wheat=0, planted_wheat_tiles=0, pastures=2)

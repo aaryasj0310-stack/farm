@@ -695,6 +695,7 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     asg = None
     plan = None
     is_strategy_fallback = False
+    feed_execution_snapshot = None
     try:
         plan = planner.build(ctx, boosts=boosts, opp_advice=opp_advice)
         if plan.intents.get("buy_land"):
@@ -709,7 +710,6 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
                 plan.intents["buy_land"] = False  # force block
         tasks = build_tasks(ctx, plan)
         asg = assign_tasks(tasks, ctx)
-        feed_execution_snapshot = None
         if build_feed_execution_snapshot is not None:
             try:
                 feed_execution_snapshot = build_feed_execution_snapshot(
