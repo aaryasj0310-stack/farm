@@ -4,6 +4,10 @@ Baseline commit:
 
 `547357a91d22260435e961dedc24f292e846e713`
 
+Frozen Phase-A baseline commit:
+
+`484244083aea694af29459995546d120e7063194`
+
 This document incorporates the Step 1–3 Sol audit and subsequent Astra architectural critique.
 
 ## Objective
@@ -243,24 +247,180 @@ Similarly, unrealized future output from previously purchased animals is not har
 
 ---
 
-# 7. Feed pricing
+# 7. Feed pricing & lifetime WHEAT funding policy (`engine_stress_bound_v1`)
 
-Use the authoritative live buffered wheat purchase-price machinery established in Point 1.
+Use the authoritative live buffered wheat purchase-price machinery established in Point 1 for current executable wheat:
 
-Near-term market purchases should use the current executable buffered wheat price.
+```python
+estimate_wheat_buy_price(ctx)
+```
 
-Remaining-lifetime feed funding should use a conservative wheat replacement-price assumption.
+Near-term market purchases inside the 4-day operational physical window must continue to use this current executable buffered wheat price.
 
-Do not reintroduce hard-coded `$25` feed affordability in:
+## Lifetime WHEAT funding policy freeze
 
-* DynamicHerdPlan;
-* ArmC purchase logic;
-* animal_planner feed reserve;
-* the new feasibility evaluator.
+The Phase-A evaluator temporarily used:
 
-The implementation should expose which price assumption funded each reservation.
+```text
+conditional_current_buffered_price
+```
 
-Astra review should not be interpreted as requiring optimistic future-price forecasts.
+for lifetime funding telemetry. That was acceptable for Phase-A shadow diagnostics, but it must NOT become the authoritative Phase-B funding policy.
+
+### Engine ground truth mechanics
+The game engine pricing rules are:
+```text
+WHEAT base price = $25
+MARKET_I0 = 10,000
+scarcity shape = sqrt
+T = 400
+below_target = 0.80
+WHEAT_BUY_PRICE_BUFFER = 1.10
+```
+
+Future lifetime feed funding must use the frozen policy:
+
+```text
+engine_stress_bound_v1
+```
+
+This is a **conservative planning stress bound**, NOT a mathematically adversarial maximum. Do NOT describe it as a guaranteed maximum future market price.
+
+### Policy definition
+
+For remaining-lifetime feed funding beyond the 4-day operational physical window, derive:
+
+```text
+stressed_wheat_inventory =
+    current_observed_wheat_market_inventory
+    - worst_case_remaining_town_wheat_drain
+    - our_committed_future_market_feed_requirement
+    - opponent_wheat_stress_allowance
+```
+
+Then evaluate the stress price:
+
+```text
+stress_raw_price =
+    market_price("WHEAT", max(1, stressed_wheat_inventory))
+
+stress_buffered_price =
+    ceil(stress_raw_price * WHEAT_BUY_PRICE_BUFFER)
+
+lifetime_wheat_price =
+    max(
+        current_executable_buffered_wheat_price,
+        stress_buffered_price,
+    )
+```
+
+where `current_executable_buffered_wheat_price = estimate_wheat_buy_price(ctx)`.
+
+### 7A. Town WHEAT stress
+
+Use actual engine mechanics:
+* For shops already unlocked: use their actual shop identities and project their remaining WHEAT consumption across remaining episode hours.
+* For shop instances not yet unlocked up to the engine maximum: assume every future shop instance consumes WHEAT (deliberately pessimistic).
+* Include the remaining town-center WHEAT drain over the remaining episode turns.
+* The calculation must dynamically depend on the current day/hour and remaining season rather than using one global constant.
+* Document that this is an engine-derived worst-case town-demand bound.
+
+### 7B. Our own WHEAT stress
+
+Use the future market WHEAT requirement of the full currently committed herd/resource ledger.
+It must include:
+```text
+existing-herd future market feed requirement
++
+all previously accepted candidate reservations
++
+the candidate currently being evaluated
+```
+
+Do NOT price each candidate independently against the original WHEAT market state.
+After candidate #1 is accepted:
+```text
+candidate #1 increases our future WHEAT stress
+→ recompute the stress price
+→ candidate #2 is evaluated against that updated residual ledger
+```
+This is mandatory for sequential candidate admission.
+
+### 7C. Opponent WHEAT stress
+
+Use a conservative but bounded v1 rule:
+```text
+observed_opponent_feed_liability =
+    currently observed opponent placed animals
+    × remaining applicable feed days
+```
+Then:
+```text
+opponent_wheat_stress_allowance =
+    max(
+        observed_opponent_feed_liability,
+        our_committed_future_market_feed_requirement,
+    )
+```
+
+Do NOT assume unlimited malicious opponent WHEAT buying.
+Do NOT assume speculative future opponent livestock expansion.
+The purpose is to model plausible competitive WHEAT pressure while keeping the bound operationally useful.
+
+### 7D. Explicit classification & terminology
+
+Document this exact distinction:
+```text
+engine_stress_bound_v1
+= conservative planning stress bound
+!= hard mathematical maximum
+```
+The true engine price can exceed it under sufficiently adversarial future market depletion.
+Therefore:
+* New observations must rebuild/reprice the ledger on every turn.
+* Phase C must revalidate actual purchases before live `BUY_ANIMAL` execution.
+* Do not call lifetime funding "guaranteed."
+* Use terminology such as:
+  ```text
+  stress-funded
+  conservatively funded under engine_stress_bound_v1
+  ```
+
+### 7E. Worked example: sequential repricing under stress bound
+
+*(Note: The following numbers are illustrative to demonstrate sequential ledger progression; they are not engine-guaranteed outputs).*
+
+```text
+Assume at Day 10, Hour 0:
+current_observed_wheat_market_inventory = 9,500
+worst_case_remaining_town_wheat_drain = 1,200
+our_committed_future_market_feed_requirement (existing herd) = 200
+observed_opponent_feed_liability = 300
+opponent_wheat_stress_allowance = max(300, 200) = 300
+
+Baseline stress state before candidates:
+stressed_inventory_0 = 9,500 - 1,200 - 200 - 300 = 7,800
+stress_raw_price_0 = market_price("WHEAT", 7,800) ≈ $28.35
+stress_buffered_price_0 = ceil(28.35 * 1.10) = $32.00
+lifetime_wheat_price_0 = max(executable=$28, stress=$32) = $32.00
+
+Candidate #1 (COW):
+- Needs 18 lifetime feed units beyond operational window.
+- Evaluated at lifetime price $32.00 → feed hold = 18 × $32 = $576.00.
+- Sward cash and feed cash available → candidate #1 feasible.
+- Candidate #1 accepted and committed:
+  our_committed_future_market_feed_requirement rises from 200 to 218 (+18).
+  opponent_wheat_stress_allowance = max(300, 218) = 300.
+
+Candidate #2 (COW) evaluation:
+- our_committed_future_market_feed_requirement is now 218.
+- Candidate #2 would add another 18 units (total 236).
+- stressed_inventory_1 = 9,500 - 1,200 - 236 - 300 = 7,764.
+- stress_raw_price_1 = market_price("WHEAT", 7,764) ≈ $28.42.
+- stress_buffered_price_1 = ceil(28.42 * 1.10) = $32.00 (or higher if inventory crosses pricing threshold).
+- Candidate #2 is evaluated against the updated residual cash balance ($original - purchase_cost_1 - feed_hold_1) at the updated stress price ($32.00+).
+- Sibling candidates never reuse original cash or ignore prior candidates' market impact.
+```
 
 ---
 
@@ -394,7 +554,7 @@ A later sale, harvest, consumption, or storage release cannot retroactively make
 
 ---
 
-# 13. Storage and execution
+# 13. Storage, execution, and execution-confidence policy
 
 A positive abstract wheat balance alone is insufficient.
 
@@ -411,7 +571,92 @@ Reuse existing scheduler/serviceability information where practical.
 
 Do not build a second complete task scheduler inside the feed evaluator.
 
-If execution certainty cannot be established, fail closed for expansion.
+## Execution-confidence policy freeze
+
+The execution-confidence policy must strictly distinguish **Phase B forward planning** from **Phase C live purchasing**. This distinction is required because `DynamicHerdPlan` executes during macro planning before the final real scheduler assignment snapshot exists.
+
+### Phase B — DynamicHerdPlan forward planning
+In Phase B:
+* `execution_confidence` is diagnostic and provisional information.
+* It is NOT an independent veto by itself.
+* A candidate must still be rejected for concrete hard failures such as:
+  ```text
+  existing_herd_feasible = False
+  insufficient_cash
+  shed_capacity
+  feed_deadline failure
+  late_hour_purchase
+  other explicit hard feed/resource failure
+  ```
+* But `execution_confidence = "guarded"` or `execution_confidence = "conditional"` alone must NOT reject a Phase-B forward-planning candidate.
+* If:
+  ```text
+  feed feasibility passes (cash, physical 4-day, lifetime stress funding)
+  +
+  candidate economics passes (positive marginal EV, housing hurdle)
+  ```
+  then Phase B may provisionally include the candidate in `DynamicHerdPlan` and record diagnostic status:
+  ```text
+  execution_status = "provisional_guarded"
+  ```
+* Reason: Phase B plans infrastructure and forward herd shape. It does NOT authorize the final engine `BUY_ANIMAL`.
+
+### Phase C — Live BUY_ANIMAL execution
+Phase C must fail closed when current-day existing-herd feed execution remains unresolved.
+
+**Frozen rule:**
+```text
+IF unfed_placed_today > 0:
+
+    IF execution_snapshot is absent
+    OR execution_confidence != "high":
+
+        reject new BUY_ANIMAL
+```
+Use an explicit rejection reason such as:
+```text
+feed_execution_unverified
+```
+or:
+```text
+feed_execution_not_verified
+```
+
+Existing-herd survival actions must continue normally. Do NOT suppress protected wheat purchases or FEED recovery merely because livestock expansion is blocked.
+
+If `unfed_placed_today == 0`:
+* Guarded/conditional execution confidence alone does NOT need to veto a new animal.
+* The new animal is treated as an unplaced commitment and does not create a current-day physical FEED obligation.
+* All other gates must still pass:
+  * feed/cash feasibility
+  * housing/serviceability
+  * marginal economic value
+  * market order capacity
+  * actual purchase cash
+  * post-Day12 physical-pasture invariant
+
+### Worked execution example: Phase B vs Phase C
+
+```text
+Scenario: Day 10, Hour 8. 2 cows currently unfed on pasture. Worker is currently harvesting; feed pickup scheduled later today.
+execution_confidence = "guarded".
+
+Phase B (DynamicHerdPlan):
+- Feed feasibility passes (plenty of cash, 4-day wheat secured, stress funding covered).
+- Candidate EV positive.
+- execution_confidence is "guarded".
+→ Result: Provisional candidate accepted into DynamicHerdPlan; records execution_status = "provisional_guarded".
+→ Forward pasture planning may plan housing for future expansion.
+→ No BUY_ANIMAL order is emitted here.
+
+Phase C (OrderBuilder live purchase revalidation):
+- Candidate COW evaluated for live BUY_ANIMAL execution.
+- unfed_placed_today = 2 (> 0).
+- execution_confidence = "guarded" (!= "high").
+→ Result: BUY_ANIMAL rejected with reason = "feed_execution_unverified".
+→ Protected wheat order proceeds; worker completes feed delivery.
+→ Livestock purchase fails closed until current herd feeding is verified.
+```
 
 ---
 
@@ -540,7 +785,34 @@ Do not change all feed logic in one uncontrolled rewrite.
 
 ---
 
-# Final architectural rule
+# Final authority map & architectural rules
+
+## Authority Map
+
+```text
+FeedFeasibility
+    = physical feed + cash funding authority
+
+engine_stress_bound_v1
+    = lifetime funding stress-price policy
+
+MarginalLivestockValuator
+    = candidate profitability authority
+
+DynamicHerdPlan
+    = sequential provisional herd/infrastructure planner
+
+TaskScheduler
+    = physical worker execution authority
+
+OrderBuilder / Phase-C live revalidation
+    = final purchase enforcement
+
+Observation
+    = next-turn truth
+```
+
+## Final architectural rule
 
 A livestock candidate is admissible only when:
 
@@ -557,7 +829,7 @@ next-4-day feeding is physically/execution feasible
 
 AND
 
-remaining feeding obligation is conservatively funded
+remaining feeding obligation is conservatively funded under engine_stress_bound_v1
 
 AND
 
@@ -569,3 +841,7 @@ marginal economic value passes
 ```
 
 No speculative future production, candidate revenue, or hypothetical land may be used to manufacture the resources that certify the candidate.
+
+## Core Architectural Invariant
+
+> A larger herd target must never create the feed resources used to justify that larger herd target.
