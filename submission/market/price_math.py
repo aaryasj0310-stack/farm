@@ -1,7 +1,7 @@
 """Pure-python price math mirroring the engine exactly (no numpy)."""
 import math
 
-from config import MARKET_I0, MARKET_PARAMS, PRICE_FLOOR
+from config import MARKET_I0, MARKET_PARAMS, PRICE_FLOOR, WHEAT_BUY_PRICE_BUFFER
 
 
 def _shape(func, x, T):
@@ -45,6 +45,28 @@ def market_price(item, inventory):
         amp = p["at"] * base / _shape(f, T, T)
         price = base - amp * _shape(f, inv - I0, T)
     return max(PRICE_FLOOR, int(round(price)))
+
+
+def estimate_wheat_buy_price(market_or_ctx=None, default_price=25.0) -> float:
+    """Return the authoritative buffered unit purchase price for WHEAT.
+
+    Quotes WHEAT at current observed market inventory and applies WHEAT_BUY_PRICE_BUFFER.
+    """
+    if market_or_ctx is not None:
+        inv = None
+        if isinstance(market_or_ctx, dict):
+            if "market" in market_or_ctx and isinstance(market_or_ctx["market"], dict):
+                inv = market_or_ctx["market"].get("inventory", {}).get("WHEAT")
+            elif "inventory" in market_or_ctx and isinstance(market_or_ctx["inventory"], dict):
+                inv = market_or_ctx["inventory"].get("WHEAT")
+        elif hasattr(market_or_ctx, "market"):
+            m = getattr(market_or_ctx, "market")
+            if hasattr(m, "inventory"):
+                inv = getattr(m.inventory, "WHEAT", None) or (m.inventory.get("WHEAT") if isinstance(m.inventory, dict) else None)
+        if inv is not None:
+            raw_px = market_price("WHEAT", inv)
+            return float(math.ceil(raw_px * WHEAT_BUY_PRICE_BUFFER))
+    return float(math.ceil(default_price * WHEAT_BUY_PRICE_BUFFER))
 
 
 def _solve_shape(func, y, T):

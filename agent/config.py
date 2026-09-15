@@ -274,7 +274,7 @@ SW_TREASURY_SEED_COST = 150
 # v5.11: Dynamic strawberry cap — deadline-consistent
 # ====================================================================
 
-def get_strawberry_cap(day, land_purchased=False):
+def get_strawberry_cap(day, strawberry_eligible=False, land_purchased=None):
     """Time-varying strawberry cap: 16 → 18 → 20 (Day 13 only) → 0.
 
     Rationale:
@@ -283,7 +283,8 @@ def get_strawberry_cap(day, land_purchased=False):
     - Day 13: Maximum (20) — last day to plant strawberry (deadline)
     - Day 14+: Zero (0) — deadline passed, no new strawberry planting
     """
-    if not land_purchased:
+    eligible = strawberry_eligible if land_purchased is None else land_purchased
+    if not eligible:
         return 0
     if day <= 8:
         return 16

@@ -27,7 +27,7 @@ from config import (
     WHEAT_BUY_PRICE_BUFFER,
     C4_LIVESTOCK_CUTOFF_DAY,
 )
-from market.price_math import market_price
+from market.price_math import market_price, estimate_wheat_buy_price
 
 
 def _fib(n):
@@ -44,10 +44,11 @@ def hire_total_cost(k_hands, mult=1):
 
 # Priority tiers (lower = executed earlier when order slots / cash run short).
 TIER_HIRES = 0
-TIER_FEED_WHEAT = 1
-TIER_LAND = 2
-TIER_SEEDS = 3
-TIER_ANIMALS = 4
+TIER_FEED_WHEAT = 1        # Unavoidable survival feed
+TIER_LAND = 2              # Land expansion
+TIER_OPTIONAL_WHEAT = 3    # Optional feed buffering (up to 20 days)
+TIER_SEEDS = 4             # Seed planting
+TIER_ANIMALS = 5           # Livestock purchases
 
 
 class OrderBuilder:
@@ -204,6 +205,7 @@ class OrderBuilder:
 
         inv = {p: float(v) for p, v in ctx["market"].inventory.items()}
         wheat_px = market_price("WHEAT", inv.get("WHEAT", 10000))
+        unit_wheat_px = estimate_wheat_buy_price(ctx)
         remaining_shed_room = max(0, 100 - sum(ctx["private"].shed.values())) if ctx.get("private") and hasattr(ctx["private"], "shed") else 100
 
         # ---- 1. Mandatory hires: exact cost calculated and reserved first ----
@@ -223,20 +225,31 @@ class OrderBuilder:
         # ---- 2. Survival feed wheat: reserved before discretionary spending ----
         available_for_purchases = max(0.0, money - mandatory_hire_budget - self.reserve)
         w_req = int(intents.get("buy_wheat", 0))
-        unit_wheat_px = math_ceil(wheat_px * WHEAT_BUY_PRICE_BUFFER)
-        w_buyable = 0
-        if w_req > 0 and unit_wheat_px > 0:
-            w_buyable = min(w_req, int(available_for_purchases // unit_wheat_px), remaining_shed_room)
-        survival_feed_budget = float(w_buyable * unit_wheat_px)
-        remaining_shed_room = max(0, remaining_shed_room - w_buyable)
+        if "protected_feed_wheat" in intents:
+            w_protected_req = max(0, int(intents["protected_feed_wheat"]))
+        else:
+            w_protected_req = w_req
+        w_optional_req = max(0, w_req - w_protected_req)
 
-        # ---- 3. Discretionary budget: land, seeds, animals ----
-        discretionary_budget = max(0.0, available_for_purchases - survival_feed_budget)
+        w_protected_buyable = 0
+        if w_protected_req > 0 and unit_wheat_px > 0:
+            w_protected_buyable = min(w_protected_req, int(available_for_purchases // unit_wheat_px), remaining_shed_room)
+        protected_feed_budget = float(w_protected_buyable * unit_wheat_px)
+        survival_feed_budget = protected_feed_budget
+        remaining_shed_room = max(0, remaining_shed_room - w_protected_buyable)
+
+        # ---- 3. Discretionary budget: land, optional feed buffer, seeds, animals ----
+        discretionary_budget = max(0.0, available_for_purchases - protected_feed_budget)
 
         ledger = {
             "budget": round(budget, 2),
             "mandatory_hire_budget": round(mandatory_hire_budget, 2),
-            "survival_feed_budget": round(survival_feed_budget, 2),
+            "survival_feed_budget": round(protected_feed_budget, 2),
+            "protected_feed_budget": round(protected_feed_budget, 2),
+            "optional_feed_budget": 0.0,
+            "w_protected_buyable": w_protected_buyable,
+            "w_opt_buyable": 0,
+            "w_buyable": w_protected_buyable,
             "discretionary_budget": round(discretionary_budget, 2),
             "spent_estimate": 0.0,
             "queued": [],
@@ -251,28 +264,28 @@ class OrderBuilder:
                 "affordable": affordable_hires,
             })
 
-        if w_req > w_buyable:
-            if w_buyable > 0:
+        if w_protected_req > w_protected_buyable:
+            if w_protected_buyable > 0:
                 ledger["dropped"].append({
-                    "kind": "wheat",
-                    "trimmed_from": w_req,
-                    "to": w_buyable,
+                    "kind": "wheat_protected",
+                    "trimmed_from": w_protected_req,
+                    "to": w_protected_buyable,
                 })
             else:
                 reason = "shed_full" if remaining_shed_room == 0 and int(available_for_purchases // unit_wheat_px) > 0 else "budget"
-                ledger["dropped"].append({"kind": "wheat", "reason": reason})
+                ledger["dropped"].append({"kind": "wheat_protected", "reason": reason})
 
         # Collect tiers
         kept = []
         if affordable_hires > 0:
             kept.append((TIER_HIRES, "hire", {"count": affordable_hires}, mandatory_hire_budget))
 
-        if w_buyable > 0:
-            kept.append((TIER_FEED_WHEAT, "wheat", {"n": w_buyable}, survival_feed_budget))
+        if w_protected_buyable > 0:
+            kept.append((TIER_FEED_WHEAT, "wheat_protected", {"n": w_protected_buyable, "is_protected": True}, protected_feed_budget))
 
         remaining_discretionary = discretionary_budget
 
-        # Discretionary Tier: Land
+        # Discretionary Tier: Land (protected feed outranks land, but land outranks optional feed buffer)
         n_extra = len(farm.unlocked) - 1
         if intents.get("buy_land") and n_extra < len(LAND_ORDER):
             land_price = float(LAND_PRICES[n_extra])
@@ -281,6 +294,32 @@ class OrderBuilder:
                 remaining_discretionary -= land_price
             else:
                 ledger["dropped"].append({"kind": "land", "reason": "budget"})
+
+        # Discretionary Tier: Optional Feed Wheat (routine buffer)
+        w_opt_buyable = 0
+        if w_optional_req > 0 and unit_wheat_px > 0:
+            w_opt_buyable = min(w_optional_req, int(remaining_discretionary // unit_wheat_px), remaining_shed_room)
+        optional_feed_budget = float(w_opt_buyable * unit_wheat_px)
+        remaining_shed_room = max(0, remaining_shed_room - w_opt_buyable)
+        remaining_discretionary -= optional_feed_budget
+
+        ledger["optional_feed_budget"] = round(optional_feed_budget, 2)
+        ledger["w_opt_buyable"] = w_opt_buyable
+        ledger["w_buyable"] = w_protected_buyable + w_opt_buyable
+
+        if w_optional_req > w_opt_buyable:
+            if w_opt_buyable > 0:
+                ledger["dropped"].append({
+                    "kind": "wheat_optional",
+                    "trimmed_from": w_optional_req,
+                    "to": w_opt_buyable,
+                })
+            else:
+                reason = "shed_full" if remaining_shed_room == 0 and int(remaining_discretionary // unit_wheat_px) > 0 else "budget"
+                ledger["dropped"].append({"kind": "wheat_optional", "reason": reason})
+
+        if w_opt_buyable > 0:
+            kept.append((TIER_OPTIONAL_WHEAT, "wheat_optional", {"n": w_opt_buyable, "is_protected": False}, optional_feed_budget))
 
         # Discretionary Tier: Seeds
         for crop, n in sorted(intents.get("buy_seed", {}).items()):
@@ -397,7 +436,7 @@ class OrderBuilder:
         # If slots is constrained, reserve slots for non-hire items in kept (wheat, land, seeds)
         # so crucial capital expansion and planting orders are not starved by excess hires.
         if slots is not None:
-            non_hire_slots_needed = sum(1 for t in kept if t[1] in ("wheat", "land", "seed"))
+            non_hire_slots_needed = sum(1 for t in kept if t[1] in ("wheat", "wheat_protected", "wheat_optional", "land", "seed"))
             max_hire_slots = max(MIN_HANDS_BASE, slots - non_hire_slots_needed)
         else:
             max_hire_slots = None
@@ -421,13 +460,13 @@ class OrderBuilder:
                         "cost": float(est),
                         "tier": tier,
                     })
-            elif kind == "wheat":
+            elif kind in ("wheat", "wheat_protected", "wheat_optional"):
                 if take(None):
                     orders.append(["BUY_PRODUCT", "WHEAT", int(payload["n"])])
-                    queued["wheat"] = int(payload["n"])
+                    queued["wheat"] = int(queued.get("wheat", 0)) + int(payload["n"])
                 else:
                     ledger["dropped"].append({
-                        "kind": "wheat_slots",
+                        "kind": f"{kind}_slots",
                         "n": int(payload["n"]),
                         "cost": float(est),
                         "tier": tier,

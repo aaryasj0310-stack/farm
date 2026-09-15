@@ -35,7 +35,7 @@ Known simplifications (documented, deliberate):
   - animal revenue model: care-enabled output rates (latest engine rules)
 """
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List, Tuple, Set
+from typing import Optional, Dict, Any, List, Tuple, Set, Union
 
 from config import (
     ANIMAL_CARE_CUTOFF_DAY,
@@ -490,7 +490,7 @@ def compute_authoritative_feed_capacity(farm, private, day, season_end=28, curre
     }
 
 
-def compute_unavoidable_feed_shortfall(farm, private, day, n_animals, feed_buffer):
+def compute_unavoidable_feed_shortfall(farm, private, day, n_animals, feed_buffer, wheat_unit_price=None, ctx=None):
     """Compute unavoidable survival feed shortfall for existing animals.
 
     Reuses authoritative feed projections and enforces strict temporal validity:
@@ -499,6 +499,13 @@ def compute_unavoidable_feed_shortfall(farm, private, day, n_animals, feed_buffe
       their arrival day. Future harvests cannot cover near-term hunger.
     Returns (wheat_on_hand, projected_wheat_req, shortfall_units, shortfall_cost).
     """
+    if wheat_unit_price is None:
+        try:
+            from market.price_math import estimate_wheat_buy_price
+            wheat_unit_price = estimate_wheat_buy_price(ctx) if ctx is not None else 25.0
+        except Exception:
+            wheat_unit_price = 25.0
+
     if n_animals <= 0:
         return 0, 0, 0, 0.0
 
@@ -544,7 +551,7 @@ def compute_unavoidable_feed_shortfall(farm, private, day, n_animals, feed_buffe
             max_deficit = deficit
 
     projected_req = n_animals * buffer_days
-    shortfall_cost = float(max_deficit * 25.0)
+    shortfall_cost = float(max_deficit * wheat_unit_price)
     return wheat_on_hand, projected_req, max_deficit, shortfall_cost
 
 
@@ -599,7 +606,8 @@ def evaluate_dynamic_sw_crop_choice(
     boosts: Any,
     committed_counts: Dict[str, int],
     opp_advice: Any = None,
-) -> str:
+    return_ev: bool = False,
+) -> Union[str, Tuple[str, float]]:
     """Select the best crop for a single SW tile using authoritative _crop_score().
 
     Dual valuation of wheat:
@@ -658,6 +666,8 @@ def evaluate_dynamic_sw_crop_choice(
             best_ev = net_ev
             best_crop = crop
 
+    if return_ev:
+        return best_crop, (best_ev if best_ev > -1e8 else 0.0)
     return best_crop
 
 
@@ -1353,7 +1363,7 @@ class MacroPlanner:
                 # Time-aware unavoidable feed shortfall for existing animals
                 feed_buffer = 5 if day <= 5 and n_animals > 0 else FEED_WHEAT_BUFFER_DAYS
                 wheat_on_hand, proj_wheat_req, feed_shortfall_units, feed_shortfall_cost = compute_unavoidable_feed_shortfall(
-                    farm, private, day, n_animals, feed_buffer
+                    farm, private, day, n_animals, feed_buffer, ctx=ctx
                 )
 
                 # v5.11: Compute dynamic land ROI
@@ -1451,8 +1461,13 @@ class MacroPlanner:
 
                 buy_wheat = min(wheat_needed - wheat_have, int(max_wheat_budget // 25))
         wheat_feed_cost = buy_wheat * 25
+        protected_feed_wheat = int(feed_shortfall_units)
+        optional_feed_wheat = max(0, buy_wheat - protected_feed_wheat)
         if "feed_risk" in plan.diagnostics:
             plan.diagnostics["feed_risk"]["macro_buy_wheat_intent"] = int(buy_wheat)
+            plan.diagnostics["feed_risk"]["feed_shortfall_units"] = int(feed_shortfall_units)
+            plan.diagnostics["feed_risk"]["protected_feed_wheat"] = int(protected_feed_wheat)
+            plan.diagnostics["feed_risk"]["optional_feed_wheat"] = int(optional_feed_wheat)
 
         # Discretionary budget: protect land capital if protection active, without double-counting reserve
         discretionary_budget = max(0.0, available_before_seeds - animal_cost)
@@ -1534,7 +1549,7 @@ class MacroPlanner:
 
                         # Authoritative crop evaluation closure (Single Source of Truth)
                         def crop_eval_cb(tile_pos, d):
-                            chosen = evaluate_dynamic_sw_crop_choice(
+                            chosen, ev = evaluate_dynamic_sw_crop_choice(
                                 day=d,
                                 wheat_have=wheat_have,
                                 n_animals=n_animals,
@@ -1542,9 +1557,10 @@ class MacroPlanner:
                                 boosts=boosts,
                                 committed_counts=committed_counts,
                                 opp_advice=opp_advice,
+                                return_ev=True,
                             )
-                            c_cost = CROPS[chosen]["seed"]
-                            return chosen, 100.0, c_cost
+                            c_cost = CROPS[chosen]["seed"] if (chosen and chosen in CROPS) else 10.0
+                            return chosen, ev, c_cost
 
                         worker_pos = {0: tuple(getattr(farm, "farmer", (4, 4)))}
                         if hasattr(farm, "hands"):
@@ -1561,6 +1577,7 @@ class MacroPlanner:
                             safety_margin_fraction=0.15,
                             hour=hour,
                             private=private,
+                            seeds_owned=dict(seeds),
                         )
                         plan.diagnostics["sw_progressive_activation"] = prog_diag
                         plan.diagnostics["sw_tile_rejections"] = prog_diag.get("rejections", {})
@@ -1767,7 +1784,7 @@ class MacroPlanner:
                             continue
                         # v5.11: Use dynamic strawberry cap
                         if forced_crop == "STRAWBERRY":
-                            cap = get_strawberry_cap(day, len(farm.unlocked) >= 2)
+                            cap = get_strawberry_cap(day, "NE" in farm.unlocked)
                         else:
                             cap = CROP_TILE_CAPS.get(forced_crop, 99)
                         if committed_counts.get(forced_crop, 0) >= cap:
@@ -1790,7 +1807,7 @@ class MacroPlanner:
                             continue
                         # v5.11: Use dynamic strawberry cap
                         if crop == "STRAWBERRY":
-                            cap = get_strawberry_cap(day, len(farm.unlocked) >= 2)
+                            cap = get_strawberry_cap(day, "NE" in farm.unlocked)
                         else:
                             cap = CROP_TILE_CAPS.get(crop, 99)
                         if committed_counts.get(crop, 0) >= cap:
@@ -1889,6 +1906,8 @@ class MacroPlanner:
             "buy_seed": buy_seed,
             "buy_animal": buy_animal,
             "buy_wheat": int(buy_wheat),
+            "protected_feed_wheat": int(protected_feed_wheat),
+            "optional_feed_wheat": int(optional_feed_wheat),
             "pending_structures": {"PASTURE": len(reserved_structure_tiles)},
         }
 
@@ -1968,7 +1987,7 @@ class MacroPlanner:
             "land_best_mix": land_roi_info.get("best_mix", {}),
             "n_own_tiles": n_own_tiles,
             # v5.11: Dynamic caps and targets
-            "dynamic_strawberry_cap": get_strawberry_cap(day, "SW" in farm.unlocked),
+            "dynamic_strawberry_cap": get_strawberry_cap(day, "NE" in farm.unlocked),
             "dynamic_sw_seed_targets": expansion_seed_targets(next_quadrant, day, money) if next_quadrant else {},
         })
 

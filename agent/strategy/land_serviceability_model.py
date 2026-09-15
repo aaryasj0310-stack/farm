@@ -938,6 +938,7 @@ def compute_progressive_sw_activation(
     hour: int = 0,
     allow_hypothetical: bool = False,
     private: Any = None,
+    seeds_owned: Optional[Dict[str, int]] = None,
 ) -> Tuple[List[Tuple[int, int]], Dict[str, Any]]:
     """Determine the number of additional SW tiles to activate dynamically.
 
@@ -1064,6 +1065,7 @@ def compute_progressive_sw_activation(
         return [], {
             "eligible_count": len(eligible_tiles),
             "accepted_count": 0,
+            "current_executable_k": 0,
             "existing_active_sw": existing_active_sw,
             "total_active_target": existing_active_sw,
             "surplus_capacity": surplus_capacity,
@@ -1083,6 +1085,7 @@ def compute_progressive_sw_activation(
         return [], {
             "eligible_count": len(eligible_tiles),
             "accepted_count": 0,
+            "current_executable_k": 0,
             "existing_active_sw": existing_active_sw,
             "total_active_target": existing_active_sw,
             "surplus_capacity": surplus_capacity,
@@ -1093,30 +1096,72 @@ def compute_progressive_sw_activation(
             "rejection_counts": rejection_counts,
         }
 
+    # Usable owned seed ledger: initialized from passed working seeds, farm.seeds, or private.seeds
+    if seeds_owned is None:
+        if hasattr(farm, "seeds") and isinstance(farm.seeds, dict):
+            seeds_owned = farm.seeds
+        elif hasattr(farm, "private") and hasattr(farm.private, "seeds") and isinstance(farm.private.seeds, dict):
+            seeds_owned = farm.private.seeds
+        elif private is not None and hasattr(private, "seeds") and isinstance(private.seeds, dict):
+            seeds_owned = private.seeds
+
+    usable_seeds = {k: int(v) for k, v in (seeds_owned or {}).items()}
+
     running_surplus = surplus_capacity
-    from config import SW_SAFETY_RESERVE
-    running_seed_money = max(0.0, float(money) - float(SW_SAFETY_RESERVE))
+    # Money passed is already spendable discretionary cash (do not double-deduct SW_SAFETY_RESERVE)
+    running_seed_money = max(0.0, float(money))
 
     for tile_pos in eligible_tiles:
         # A. Authoritative crop evaluation (Single Source of Truth)
         best_crop = "WHEAT"
-        crop_ev = 100.0
+        crop_ev = 0.0
         seed_cost = 10.0
         if crop_eval_func is not None:
             try:
                 best_crop, crop_ev, seed_cost = crop_eval_func(tile_pos, day)
             except Exception:
                 best_crop = "WHEAT"
-                crop_ev = 100.0
+                crop_ev = 0.0
                 seed_cost = 10.0
+        else:
+            try:
+                from strategy.macro_planner import evaluate_dynamic_sw_crop_choice
+                best_crop, crop_ev = evaluate_dynamic_sw_crop_choice(
+                    day=day,
+                    wheat_have=0,
+                    n_animals=0,
+                    forecast=getattr(farm, "forecast", None),
+                    boosts={},
+                    committed_counts={},
+                    return_ev=True,
+                )
+                seed_cost = CROPS.get(best_crop, {}).get("seed", 10.0) if best_crop else 10.0
+            except Exception:
+                crop_ev = 0.0
+            if crop_ev <= 0 and day <= 25:
+                # Real conservative fallback for wheat on Day <= 25:
+                # 4 units * $25 base price - $10 seed - SW labor penalty (~2 actions * $1 * days_left)
+                days_left = max(1, 30 - day)
+                labor_pen = 2.0 * days_left
+                est_ev = 4.0 * 25.0 - 10.0 - labor_pen
+                if est_ev > 0:
+                    best_crop = "WHEAT"
+                    crop_ev = est_ev
+                    seed_cost = 10.0
 
         if crop_ev <= 0 or best_crop is None:
             rejections[tile_pos] = "NO_POSITIVE_CROP"
             rejection_counts["NO_POSITIVE_CROP"] += 1
             continue
 
-        # B. Treasury check for seed cost
-        if running_seed_money < seed_cost:
+        # B. Treasury check for seed cost, crediting owned seed inventory
+        have_seed = usable_seeds.get(best_crop, 0)
+        if have_seed > 0:
+            cash_for_seed = 0.0
+        else:
+            cash_for_seed = seed_cost
+
+        if running_seed_money < cash_for_seed:
             rejections[tile_pos] = "TREASURY"
             rejection_counts["TREASURY"] += 1
             continue
@@ -1154,11 +1199,15 @@ def compute_progressive_sw_activation(
         # Tile accepted!
         accepted_tiles.append(tile_pos)
         running_surplus -= incremental_demand
-        running_seed_money -= seed_cost
+        if have_seed > 0:
+            usable_seeds[best_crop] = have_seed - 1
+        else:
+            running_seed_money -= cash_for_seed
 
     diag = {
         "eligible_count": len(eligible_tiles),
         "accepted_count": len(accepted_tiles),
+        "current_executable_k": len(accepted_tiles),
         "existing_active_sw": existing_active_sw,
         "total_active_target": existing_active_sw + len(accepted_tiles),
         "surplus_capacity": surplus_capacity,

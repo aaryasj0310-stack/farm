@@ -145,12 +145,15 @@ def _estimate_crop_revenue_per_tile(crop, plant_day, current_day,
         return total_net, total_units
 
 
-def _allocate_portfolio_profit(n_tiles, current_day, forecast, is_sw_available=False):
-    """Heuristically allocate up to n_tiles among eligible crops to maximize profit.
+def _allocate_portfolio_profit(n_tiles, current_day, forecast, strawberry_eligible=False, is_sw_available=None):
+    """Greedy portfolio profit allocation for a set of tiles.
 
     Returns (total_expected_profit, allocation_dict).
     Respects CROP_TILE_CAPS and dynamic strawberry caps.
     """
+    if is_sw_available is not None:
+        strawberry_eligible = is_sw_available
+
     if n_tiles <= 0 or current_day > 25:
         return 0.0, {}
 
@@ -164,7 +167,7 @@ def _allocate_portfolio_profit(n_tiles, current_day, forecast, is_sw_available=F
             continue
 
         if crop == "STRAWBERRY":
-            cap = get_strawberry_cap(current_day, is_sw_available)
+            cap = get_strawberry_cap(current_day, strawberry_eligible=strawberry_eligible)
         else:
             cap = CROP_TILE_CAPS.get(crop, 99)
 
@@ -196,8 +199,8 @@ def _candidate_crop_mix_for_quadrant(next_quadrant, current_day, forecast,
 
     Returns list of (mix_dict, avg_revenue_per_tile, total_revenue).
     """
-    is_sw = (next_quadrant == 3)
-    profit, mix = _allocate_portfolio_profit(n_tiles, current_day, forecast, is_sw_available=is_sw)
+    strawberry_eligible = (next_quadrant in (2, 3))
+    profit, mix = _allocate_portfolio_profit(n_tiles, current_day, forecast, strawberry_eligible=strawberry_eligible)
     if not mix or profit <= 0:
         return []
     avg_rev = profit / max(1, sum(mix.values()))
@@ -253,6 +256,25 @@ def evaluate_sw_timing(current_day, forecast, n_tiles=TILES_PER_QUADRANT):
     return buy_today_val, wait_1_day_val, delay_val, details
 
 
+def get_effective_quadrant_unlock_day(next_quadrant: int) -> int:
+    """Return the authoritative unlock day for a quadrant."""
+    if next_quadrant not in QUADRANT_UNLOCK_DAYS:
+        return 999
+    unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
+    if next_quadrant == 3:
+        try:
+            from config import SW_OWNERSHIP_MODE, SW_DELAYED_UNLOCK_DAY
+            if SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic"):
+                unlock_day = 7
+            else:
+                unlock_day = 9
+            if SW_DELAYED_UNLOCK_DAY is not None:
+                unlock_day = max(unlock_day, SW_DELAYED_UNLOCK_DAY)
+        except Exception:
+            unlock_day = 9
+    return unlock_day
+
+
 def compute_land_roi(next_quadrant, current_day, money, farm, forecast,
                      n_own_tiles=0, n_opp_tiles=0):
     """Estimate marginal expected profit and ROI of buying the next quadrant today.
@@ -275,14 +297,7 @@ def compute_land_roi(next_quadrant, current_day, money, farm, forecast,
     if next_quadrant in _qhb:
         return 0.0, {"reason": "hard_blocked"}
 
-    unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
-    if next_quadrant == 3:
-        try:
-            from config import SW_DELAYED_UNLOCK_DAY
-            if SW_DELAYED_UNLOCK_DAY is not None:
-                unlock_day = max(unlock_day, SW_DELAYED_UNLOCK_DAY)
-        except Exception:
-            pass
+    unlock_day = get_effective_quadrant_unlock_day(next_quadrant)
     if current_day < unlock_day:
         return 0.0, {"reason": f"before_unlock_{unlock_day}"}
 
@@ -308,15 +323,15 @@ def compute_land_roi(next_quadrant, current_day, money, farm, forecast,
     t_without = max(0, total_curr_tiles - occupied)
     t_with = t_without + TILES_PER_QUADRANT
 
-    # Evaluate profit without new land
-    is_sw_curr = ("SW" in farm.unlocked)
+    # Evaluate profit without new land — strawberry requires NE ownership
+    strawberry_eligible_without = ("NE" in farm.unlocked)
     profit_without, mix_without = _allocate_portfolio_profit(
-        t_without, current_day, forecast, is_sw_available=is_sw_curr)
+        t_without, current_day, forecast, strawberry_eligible=strawberry_eligible_without)
 
     # Evaluate profit with new land
-    is_sw_with = is_sw_curr or (next_quadrant == 3)
+    strawberry_eligible_with = strawberry_eligible_without or (next_quadrant == 2)
     profit_with, mix_with = _allocate_portfolio_profit(
-        t_with, current_day, forecast, is_sw_available=is_sw_with)
+        t_with, current_day, forecast, strawberry_eligible=strawberry_eligible_with)
 
     # Incremental profit caused specifically by the additional 25 tiles
     marginal_revenue_gain = max(0.0, profit_with - profit_without)
@@ -520,16 +535,7 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         SW_SAFETY_RESERVE = 300.0
         STRATEGIC_SW_OWNERSHIP_ENABLED = False
 
-    unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
-    if next_quadrant == 3:
-        if SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic") or STRATEGIC_SW_OWNERSHIP_ENABLED:
-            unlock_day = 7
-        try:
-            from config import SW_DELAYED_UNLOCK_DAY
-            if SW_DELAYED_UNLOCK_DAY is not None:
-                unlock_day = max(unlock_day, SW_DELAYED_UNLOCK_DAY)
-        except Exception:
-            pass
+    unlock_day = get_effective_quadrant_unlock_day(next_quadrant)
 
     n_extra = len(farm.unlocked) - 1
     if n_extra >= len(LAND_PRICES):
@@ -648,6 +654,7 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         "adjusted_roi": round(adjusted_roi, 4),
         "labor_serviceability_result": bool(labor_adequate),
         "best_k_tiles": best_k,
+        "purchase_time_best_k": best_k,
         "best_k_serviceable": sw_serv_diag.get("best_k_serviceable", best_k if next_quadrant == 3 else 25),
         "serviceability_fraction": sw_serv_diag.get("serviceability_fraction", 1.0),
         "candidate_sw_workload": sw_serv_diag.get("candidate_sw_workload", 0.0),

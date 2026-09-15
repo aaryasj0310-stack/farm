@@ -316,6 +316,7 @@ class CentralPlanner:
         if op == "BUY_PRODUCT":
             prod = order_copy[1] if len(order_copy) > 1 else ""
             if prod == "WHEAT":
+                qty = int(order_copy[2]) if len(order_copy) > 2 else 0
                 n_animals = self._get_existing_animals_count(ctx)
                 wheat_have = self._get_wheat_in_shed(ctx)
 
@@ -328,6 +329,17 @@ class CentralPlanner:
                 if macro_plan and hasattr(macro_plan, "intents") and isinstance(macro_plan.intents, dict):
                     macro_buy_wheat_intent = int(macro_plan.intents.get("buy_wheat", 0))
 
+                # Identify if this proposal is specifically for optional feed buffer
+                is_optional_buffer = False
+                if isinstance(purchase_ledger, dict):
+                    w_opt = int(purchase_ledger.get("w_opt_buyable", 0))
+                    w_prot = int(purchase_ledger.get("w_protected_buyable", 0))
+                    if w_opt > 0 and qty == w_opt and (idx > 0 or w_prot > 0):
+                        if w_opt == w_prot:
+                            is_optional_buffer = (idx > 0)
+                        else:
+                            is_optional_buffer = True
+
                 immediate_shortage = feed_risk.get("immediate_shortage")
                 if immediate_shortage is None:
                     immediate_shortage = (n_animals > 0 and wheat_have < n_animals)
@@ -337,18 +349,23 @@ class CentralPlanner:
                     feed_days_covered = (wheat_have // n_animals) if n_animals > 0 else 999
                     near_term_shortage = (n_animals > 0 and not immediate_shortage and feed_days_covered < 2)
 
-                if immediate_shortage:
-                    prio = P0_CRITICAL
-                    urg = 2.0
-                    reason = "immediate_starvation_risk"
-                elif near_term_shortage:
-                    prio = P1_URGENT
-                    urg = 1.0
-                    reason = "near_term_feed_danger"
-                else:
+                if is_optional_buffer:
                     prio = P2_STRATEGIC
                     urg = 0.5
-                    reason = "routine_feed_buffer" if macro_buy_wheat_intent > 0 else "routine_wheat_purchase"
+                    reason = "routine_feed_buffer"
+                else:
+                    if immediate_shortage:
+                        prio = P0_CRITICAL
+                        urg = 2.0
+                        reason = "immediate_starvation_risk"
+                    elif near_term_shortage:
+                        prio = P1_URGENT
+                        urg = 1.0
+                        reason = "near_term_feed_danger"
+                    else:
+                        prio = P2_STRATEGIC
+                        urg = 0.5
+                        reason = "routine_feed_buffer" if macro_buy_wheat_intent > 0 else "routine_wheat_purchase"
 
                 projected_supply = feed_risk.get(
                     "projected_wheat_supply",
@@ -739,13 +756,33 @@ class CentralPlanner:
         """
         purchases = [list(o) for o in (purchase_orders or [])]
         sells = [list(o) for o in (sell_orders or [])]
+
+        # Semantic splitting: If a single combined wheat order arrives while protected feed is strictly less than order qty,
+        # split into protected and optional proposals so optional buffer is never promoted to P0/P1.
+        w_prot = 0
+        if isinstance(purchase_ledger, dict):
+            w_prot = int(purchase_ledger.get("w_protected_buyable", 0))
+        if w_prot == 0 and macro_plan and hasattr(macro_plan, "diagnostics") and isinstance(macro_plan.diagnostics, dict):
+            w_prot = int(macro_plan.diagnostics.get("feed_risk", {}).get("protected_feed_wheat", 0))
+
+        if w_prot > 0:
+            wheat_orders = [o for o in purchases if isinstance(o, (list, tuple)) and len(o) >= 3 and o[0] == "BUY_PRODUCT" and o[1] == "WHEAT"]
+            if len(wheat_orders) == 1 and wheat_orders[0][2] > w_prot:
+                idx = purchases.index(wheat_orders[0])
+                total_n = wheat_orders[0][2]
+                purchases[idx] = ["BUY_PRODUCT", "WHEAT", w_prot]
+                purchases.insert(idx + 1, ["BUY_PRODUCT", "WHEAT", total_n - w_prot])
+                if isinstance(purchase_ledger, dict):
+                    purchase_ledger = dict(purchase_ledger)
+                    purchase_ledger["w_protected_buyable"] = w_prot
+                    purchase_ledger["w_opt_buyable"] = total_n - w_prot
         hour = self._get_hour(ctx)
         day = self._get_day(ctx)
         effective_cap = max(0, cap)
         purchases_first = (hour in (0, 1))
 
         try:
-            return self._plan_market_core(
+            final_orders, diag = self._plan_market_core(
                 ctx=ctx,
                 macro_plan=macro_plan,
                 purchases=purchases,
@@ -758,6 +795,21 @@ class CentralPlanner:
                 day=day,
                 purchases_first=purchases_first,
             )
+            # Post-arbitration consolidation: consolidate multiple accepted wheat buy orders into one
+            wheat_buys = [o for o in final_orders if isinstance(o, (list, tuple)) and len(o) >= 3 and o[0] == "BUY_PRODUCT" and o[1] == "WHEAT"]
+            if len(wheat_buys) > 1:
+                total_wheat = sum(int(o[2]) for o in wheat_buys)
+                consolidated = []
+                replaced = False
+                for o in final_orders:
+                    if isinstance(o, (list, tuple)) and len(o) >= 3 and o[0] == "BUY_PRODUCT" and o[1] == "WHEAT":
+                        if not replaced:
+                            consolidated.append(["BUY_PRODUCT", "WHEAT", total_wheat])
+                            replaced = True
+                    else:
+                        consolidated.append(o)
+                final_orders = consolidated
+            return final_orders, diag
         except Exception as exc:
             # Resilient fallback: ensure turn never default-fails on unexpected error
             fallback_orders = legacy_compose_market(purchases, sells, ctx, cap=effective_cap)
