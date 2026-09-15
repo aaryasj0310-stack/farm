@@ -22,6 +22,7 @@ Verifies:
 
 import copy
 import json
+import math
 import os
 import subprocess
 import sys
@@ -1376,4 +1377,208 @@ def test_phase_b_dynamic_herd_plan_capital_insensitivity():
 
     # Both plans should project the exact same herd size
     assert plan1.desired_herd == plan2.desired_herd
+
+
+# ===========================================================================
+# Phase B Repair Tests (P1 & Hardening items)
+# ===========================================================================
+
+def test_phase_b_repair_macro_placed_vs_unplaced_semantics():
+    """P1: Preserve placed vs owned-unplaced herd semantics in Macro planning ledger.
+    - 1 placed cow + 1 shed cow: placed=1, unplaced=1, unfed_today=1.
+    - 1 placed cow + 1 worker cow: placed=1, unplaced=1, unfed_today=1.
+    Unplaced animals must not create current-day feed obligations.
+    """
+    # Case A: 1 placed COW, 1 shed COW
+    ctx_shed = make_mock_farm_ctx(day=10, hour=0, money=1000.0, placed_animals=["COW"], shed_animals={"COW": 1})
+    ledger_shed = build_feed_resource_ledger(ctx_shed)
+    assert ledger_shed.placed_herd["COW"] == 1
+    assert ledger_shed.owned_unplaced_herd["COW"] == 1
+    assert ledger_shed.total_placed_animals == 1
+    assert ledger_shed.total_owned_unplaced_animals == 1
+    assert ledger_shed.total_owned_animals == 2
+    assert ledger_shed.unfed_placed_today == 1
+
+    # Case B: 1 placed COW, 1 worker COW
+    ctx_worker = make_mock_farm_ctx(day=10, hour=0, money=1000.0, placed_animals=["COW"], worker_animals=["COW"])
+    ledger_worker = build_feed_resource_ledger(ctx_worker)
+    assert ledger_worker.placed_herd["COW"] == 1
+    assert ledger_worker.owned_unplaced_herd["COW"] == 1
+    assert ledger_worker.total_placed_animals == 1
+    assert ledger_worker.total_owned_unplaced_animals == 1
+    assert ledger_worker.total_owned_animals == 2
+    assert ledger_worker.unfed_placed_today == 1
+
+
+def test_phase_b_repair_ledger_fail_closed_in_herd_plan_and_live(monkeypatch):
+    """P1: Never silently fall back to legacy scalar authority in herd_plan / live.
+    When build_feed_resource_ledger fails or returns None, or generate_dynamic_herd_plan fails:
+    FAIL CLOSED immediately:
+      dynamic_targets = current owned herd
+      needed_new_pastures = 0
+      final_feed_capped_herd_size = sum(current_owned_herd)
+      feed_authority = 'ledger_error_fail_closed'
+    """
+    import config
+    import strategy.macro_planner as mp_module
+
+    ctx = make_mock_farm_ctx(day=6, hour=0, money=5000.0, shed_wheat=20, placed_animals=["COW"])
+
+    for mode in ("herd_plan", "live"):
+        monkeypatch.setattr(config, "POINT2_FEED_MODE", mode)
+        reset_memory()
+
+        # 1. build_feed_resource_ledger raises RuntimeError
+        def mock_failing_build(*args, **kwargs):
+            raise RuntimeError("Simulated ledger build failure")
+
+        monkeypatch.setattr(mp_module, "build_feed_resource_ledger", mock_failing_build)
+
+        planner = MacroPlanner(DummyFC())
+        plan = planner.build(ctx)
+
+        authority_diag = plan.diagnostics.get("point2_feed_authority", {})
+        assert authority_diag.get("mode") == mode
+        assert authority_diag.get("feed_authority") == "ledger_error_fail_closed"
+        assert authority_diag.get("error_type") == "RuntimeError"
+        assert "Simulated ledger build failure" in authority_diag.get("error_message", "")
+
+        pasture_diag = plan.diagnostics.get("pasture_diagnostics", {})
+        assert pasture_diag.get("pastures_needed_now") == 0
+        assert pasture_diag.get("desired_target_herd") == 1  # 1 cow owned, zero expansion
+        assert len(plan.build_queue) == 0
+
+        # 2. build_feed_resource_ledger returns None
+        def mock_none_build(*args, **kwargs):
+            return None
+
+        monkeypatch.setattr(mp_module, "build_feed_resource_ledger", mock_none_build)
+
+        planner = MacroPlanner(DummyFC())
+        plan = planner.build(ctx)
+        authority_diag = plan.diagnostics.get("point2_feed_authority", {})
+        assert authority_diag.get("feed_authority") == "ledger_error_fail_closed"
+        assert authority_diag.get("error_type") == "RuntimeError"
+
+        # 3. generate_dynamic_herd_plan raises error
+        monkeypatch.setattr(mp_module, "build_feed_resource_ledger", build_feed_resource_ledger)
+
+        def mock_failing_herd_plan(*args, **kwargs):
+            raise ValueError("Simulated herd planner failure")
+
+        import strategy.herd_planner as hp_module
+        monkeypatch.setattr(hp_module, "generate_dynamic_herd_plan", mock_failing_herd_plan)
+
+        planner = MacroPlanner(DummyFC())
+        plan = planner.build(ctx)
+        authority_diag = plan.diagnostics.get("point2_feed_authority", {})
+        assert authority_diag.get("feed_authority") == "ledger_error_fail_closed"
+        assert authority_diag.get("error_type") == "ValueError"
+        assert plan.diagnostics["pasture_diagnostics"]["desired_target_herd"] == 1
+
+
+def test_phase_b_repair_wheat_buy_price_buffer_config(monkeypatch):
+    """Hardening #3: Replace hardcoded 1.10 with WHEAT_BUY_PRICE_BUFFER."""
+    import strategy.feed_feasibility as ff_module
+
+    monkeypatch.setattr(ff_module, "WHEAT_BUY_PRICE_BUFFER", 1.25)
+    stress_price, diag = compute_engine_stress_wheat_price(
+        current_market_wheat_inventory=1000.0,
+        worst_case_town_drain=100,
+        our_committed_future_market_feed_requirement=20,
+        opponent_feed_liability=0,
+        executable_buffered_price=28.0,
+    )
+    expected_buffered = float(math.ceil(diag["stress_raw_price"] * 1.25))
+    assert diag["stress_buffered_price"] == expected_buffered
+
+
+def test_phase_b_repair_stress_telemetry_synchronization():
+    """Hardening #4: Synchronize full stress telemetry after candidate commit.
+    In commit_candidate_reservation(), update stressed_wheat_inventory, stress_raw_price,
+    stress_buffered_price, and lifetime_wheat_price from result.diagnostics['stress_diagnostics'].
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=10000.0, shed_wheat=0, placed_animals=["COW"])
+    ledger = build_feed_resource_ledger(
+        ctx,
+        lifetime_price_policy="engine_stress_bound_v1",
+        market_inventory={"WHEAT": 5000.0},
+    )
+    ok, res_init = evaluate_existing_herd_feasibility(ledger)
+    assert ok is True
+
+    res1 = evaluate_incremental_candidate(ledger, "COW")
+    assert res1.feasible is True
+    commit_candidate_reservation(ledger, res1)
+
+    s_diag1 = res1.diagnostics["stress_diagnostics"]
+    assert ledger.stressed_wheat_inventory == s_diag1["stressed_wheat_inventory"]
+    assert ledger.stress_raw_price == s_diag1["stress_raw_price"]
+    assert ledger.stress_buffered_price == s_diag1["stress_buffered_price"]
+    assert ledger.lifetime_wheat_price == s_diag1["lifetime_wheat_price"]
+
+    # Candidate 2: SHEEP
+    res2 = evaluate_incremental_candidate(ledger, "SHEEP")
+    assert res2.feasible is True
+    commit_candidate_reservation(ledger, res2)
+
+    s_diag2 = res2.diagnostics["stress_diagnostics"]
+    assert ledger.stressed_wheat_inventory == s_diag2["stressed_wheat_inventory"]
+    assert ledger.stress_raw_price == s_diag2["stress_raw_price"]
+    assert ledger.stress_buffered_price == s_diag2["stress_buffered_price"]
+    assert ledger.lifetime_wheat_price == s_diag2["lifetime_wheat_price"]
+
+    # Stress inventory decreases and stress prices increase monotonically with commitments
+    assert s_diag2["stressed_wheat_inventory"] <= s_diag1["stressed_wheat_inventory"]
+    assert s_diag2["stress_raw_price"] >= s_diag1["stress_raw_price"]
+    assert s_diag2["stress_buffered_price"] >= s_diag1["stress_buffered_price"]
+
+
+def test_phase_b_repair_direct_max_sustainable_authority_regression():
+    """Hardening #5: Direct max_sustainable authority regression.
+    feed_ledger=None obeys scalar cap, while feed_ledger provided bypasses scalar cap.
+    """
+    # 1. feed_ledger=None: obeys max_sustainable=5
+    plan_none = generate_dynamic_herd_plan(
+        day=10,
+        hour=0,
+        current_herd={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+        max_sustainable=5,
+        feed_ledger=None,
+    )
+    assert sum(plan_none.desired_herd.values()) <= 5
+
+    # 2. feed_ledger provided: abundant physical wheat / cash bypasses max_sustainable=5
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=15000.0, shed_wheat=60, placed_animals=[])
+    ledger = build_feed_resource_ledger(ctx, lifetime_price_policy="engine_stress_bound_v1")
+    plan_ledger = generate_dynamic_herd_plan(
+        day=10,
+        hour=0,
+        current_herd={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+        max_sustainable=5,
+        feed_ledger=ledger,
+    )
+    # With 60 wheat in shed, herd planner expands beyond 5 (up to species/market cap)
+    assert sum(plan_ledger.desired_herd.values()) > 5
+
+
+def test_phase_b_repair_exact_planning_budget_mapping():
+    """Hardening #6: Verify exact planning budget mapping.
+    planning_nonanimal_hold = max(0.0, farm_money - cash_for_animals),
+    verify observed_cash - planning_nonanimal_hold == cash_for_animals.
+    """
+    farm_money = 5000.0
+    cash_for_animals = 1200.0
+    planning_nonanimal_hold = max(0.0, farm_money - float(cash_for_animals))
+    assert farm_money - planning_nonanimal_hold == cash_for_animals
+
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=farm_money, shed_wheat=10, placed_animals=[])
+    ledger = build_feed_resource_ledger(
+        ctx,
+        hard_cash_hold=planning_nonanimal_hold,
+        lifetime_price_policy="engine_stress_bound_v1",
+    )
+    assert ledger.observed_cash == farm_money
+    assert ledger.hard_cash_hold == planning_nonanimal_hold
+    assert ledger.available_cash_for_candidates == cash_for_animals
 

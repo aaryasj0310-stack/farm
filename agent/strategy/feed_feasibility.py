@@ -47,6 +47,7 @@ try:
         FEED_WHEAT_BUFFER_DAYS,
         SEASON_DAYS,
         SHED_CAPACITY,
+        WHEAT_BUY_PRICE_BUFFER,
         get_point2_feed_mode,
     )
 except ImportError:
@@ -61,6 +62,7 @@ except ImportError:
     FEED_WHEAT_BUFFER_DAYS = 4
     SEASON_DAYS = 30
     SHED_CAPACITY = 100
+    WHEAT_BUY_PRICE_BUFFER = 1.10
 
     def get_point2_feed_mode() -> str:
         return "shadow"
@@ -215,7 +217,7 @@ def compute_engine_stress_wheat_price(
         - float(opponent_allowance)
     )
     stress_raw_price = market_price("WHEAT", stressed_wheat_inventory)
-    stress_buffered_price = float(math.ceil(stress_raw_price * 1.10))
+    stress_buffered_price = float(math.ceil(stress_raw_price * WHEAT_BUY_PRICE_BUFFER))
     lifetime_wheat_price = max(float(executable_buffered_price), stress_buffered_price)
 
     diagnostics = {
@@ -1395,7 +1397,13 @@ def commit_candidate_reservation(
     else:
         ledger.candidate_feed_cash_hold += float(result.candidate_feed_cash_hold)
 
-    if "new_stress_price" in diag:
+    if "stress_diagnostics" in diag and diag["stress_diagnostics"]:
+        s_diag = diag["stress_diagnostics"]
+        ledger.stressed_wheat_inventory = float(s_diag.get("stressed_wheat_inventory", ledger.stressed_wheat_inventory))
+        ledger.stress_raw_price = float(s_diag.get("stress_raw_price", ledger.stress_raw_price))
+        ledger.stress_buffered_price = float(s_diag.get("stress_buffered_price", ledger.stress_buffered_price))
+        ledger.lifetime_wheat_price = float(s_diag.get("lifetime_wheat_price", ledger.lifetime_wheat_price))
+    elif "new_stress_price" in diag:
         ledger.lifetime_wheat_price = float(diag["new_stress_price"])
 
     ledger.candidate_purchase_cash_spent += float(purchase_cost)
