@@ -66,13 +66,16 @@ except ImportError:
         return "shadow"
 
 try:
-    from market.price_math import estimate_wheat_buy_price
+    from market.price_math import estimate_wheat_buy_price, market_price
 except ImportError:
     try:
-        from price_math import estimate_wheat_buy_price
+        from price_math import estimate_wheat_buy_price, market_price
     except ImportError:
         def estimate_wheat_buy_price(market_or_ctx=None, default_price=25.0) -> float:
             return float(math.ceil(default_price * 1.1))
+
+        def market_price(item: str, inventory: float) -> float:
+            return 25.0
 
 
 # ============================================================================
@@ -104,6 +107,131 @@ class FeedExecutionSnapshot:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+WHEAT_CONSUMING_SHOPS = {
+    "BAKERY",
+    "PIZZA_SHOP",
+    "BRUNCH_SPOT",
+    "ICE_CREAM_SHOP",
+    "FARMERS_MARKET",
+}
+
+
+def compute_worst_case_remaining_town_wheat_drain(
+    day: int,
+    hour: int,
+    active_shops: Optional[List[str]] = None,
+) -> int:
+    """Project engine-exact worst-case town WHEAT consumption for remaining season.
+
+    Engine rules:
+      - Active shops consume WHEAT every 4 steps (step % 4 == 0).
+      - Town center consumes 1 WHEAT every 24 steps (step % 24 == 0).
+      - Shop unlock occurs at end of day: (s + 1) % 24 == 0, if ((s // 24) + 1) % 3 == 0,
+        up to 8 total unlock events across the season.
+      - If active_shops is passed: known wheat-consuming shops are used; future unlocks
+        are pessimistically assumed to be wheat-consuming shops.
+      - If active_shops is None: unlocks up to current day are assumed to have been wheat shops,
+        ensuring monotonic non-increasing drain across all 720 steps.
+    """
+    current_step = day * 24 + hour
+    if current_step >= 720:
+        return 0
+
+    if active_shops is not None:
+        known_wheat_shops = sum(1 for s in active_shops if s in WHEAT_CONSUMING_SHOPS)
+        total_unlocked = len(active_shops)
+    else:
+        total_unlocked = min(8, day // 3)
+        known_wheat_shops = total_unlocked
+
+    active_wheat_shops = known_wheat_shops
+    total_drain = 0
+
+    for s in range(current_step, 720):
+        if s % 4 == 0:
+            total_drain += active_wheat_shops
+        if s % 24 == 0:
+            total_drain += 1
+        if (s + 1) % 24 == 0:
+            d = s // 24
+            if (d + 1) % 3 == 0 and total_unlocked < 8:
+                total_unlocked += 1
+                active_wheat_shops += 1
+
+    return total_drain
+
+
+def compute_observed_opponent_feed_liability(
+    opponent_farm: Any,
+    day: int,
+) -> int:
+    """Calculate remaining lifetime feeding liability of observed opponent animals.
+
+    Placed animals on the opponent's farm consume 1 wheat per day through Day 28.
+    """
+    placed_count = 0
+    if opponent_farm is not None:
+        if hasattr(opponent_farm, "iter_tiles"):
+            for t in opponent_farm.iter_tiles():
+                if t is not None and getattr(t, "is_animal", False):
+                    placed_count += 1
+        elif isinstance(opponent_farm, dict) and "tiles" in opponent_farm:
+            tiles = opponent_farm.get("tiles")
+            if isinstance(tiles, list):
+                for row_or_tile in tiles:
+                    if isinstance(row_or_tile, list):
+                        for t in row_or_tile:
+                            if isinstance(t, dict) and (t.get("is_animal") or t.get("kind") in ("COW", "SHEEP", "GOOSE")):
+                                placed_count += 1
+                    elif isinstance(row_or_tile, dict) and (row_or_tile.get("is_animal") or row_or_tile.get("kind") in ("COW", "SHEEP", "GOOSE")):
+                        placed_count += 1
+        elif hasattr(opponent_farm, "animals"):
+            placed_count = len(opponent_farm.animals)
+        elif isinstance(opponent_farm, dict) and "animals" in opponent_farm:
+            placed_count = len(opponent_farm["animals"])
+
+    remaining_feed_days = max(0, 29 - day)
+    return placed_count * remaining_feed_days
+
+
+def compute_engine_stress_wheat_price(
+    current_market_wheat_inventory: float,
+    worst_case_town_drain: int,
+    our_committed_future_market_feed_requirement: int,
+    opponent_feed_liability: int,
+    executable_buffered_price: float,
+) -> Tuple[float, Dict[str, Any]]:
+    """Derive lifetime stress wheat price under engine_stress_bound_v1.
+
+    No lower clamp on stressed_wheat_inventory (negative inventory produces valid scarcity pricing).
+    """
+    opponent_allowance = max(opponent_feed_liability, our_committed_future_market_feed_requirement)
+    stressed_wheat_inventory = (
+        float(current_market_wheat_inventory)
+        - float(worst_case_town_drain)
+        - float(our_committed_future_market_feed_requirement)
+        - float(opponent_allowance)
+    )
+    stress_raw_price = market_price("WHEAT", stressed_wheat_inventory)
+    stress_buffered_price = float(math.ceil(stress_raw_price * 1.10))
+    lifetime_wheat_price = max(float(executable_buffered_price), stress_buffered_price)
+
+    diagnostics = {
+        "current_market_wheat_inventory": float(current_market_wheat_inventory),
+        "worst_case_town_drain": int(worst_case_town_drain),
+        "our_committed_future_market_feed_requirement": int(our_committed_future_market_feed_requirement),
+        "opponent_feed_liability": int(opponent_feed_liability),
+        "opponent_allowance": int(opponent_allowance),
+        "stressed_wheat_inventory": float(stressed_wheat_inventory),
+        "stress_raw_price": float(stress_raw_price),
+        "stress_buffered_price": float(stress_buffered_price),
+        "executable_buffered_price": float(executable_buffered_price),
+        "lifetime_wheat_price": float(lifetime_wheat_price),
+        "policy": "engine_stress_bound_v1",
+    }
+    return lifetime_wheat_price, diagnostics
 
 
 @dataclass
@@ -143,6 +271,14 @@ class FeedResourceLedger:
     lifetime_price_policy: str = "conditional_current_buffered_price"
     unplaced_timing_assumption: str = "future_funding_liability_not_eating_today"
 
+    wheat_market_inventory: float = 10000.0
+    town_wheat_drain: int = 0
+    opponent_feed_liability: int = 0
+    lifetime_wheat_price: float = 28.0
+    stressed_wheat_inventory: float = 10000.0
+    stress_raw_price: float = 25.0
+    stress_buffered_price: float = 28.0
+
     def clone(self) -> "FeedResourceLedger":
         """Produce an independent deep copy of this ledger."""
         return FeedResourceLedger(
@@ -170,6 +306,13 @@ class FeedResourceLedger:
             wheat_price_current=self.wheat_price_current,
             lifetime_price_policy=self.lifetime_price_policy,
             unplaced_timing_assumption=self.unplaced_timing_assumption,
+            wheat_market_inventory=self.wheat_market_inventory,
+            town_wheat_drain=self.town_wheat_drain,
+            opponent_feed_liability=self.opponent_feed_liability,
+            lifetime_wheat_price=self.lifetime_wheat_price,
+            stressed_wheat_inventory=self.stressed_wheat_inventory,
+            stress_raw_price=self.stress_raw_price,
+            stress_buffered_price=self.stress_buffered_price,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -197,6 +340,13 @@ class FeedResourceLedger:
             "lifetime_price_policy": self.lifetime_price_policy,
             "candidate_reservations_count": len(self.candidate_reservations),
             "scheduled_market_purchases_count": len(self.scheduled_market_purchases),
+            "wheat_market_inventory": self.wheat_market_inventory,
+            "town_wheat_drain": self.town_wheat_drain,
+            "opponent_feed_liability": self.opponent_feed_liability,
+            "lifetime_wheat_price": self.lifetime_wheat_price,
+            "stressed_wheat_inventory": self.stressed_wheat_inventory,
+            "stress_raw_price": self.stress_raw_price,
+            "stress_buffered_price": self.stress_buffered_price,
         }
 
     @property
@@ -438,6 +588,10 @@ def build_feed_resource_ledger(
     strategic_cash_hold: float = 0.0,
     execution_snapshot: Optional[FeedExecutionSnapshot] = None,
     horizon_days: int = FEED_OPERATIONAL_HORIZON_DAYS,
+    lifetime_price_policy: str = "conditional_current_buffered_price",
+    market_inventory: Optional[Dict[str, float]] = None,
+    town_shops: Optional[List[str]] = None,
+    opponent_farm: Any = None,
 ) -> FeedResourceLedger:
     """Constructs the initial FeedResourceLedger from observation state.
 
@@ -530,6 +684,30 @@ def build_feed_resource_ledger(
                 if isinstance(inv, dict):
                     owned_unplaced_herd[a] += int(inv.get(a, 0))
 
+    if market_inventory is None and ctx is not None:
+        m = ctx.get("market") if isinstance(ctx, dict) else getattr(ctx, "market", None)
+        if m is not None:
+            if isinstance(m, dict):
+                market_inventory = m.get("inventory")
+            elif hasattr(m, "inventory"):
+                market_inventory = m.inventory
+
+    if town_shops is None and ctx is not None:
+        if isinstance(ctx, dict):
+            town_shops = ctx.get("town_shops")
+        else:
+            town_shops = getattr(ctx, "town_shops", None)
+
+    if opponent_farm is None and ctx is not None:
+        if isinstance(ctx, dict):
+            opponent_farm = ctx.get("opponent_farm")
+        else:
+            opponent_farm = getattr(ctx, "opponent_farm", None)
+
+    wheat_market_inv = float(market_inventory.get("WHEAT", 10000.0)) if market_inventory else 10000.0
+    town_drain = compute_worst_case_remaining_town_wheat_drain(day, hour, town_shops)
+    opp_liability = compute_observed_opponent_feed_liability(opponent_farm, day)
+
     operational_end_day = min(SEASON_DAYS - 1, day + horizon_days - 1)
     secured_deliveries = collect_secured_wheat_deliveries(farm, day, operational_end_day)
 
@@ -558,8 +736,15 @@ def build_feed_resource_ledger(
         candidate_reservations=[],
         execution_snapshot=execution_snapshot,
         wheat_price_current=wheat_price,
-        lifetime_price_policy="conditional_current_buffered_price",
+        lifetime_price_policy=lifetime_price_policy,
         unplaced_timing_assumption="future_funding_liability_not_eating_today",
+        wheat_market_inventory=wheat_market_inv,
+        town_wheat_drain=town_drain,
+        opponent_feed_liability=opp_liability,
+        lifetime_wheat_price=wheat_price,
+        stressed_wheat_inventory=wheat_market_inv,
+        stress_raw_price=25.0,
+        stress_buffered_price=wheat_price,
     )
 
 
@@ -632,6 +817,8 @@ def evaluate_existing_herd_feasibility(
 
     existing_scheduled_by_day: Dict[int, int] = {}
     for buy in ledger.scheduled_market_purchases:
+        if str(buy.get("purpose", "")).startswith("candidate_"):
+            continue
         b_day = buy.get("day")
         if b_day is not None:
             existing_scheduled_by_day[b_day] = existing_scheduled_by_day.get(b_day, 0) + int(buy.get("units", 0))
@@ -725,6 +912,7 @@ def evaluate_existing_herd_feasibility(
             minimum_cash_slack=current_cash,
             scheduled_market_purchases=scheduled_buys,
             daily_timeline=daily_timeline,
+            price_policy=ledger.lifetime_price_policy,
             execution_confidence=exec_conf,
         )
         return False, res
@@ -733,13 +921,31 @@ def evaluate_existing_herd_feasibility(
     remaining_feeding_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
 
     placed_lifetime_units = n_placed * remaining_feeding_days_beyond
-    placed_lifetime_cost = float(placed_lifetime_units * ledger.wheat_price_current)
-
     total_feeding_days_from_today = max(0, ANIMAL_FEED_CUTOFF_DAY - day)
     unplaced_lifetime_units = n_unplaced * total_feeding_days_from_today
-    unplaced_lifetime_cost = float(unplaced_lifetime_units * ledger.wheat_price_current)
-
     total_remaining_lifetime_units = placed_lifetime_units + unplaced_lifetime_units
+
+    if ledger.lifetime_price_policy == "engine_stress_bound_v1":
+        existing_future_market_req = cumulative_market_purchased + total_remaining_lifetime_units
+        stress_price, stress_diag = compute_engine_stress_wheat_price(
+            current_market_wheat_inventory=ledger.wheat_market_inventory,
+            worst_case_town_drain=ledger.town_wheat_drain,
+            our_committed_future_market_feed_requirement=existing_future_market_req,
+            opponent_feed_liability=ledger.opponent_feed_liability,
+            executable_buffered_price=ledger.wheat_price_current,
+        )
+        lifetime_wheat_price = stress_price
+        ledger.lifetime_wheat_price = stress_price
+        ledger.stressed_wheat_inventory = stress_diag["stressed_wheat_inventory"]
+        ledger.stress_raw_price = stress_diag["stress_raw_price"]
+        ledger.stress_buffered_price = stress_diag["stress_buffered_price"]
+    else:
+        lifetime_wheat_price = ledger.wheat_price_current
+        ledger.lifetime_wheat_price = ledger.wheat_price_current
+        stress_diag = {}
+
+    placed_lifetime_cost = float(placed_lifetime_units * lifetime_wheat_price)
+    unplaced_lifetime_cost = float(unplaced_lifetime_units * lifetime_wheat_price)
     total_remaining_lifetime_cost = placed_lifetime_cost + unplaced_lifetime_cost
 
     near_term_market_wheat_cost = sum(b["cost"] for b in scheduled_buys)
@@ -760,8 +966,18 @@ def evaluate_existing_herd_feasibility(
             minimum_cash_slack=cash_available_for_existing_feed - total_existing_feed_cash_required,
             scheduled_market_purchases=scheduled_buys,
             daily_timeline=daily_timeline,
+            price_policy=ledger.lifetime_price_policy,
             execution_confidence=exec_conf,
+            diagnostics={
+                "near_term_market_cost": near_term_market_wheat_cost,
+                "placed_lifetime_cost": placed_lifetime_cost,
+                "unplaced_lifetime_cost": unplaced_lifetime_cost,
+                "unplaced_timing_assumption": ledger.unplaced_timing_assumption,
+                "lifetime_wheat_price": lifetime_wheat_price,
+                "stress_diagnostics": stress_diag,
+            },
         )
+        ledger.existing_feed_cash_hold = float(total_existing_feed_cash_required)
         return False, res
 
     min_cash_slack = cash_available_for_existing_feed - total_existing_feed_cash_required
@@ -779,12 +995,15 @@ def evaluate_existing_herd_feasibility(
         minimum_cash_slack=min_cash_slack,
         scheduled_market_purchases=scheduled_buys,
         daily_timeline=daily_timeline,
+        price_policy=ledger.lifetime_price_policy,
         execution_confidence=exec_conf,
         diagnostics={
             "near_term_market_cost": near_term_market_wheat_cost,
             "placed_lifetime_cost": placed_lifetime_cost,
             "unplaced_lifetime_cost": unplaced_lifetime_cost,
             "unplaced_timing_assumption": ledger.unplaced_timing_assumption,
+            "lifetime_wheat_price": lifetime_wheat_price,
+            "stress_diagnostics": stress_diag,
         },
     )
     ledger.existing_feed_cash_hold = float(total_existing_feed_cash_required)
@@ -1026,14 +1245,49 @@ def evaluate_incremental_candidate(
     last_op_day = operational_days[-1] if operational_days else day - 1
     cand_lifetime_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
     cand_lifetime_units = cand_lifetime_days_beyond * 1
-    cand_lifetime_cost = float(cand_lifetime_units * working.wheat_price_current)
-
+    cand_near_term_market_units = cand_cumulative_market_purchased
     cand_near_term_market_cost = sum(b["cost"] for b in cand_scheduled_buys)
-    total_cand_feed_cash_required = cand_near_term_market_cost + cand_lifetime_cost
+
+    existing_near_term_market_units = existing_res.near_term_market_wheat_required
+    existing_near_term_market_cost = sum(b["cost"] for b in existing_res.scheduled_market_purchases)
+    existing_lifetime_units = existing_res.remaining_lifetime_feed_units
+
+    prior_near_term_market_units = sum(r.get("near_term_market_wheat_required", 0) for r in working.candidate_reservations)
+    prior_near_term_market_cost = sum(
+        sum(b.get("cost", 0.0) for b in r.get("scheduled_market_purchases", []))
+        for r in working.candidate_reservations
+    )
+    prior_lifetime_units = sum(r.get("remaining_lifetime_feed_units", 0) for r in working.candidate_reservations)
+
+    combined_future_market_req = (
+        existing_near_term_market_units + existing_lifetime_units
+        + prior_near_term_market_units + prior_lifetime_units
+        + cand_near_term_market_units + cand_lifetime_units
+    )
+
+    if working.lifetime_price_policy == "engine_stress_bound_v1":
+        new_stress_price, stress_diag = compute_engine_stress_wheat_price(
+            current_market_wheat_inventory=working.wheat_market_inventory,
+            worst_case_town_drain=working.town_wheat_drain,
+            our_committed_future_market_feed_requirement=combined_future_market_req,
+            opponent_feed_liability=working.opponent_feed_liability,
+            executable_buffered_price=working.wheat_price_current,
+        )
+    else:
+        new_stress_price = working.wheat_price_current
+        stress_diag = {}
+
+    new_required_existing_hold = existing_near_term_market_cost + existing_lifetime_units * new_stress_price
+    new_required_committed_candidate_hold = prior_near_term_market_cost + prior_lifetime_units * new_stress_price
+    new_candidate_own_hold = cand_near_term_market_cost + cand_lifetime_units * new_stress_price
+
+    delta_existing = max(0.0, new_required_existing_hold - working.existing_feed_cash_hold)
+    delta_prior = max(0.0, new_required_committed_candidate_hold - working.candidate_feed_cash_hold)
+    delta_total_feed = delta_existing + delta_prior + new_candidate_own_hold
 
     cand_near_term_feed_units = sum(1 for d in operational_days if d > day)
 
-    if total_cand_feed_cash_required > cash_after_purchase:
+    if purchase_cost + delta_total_feed > available_candidate_cash:
         return FeedFeasibilityResult(
             feasible=False,
             existing_herd_feasible=True,
@@ -1043,17 +1297,31 @@ def evaluate_incremental_candidate(
             near_term_feed_units=cand_near_term_feed_units,
             near_term_market_wheat_required=cand_cumulative_market_purchased,
             remaining_lifetime_feed_units=cand_lifetime_units,
-            remaining_feed_cash_required=cand_lifetime_cost,
-            existing_feed_cash_hold=existing_res.existing_feed_cash_hold,
-            candidate_feed_cash_hold=total_cand_feed_cash_required,
+            remaining_feed_cash_required=cand_lifetime_units * new_stress_price,
+            existing_feed_cash_hold=new_required_existing_hold,
+            candidate_feed_cash_hold=new_required_committed_candidate_hold + new_candidate_own_hold,
             minimum_wheat_slack=min_wheat_slack,
-            minimum_cash_slack=cash_after_purchase - total_cand_feed_cash_required,
+            minimum_cash_slack=available_candidate_cash - (purchase_cost + delta_total_feed),
             scheduled_market_purchases=cand_scheduled_buys,
             daily_timeline=daily_timeline,
+            price_policy=working.lifetime_price_policy,
             execution_confidence=exec_conf,
+            diagnostics={
+                "purchase_cost": purchase_cost,
+                "cand_near_term_market_cost": cand_near_term_market_cost,
+                "cand_lifetime_cost": cand_lifetime_units * new_stress_price,
+                "new_required_existing_hold": new_required_existing_hold,
+                "new_required_committed_candidate_hold": new_required_committed_candidate_hold,
+                "new_candidate_own_hold": new_candidate_own_hold,
+                "delta_existing": delta_existing,
+                "delta_prior": delta_prior,
+                "delta_total_feed": delta_total_feed,
+                "new_stress_price": new_stress_price,
+                "stress_diagnostics": stress_diag,
+            },
         )
 
-    min_cash_slack = cash_after_purchase - total_cand_feed_cash_required
+    min_cash_slack = available_candidate_cash - (purchase_cost + delta_total_feed)
 
     return FeedFeasibilityResult(
         feasible=True,
@@ -1062,18 +1330,27 @@ def evaluate_incremental_candidate(
         near_term_feed_units=cand_near_term_feed_units,
         near_term_market_wheat_required=cand_cumulative_market_purchased,
         remaining_lifetime_feed_units=cand_lifetime_units,
-        remaining_feed_cash_required=cand_lifetime_cost,
-        existing_feed_cash_hold=existing_res.existing_feed_cash_hold,
-        candidate_feed_cash_hold=total_cand_feed_cash_required,
+        remaining_feed_cash_required=cand_lifetime_units * new_stress_price,
+        existing_feed_cash_hold=new_required_existing_hold,
+        candidate_feed_cash_hold=new_required_committed_candidate_hold + new_candidate_own_hold,
         minimum_wheat_slack=min_wheat_slack,
         minimum_cash_slack=min_cash_slack,
         scheduled_market_purchases=cand_scheduled_buys,
         daily_timeline=daily_timeline,
+        price_policy=working.lifetime_price_policy,
         execution_confidence=exec_conf,
         diagnostics={
             "purchase_cost": purchase_cost,
             "cand_near_term_market_cost": cand_near_term_market_cost,
-            "cand_lifetime_cost": cand_lifetime_cost,
+            "cand_lifetime_cost": cand_lifetime_units * new_stress_price,
+            "new_required_existing_hold": new_required_existing_hold,
+            "new_required_committed_candidate_hold": new_required_committed_candidate_hold,
+            "new_candidate_own_hold": new_candidate_own_hold,
+            "delta_existing": delta_existing,
+            "delta_prior": delta_prior,
+            "delta_total_feed": delta_total_feed,
+            "new_stress_price": new_stress_price,
+            "stress_diagnostics": stress_diag,
         },
     )
 
@@ -1096,6 +1373,7 @@ def commit_candidate_reservation(
       - Deducts purchase cost from candidate purchasing power.
       - Reserves candidate feed cash hold in candidate_feed_cash_hold.
       - Appends scheduled market purchases.
+      - Accurately reprices existing and candidate holds under engine_stress_bound_v1.
     """
     if isinstance(candidate_species_or_result, FeedFeasibilityResult):
         result = candidate_species_or_result
@@ -1109,16 +1387,25 @@ def commit_candidate_reservation(
     if purchase_cost is None:
         purchase_cost = float(ANIMALS.get(candidate_species, {}).get("cost", 0.0))
 
-    # Distinct semantic holds: committed candidate feed liability belongs to candidate_feed_cash_hold
+    diag = result.diagnostics or {}
+    if "new_required_existing_hold" in diag:
+        ledger.existing_feed_cash_hold = float(diag["new_required_existing_hold"])
+    if "new_candidate_own_hold" in diag and "new_required_committed_candidate_hold" in diag:
+        ledger.candidate_feed_cash_hold = float(diag["new_required_committed_candidate_hold"] + diag["new_candidate_own_hold"])
+    else:
+        ledger.candidate_feed_cash_hold += float(result.candidate_feed_cash_hold)
+
+    if "new_stress_price" in diag:
+        ledger.lifetime_wheat_price = float(diag["new_stress_price"])
+
     ledger.candidate_purchase_cash_spent += float(purchase_cost)
-    ledger.candidate_feed_cash_hold += float(result.candidate_feed_cash_hold)
     ledger.candidate_storage_slots_reserved += 1
     ledger.scheduled_market_purchases.extend(result.scheduled_market_purchases)
 
     reservation_record = {
         "species": candidate_species,
         "purchase_cost": purchase_cost,
-        "candidate_feed_cash_hold": result.candidate_feed_cash_hold,
+        "candidate_feed_cash_hold": diag.get("new_candidate_own_hold", result.candidate_feed_cash_hold),
         "candidate_storage_slots_reserved": 1,
         "near_term_market_wheat_required": result.near_term_market_wheat_required,
         "remaining_lifetime_feed_units": result.remaining_lifetime_feed_units,

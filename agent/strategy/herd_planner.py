@@ -84,11 +84,19 @@ def generate_dynamic_herd_plan(
     opponent_committed_supplies: Optional[Dict[str, Dict[int, float]]] = None,
     opponent_stress_supplies: Optional[Dict[str, Dict[int, float]]] = None,
     guard_threshold: float = 0.15,
+    feed_ledger: Optional[Any] = None,
 ) -> DynamicHerdPlan:
     """Generate forward infrastructure herd targets using transactional shadow-state economics.
 
     Simulates adding prospective animals one by one into a shadow herd:
       - At each step, evaluates marginal counterfactual net value for COW, SHEEP, GOOSE.
+      - If feed_ledger is provided (Phase B authority):
+          * Baseline existing herd must be feed-feasible; if not, stops immediately.
+          * Candidates are filtered by incremental feed feasibility against residual ledger.
+          * Selected candidate reservations are committed to feed_ledger.
+          * Does not clamp target_cap by legacy scalar max_sustainable.
+      - If feed_ledger is None:
+          * Preserves legacy scalar max_sustainable cap behavior.
       - Picks the argmax profitable species.
       - Updates shadow herd, shadow future supply, shadow feed demand, and required housing.
       - Stops when no candidate clears the economic hurdle or constraints (caps, feed sustainability) bind.
@@ -120,8 +128,45 @@ def generate_dynamic_herd_plan(
     marginal_value_seq: List[str] = []
     decision_records: List[Dict[str, Any]] = []
 
-    eff_max_sustainable = max_sustainable if max_sustainable is not None else herd_cap
-    target_cap = min(herd_cap, eff_max_sustainable)
+    if feed_ledger is not None:
+        try:
+            from strategy.feed_feasibility import (
+                evaluate_existing_herd_feasibility,
+                evaluate_incremental_candidate,
+                commit_candidate_reservation,
+            )
+        except ImportError:
+            from feed_feasibility import (
+                evaluate_existing_herd_feasibility,
+                evaluate_incremental_candidate,
+                commit_candidate_reservation,
+            )
+
+        existing_ok, existing_res = evaluate_existing_herd_feasibility(feed_ledger)
+        if not existing_ok:
+            return DynamicHerdPlan(
+                desired_herd=dict(shadow_herd),
+                required_pastures=c0 + s0,
+                required_coops=g0,
+                marginal_value_sequence=[
+                    f"Baseline existing herd infeasible ({existing_res.blocking_reason}) -> STOP"
+                ],
+                decision_records=[{
+                    "species": "NONE",
+                    "candidate_num": 0,
+                    "net_val": 0.0,
+                    "accepted": False,
+                    "reason": f"baseline_existing_herd_infeasible: {existing_res.blocking_reason}",
+                    "execution_status": "rejected",
+                    "feasibility_diag": existing_res.to_dict(),
+                }],
+                horizon_days=horizon_days,
+                rationale="baseline_existing_herd_infeasible",
+            )
+        target_cap = herd_cap
+    else:
+        eff_max_sustainable = max_sustainable if max_sustainable is not None else herd_cap
+        target_cap = min(herd_cap, eff_max_sustainable)
 
     # Infrastructure build cost allowance:
     # A planned prospective animal must earn enough to pay for its $100 pasture fence + $25 build action + logistics
@@ -131,74 +176,88 @@ def generate_dynamic_herd_plan(
         curr_total = sum(shadow_herd.values())
         base_evals: Dict[str, Dict[str, Any]] = {}
         stress_evals: Dict[str, Dict[str, Any]] = {}
+        cand_results: Dict[str, Any] = {}
 
         # 1. Evaluate COW
         if shadow_herd["COW"] < cow_cap and (curr_total + 1) <= target_cap:
-            eval_c_base = estimate_realized_marginal_animal_value(
-                species="COW",
-                day=day,
-                current_animals=shadow_herd,
-                market_inventory=market_inventory,
-                empty_pastures=1,  # Infrastructure query: prospective pasture will be built
-                crop_opportunity_val=crop_opportunity_val,
-                town_shops=town_shops,
-                opponent_committed_supply=(opponent_committed_supplies.get("MILK") if opponent_committed_supplies else None),
-            )
-            base_evals["COW"] = eval_c_base
-            if opponent_stress_supplies is not None:
-                eval_c_stress = estimate_realized_marginal_animal_value(
+            cand_feasible = True
+            cand_res = None
+            if feed_ledger is not None:
+                cand_res = evaluate_incremental_candidate(feed_ledger, "COW")
+                cand_feasible = cand_res.feasible
+
+            if cand_feasible:
+                eval_c_base = estimate_realized_marginal_animal_value(
                     species="COW",
                     day=day,
                     current_animals=shadow_herd,
                     market_inventory=market_inventory,
-                    empty_pastures=1,
+                    empty_pastures=1,  # Infrastructure query: prospective pasture will be built
                     crop_opportunity_val=crop_opportunity_val,
                     town_shops=town_shops,
-                    opponent_committed_supply=opponent_stress_supplies.get("MILK"),
+                    opponent_committed_supply=(opponent_committed_supplies.get("MILK") if opponent_committed_supplies else None),
                 )
-                stress_evals["COW"] = eval_c_stress
+                base_evals["COW"] = eval_c_base
+                if cand_res is not None:
+                    cand_results["COW"] = cand_res
+                if opponent_stress_supplies is not None:
+                    eval_c_stress = estimate_realized_marginal_animal_value(
+                        species="COW",
+                        day=day,
+                        current_animals=shadow_herd,
+                        market_inventory=market_inventory,
+                        empty_pastures=1,
+                        crop_opportunity_val=crop_opportunity_val,
+                        town_shops=town_shops,
+                        opponent_committed_supply=opponent_stress_supplies.get("MILK"),
+                    )
+                    stress_evals["COW"] = eval_c_stress
 
         # 2. Evaluate SHEEP
         if shadow_herd["SHEEP"] < sheep_cap and (curr_total + 1) <= target_cap:
-            eval_s_base = estimate_realized_marginal_animal_value(
-                species="SHEEP",
-                day=day,
-                current_animals=shadow_herd,
-                market_inventory=market_inventory,
-                empty_pastures=1,  # Infrastructure query: prospective pasture will be built
-                crop_opportunity_val=crop_opportunity_val,
-                town_shops=town_shops,
-                opponent_committed_supply=(opponent_committed_supplies.get("WOOL") if opponent_committed_supplies else None),
-            )
-            base_evals["SHEEP"] = eval_s_base
-            if opponent_stress_supplies is not None:
-                eval_s_stress = estimate_realized_marginal_animal_value(
+            cand_feasible = True
+            cand_res = None
+            if feed_ledger is not None:
+                cand_res = evaluate_incremental_candidate(feed_ledger, "SHEEP")
+                cand_feasible = cand_res.feasible
+
+            if cand_feasible:
+                eval_s_base = estimate_realized_marginal_animal_value(
                     species="SHEEP",
                     day=day,
                     current_animals=shadow_herd,
                     market_inventory=market_inventory,
-                    empty_pastures=1,
+                    empty_pastures=1,  # Infrastructure query: prospective pasture will be built
                     crop_opportunity_val=crop_opportunity_val,
                     town_shops=town_shops,
-                    opponent_committed_supply=opponent_stress_supplies.get("WOOL"),
+                    opponent_committed_supply=(opponent_committed_supplies.get("WOOL") if opponent_committed_supplies else None),
                 )
-                stress_evals["SHEEP"] = eval_s_stress
+                base_evals["SHEEP"] = eval_s_base
+                if cand_res is not None:
+                    cand_results["SHEEP"] = cand_res
+                if opponent_stress_supplies is not None:
+                    eval_s_stress = estimate_realized_marginal_animal_value(
+                        species="SHEEP",
+                        day=day,
+                        current_animals=shadow_herd,
+                        market_inventory=market_inventory,
+                        empty_pastures=1,
+                        crop_opportunity_val=crop_opportunity_val,
+                        town_shops=town_shops,
+                        opponent_committed_supply=opponent_stress_supplies.get("WOOL"),
+                    )
+                    stress_evals["SHEEP"] = eval_s_stress
 
         # 3. Evaluate GOOSE (strict zero-geese check: evaluate real ROI)
         if (curr_total + 1) <= target_cap:
-            eval_g_base = estimate_realized_marginal_animal_value(
-                species="GOOSE",
-                day=day,
-                current_animals=shadow_herd,
-                market_inventory=market_inventory,
-                empty_pastures=1,
-                crop_opportunity_val=crop_opportunity_val,
-                town_shops=town_shops,
-                opponent_committed_supply=(opponent_committed_supplies.get("EGG") if opponent_committed_supplies else None),
-            )
-            base_evals["GOOSE"] = eval_g_base
-            if opponent_stress_supplies is not None:
-                eval_g_stress = estimate_realized_marginal_animal_value(
+            cand_feasible = True
+            cand_res = None
+            if feed_ledger is not None:
+                cand_res = evaluate_incremental_candidate(feed_ledger, "GOOSE")
+                cand_feasible = cand_res.feasible
+
+            if cand_feasible:
+                eval_g_base = estimate_realized_marginal_animal_value(
                     species="GOOSE",
                     day=day,
                     current_animals=shadow_herd,
@@ -206,11 +265,27 @@ def generate_dynamic_herd_plan(
                     empty_pastures=1,
                     crop_opportunity_val=crop_opportunity_val,
                     town_shops=town_shops,
-                    opponent_committed_supply=opponent_stress_supplies.get("EGG"),
+                    opponent_committed_supply=(opponent_committed_supplies.get("EGG") if opponent_committed_supplies else None),
                 )
-                stress_evals["GOOSE"] = eval_g_stress
+                base_evals["GOOSE"] = eval_g_base
+                if cand_res is not None:
+                    cand_results["GOOSE"] = cand_res
+                if opponent_stress_supplies is not None:
+                    eval_g_stress = estimate_realized_marginal_animal_value(
+                        species="GOOSE",
+                        day=day,
+                        current_animals=shadow_herd,
+                        market_inventory=market_inventory,
+                        empty_pastures=1,
+                        crop_opportunity_val=crop_opportunity_val,
+                        town_shops=town_shops,
+                        opponent_committed_supply=opponent_stress_supplies.get("EGG"),
+                    )
+                    stress_evals["GOOSE"] = eval_g_stress
 
         if not base_evals:
+            if feed_ledger is not None and (curr_total < target_cap):
+                marginal_value_seq.append("No candidates feasible under FeedResourceLedger -> STOP")
             break
 
         # Select candidate: guarded commitment awareness if stress test provided, otherwise argmax baseline
@@ -238,21 +313,35 @@ def generate_dynamic_herd_plan(
                 "net_val": round(best_val, 2),
                 "accepted": False,
                 "reason": "below_housing_hurdle",
+                "execution_status": "rejected",
             })
             break
 
         # ACCEPT candidate into forward shadow state
+        status = "admitted"
+        feed_diag = None
+        if feed_ledger is not None:
+            best_cand_res = cand_results[best_sp]
+            commit_candidate_reservation(feed_ledger, best_cand_res)
+            if best_cand_res.execution_confidence in ("guarded", "conditional"):
+                status = "provisional_guarded"
+            feed_diag = best_cand_res.to_dict()
+
         shadow_herd[best_sp] += 1
         switch_note = f" (SWITCH from {diag.get('baseline_best')} [gap {diag.get('relative_gap', 0):.1%}])" if diag.get("switched") else ""
         marginal_value_seq.append(f"{best_sp} #{next_count}: +${best_val:.0f}{switch_note}")
-        decision_records.append({
+        rec = {
             "species": best_sp,
             "candidate_num": next_count,
             "net_val": round(best_val, 2),
             "accepted": True,
             "reason": "economically_justified",
             "guarded_diag": diag,
-        })
+            "execution_status": status,
+        }
+        if feed_diag is not None:
+            rec["feed_feasibility"] = feed_diag
+        decision_records.append(rec)
 
     req_pastures = shadow_herd["COW"] + shadow_herd["SHEEP"]
     req_coops = shadow_herd["GOOSE"]

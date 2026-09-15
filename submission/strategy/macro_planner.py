@@ -913,35 +913,86 @@ class MacroPlanner:
                                    "GOOSE": 0}
                 target_pastures = counts.get("COW", 0) + counts.get("SHEEP", 0)
                 needed_new_pastures = 0
+                requested_herd_size = sum(dynamic_targets.values())
+                final_feed_capped_herd_size = min(requested_herd_size, sustainable)
             else:
                 from strategy.herd_planner import generate_dynamic_herd_plan, get_forward_housing_demand
-                herd_plan = generate_dynamic_herd_plan(
-                    day=day,
-                    hour=hour,
-                    current_herd=counts,
-                    town_shops=town_shops,
-                    market_inventory=market_inv,
-                    max_sustainable=sustainable,
-                    active_caps=active_caps,
-                    crop_opportunity_val=crop_opp_val,
-                    horizon_days=4,
-                    opponent_committed_supplies=opp_livestock_supply,
-                    opponent_stress_supplies=opp_stress_supply,
-                    guard_threshold=guard_threshold,
-                )
-                target_pastures = max(
-                    herd_plan.required_pastures,
-                    counts.get("COW", 0) + counts.get("SHEEP", 0)
-                )
-                dynamic_targets = dict(herd_plan.desired_herd)
-                housing_demand = get_forward_housing_demand(
-                    herd_plan,
-                    existing_pastures,
-                    len(reserved_structure_tiles)
-                )
-                needed_new_pastures = housing_demand["needed_pastures"]
-            requested_herd_size = sum(dynamic_targets.values())
-            final_feed_capped_herd_size = min(requested_herd_size, sustainable)
+                point2_mode = get_point2_feed_mode() if callable(get_point2_feed_mode) else "off"
+                planning_feed_ledger = None
+                if point2_mode in ("herd_plan", "live") and build_feed_resource_ledger is not None:
+                    try:
+                        farm_money = float(ctx["farm"].money) if (ctx.get("farm") and hasattr(ctx["farm"], "money")) else (
+                            float(ctx["farm"].get("money", 0.0)) if isinstance(ctx.get("farm"), dict) else 0.0
+                        )
+                        planning_nonanimal_hold = max(0.0, farm_money - float(cash_for_animals))
+                        planning_feed_ledger = build_feed_resource_ledger(
+                            ctx,
+                            current_herd=counts,
+                            hard_cash_hold=planning_nonanimal_hold,
+                            strategic_cash_hold=0.0,
+                            horizon_days=4,
+                            lifetime_price_policy="engine_stress_bound_v1",
+                            market_inventory=market_inv,
+                            town_shops=town_shops,
+                            opponent_farm=ctx.get("opponent_farm") if isinstance(ctx, dict) else getattr(ctx, "opponent_farm", None),
+                        )
+                    except Exception as e:
+                        planning_feed_ledger = None
+
+                try:
+                    herd_plan = generate_dynamic_herd_plan(
+                        day=day,
+                        hour=hour,
+                        current_herd=counts,
+                        town_shops=town_shops,
+                        market_inventory=market_inv,
+                        max_sustainable=sustainable,
+                        active_caps=active_caps,
+                        crop_opportunity_val=crop_opp_val,
+                        horizon_days=4,
+                        opponent_committed_supplies=opp_livestock_supply,
+                        opponent_stress_supplies=opp_stress_supply,
+                        guard_threshold=guard_threshold,
+                        feed_ledger=planning_feed_ledger,
+                    )
+                    target_pastures = max(
+                        herd_plan.required_pastures,
+                        counts.get("COW", 0) + counts.get("SHEEP", 0)
+                    )
+                    dynamic_targets = dict(herd_plan.desired_herd)
+                    housing_demand = get_forward_housing_demand(
+                        herd_plan,
+                        existing_pastures,
+                        len(reserved_structure_tiles)
+                    )
+                    needed_new_pastures = housing_demand["needed_pastures"]
+                    requested_herd_size = sum(dynamic_targets.values())
+                    if point2_mode in ("herd_plan", "live"):
+                        final_feed_capped_herd_size = requested_herd_size
+                        plan.diagnostics["point2_feed_authority"] = {
+                            "mode": point2_mode,
+                            "final_feed_capped_herd_size": final_feed_capped_herd_size,
+                            "legacy_sustainable_herd_size": sustainable,
+                            "ledger_summary": planning_feed_ledger.to_dict() if planning_feed_ledger else None,
+                        }
+                    else:
+                        final_feed_capped_herd_size = min(requested_herd_size, sustainable)
+                except Exception as e:
+                    if point2_mode in ("herd_plan", "live"):
+                        dynamic_targets = {"COW": counts.get("COW", 0),
+                                           "SHEEP": counts.get("SHEEP", 0),
+                                           "GOOSE": 0}
+                        target_pastures = counts.get("COW", 0) + counts.get("SHEEP", 0)
+                        needed_new_pastures = 0
+                        requested_herd_size = sum(dynamic_targets.values())
+                        final_feed_capped_herd_size = requested_herd_size
+                        plan.diagnostics["point2_feed_authority"] = {
+                            "mode": point2_mode,
+                            "error": str(e),
+                            "status": "ledger_error_fail_closed",
+                        }
+                    else:
+                        raise e
         elif is_endgame or not allow_livestock or day in (3, 4, 5):
             dynamic_targets = {"COW": counts.get("COW", 0),
                                "SHEEP": counts.get("SHEEP", 0),

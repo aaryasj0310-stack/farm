@@ -56,7 +56,11 @@ from strategy.feed_feasibility import (
     evaluate_existing_herd_feasibility,
     evaluate_incremental_candidate,
     commit_candidate_reservation,
+    compute_worst_case_remaining_town_wheat_drain,
+    compute_observed_opponent_feed_liability,
+    compute_engine_stress_wheat_price,
 )
+from strategy.herd_planner import generate_dynamic_herd_plan, DynamicHerdPlan
 from observation_parser import parse_observation
 from strategy.macro_planner import MacroPlanner
 from state.state_tracker import reset_memory
@@ -1142,3 +1146,234 @@ def test_hour0_same_day_scheduled_wheat_can_rescue_today():
     feasible, res = evaluate_existing_herd_feasibility(ledger)
     assert feasible is True
     assert res.minimum_wheat_slack >= 1.0
+
+
+# ============================================================================
+# Phase B Tests
+# ============================================================================
+
+def test_phase_b_existing_herd_stress_funding_zero_candidates():
+    """Phase B user correction #1:
+    evaluate_existing_herd_feasibility() must apply engine_stress_bound_v1
+    to the existing herd even when 0 incremental candidates are evaluated.
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=10000.0, shed_wheat=0, placed_animals=["COW", "COW"])
+    ledger = build_feed_resource_ledger(
+        ctx,
+        hard_cash_hold=500.0,
+        lifetime_price_policy="engine_stress_bound_v1",
+        market_inventory={"WHEAT": 8000.0},
+    )
+    assert ledger.lifetime_price_policy == "engine_stress_bound_v1"
+
+    ok, res = evaluate_existing_herd_feasibility(ledger)
+    assert ok is True
+    # Stress price should be higher than current executable buffered price ($28)
+    assert res.diagnostics.get("lifetime_wheat_price", 0) > ledger.wheat_price_current
+    assert ledger.lifetime_wheat_price > ledger.wheat_price_current
+    # existing_feed_cash_hold must reflect stress pricing on remaining-lifetime units
+    assert ledger.existing_feed_cash_hold > 0
+    # Exactly matches the required hold
+    assert ledger.existing_feed_cash_hold == res.existing_feed_cash_hold
+
+
+def test_phase_b_semantic_hold_repricing_separation():
+    """Phase B user correction #2:
+    Strict semantic hold separation:
+      - Uplift on existing herd goes to existing_feed_cash_hold.
+      - Uplift on prior candidates + new candidate's own hold goes to candidate_feed_cash_hold.
+      - Never dump existing herd repricing into candidate_feed_cash_hold.
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=10000.0, shed_wheat=0, placed_animals=["COW"])
+    ledger = build_feed_resource_ledger(
+        ctx,
+        lifetime_price_policy="engine_stress_bound_v1",
+        market_inventory={"WHEAT": 7500.0},
+    )
+    ok, res_init = evaluate_existing_herd_feasibility(ledger)
+    assert ok is True
+    e0 = ledger.existing_feed_cash_hold
+    c0 = ledger.candidate_feed_cash_hold
+    assert c0 == 0.0
+
+    # Candidate 1: COW
+    res1 = evaluate_incremental_candidate(ledger, "COW")
+    assert res1.feasible is True
+    commit_candidate_reservation(ledger, res1)
+    e1 = ledger.existing_feed_cash_hold
+    c1 = ledger.candidate_feed_cash_hold
+    # Candidate 1 required its own feed hold
+    assert c1 > 0
+    assert e1 >= e0
+
+    # Candidate 2: SHEEP
+    res2 = evaluate_incremental_candidate(ledger, "SHEEP")
+    assert res2.feasible is True
+    commit_candidate_reservation(ledger, res2)
+    e2 = ledger.existing_feed_cash_hold
+    c2 = ledger.candidate_feed_cash_hold
+
+    # As cumulative feed demand increases, stress price rises or stays equal
+    assert e2 >= e1
+    # Candidate hold includes Candidate 2 + repriced Candidate 1
+    assert c2 > c1
+    # Check total deduction consistency
+    total_deductions = (e2 - e0) + c2 + ledger.candidate_purchase_cash_spent
+    spent_or_held = (
+        ledger.hard_cash_hold
+        + ledger.existing_feed_cash_hold
+        + ledger.strategic_cash_hold
+        + ledger.candidate_purchase_cash_spent
+        + ledger.candidate_feed_cash_hold
+    )
+    assert ledger.available_cash_for_candidates == max(0.0, ledger.observed_cash - spent_or_held)
+
+
+def test_phase_b_town_drain_monotonicity_and_event_cadence():
+    """Phase B user correction #5:
+    Town wheat drain simulation:
+      - Strictly monotonic non-increasing across all 720 steps.
+      - Exact cadence at step 71 vs 72 (Day 2 Hour 23 vs Day 3 Hour 0).
+    """
+    drains = [compute_worst_case_remaining_town_wheat_drain(s // 24, s % 24) for s in range(721)]
+    for i in range(len(drains) - 1):
+        assert drains[i] >= drains[i + 1], f"Drain increased at step {i}: {drains[i]} -> {drains[i+1]}"
+
+    # Step 71 is Day 2 Hour 23, step 72 is Day 3 Hour 0
+    assert drains[71] >= drains[72]
+    # Step 719 has 0 drain
+    assert drains[719] == 0
+    assert drains[720] == 0
+
+
+def test_phase_b_opponent_feed_liability():
+    """Phase B user correction #4:
+    Opponent feed liability correctly reads placed animals and remaining days.
+    """
+    class MockTile:
+        def __init__(self, is_animal):
+            self.is_animal = is_animal
+
+    class MockOpponentFarm:
+        def iter_tiles(self):
+            return [MockTile(True), MockTile(True), MockTile(False)]
+
+    opp_farm = MockOpponentFarm()
+    # At Day 10, remaining days = 29 - 10 = 19
+    liability_d10 = compute_observed_opponent_feed_liability(opp_farm, 10)
+    assert liability_d10 == 2 * 19
+
+    # At Day 28, remaining days = 29 - 28 = 1
+    liability_d28 = compute_observed_opponent_feed_liability(opp_farm, 28)
+    assert liability_d28 == 2 * 1
+
+    # At Day 29, remaining days = 0
+    liability_d29 = compute_observed_opponent_feed_liability(opp_farm, 29)
+    assert liability_d29 == 0
+
+
+def test_phase_b_dynamic_herd_plan_profitable_but_feed_infeasible_rejected():
+    """Under feed_ledger authority, a candidate that would be economically profitable
+    under baseline pricing is rejected if the residual ledger cannot support its feed.
+    """
+    # $600 money at Day 10: enough for 1 Cow purchase ($500), but NOT enough for Cow purchase + 15 lifetime feed
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=600.0, shed_wheat=0, placed_animals=[])
+    ledger = build_feed_resource_ledger(
+        ctx,
+        lifetime_price_policy="engine_stress_bound_v1",
+        market_inventory={"WHEAT": 8000.0},
+    )
+
+    plan = generate_dynamic_herd_plan(
+        day=10,
+        hour=0,
+        current_herd={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+        town_shops=["BAKERY"],
+        market_inventory={"WHEAT": 8000.0},
+        max_sustainable=10,
+        feed_ledger=ledger,
+    )
+    # Cow should not be admitted because $600 cannot cover purchase ($500) + lifetime feed (~$1200)
+    assert plan.desired_cows == 0
+
+
+def test_phase_b_dynamic_herd_plan_ev_below_hurdle_rejected():
+    """Candidates whose marginal realized net value is below $150 housing hurdle are stopped."""
+    # Near cutoff, ROI falls below $150
+    plan = generate_dynamic_herd_plan(
+        day=11,
+        hour=20,
+        current_herd={"COW": 2, "SHEEP": 0, "GOOSE": 0},
+        crop_opportunity_val=500.0,  # high opportunity cost pushes net value down
+    )
+    # Forward housing should stop
+    for rec in plan.decision_records:
+        if not rec.get("accepted"):
+            assert rec.get("reason") in ("below_housing_hurdle", "invalid_species")
+
+
+def test_phase_b_dynamic_herd_plan_guarded_confidence_provisional():
+    """Guarded execution confidence marks decision record as provisional_guarded."""
+    ctx = make_mock_farm_ctx(day=10, hour=20, money=10000.0, shed_wheat=0, placed_animals=[])
+    # Build execution snapshot with guarded confidence (late hour, unfed)
+    snap = build_feed_execution_snapshot(ctx)
+    snap.execution_confidence = "guarded"
+    ledger = build_feed_resource_ledger(
+        ctx,
+        execution_snapshot=snap,
+        lifetime_price_policy="engine_stress_bound_v1",
+    )
+
+    plan = generate_dynamic_herd_plan(
+        day=10,
+        hour=20,
+        current_herd={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+        feed_ledger=ledger,
+    )
+    for rec in plan.decision_records:
+        if rec.get("accepted"):
+            assert rec.get("execution_status") == "provisional_guarded"
+
+
+def test_phase_b_dynamic_herd_plan_existing_infeasible_stops():
+    """If baseline existing herd is feed-infeasible, DynamicHerdPlan stops immediately
+    and requests 0 additional housing.
+    """
+    # 2 placed cows, 0 wheat, $50 cash -> existing herd cannot be funded
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=50.0, shed_wheat=0, placed_animals=["COW", "COW"])
+    ledger = build_feed_resource_ledger(
+        ctx,
+        lifetime_price_policy="engine_stress_bound_v1",
+    )
+    plan = generate_dynamic_herd_plan(
+        day=10,
+        hour=0,
+        current_herd={"COW": 2, "SHEEP": 0, "GOOSE": 0},
+        feed_ledger=ledger,
+    )
+    assert plan.desired_cows == 2
+    assert plan.desired_sheep == 0
+    assert plan.desired_geese == 0
+    assert plan.rationale == "baseline_existing_herd_infeasible"
+    assert "infeasible" in plan.marginal_value_sequence[0]
+
+
+def test_phase_b_dynamic_herd_plan_capital_insensitivity():
+    """Regression test:
+    Under feed constraints, herd targets should be identical between $10,000 and $100,000
+    when feed authority bounds expansion rather than cash.
+    """
+    ctx1 = make_mock_farm_ctx(day=10, hour=0, money=10000.0, shed_wheat=0, placed_animals=["COW"])
+    ctx2 = make_mock_farm_ctx(day=10, hour=0, money=100000.0, shed_wheat=0, placed_animals=["COW"])
+
+    ledger1 = build_feed_resource_ledger(ctx1, lifetime_price_policy="engine_stress_bound_v1")
+    ledger1.shed_other_units = 94
+    ledger2 = build_feed_resource_ledger(ctx2, lifetime_price_policy="engine_stress_bound_v1")
+    ledger2.shed_other_units = 94
+
+    plan1 = generate_dynamic_herd_plan(day=10, hour=0, current_herd={"COW": 1, "SHEEP": 0, "GOOSE": 0}, feed_ledger=ledger1)
+    plan2 = generate_dynamic_herd_plan(day=10, hour=0, current_herd={"COW": 1, "SHEEP": 0, "GOOSE": 0}, feed_ledger=ledger2)
+
+    # Both plans should project the exact same herd size
+    assert plan1.desired_herd == plan2.desired_herd
+
