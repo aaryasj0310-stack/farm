@@ -39,6 +39,9 @@ class DynamicHerdPlan:
         decision_records: List[Dict[str, Any]],
         horizon_days: int = 4,
         rationale: str = "",
+        buy_animal_sequence: Optional[List[str]] = None,
+        buy_animal: Optional[Dict[str, int]] = None,
+        provisional_candidates: Optional[List[Dict[str, Any]]] = None,
     ):
         self.desired_herd = dict(desired_herd)
         self.desired_cows = int(desired_herd.get("COW", 0))
@@ -51,6 +54,58 @@ class DynamicHerdPlan:
         self.horizon_days = int(horizon_days)
         self.rationale = str(rationale)
 
+        if buy_animal_sequence is not None:
+            self.buy_animal_sequence = list(buy_animal_sequence)
+        else:
+            self.buy_animal_sequence = [
+                rec["species"] for rec in self.decision_records
+                if rec.get("accepted", False) and rec.get("species") not in (None, "NONE")
+            ]
+
+        if buy_animal is not None:
+            self.buy_animal = dict(buy_animal)
+        else:
+            self.buy_animal = {
+                "COW": self.buy_animal_sequence.count("COW"),
+                "SHEEP": self.buy_animal_sequence.count("SHEEP"),
+                "GOOSE": self.buy_animal_sequence.count("GOOSE"),
+            }
+
+        if provisional_candidates is not None:
+            self.provisional_candidates = list(provisional_candidates)
+        else:
+            self.provisional_candidates = []
+            seq_counter = 0
+            rej_counter = 0
+            for rec in self.decision_records:
+                is_accepted = bool(rec.get("accepted", False))
+                sp = rec.get("species", "NONE")
+                if is_accepted:
+                    c_id = rec.get("candidate_id") or f"cand_{seq_counter}_{sp}"
+                    s_idx = rec.get("sequence_index", seq_counter)
+                    seq_counter += 1
+                    status = "admitted"
+                    exec_status = rec.get("execution_status", "admitted")
+                else:
+                    c_id = rec.get("candidate_id") or f"cand_rej_{rej_counter}_{sp}"
+                    s_idx = rec.get("sequence_index", -1)
+                    rej_counter += 1
+                    status = "rejected"
+                    exec_status = "rejected"
+
+                feed_diag = rec.get("feed_diagnostics") or rec.get("feed_feasibility") or rec.get("feasibility_diag") or {}
+                self.provisional_candidates.append({
+                    "candidate_id": c_id,
+                    "sequence_index": s_idx,
+                    "species": sp,
+                    "provisional_status": status,
+                    "feed_feasible": bool(rec.get("feed_feasible", is_accepted)),
+                    "execution_status": exec_status,
+                    "net_realized_value": float(rec.get("net_val", 0.0)),
+                    "reason": str(rec.get("reason", "economically_justified" if is_accepted else "rejected")),
+                    "feed_diagnostics": feed_diag,
+                })
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "desired_herd": self.desired_herd,
@@ -62,6 +117,9 @@ class DynamicHerdPlan:
             "horizon_days": self.horizon_days,
             "marginal_value_sequence": self.marginal_value_sequence,
             "rationale": self.rationale,
+            "buy_animal_sequence": list(self.buy_animal_sequence),
+            "buy_animal": dict(self.buy_animal),
+            "provisional_candidates": list(self.provisional_candidates),
         }
 
     def __repr__(self) -> str:
@@ -127,6 +185,7 @@ def generate_dynamic_herd_plan(
     shadow_herd = {"COW": c0, "SHEEP": s0, "GOOSE": 0}
     marginal_value_seq: List[str] = []
     decision_records: List[Dict[str, Any]] = []
+    buy_animal_seq: List[str] = []
 
     if feed_ledger is not None:
         try:
@@ -152,16 +211,23 @@ def generate_dynamic_herd_plan(
                     f"Baseline existing herd infeasible ({existing_res.blocking_reason}) -> STOP"
                 ],
                 decision_records=[{
+                    "candidate_id": "cand_rej_0_NONE",
+                    "sequence_index": -1,
                     "species": "NONE",
                     "candidate_num": 0,
                     "net_val": 0.0,
                     "accepted": False,
-                    "reason": f"baseline_existing_herd_infeasible: {existing_res.blocking_reason}",
+                    "provisional_status": "rejected",
+                    "feed_feasible": False,
                     "execution_status": "rejected",
+                    "reason": f"baseline_existing_herd_infeasible: {existing_res.blocking_reason}",
+                    "feed_diagnostics": existing_res.to_dict(),
                     "feasibility_diag": existing_res.to_dict(),
                 }],
                 horizon_days=horizon_days,
                 rationale="baseline_existing_herd_infeasible",
+                buy_animal_sequence=[],
+                buy_animal={"COW": 0, "SHEEP": 0, "GOOSE": 0},
             )
         target_cap = herd_cap
     else:
@@ -177,6 +243,7 @@ def generate_dynamic_herd_plan(
         base_evals: Dict[str, Dict[str, Any]] = {}
         stress_evals: Dict[str, Dict[str, Any]] = {}
         cand_results: Dict[str, Any] = {}
+        infeasible_feed_cands: Dict[str, Any] = {}
 
         # 1. Evaluate COW
         if shadow_herd["COW"] < cow_cap and (curr_total + 1) <= target_cap:
@@ -185,6 +252,8 @@ def generate_dynamic_herd_plan(
             if feed_ledger is not None:
                 cand_res = evaluate_incremental_candidate(feed_ledger, "COW")
                 cand_feasible = cand_res.feasible
+                if not cand_feasible:
+                    infeasible_feed_cands["COW"] = cand_res
 
             if cand_feasible:
                 eval_c_base = estimate_realized_marginal_animal_value(
@@ -220,6 +289,8 @@ def generate_dynamic_herd_plan(
             if feed_ledger is not None:
                 cand_res = evaluate_incremental_candidate(feed_ledger, "SHEEP")
                 cand_feasible = cand_res.feasible
+                if not cand_feasible:
+                    infeasible_feed_cands["SHEEP"] = cand_res
 
             if cand_feasible:
                 eval_s_base = estimate_realized_marginal_animal_value(
@@ -255,6 +326,8 @@ def generate_dynamic_herd_plan(
             if feed_ledger is not None:
                 cand_res = evaluate_incremental_candidate(feed_ledger, "GOOSE")
                 cand_feasible = cand_res.feasible
+                if not cand_feasible:
+                    infeasible_feed_cands["GOOSE"] = cand_res
 
             if cand_feasible:
                 eval_g_base = estimate_realized_marginal_animal_value(
@@ -286,6 +359,23 @@ def generate_dynamic_herd_plan(
         if not base_evals:
             if feed_ledger is not None and (curr_total < target_cap):
                 marginal_value_seq.append("No candidates feasible under FeedResourceLedger -> STOP")
+                for sp in ("COW", "SHEEP", "GOOSE"):
+                    cand_res = infeasible_feed_cands.get(sp)
+                    if cand_res is not None:
+                        decision_records.append({
+                            "candidate_id": f"cand_rej_{len(decision_records)}_{sp}",
+                            "sequence_index": -1,
+                            "species": sp,
+                            "candidate_num": shadow_herd[sp] + 1,
+                            "net_val": 0.0,
+                            "accepted": False,
+                            "provisional_status": "rejected",
+                            "feed_feasible": False,
+                            "execution_status": "rejected",
+                            "reason": f"feed_infeasible: {cand_res.blocking_reason}",
+                            "feed_diagnostics": cand_res.to_dict(),
+                            "feed_feasibility": cand_res.to_dict(),
+                        })
             break
 
         # Select candidate: guarded commitment awareness if stress test provided, otherwise argmax baseline
@@ -307,13 +397,20 @@ def generate_dynamic_herd_plan(
             marginal_value_seq.append(
                 f"{best_sp} #{next_count}: ${best_val:.0f} -> STOP (below hurdle ${housing_build_hurdle:.0f})"
             )
+            cand_diag = cand_results[best_sp].to_dict() if (best_sp in cand_results and cand_results[best_sp]) else {}
             decision_records.append({
+                "candidate_id": f"cand_rej_{len(decision_records)}_{best_sp}",
+                "sequence_index": -1,
                 "species": best_sp,
                 "candidate_num": next_count,
                 "net_val": round(best_val, 2),
                 "accepted": False,
-                "reason": "below_housing_hurdle",
+                "provisional_status": "rejected",
+                "feed_feasible": True,
                 "execution_status": "rejected",
+                "reason": "below_housing_hurdle",
+                "feed_diagnostics": cand_diag,
+                "feed_feasibility": cand_diag,
             })
             break
 
@@ -328,16 +425,23 @@ def generate_dynamic_herd_plan(
             feed_diag = best_cand_res.to_dict()
 
         shadow_herd[best_sp] += 1
+        seq_idx = len(buy_animal_seq)
+        buy_animal_seq.append(best_sp)
         switch_note = f" (SWITCH from {diag.get('baseline_best')} [gap {diag.get('relative_gap', 0):.1%}])" if diag.get("switched") else ""
         marginal_value_seq.append(f"{best_sp} #{next_count}: +${best_val:.0f}{switch_note}")
         rec = {
+            "candidate_id": f"cand_{seq_idx}_{best_sp}",
+            "sequence_index": seq_idx,
             "species": best_sp,
             "candidate_num": next_count,
             "net_val": round(best_val, 2),
             "accepted": True,
+            "provisional_status": "admitted",
+            "feed_feasible": True,
             "reason": "economically_justified",
             "guarded_diag": diag,
             "execution_status": status,
+            "feed_diagnostics": feed_diag or {},
         }
         if feed_diag is not None:
             rec["feed_feasibility"] = feed_diag
@@ -354,6 +458,7 @@ def generate_dynamic_herd_plan(
         decision_records=decision_records,
         horizon_days=horizon_days,
         rationale=f"shadow_econ_plan_c{shadow_herd['COW']}_s{shadow_herd['SHEEP']}_g{shadow_herd['GOOSE']}",
+        buy_animal_sequence=buy_animal_seq,
     )
 
 

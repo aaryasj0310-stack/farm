@@ -317,6 +317,15 @@ class FeedResourceLedger:
             stress_buffered_price=self.stress_buffered_price,
         )
 
+    def get_feed_hold_diagnostics(self) -> Dict[str, float]:
+        """Expose structured feed hold diagnostics separating existing herd hold from candidate holds."""
+        return {
+            "existing_feed_cash_hold": float(self.existing_feed_cash_hold),
+            "candidate_feed_cash_hold": float(self.candidate_feed_cash_hold),
+            "remaining_existing_feed_hold": float(self.existing_feed_cash_hold),
+            "candidate_feed_holds_total": float(self.candidate_feed_cash_hold),
+        }
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert ledger to a serializable dictionary."""
         return {
@@ -328,6 +337,9 @@ class FeedResourceLedger:
             "existing_feed_cash_hold": self.existing_feed_cash_hold,
             "strategic_cash_hold": self.strategic_cash_hold,
             "candidate_feed_cash_hold": self.candidate_feed_cash_hold,
+            "remaining_existing_feed_hold": self.existing_feed_cash_hold,
+            "candidate_feed_holds_total": self.candidate_feed_cash_hold,
+            "feed_hold_diagnostics": self.get_feed_hold_diagnostics(),
             "candidate_purchase_cash_spent": self.candidate_purchase_cash_spent,
             "candidate_storage_slots_reserved": self.candidate_storage_slots_reserved,
             "available_cash_for_candidates": self.available_cash_for_candidates,

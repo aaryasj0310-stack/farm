@@ -1582,3 +1582,233 @@ def test_phase_b_repair_exact_planning_budget_mapping():
     assert ledger.hard_cash_hold == planning_nonanimal_hold
     assert ledger.available_cash_for_candidates == cash_for_animals
 
+
+# ===========================================================================
+# Phase C1 Tests: Candidate-contract layer, provisional ordering, diagnostics
+# ===========================================================================
+
+def test_phase_c1_candidate_admission_preserves_interleaved_order():
+    """Verify candidate admission preserves exact interleaved order (e.g. SHEEP, COW, SHEEP).
+    DynamicHerdPlan.buy_animal_sequence must reflect sequential admissions without species sorting.
+    """
+    plan = DynamicHerdPlan(
+        desired_herd={"COW": 1, "SHEEP": 2, "GOOSE": 0},
+        required_pastures=3,
+        required_coops=0,
+        marginal_value_sequence=["SHEEP #1: +$300", "COW #1: +$280", "SHEEP #2: +$260"],
+        decision_records=[
+            {"species": "SHEEP", "candidate_num": 1, "net_val": 300.0, "accepted": True, "reason": "economically_justified"},
+            {"species": "COW", "candidate_num": 1, "net_val": 280.0, "accepted": True, "reason": "economically_justified"},
+            {"species": "SHEEP", "candidate_num": 2, "net_val": 260.0, "accepted": True, "reason": "economically_justified"},
+        ],
+        horizon_days=4,
+    )
+    assert plan.buy_animal_sequence == ["SHEEP", "COW", "SHEEP"]
+    # Verify it was NOT sorted alphabetically (which would be ['COW', 'SHEEP', 'SHEEP'])
+    assert plan.buy_animal_sequence != sorted(plan.buy_animal_sequence)
+
+
+def test_phase_c1_aggregate_buy_animal_matches_sequence_counts():
+    """Verify aggregate buy_animal matches sequence counts exactly."""
+    plan = DynamicHerdPlan(
+        desired_herd={"COW": 2, "SHEEP": 3, "GOOSE": 0},
+        required_pastures=5,
+        required_coops=0,
+        marginal_value_sequence=[],
+        decision_records=[
+            {"species": "SHEEP", "candidate_num": 1, "net_val": 300.0, "accepted": True},
+            {"species": "COW", "candidate_num": 1, "net_val": 290.0, "accepted": True},
+            {"species": "SHEEP", "candidate_num": 2, "net_val": 280.0, "accepted": True},
+            {"species": "SHEEP", "candidate_num": 3, "net_val": 270.0, "accepted": True},
+            {"species": "COW", "candidate_num": 2, "net_val": 260.0, "accepted": True},
+        ],
+    )
+    assert plan.buy_animal_sequence == ["SHEEP", "COW", "SHEEP", "SHEEP", "COW"]
+    assert plan.buy_animal["SHEEP"] == 3
+    assert plan.buy_animal["COW"] == 2
+    assert plan.buy_animal["GOOSE"] == 0
+    for sp in ("COW", "SHEEP", "GOOSE"):
+        assert plan.buy_animal[sp] == plan.buy_animal_sequence.count(sp)
+
+
+def test_phase_c1_stable_candidate_ids_and_sequence_indices():
+    """Verify stable candidate IDs and sequence indices on provisional_candidates.
+    Admitted candidates get sequence_index 0, 1, 2... and stable IDs cand_{idx}_{species}.
+    Rejected candidates get sequence_index -1 and stable IDs cand_rej_{idx}_{species}.
+    """
+    plan = DynamicHerdPlan(
+        desired_herd={"COW": 1, "SHEEP": 1, "GOOSE": 0},
+        required_pastures=2,
+        required_coops=0,
+        marginal_value_sequence=[],
+        decision_records=[
+            {"species": "SHEEP", "candidate_num": 1, "net_val": 300.0, "accepted": True, "execution_status": "admitted"},
+            {"species": "COW", "candidate_num": 1, "net_val": 280.0, "accepted": True, "execution_status": "provisional_guarded"},
+            {"species": "GOOSE", "candidate_num": 1, "net_val": 100.0, "accepted": False, "reason": "below_housing_hurdle", "feed_feasible": True},
+        ],
+    )
+    cands = plan.provisional_candidates
+    assert len(cands) == 3
+
+    # Candidate 0: SHEEP (admitted)
+    assert cands[0]["candidate_id"] == "cand_0_SHEEP"
+    assert cands[0]["sequence_index"] == 0
+    assert cands[0]["species"] == "SHEEP"
+    assert cands[0]["provisional_status"] == "admitted"
+    assert cands[0]["feed_feasible"] is True
+    assert cands[0]["execution_status"] == "admitted"
+    assert cands[0]["net_realized_value"] == 300.0
+    assert cands[0]["reason"] == "economically_justified"
+
+    # Candidate 1: COW (admitted provisional_guarded)
+    assert cands[1]["candidate_id"] == "cand_1_COW"
+    assert cands[1]["sequence_index"] == 1
+    assert cands[1]["species"] == "COW"
+    assert cands[1]["provisional_status"] == "admitted"
+    assert cands[1]["feed_feasible"] is True
+    assert cands[1]["execution_status"] == "provisional_guarded"
+    assert cands[1]["net_realized_value"] == 280.0
+
+    # Candidate 2: GOOSE (rejected)
+    assert cands[2]["candidate_id"] == "cand_rej_0_GOOSE"
+    assert cands[2]["sequence_index"] == -1
+    assert cands[2]["species"] == "GOOSE"
+    assert cands[2]["provisional_status"] == "rejected"
+    assert cands[2]["execution_status"] == "rejected"
+    assert cands[2]["net_realized_value"] == 100.0
+    assert cands[2]["reason"] == "below_housing_hurdle"
+
+
+def test_phase_c1_rejected_candidates_recorded_with_reasons_and_not_in_sequence():
+    """Verify rejected candidates (hurdle or feed-infeasible) are recorded with reasons
+    in provisional_candidates and are NOT placed in buy_animal_sequence.
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=1000.0, shed_wheat=0, placed_animals=[])
+    ledger = build_feed_resource_ledger(ctx, lifetime_price_policy="engine_stress_bound_v1")
+    ledger.hard_cash_hold = 200.0
+
+    plan = generate_dynamic_herd_plan(
+        day=10,
+        hour=0,
+        current_herd={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+        town_shops=["BAKERY"],
+        feed_ledger=ledger,
+    )
+
+    for sp in plan.buy_animal_sequence:
+        assert sp in ("COW", "SHEEP", "GOOSE")
+
+    rejected = [c for c in plan.provisional_candidates if c["provisional_status"] == "rejected"]
+    if rejected:
+        for r in rejected:
+            assert r["sequence_index"] == -1
+            assert r["execution_status"] == "rejected"
+            assert "reason" in r and len(r["reason"]) > 0
+
+
+def test_phase_c1_original_planning_ledger_not_corrupted():
+    """Verify original planning ledger is not corrupted by candidate evaluations.
+    Pure evaluation operates on clones and does not mutate caller's ledger.
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=20, placed_animals=["COW"])
+    ledger = build_feed_resource_ledger(ctx, lifetime_price_policy="engine_stress_bound_v1")
+
+    orig_cash = ledger.observed_cash
+    orig_reservations_len = len(ledger.candidate_reservations)
+    orig_spent = ledger.candidate_purchase_cash_spent
+    orig_wheat = ledger.wheat_in_shed
+    orig_hold = ledger.existing_feed_cash_hold
+
+    # Evaluate incremental candidates without committing
+    evaluate_incremental_candidate(ledger, "COW")
+    evaluate_incremental_candidate(ledger, "SHEEP")
+    evaluate_incremental_candidate(ledger, "GOOSE")
+
+    # Verify original ledger is completely unmutated
+    assert ledger.observed_cash == orig_cash
+    assert len(ledger.candidate_reservations) == orig_reservations_len
+    assert ledger.candidate_purchase_cash_spent == orig_spent
+    assert ledger.wheat_in_shed == orig_wheat
+    assert ledger.existing_feed_cash_hold == orig_hold
+
+
+def test_phase_c1_feed_hold_diagnostics_exposed():
+    """Verify feed_hold_diagnostics exposes:
+    existing_feed_cash_hold, candidate_feed_cash_hold,
+    remaining_existing_feed_hold, candidate_feed_holds_total.
+    """
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=5, placed_animals=["COW"])
+    ledger = build_feed_resource_ledger(ctx, lifetime_price_policy="engine_stress_bound_v1")
+    evaluate_existing_herd_feasibility(ledger)
+
+    holds = ledger.get_feed_hold_diagnostics()
+    assert "existing_feed_cash_hold" in holds
+    assert "candidate_feed_cash_hold" in holds
+    assert "remaining_existing_feed_hold" in holds
+    assert "candidate_feed_holds_total" in holds
+    assert holds["remaining_existing_feed_hold"] == holds["existing_feed_cash_hold"]
+    assert holds["candidate_feed_holds_total"] == holds["candidate_feed_cash_hold"]
+
+    d = ledger.to_dict()
+    assert "remaining_existing_feed_hold" in d
+    assert "candidate_feed_holds_total" in d
+    assert "feed_hold_diagnostics" in d
+
+
+def test_phase_c1_macro_planner_intents_and_diagnostics():
+    """Verify MacroPlanner populates buy_animal_sequence in plan.intents and diagnostics."""
+    from strategy.macro_planner import MacroPlanner
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=10000.0, shed_wheat=30, placed_animals=["COW"])
+    planner = MacroPlanner(DummyFC())
+    plan = planner.build(ctx)
+
+    assert hasattr(plan, "buy_animal_sequence")
+    assert "buy_animal_sequence" in plan.intents
+    assert isinstance(plan.intents["buy_animal_sequence"], list)
+    assert "buy_animal" in plan.intents
+    assert isinstance(plan.intents["buy_animal"], dict)
+
+    assert "feed_hold_diagnostics" in plan.diagnostics
+    assert "existing_feed_cash_hold" in plan.diagnostics["feed_hold_diagnostics"]
+    assert "candidate_feed_cash_hold" in plan.diagnostics["feed_hold_diagnostics"]
+    assert "provisional_candidates" in plan.diagnostics
+    assert "buy_animal_sequence" in plan.diagnostics
+
+
+def test_phase_c1_order_builder_untouched():
+    """Verify OrderBuilder produces identical orders with buy_animal_sequence in intents.
+    OrderBuilder during C1 ignores buy_animal_sequence and continues using buy_animal.
+    """
+    from market.order_builder import OrderBuilder
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=10, placed_animals=[])
+
+    from strategy.macro_planner import MacroPlan
+    plan1 = MacroPlan(day=10)
+    plan1.intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_animal": {"SHEEP": 1},
+        "buy_wheat": 0,
+        "protected_feed_wheat": 0,
+        "optional_feed_wheat": 0,
+    }
+
+    plan2 = MacroPlan(day=10)
+    plan2.intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "buy_wheat": 0,
+        "protected_feed_wheat": 0,
+        "optional_feed_wheat": 0,
+    }
+
+    builder = OrderBuilder()
+    orders1 = builder.build(ctx, plan1.intents)
+    orders2 = builder.build(ctx, plan2.intents)
+
+    assert orders1 == orders2
+

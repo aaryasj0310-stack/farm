@@ -227,6 +227,7 @@ class MacroPlan:
     intents: dict = field(default_factory=dict)
     notes: list = field(default_factory=list)
     diagnostics: dict = field(default_factory=dict)      # v5.10: expansion observability
+    buy_animal_sequence: list = field(default_factory=list)  # Phase C1: ordered provisional sequence
 
 
 def _crop_allowed_today(crop, day):
@@ -906,6 +907,9 @@ class MacroPlanner:
         except ImportError:
             LIVESTOCK_EXPERIMENT_ARM = "ArmA"
 
+        planning_feed_ledger = None
+        herd_plan = None
+
         if LIVESTOCK_EXPERIMENT_ARM == "ArmC":
             if is_endgame or not allow_livestock:
                 dynamic_targets = {"COW": counts.get("COW", 0),
@@ -918,7 +922,6 @@ class MacroPlanner:
             else:
                 from strategy.herd_planner import generate_dynamic_herd_plan, get_forward_housing_demand
                 point2_mode = get_point2_feed_mode() if callable(get_point2_feed_mode) else "off"
-                planning_feed_ledger = None
                 ledger_build_error = None
                 if point2_mode in ("herd_plan", "live"):
                     if build_feed_resource_ledger is None:
@@ -998,6 +1001,9 @@ class MacroPlanner:
                                 "final_feed_capped_herd_size": final_feed_capped_herd_size,
                                 "legacy_sustainable_herd_size": sustainable,
                                 "ledger_summary": planning_feed_ledger.to_dict() if planning_feed_ledger else None,
+                                "feed_hold_diagnostics": planning_feed_ledger.get_feed_hold_diagnostics() if planning_feed_ledger else None,
+                                "buy_animal_sequence": list(herd_plan.buy_animal_sequence) if herd_plan else [],
+                                "provisional_candidates": list(herd_plan.provisional_candidates) if herd_plan else [],
                             }
                         else:
                             final_feed_capped_herd_size = min(requested_herd_size, sustainable)
@@ -2000,11 +2006,15 @@ class MacroPlanner:
         plan.plant_queue = plant_queue
         plan.water_budget_exceeded = water_budget_exceeded
         plan.place_queue = place_queue
+        # Phase C1: ordered provisional animal candidate sequence
+        provisional_seq = list(herd_plan.buy_animal_sequence) if herd_plan is not None else []
+        plan.buy_animal_sequence = provisional_seq
         plan.intents = {
             "hire": hires,
             "buy_land": buy_land,
             "buy_seed": buy_seed,
             "buy_animal": buy_animal,
+            "buy_animal_sequence": provisional_seq,
             "buy_wheat": int(buy_wheat),
             "protected_feed_wheat": int(protected_feed_wheat),
             "optional_feed_wheat": int(optional_feed_wheat),
@@ -2145,6 +2155,24 @@ class MacroPlanner:
                     "mode": point2_mode,
                     "error": str(e),
                 }
+
+        # Phase C1 diagnostics: provisional candidates and feed hold diagnostics
+        if herd_plan is not None:
+            plan.diagnostics["provisional_candidates"] = list(herd_plan.provisional_candidates)
+            plan.diagnostics["buy_animal_sequence"] = list(herd_plan.buy_animal_sequence)
+        else:
+            plan.diagnostics["provisional_candidates"] = []
+            plan.diagnostics["buy_animal_sequence"] = []
+
+        if planning_feed_ledger is not None and hasattr(planning_feed_ledger, "get_feed_hold_diagnostics"):
+            plan.diagnostics["feed_hold_diagnostics"] = planning_feed_ledger.get_feed_hold_diagnostics()
+        else:
+            plan.diagnostics["feed_hold_diagnostics"] = {
+                "existing_feed_cash_hold": 0.0,
+                "candidate_feed_cash_hold": 0.0,
+                "remaining_existing_feed_hold": 0.0,
+                "candidate_feed_holds_total": 0.0,
+            }
 
         return plan
 
