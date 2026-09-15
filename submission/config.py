@@ -98,6 +98,15 @@ HOLD_AT_FLOOR_PRODUCTS = {"MELON", "STRAWBERRY", "MILK", "WOOL"}
 FEED_WHEAT_BUFFER_DAYS = 4        # keep >= animals * 4 days of feed wheat (bridges 4-day wheat cycle)
 BUY_WHEAT_TRIGGER_DAYS = 2.0
 
+# Point 2 — Feed/Herd Feasibility Rollout Mode
+# Supported modes: "off", "shadow", "herd_plan", "live"
+POINT2_FEED_MODE = "shadow"
+FEED_OPERATIONAL_HORIZON_DAYS = FEED_WHEAT_BUFFER_DAYS
+
+def get_point2_feed_mode() -> str:
+    """Return the active Point-2 feed/herd sustainability rollout mode."""
+    return POINT2_FEED_MODE
+
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
 PHASE1_MELON_TILES_NW = 12        # NW melons for day-10 cash surge (Leader springboard)

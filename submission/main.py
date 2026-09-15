@@ -74,6 +74,7 @@ try:
         summarize_opponent_commitments, update_opponent_shed_estimate,
         compute_opponent_sell_probabilities,
     )
+    from strategy.feed_feasibility import build_feed_execution_snapshot
 except ImportError:
     from config import (
         QUADRANT_HARD_BLOCK, get_target_hands,
@@ -99,6 +100,10 @@ except ImportError:
         summarize_opponent_commitments, update_opponent_shed_estimate,
         compute_opponent_sell_probabilities,
     )
+    try:
+        from feed_feasibility import build_feed_execution_snapshot
+    except ImportError:
+        build_feed_execution_snapshot = None
 
 PASS_ACTION = {"farmer": ["PASS"], "hands": [], "market": []}
 
@@ -704,6 +709,14 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
                 plan.intents["buy_land"] = False  # force block
         tasks = build_tasks(ctx, plan)
         asg = assign_tasks(tasks, ctx)
+        feed_execution_snapshot = None
+        if build_feed_execution_snapshot is not None:
+            try:
+                feed_execution_snapshot = build_feed_execution_snapshot(
+                    ctx, tasks=tasks, assignment=asg.get("assignment", {}) if isinstance(asg, dict) else asg
+                )
+            except Exception:
+                feed_execution_snapshot = None
     except Exception as exc:
         # Fallback to survival tasks when planner or task scheduler fails
         global _LAST_FALLBACK_DIAGNOSTIC
@@ -917,6 +930,8 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         "sell_telemetry": copy.deepcopy(_cp_diag.get("sell_telemetry")) if (_cp_diag and "sell_telemetry" in _cp_diag) else None,
         "central_planner_diagnostic": copy.deepcopy(_cp_diag) if _cp_diag else None,
         "macro_plan_diagnostic": copy.deepcopy(plan.diagnostics) if plan and hasattr(plan, "diagnostics") else None,
+        "feed_execution_snapshot": feed_execution_snapshot.to_dict() if feed_execution_snapshot else None,
+        "feed_feasibility_shadow": copy.deepcopy(plan.diagnostics.get("point2_feed_shadow")) if (plan and hasattr(plan, "diagnostics")) else None,
     }
 
     # 6. Action dict assembly

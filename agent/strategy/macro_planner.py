@@ -47,6 +47,7 @@ from config import (
     CROP_TILE_CAPS,
     CROPS,
     ENDGAME_START_DAY,
+    FEED_OPERATIONAL_HORIZON_DAYS,
     FEED_WHEAT_BUFFER_DAYS,
     HIRE_BUDGET_MAX_HANDS,
     LAND_BUY_LAST_DAY,
@@ -80,7 +81,28 @@ from config import (
     get_strawberry_cap,
     get_sw_seed_targets,
     C4_LIVESTOCK_CUTOFF_DAY,
+    get_point2_feed_mode,
 )
+try:
+    from strategy.feed_feasibility import (
+        build_feed_resource_ledger,
+        evaluate_existing_herd_feasibility,
+        evaluate_incremental_candidate,
+        commit_candidate_reservation,
+    )
+except ImportError:
+    try:
+        from feed_feasibility import (
+            build_feed_resource_ledger,
+            evaluate_existing_herd_feasibility,
+            evaluate_incremental_candidate,
+            commit_candidate_reservation,
+        )
+    except ImportError:
+        build_feed_resource_ledger = None
+        evaluate_existing_herd_feasibility = None
+        evaluate_incremental_candidate = None
+        commit_candidate_reservation = None
 try:
     from strategy.animal_planner import get_animal_targets, HERD_CAP
     from strategy.pasture_planner import (
@@ -1990,6 +2012,61 @@ class MacroPlanner:
             "dynamic_strawberry_cap": get_strawberry_cap(day, "NE" in farm.unlocked),
             "dynamic_sw_seed_targets": expansion_seed_targets(next_quadrant, day, money) if next_quadrant else {},
         })
+
+        # Point 2 Phase A: Shadow Feed/Herd Feasibility Evaluator (Diagnostic only)
+        point2_mode = get_point2_feed_mode() if callable(get_point2_feed_mode) else "off"
+        if point2_mode != "off" and build_feed_resource_ledger is not None:
+            try:
+                strategic_hold = float(hire_cost) + (float(land_cost) if buy_land else 0.0)
+                shadow_ledger = build_feed_resource_ledger(
+                    ctx,
+                    hard_cash_hold=float(self.reserve),
+                    strategic_cash_hold=strategic_hold,
+                    horizon_days=FEED_OPERATIONAL_HORIZON_DAYS,
+                )
+                existing_ok, existing_res = evaluate_existing_herd_feasibility(shadow_ledger)
+
+                cow_res = evaluate_incremental_candidate(shadow_ledger, "COW")
+                cow_ok = cow_res.feasible
+                sheep_res = evaluate_incremental_candidate(shadow_ledger, "SHEEP")
+                sheep_ok = sheep_res.feasible
+                goose_res = evaluate_incremental_candidate(shadow_ledger, "GOOSE")
+                goose_ok = goose_res.feasible
+
+                # Short sequential feasibility test on a cloned ledger (COW then SHEEP)
+                seq_ledger = shadow_ledger.clone()
+                seq_cow_res = evaluate_incremental_candidate(seq_ledger, "COW")
+                seq_cow_ok = seq_cow_res.feasible
+                seq_sheep_ok = False
+                seq_sheep_res = None
+                if seq_cow_ok:
+                    commit_candidate_reservation(seq_ledger, seq_cow_res)
+                    seq_sheep_res = evaluate_incremental_candidate(seq_ledger, "SHEEP")
+                    seq_sheep_ok = seq_sheep_res.feasible
+
+                plan.diagnostics["point2_feed_shadow"] = {
+                    "mode": point2_mode,
+                    "existing_feasible": existing_ok,
+                    "existing_reason": existing_res.blocking_reason,
+                    "existing_confidence": existing_res.execution_confidence,
+                    "candidate_feasibility": {
+                        "COW": cow_res.to_dict() if cow_res else None,
+                        "SHEEP": sheep_res.to_dict() if sheep_res else None,
+                        "GOOSE": goose_res.to_dict() if goose_res else None,
+                    },
+                    "sequential_test": {
+                        "cow_possible": seq_cow_ok,
+                        "cow_then_sheep_possible": seq_sheep_ok,
+                        "cow_result": seq_cow_res.to_dict() if seq_cow_res else None,
+                        "sheep_result": seq_sheep_res.to_dict() if seq_sheep_res else None,
+                    },
+                    "ledger_summary": shadow_ledger.to_dict(),
+                }
+            except Exception as e:
+                plan.diagnostics["point2_feed_shadow"] = {
+                    "mode": point2_mode,
+                    "error": str(e),
+                }
 
         return plan
 
