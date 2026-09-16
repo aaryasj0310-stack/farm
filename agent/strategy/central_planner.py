@@ -349,6 +349,49 @@ class CentralPlanner:
         return True, None
 
     @staticmethod
+    def _validate_animal_c2c_metadata(meta: Any) -> Tuple[bool, Optional[str]]:
+        """Validates explicit C2C dependency metadata for a BUY_ANIMAL proposal.
+
+        Requires:
+          - candidate_ids: non-empty list of non-empty strings.
+          - dependency_group: non-empty string.
+          - requires_resource_keys: list with elements in {"wheat:protected", "wheat:optional"}.
+            (Explicit empty list [] is valid; missing is NOT equivalent to []).
+        """
+        if not isinstance(meta, dict):
+            return False, "metadata_not_a_dict"
+
+        # 1. candidate_ids
+        if "candidate_ids" not in meta:
+            return False, "missing_candidate_ids"
+        cids = meta["candidate_ids"]
+        if not isinstance(cids, list):
+            return False, "candidate_ids_not_a_list"
+        if len(cids) == 0:
+            return False, "empty_candidate_ids"
+        if not all(isinstance(cid, str) and len(cid) > 0 for cid in cids):
+            return False, "invalid_candidate_id_element"
+
+        # 2. dependency_group
+        if "dependency_group" not in meta:
+            return False, "missing_dependency_group"
+        dg = meta["dependency_group"]
+        if not isinstance(dg, str) or len(dg) == 0:
+            return False, "invalid_dependency_group"
+
+        # 3. requires_resource_keys
+        if "requires_resource_keys" not in meta:
+            return False, "missing_requires_resource_keys"
+        req = meta["requires_resource_keys"]
+        if not isinstance(req, list):
+            return False, "requires_resource_keys_not_a_list"
+        for k in req:
+            if k not in ("wheat:protected", "wheat:optional"):
+                return False, f"unknown_dependency_key_{k}"
+
+        return True, None
+
+    @staticmethod
     def _purchase_semantic_subpriority(c: ProposalCandidate) -> int:
         """Deterministic tiebreaker for equal-priority purchases:
 
@@ -605,11 +648,7 @@ class CentralPlanner:
 
         if op == "BUY_ANIMAL":
             explicit_meta = self._get_upstream_purchase_metadata(order_copy, idx, purchase_ledger)
-            meta = {
-                "candidate_ids": list(explicit_meta.get("candidate_ids", [])),
-                "dependency_group": explicit_meta.get("dependency_group"),
-                "requires_resource_keys": list(explicit_meta.get("requires_resource_keys", [])),
-            }
+            meta = dict(explicit_meta)
             clean_order = [order_copy[0], order_copy[1], order_copy[2]]
             return ProposalCandidate(
                 proposal_id=proposal_id,
@@ -1092,6 +1131,24 @@ class CentralPlanner:
                     else:
                         valid_purchases.append(c)
                 purchase_candidates = valid_purchases
+            else:
+                valid_purchases = []
+                for c in purchase_candidates:
+                    if c.kind == "animal":
+                        raw_meta = self._get_upstream_purchase_metadata(c.order, c.original_index, purchase_ledger)
+                        a_valid, a_err = self._validate_animal_c2c_metadata(raw_meta)
+                        if not a_valid:
+                            c.rejection_reason = "invalid_dependency_contract"
+                            c.metadata["contract_error"] = a_err
+                            all_rejected.append(c)
+                        else:
+                            c.metadata["candidate_ids"] = list(raw_meta["candidate_ids"])
+                            c.metadata["dependency_group"] = str(raw_meta["dependency_group"])
+                            c.metadata["requires_resource_keys"] = list(raw_meta["requires_resource_keys"])
+                            valid_purchases.append(c)
+                    else:
+                        valid_purchases.append(c)
+                purchase_candidates = valid_purchases
 
         # Step 2: Early Validation & Filtering
         # 2a. Accidental Duplicate Land Protection (only BUY_LAND is deduplicated)
@@ -1199,17 +1256,33 @@ class CentralPlanner:
         missing_feed_sale_resource_keys: List[str] = []
         effective_sellable_shed_wheat = self._get_wheat_in_shed(ctx)
         authoritative_sellable_shed_wheat = self._get_wheat_in_shed(ctx)
+        remaining_sellable_shed_wheat = self._get_wheat_in_shed(ctx)
 
         if is_live_feed_mode:
             feed_sale_res = purchase_ledger.get("feed_sale_reservation", {}) if isinstance(purchase_ledger, dict) else {}
-            res_deps = set(feed_sale_res.get("requires_resource_keys", []))
-            missing_res_deps = res_deps - selected_resource_keys
+            res_valid = isinstance(feed_sale_res, dict) and feed_sale_res.get("valid", False)
+            res_deps = feed_sale_res.get("requires_resource_keys") if isinstance(feed_sale_res, dict) else None
+
+            res_deps_valid = (
+                isinstance(res_deps, list) and
+                all(k in ("wheat:protected", "wheat:optional") for k in res_deps)
+            )
+            if not res_deps_valid:
+                res_valid = False
+
+            req_dep_set = set(res_deps) if res_deps_valid else set()
+            missing_res_deps = req_dep_set - selected_resource_keys
 
             authoritative_sellable_shed_wheat = int(feed_sale_res.get("sellable_shed_wheat", 0)) if isinstance(feed_sale_res, dict) else 0
 
-            if not c2c_contract_valid or missing_res_deps:
+            if not c2c_contract_valid or not res_valid or missing_res_deps:
                 feed_sale_reservation_dependency_satisfied = False
-                missing_feed_sale_resource_keys = sorted(list(missing_res_deps)) if missing_res_deps else ["invalid_contract"]
+                if not res_deps_valid:
+                    missing_feed_sale_resource_keys = ["malformed_reservation_dependencies"]
+                elif missing_res_deps:
+                    missing_feed_sale_resource_keys = sorted(list(missing_res_deps))
+                else:
+                    missing_feed_sale_resource_keys = ["invalid_contract"]
                 effective_sellable_shed_wheat = 0 if day < 29 else self._get_wheat_in_shed(ctx)
             else:
                 feed_sale_reservation_dependency_satisfied = True
@@ -1552,92 +1625,202 @@ class CentralPlanner:
         """Dependency-safe fallback in live feed mode on unexpected exceptions.
 
         Invariants:
+          - Validates all purchase and sell proposals structurally via _validate_proposal (rejection_reason = "invalid_order").
           - Drops ALL BUY_ANIMAL proposals immediately (rejection_reason = "live_fallback_animal_drop").
-          - Preserves valid protected WHEAT first.
-          - Clamps WHEAT sales to sellable_shed_wheat (blocks completely if invalid before Day 29).
-          - Retains independent valid orders up to cap.
-          - Never routes to legacy_compose_market in live mode.
+          - Selects valid protected WHEAT as hard root (subject to cap).
+          - Selects remaining valid independent proposals under cap (purchases-first in hour 0, 1; sells-first otherwise).
+          - Resolves surviving resource keys (wheat:protected, wheat:optional) from final selected fallback purchases.
+          - Validates feed_sale_reservation dependencies:
+              * requires_resource_keys must be list with keys in {"wheat:protected", "wheat:optional"}.
+              * if reservation invalid or any required resource key is missing from selected fallback purchases:
+                    effective_sellable_shed_wheat = 0 (before Day 29).
+              * on Day 29: liquidation exempt (all shed wheat sellable).
+          - Clamps/removes selected SELL WHEAT orders against effective_sellable_shed_wheat.
+          - Consolidates multiple wheat buys if any.
+          - Exposes complete diagnostic telemetry.
         """
-        purchases = [list(o) for o in (purchase_orders or [])]
-        sells = [list(o) for o in (sell_orders or [])]
+        purchases = [list(o) if isinstance(o, (list, tuple)) else [o] for o in (purchase_orders or [])]
+        sells = [list(o) if isinstance(o, (list, tuple)) else [o] for o in (sell_orders or [])]
         day = self._get_day(ctx)
         hour = self._get_hour(ctx)
         effective_cap = max(0, cap)
 
-        feed_sale_res = purchase_ledger.get("feed_sale_reservation") if isinstance(purchase_ledger, dict) else None
-        if day >= 29:
-            sellable_wheat = self._get_wheat_in_shed(ctx)
-        elif isinstance(feed_sale_res, dict) and feed_sale_res.get("valid", False):
-            sellable_wheat = int(feed_sale_res.get("sellable_shed_wheat", 0))
-        else:
-            sellable_wheat = 0
+        all_rejected: List[Dict[str, Any]] = []
 
-        accepted_buys = []
-        rejected_buys = []
-        protected_wheat_order = None
+        # 1. Structural validation of purchases
+        valid_buys: List[Tuple[List[Any], Optional[str], bool]] = []
+        dropped_animals: List[Dict[str, Any]] = []
 
         for idx, o in enumerate(purchases):
-            op = o[0] if o else ""
+            is_valid, err = self._validate_proposal(o)
+            if not is_valid:
+                all_rejected.append({
+                    "proposal_id": f"fallback_purchase:{idx}",
+                    "order": list(o),
+                    "rejection_reason": "invalid_order",
+                    "validation_error": err,
+                })
+                continue
+
+            op = o[0]
             if op == "BUY_ANIMAL":
-                rejected_buys.append({
+                rej = {
                     "proposal_id": f"fallback_purchase:{idx}",
                     "order": list(o),
                     "rejection_reason": "live_fallback_animal_drop",
-                })
+                }
+                dropped_animals.append(rej)
+                all_rejected.append(rej)
             elif op == "BUY_PRODUCT" and len(o) > 1 and o[1] == "WHEAT":
                 meta = self._get_upstream_purchase_metadata(o, idx, purchase_ledger)
-                is_prot = (meta.get("is_protected") or meta.get("feed_class") == "protected" or meta.get("resource_key") == "wheat:protected")
-                if is_prot and protected_wheat_order is None:
-                    protected_wheat_order = list(o[:3])
-                else:
-                    accepted_buys.append(list(o[:3]))
+                rk = meta.get("resource_key")
+                is_prot = bool(meta.get("is_protected") or meta.get("feed_class") == "protected" or rk == "wheat:protected")
+                resolved_rk = "wheat:protected" if is_prot else (rk if rk in ("wheat:protected", "wheat:optional") else "wheat:optional")
+                valid_buys.append((list(o[:3]), resolved_rk, is_prot))
             else:
-                accepted_buys.append(list(o[:3]) if len(o) > 3 else list(o))
+                valid_buys.append((list(o[:3]) if len(o) > 3 else list(o), None, False))
 
-        accepted_sells = []
-        rejected_sells = []
+        # 1b. Structural validation of sells
+        valid_sells: List[List[Any]] = []
         for idx, o in enumerate(sells):
+            is_valid, err = self._validate_proposal(o)
+            if not is_valid:
+                all_rejected.append({
+                    "proposal_id": f"fallback_sell:{idx}",
+                    "order": list(o),
+                    "rejection_reason": "invalid_order",
+                    "validation_error": err,
+                })
+                continue
+            valid_sells.append(list(o[:3]) if len(o) > 3 else list(o))
+
+        # 2. Protected WHEAT fallback selection root
+        protected_wheat_order = None
+        other_buys: List[Tuple[List[Any], Optional[str]]] = []
+        for o_clean, rk, is_prot in valid_buys:
+            if is_prot and protected_wheat_order is None and effective_cap > 0:
+                protected_wheat_order = (o_clean, "wheat:protected")
+            else:
+                other_buys.append((o_clean, rk))
+
+        # 3. Initial selection under cap
+        selected_buys: List[Tuple[List[Any], Optional[str]]] = []
+        if protected_wheat_order is not None and effective_cap > 0:
+            selected_buys.append(protected_wheat_order)
+
+        remaining_slots = effective_cap - len(selected_buys)
+        purchases_first = (hour in (0, 1))
+        selected_sells: List[List[Any]] = []
+
+        if purchases_first:
+            for b in other_buys:
+                if remaining_slots > 0:
+                    selected_buys.append(b)
+                    remaining_slots -= 1
+                else:
+                    all_rejected.append({
+                        "proposal_id": f"fallback_purchase_cap:{len(all_rejected)}",
+                        "order": list(b[0]),
+                        "rejection_reason": "slot_cap",
+                    })
+            for s in valid_sells:
+                if remaining_slots > 0:
+                    selected_sells.append(s)
+                    remaining_slots -= 1
+                else:
+                    all_rejected.append({
+                        "proposal_id": f"fallback_sell_cap:{len(all_rejected)}",
+                        "order": list(s),
+                        "rejection_reason": "slot_cap",
+                    })
+        else:
+            for s in valid_sells:
+                if remaining_slots > 0:
+                    selected_sells.append(s)
+                    remaining_slots -= 1
+                else:
+                    all_rejected.append({
+                        "proposal_id": f"fallback_sell_cap:{len(all_rejected)}",
+                        "order": list(s),
+                        "rejection_reason": "slot_cap",
+                    })
+            for b in other_buys:
+                if remaining_slots > 0:
+                    selected_buys.append(b)
+                    remaining_slots -= 1
+                else:
+                    all_rejected.append({
+                        "proposal_id": f"fallback_purchase_cap:{len(all_rejected)}",
+                        "order": list(b[0]),
+                        "rejection_reason": "slot_cap",
+                    })
+
+        # 4. Determine surviving resource keys
+        final_selected_resource_keys = set()
+        for o_clean, rk in selected_buys:
+            if rk in ("wheat:protected", "wheat:optional"):
+                final_selected_resource_keys.add(rk)
+
+        # 5. Validate feed-sale reservation dependencies
+        feed_sale_res = purchase_ledger.get("feed_sale_reservation") if isinstance(purchase_ledger, dict) else None
+        res_valid = isinstance(feed_sale_res, dict) and feed_sale_res.get("valid", False)
+        req_keys = feed_sale_res.get("requires_resource_keys") if isinstance(feed_sale_res, dict) else None
+
+        req_keys_valid = (
+            isinstance(req_keys, list) and
+            all(k in ("wheat:protected", "wheat:optional") for k in req_keys)
+        )
+        if not req_keys_valid:
+            res_valid = False
+
+        req_dep_set = set(req_keys) if req_keys_valid else set()
+        missing_res_deps = req_dep_set - final_selected_resource_keys
+        if missing_res_deps:
+            res_valid = False
+
+        feed_sale_reservation_dependency_satisfied = res_valid
+        if not req_keys_valid:
+            missing_feed_sale_resource_keys = ["malformed_reservation_dependencies"]
+        elif missing_res_deps:
+            missing_feed_sale_resource_keys = sorted(list(missing_res_deps))
+        else:
+            missing_feed_sale_resource_keys = []
+
+        if day >= 29:
+            effective_sellable_shed_wheat = self._get_wheat_in_shed(ctx)
+        elif res_valid:
+            effective_sellable_shed_wheat = int(feed_sale_res.get("sellable_shed_wheat", 0))
+        else:
+            effective_sellable_shed_wheat = 0
+
+        # 6. Clamp/remove selected SELL WHEAT orders
+        accepted_sells: List[List[Any]] = []
+        remaining_sellable_wheat = effective_sellable_shed_wheat
+
+        for idx, o in enumerate(selected_sells):
             op = o[0] if o else ""
             prod = o[1] if len(o) > 1 else ""
             if op == "SELL" and prod == "WHEAT" and day < 29:
                 req = int(o[2]) if len(o) > 2 else 0
-                allowed = min(req, max(0, sellable_wheat))
+                allowed = min(req, max(0, remaining_sellable_wheat))
                 if allowed <= 0:
-                    rejected_sells.append({
+                    all_rejected.append({
                         "proposal_id": f"fallback_sell:{idx}",
                         "order": list(o),
                         "rejection_reason": "protected_feed_reservation",
                     })
                 elif allowed < req:
-                    sellable_wheat -= allowed
+                    remaining_sellable_wheat -= allowed
                     accepted_sells.append(["SELL", "WHEAT", allowed])
                 else:
-                    sellable_wheat -= req
+                    remaining_sellable_wheat -= req
                     accepted_sells.append(list(o[:3]))
             else:
                 accepted_sells.append(list(o[:3]) if len(o) > 3 else list(o))
 
-        # Assembly: protected wheat first
-        final_orders = []
-        if protected_wheat_order is not None and effective_cap > 0:
-            final_orders.append(protected_wheat_order)
-
-        remaining_cap = effective_cap - len(final_orders)
-        purchases_first = (hour in (0, 1))
-        first_queue, second_queue = (accepted_buys, accepted_sells) if purchases_first else (accepted_sells, accepted_buys)
-
-        for o in first_queue:
-            if remaining_cap > 0:
-                final_orders.append(o)
-                remaining_cap -= 1
-            else:
-                break
-        for o in second_queue:
-            if remaining_cap > 0:
-                final_orders.append(o)
-                remaining_cap -= 1
-            else:
-                break
+        # 7. Final assembly
+        final_buys = [o_clean for o_clean, _ in selected_buys]
+        final_orders = (final_buys + accepted_sells) if purchases_first else (accepted_sells + final_buys)
 
         # Consolidate wheat buys if multiple
         wheat_buys = [o for o in final_orders if o[0] == "BUY_PRODUCT" and o[1] == "WHEAT"]
@@ -1659,10 +1842,15 @@ class CentralPlanner:
             "fallback_mode": "dependency_safe_live_fallback",
             "error": error,
             "accepted_orders": [list(o) for o in final_orders],
-            "rejected_orders": [r["order"] for r in rejected_buys + rejected_sells],
-            "rejected_details": rejected_buys + rejected_sells,
+            "rejected_orders": [r["order"] for r in all_rejected],
+            "rejected_details": all_rejected,
             "c2c_contract_valid": False,
             "dependency_closure_applied": True,
-            "dropped_animal_count": len(rejected_buys),
+            "dropped_animal_count": len(dropped_animals),
+            "feed_sale_reservation_dependency_satisfied": feed_sale_reservation_dependency_satisfied,
+            "missing_feed_sale_resource_keys": missing_feed_sale_resource_keys,
+            "effective_sellable_shed_wheat": effective_sellable_shed_wheat,
+            "remaining_sellable_shed_wheat": remaining_sellable_wheat,
+            "final_selected_resource_keys": sorted(list(final_selected_resource_keys)),
         }
         return final_orders, diag
