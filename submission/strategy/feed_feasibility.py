@@ -43,6 +43,7 @@ try:
         ANIMAL_FEED_CUTOFF_DAY,
         ANIMAL_LIST,
         ANIMALS,
+        CROPS,
         FEED_OPERATIONAL_HORIZON_DAYS,
         FEED_WHEAT_BUFFER_DAYS,
         SEASON_DAYS,
@@ -54,10 +55,11 @@ except ImportError:
     ANIMAL_FEED_CUTOFF_DAY = 29
     ANIMAL_LIST = ["COW", "SHEEP", "GOOSE"]
     ANIMALS = {
-        "COW": {"cost": 500, "space": 4},
-        "SHEEP": {"cost": 250, "space": 4},
-        "GOOSE": {"cost": 100, "space": 1},
+        "COW": {"cost": 500, "space": 4, "structure": "PASTURE", "product": "MILK"},
+        "SHEEP": {"cost": 250, "space": 4, "structure": "PASTURE", "product": "WOOL"},
+        "GOOSE": {"cost": 100, "space": 1, "structure": "COOP", "product": "EGG"},
     }
+    CROPS = {"WHEAT": {}, "CARROT": {}, "POTATO": {}, "STRAWBERRY": {}, "PUMPKIN": {}}
     FEED_OPERATIONAL_HORIZON_DAYS = 4
     FEED_WHEAT_BUFFER_DAYS = 4
     SEASON_DAYS = 30
@@ -617,6 +619,127 @@ def collect_secured_wheat_deliveries(
 # Execution Snapshot Construction
 # ============================================================================
 
+def _get_farm_tile(farm: Any, pos: Any) -> Any:
+    if farm is None or pos is None:
+        return None
+    if not isinstance(pos, (list, tuple)) or len(pos) < 2:
+        return None
+    try:
+        x, y = int(pos[0]), int(pos[1])
+    except (ValueError, TypeError):
+        return None
+
+    # 1. Prioritize 2D list farm.tiles
+    if hasattr(farm, "tiles"):
+        tiles = farm.tiles
+        if isinstance(tiles, list) and 0 <= y < len(tiles):
+            row = tiles[y]
+            if isinstance(row, list) and 0 <= x < len(row):
+                t = row[x]
+                if t is not None:
+                    return t
+
+    # 2. 2D list farm["tiles"]
+    if isinstance(farm, dict) and "tiles" in farm:
+        tiles = farm["tiles"]
+        if isinstance(tiles, list) and 0 <= y < len(tiles):
+            row = tiles[y]
+            if isinstance(row, list) and 0 <= x < len(row):
+                t = row[x]
+                if t is not None:
+                    return t
+
+    # 3. farm.iter_tiles()
+    if hasattr(farm, "iter_tiles") and callable(getattr(farm, "iter_tiles")):
+        try:
+            it = farm.iter_tiles()
+            if hasattr(it, "__iter__"):
+                for t in it:
+                    t_pos = getattr(t, "pos", None)
+                    if t_pos is not None:
+                        if hasattr(t_pos, "x") and hasattr(t_pos, "y") and isinstance(t_pos.x, (int, float)):
+                            if (int(t_pos.x), int(t_pos.y)) == (x, y):
+                                return t
+                        elif isinstance(t_pos, (list, tuple)) and len(t_pos) >= 2 and isinstance(t_pos[0], (int, float)):
+                            if (int(t_pos[0]), int(t_pos[1])) == (x, y):
+                                return t
+                    elif hasattr(t, "x") and hasattr(t, "y") and isinstance(t.x, (int, float)):
+                        if (int(t.x), int(t.y)) == (x, y):
+                            return t
+        except Exception:
+            pass
+
+    # 4. farm.tile_at((x, y)) if real method (not MagicMock)
+    if hasattr(farm, "tile_at") and callable(getattr(farm, "tile_at")):
+        tile_at_fn = getattr(farm, "tile_at")
+        if not hasattr(tile_at_fn, "_mock_return_value") and not type(tile_at_fn).__name__.startswith("MagicMock"):
+            try:
+                t = tile_at_fn((x, y))
+                if t is not None:
+                    return t
+            except Exception:
+                pass
+
+    return None
+
+
+def _is_tile_unlocked(farm: Any, pos: Tuple[int, int], tile: Any = None) -> bool:
+    if farm is None:
+        return True
+    if tile == "LOCKED":
+        return False
+    if isinstance(tile, dict) and tile.get("kind") == "LOCKED":
+        return False
+    if hasattr(tile, "kind") and isinstance(getattr(tile, "kind", None), str) and getattr(tile, "kind", None) == "LOCKED":
+        return False
+    if hasattr(farm, "unlocked") and hasattr(farm, "quadrant_of") and callable(getattr(farm, "quadrant_of")):
+        try:
+            q = farm.quadrant_of(pos)
+            if isinstance(q, str):
+                unlocked = farm.unlocked
+                if isinstance(unlocked, (set, list, tuple)):
+                    return q in unlocked
+        except Exception:
+            pass
+    if isinstance(farm, dict) and "unlocked_quadrants" in farm:
+        unlocked = farm.get("unlocked_quadrants") or ["NW"]
+        tiles = farm.get("tiles")
+        half = (len(tiles[0]) // 2) if (tiles and len(tiles) > 0 and isinstance(tiles[0], list) and len(tiles[0]) > 0) else 5
+        x, y = pos
+        q = ("N" if y < half else "S") + ("W" if x < half else "E")
+        return q in unlocked
+    return True
+
+
+def _get_worker_pos(farm: Any, u_idx: int) -> Optional[Tuple[int, int]]:
+    if farm is None:
+        return None
+    if u_idx == 0:
+        farmer = getattr(farm, "farmer", None) if not isinstance(farm, dict) else farm.get("farmer")
+        if farmer is not None:
+            if hasattr(farmer, "pos"):
+                p = farmer.pos
+                if hasattr(p, "x") and hasattr(p, "y") and isinstance(p.x, (int, float)):
+                    return (int(p.x), int(p.y))
+                if isinstance(p, (list, tuple)) and len(p) >= 2 and isinstance(p[0], (int, float)):
+                    return (int(p[0]), int(p[1]))
+            if isinstance(farmer, (list, tuple)) and len(farmer) >= 2 and isinstance(farmer[0], (int, float)):
+                return (int(farmer[0]), int(farmer[1]))
+    else:
+        hands = getattr(farm, "hands", None) if not isinstance(farm, dict) else farm.get("hands")
+        if hands and isinstance(hands, list) and (u_idx - 1) < len(hands):
+            hand = hands[u_idx - 1]
+            if hasattr(hand, "pos"):
+                p = hand.pos
+                if hasattr(p, "x") and hasattr(p, "y") and isinstance(p.x, (int, float)):
+                    return (int(p.x), int(p.y))
+                if isinstance(p, (list, tuple)) and len(p) >= 2 and isinstance(p[0], (int, float)):
+                    return (int(p[0]), int(p[1]))
+            if isinstance(hand, (list, tuple)) and len(hand) >= 2 and isinstance(hand[0], (int, float)):
+                return (int(hand[0]), int(hand[1]))
+    return None
+
+
 def build_feed_execution_snapshot(
     ctx: Any,
     tasks: Any = None,
@@ -830,7 +953,13 @@ def build_feed_execution_snapshot(
                 post_unit_workers.append({str(k): int(v) for k, v in w_inv.items()})
             else:
                 post_unit_workers.append({})
-    while len(post_unit_workers) < n_active_units:
+    max_active_idx = max(
+        [n_active_units - 1] +
+        [int(k) for k in actions_map.keys() if str(k).isdigit()] +
+        [int(k) for k in asg_map.keys() if str(k).isdigit()] +
+        [0]
+    )
+    while len(post_unit_workers) <= max_active_idx:
         post_unit_workers.append({})
 
     # Observed structures & placed animals
@@ -881,21 +1010,34 @@ def build_feed_execution_snapshot(
 
     post_unit_verified = True
     post_unit_reason = "ok"
+    occupied_structure_targets: Set[Tuple[int, int]] = set()
+    built_targets: Set[Tuple[int, int]] = set()
 
-    for u_idx, act in actions_map.items():
+    def mark_unverified(reason: str):
+        nonlocal post_unit_verified, post_unit_reason
+        if post_unit_verified:
+            post_unit_verified = False
+            post_unit_reason = reason
+
+    for raw_u_idx, act in sorted(actions_map.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0):
         if not act or not isinstance(act, (list, tuple)):
             continue
         op_act = act[0]
+        u_idx = int(raw_u_idx) if str(raw_u_idx).isdigit() else 0
         u_task = asg_map.get(u_idx) if isinstance(asg_map, dict) else None
+        if u_task is None and isinstance(asg_map, dict) and str(u_idx) in asg_map:
+            u_task = asg_map[str(u_idx)]
         task_args = u_task.get("args", []) if isinstance(u_task, dict) else []
         act_args = act[1:] if len(act) > 1 else task_args
         u_inv = post_unit_workers[u_idx] if u_idx < len(post_unit_workers) else None
 
         if op_act == "FEED":
-            tgt = tuple(u_task.get("target")) if (isinstance(u_task, dict) and u_task.get("target") is not None) else None
-            if tgt in verified_feed_targets:
-                if u_inv is not None and u_inv.get("WHEAT", 0) > 0:
-                    u_inv["WHEAT"] -= 1
+            if u_inv is not None and u_inv.get("WHEAT", 0) >= 1:
+                u_inv["WHEAT"] -= 1
+                if u_inv["WHEAT"] == 0:
+                    del u_inv["WHEAT"]
+            else:
+                mark_unverified("unverifiable_feed")
 
         elif op_act == "PLACE":
             animal_to_place = None
@@ -904,56 +1046,226 @@ def build_feed_execution_snapshot(
             elif task_args and task_args[0] in ("COW", "SHEEP", "GOOSE"):
                 animal_to_place = task_args[0]
             elif u_inv:
-                for a in ("COW", "SHEEP", "GOOSE"):
-                    if u_inv.get(a, 0) > 0:
-                        animal_to_place = a
-                        break
+                inv_anims = [a for a in ("COW", "SHEEP", "GOOSE") if u_inv.get(a, 0) > 0]
+                if len(inv_anims) == 1:
+                    animal_to_place = inv_anims[0]
 
-            if animal_to_place:
-                if u_inv and u_inv.get(animal_to_place, 0) > 0:
+            tgt = None
+            if isinstance(u_task, dict) and u_task.get("target") is not None:
+                tgt = tuple(u_task["target"])
+            if tgt is None:
+                tgt = _get_worker_pos(farm, u_idx)
+
+            if animal_to_place is None or animal_to_place not in ANIMALS:
+                mark_unverified("unverifiable_place")
+            elif u_inv is None or u_inv.get(animal_to_place, 0) < 1:
+                mark_unverified("unverifiable_place")
+            elif tgt is None:
+                mark_unverified("unverifiable_place")
+            elif tgt in occupied_structure_targets:
+                mark_unverified("unverifiable_place")
+            else:
+                tgt_tile = _get_farm_tile(farm, tgt)
+                raw_kind = getattr(tgt_tile, "kind", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("kind")
+                tgt_kind = str(raw_kind) if isinstance(raw_kind, str) else ""
+                t_anim_raw = getattr(tgt_tile, "animal", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("animal")
+                tgt_is_animal = bool(
+                    getattr(tgt_tile, "is_animal", False) is True or
+                    (isinstance(t_anim_raw, str) and t_anim_raw in ANIMALS) or
+                    (isinstance(tgt_tile, dict) and (tgt_tile.get("is_animal") or "animal" in tgt_tile))
+                )
+                expected_struct = ANIMALS[animal_to_place]["structure"]
+                is_unlocked = _is_tile_unlocked(farm, tgt, tgt_tile)
+
+                if (tgt_tile is None or
+                    tgt_kind != expected_struct or
+                    tgt_is_animal or
+                    not is_unlocked):
+                    mark_unverified("unverifiable_place")
+                else:
                     u_inv[animal_to_place] -= 1
-                sim_placed_herd[animal_to_place] = sim_placed_herd.get(animal_to_place, 0) + 1
-                struct = ANIMALS[animal_to_place]["structure"] if animal_to_place in ANIMALS else "PASTURE"
-                if struct == "PASTURE":
-                    empty_pastures = max(0, empty_pastures - 1)
-                elif struct == "COOP":
-                    empty_coops = max(0, empty_coops - 1)
+                    if u_inv[animal_to_place] == 0:
+                        del u_inv[animal_to_place]
+                    sim_placed_herd[animal_to_place] = sim_placed_herd.get(animal_to_place, 0) + 1
+                    if expected_struct == "PASTURE":
+                        empty_pastures = max(0, empty_pastures - 1)
+                    elif expected_struct == "COOP":
+                        empty_coops = max(0, empty_coops - 1)
+                    occupied_structure_targets.add(tgt)
 
-        elif op_act == "BUILD_PASTURE":
+        elif op_act in ("BUILD_PASTURE", "BUILD_COOP"):
             if day < 12:
-                empty_pastures += 1
+                tgt = None
+                if isinstance(u_task, dict) and u_task.get("target") is not None:
+                    tgt = tuple(u_task["target"])
+                if tgt is None:
+                    tgt = _get_worker_pos(farm, u_idx)
 
-        elif op_act == "BUILD_COOP":
-            if day < 12:
-                empty_coops += 1
+                if tgt is None or tgt in built_targets:
+                    mark_unverified("unverifiable_build")
+                else:
+                    tgt_tile = _get_farm_tile(farm, tgt)
+                    raw_kind = getattr(tgt_tile, "kind", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("kind")
+                    tgt_kind = str(raw_kind) if isinstance(raw_kind, str) else ""
+                    t_anim_raw = getattr(tgt_tile, "animal", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("animal")
+                    t_anim = bool(
+                        getattr(tgt_tile, "is_animal", False) is True or
+                        (isinstance(t_anim_raw, str) and t_anim_raw in ANIMALS) or
+                        (isinstance(tgt_tile, dict) and (tgt_tile.get("is_animal") or "animal" in tgt_tile))
+                    )
+                    t_crop_raw = getattr(tgt_tile, "crop", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("crop")
+                    t_crop = bool(isinstance(t_crop_raw, str) and t_crop_raw in CROPS)
+                    is_empty = (
+                        (tgt_tile is None or tgt_kind in ("EMPTY", "", "?") or (hasattr(tgt_tile, "raw") and tgt_tile.raw is None))
+                        and not t_anim
+                        and not t_crop
+                        and tgt_kind not in ("LOCKED", "PASTURE", "COOP", "PLANT", "WEED")
+                    )
+                    is_unlocked = _is_tile_unlocked(farm, tgt, tgt_tile)
+
+                    if not is_empty or not is_unlocked:
+                        mark_unverified("unverifiable_build")
+                    else:
+                        built_targets.add(tgt)
+                        if op_act == "BUILD_PASTURE":
+                            empty_pastures += 1
+                        elif op_act == "BUILD_COOP":
+                            empty_coops += 1
+            else:
+                # Day 12+: zero credit, regardless of build
+                pass
 
         elif op_act == "PICKUP":
             item = act_args[0] if act_args else (task_args[0] if task_args else None)
             qty = int(act_args[1]) if len(act_args) > 1 else (int(task_args[1]) if len(task_args) > 1 else 1)
-            if item:
-                post_unit_shed[item] = max(0, post_unit_shed.get(item, 0) - qty)
+            if item is not None and qty > 0 and post_unit_shed.get(item, 0) >= qty:
+                post_unit_shed[item] -= qty
+                if post_unit_shed[item] == 0:
+                    del post_unit_shed[item]
                 if u_inv is not None:
                     u_inv[item] = u_inv.get(item, 0) + qty
+            else:
+                mark_unverified("unverifiable_pickup")
 
         elif op_act == "DROP":
             item = act_args[0] if act_args else (task_args[0] if task_args else None)
             qty = int(act_args[1]) if len(act_args) > 1 else (int(task_args[1]) if len(task_args) > 1 else 1)
-            if item and u_inv is not None:
-                u_inv[item] = max(0, u_inv.get(item, 0) - qty)
+            if item is not None and u_inv is not None and qty > 0 and u_inv.get(item, 0) >= qty:
+                u_inv[item] -= qty
+                if u_inv[item] == 0:
+                    del u_inv[item]
                 post_unit_shed[item] = post_unit_shed.get(item, 0) + qty
-
-        elif op_act == "FERTILIZE":
-            if u_inv is not None and u_inv.get("FERTILIZER", 0) > 0:
-                u_inv["FERTILIZER"] -= 1
-
-        elif op_act == "COLLECT_FERTILIZER":
-            if u_inv is not None:
-                u_inv["FERTILIZER"] = u_inv.get("FERTILIZER", 0) + 1
+            else:
+                mark_unverified("unverifiable_drop")
 
         elif op_act == "HARVEST":
-            crop = act_args[0] if act_args else (task_args[0] if task_args else None)
-            if crop and u_inv is not None:
-                u_inv[crop] = u_inv.get(crop, 0) + 1
+            # Scheduler emits ["HARVEST"] with no args.
+            # Look up acting worker's target tile via u_task.get("target") (or worker's current tile / adjacent tile).
+            tgt_tile, tgt_pos = None, None
+            if isinstance(u_task, dict) and u_task.get("target") is not None:
+                p = tuple(u_task["target"])
+                t = _get_farm_tile(farm, p)
+                if t is not None and (
+                    getattr(t, "crop", None) or getattr(t, "animal", None) or
+                    (isinstance(t, dict) and (t.get("crop") or t.get("animal")))
+                ):
+                    tgt_tile, tgt_pos = t, p
+
+            if tgt_tile is None:
+                u_pos = _get_worker_pos(farm, u_idx)
+                if u_pos is not None:
+                    t = _get_farm_tile(farm, u_pos)
+                    if t is not None and (
+                        getattr(t, "crop", None) or getattr(t, "animal", None) or
+                        (isinstance(t, dict) and (t.get("crop") or t.get("animal")))
+                    ):
+                        tgt_tile, tgt_pos = t, u_pos
+                    else:
+                        for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+                            adj_p = (u_pos[0] + dx, u_pos[1] + dy)
+                            t_adj = _get_farm_tile(farm, adj_p)
+                            if t_adj is not None and (
+                                getattr(t_adj, "crop", None) or getattr(t_adj, "animal", None) or
+                                (isinstance(t_adj, dict) and (t_adj.get("crop") or t_adj.get("animal")))
+                            ):
+                                tgt_tile, tgt_pos = t_adj, adj_p
+                                break
+
+            # If still None, fall back to target or worker pos
+            if tgt_tile is None:
+                if isinstance(u_task, dict) and u_task.get("target") is not None:
+                    tgt_tile = _get_farm_tile(farm, tuple(u_task["target"]))
+                elif u_pos is not None:
+                    tgt_tile = _get_farm_tile(farm, u_pos)
+
+            raw_kind = getattr(tgt_tile, "kind", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("kind")
+            tgt_kind = str(raw_kind) if isinstance(raw_kind, str) else ""
+            t_crop_raw = getattr(tgt_tile, "crop", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("crop")
+            crop_name = str(t_crop_raw) if (isinstance(t_crop_raw, str) and t_crop_raw in CROPS) else None
+
+            t_anim_raw = getattr(tgt_tile, "animal", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("animal")
+            animal_name = str(t_anim_raw) if (isinstance(t_anim_raw, str) and t_anim_raw in ANIMALS) else None
+
+            is_plant = (
+                getattr(tgt_tile, "is_plant", False) is True or
+                tgt_kind == "PLANT" or
+                crop_name is not None or
+                (isinstance(tgt_tile, dict) and (tgt_tile.get("kind") == "PLANT" or "crop" in tgt_tile))
+            )
+            is_animal = (
+                getattr(tgt_tile, "is_animal", False) is True or
+                animal_name is not None or
+                (isinstance(tgt_tile, dict) and ("animal" in tgt_tile or tgt_tile.get("is_animal")))
+            )
+
+            if is_plant:
+                item = crop_name or (str(t_crop_raw) if isinstance(t_crop_raw, str) else None)
+                raw_yield = getattr(tgt_tile, "yield_units", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("yield_units")
+                if item is None or not isinstance(raw_yield, (int, float)) or int(raw_yield) <= 0:
+                    mark_unverified("unverifiable_crop_harvest")
+                else:
+                    if u_inv is not None:
+                        u_inv[item] = u_inv.get(item, 0) + int(raw_yield)
+            elif is_animal:
+                product = ANIMALS[animal_name]["product"] if (animal_name and animal_name in ANIMALS and "product" in ANIMALS[animal_name]) else None
+                raw_yield = getattr(tgt_tile, "yield_units", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("yield_units")
+                if product is None or not isinstance(raw_yield, (int, float)) or int(raw_yield) <= 0:
+                    mark_unverified("unverifiable_animal_harvest")
+                else:
+                    if u_inv is not None:
+                        u_inv[product] = u_inv.get(product, 0) + int(raw_yield)
+            else:
+                mark_unverified("unverifiable_crop_harvest")
+
+        elif op_act == "FERTILIZE":
+            if u_inv is not None and u_inv.get("FERTILIZER", 0) >= 1:
+                u_inv["FERTILIZER"] -= 1
+                if u_inv["FERTILIZER"] == 0:
+                    del u_inv["FERTILIZER"]
+            else:
+                mark_unverified("unverifiable_fertilize")
+
+        elif op_act == "COLLECT_FERTILIZER":
+            tgt = None
+            if isinstance(u_task, dict) and u_task.get("target") is not None:
+                tgt = tuple(u_task["target"])
+            if tgt is None:
+                tgt = _get_worker_pos(farm, u_idx)
+
+            tgt_tile = _get_farm_tile(farm, tgt) if tgt is not None else None
+            t_anim_raw = getattr(tgt_tile, "animal", None) if not isinstance(tgt_tile, dict) else tgt_tile.get("animal")
+            is_anim = bool(
+                getattr(tgt_tile, "is_animal", False) is True or
+                (isinstance(t_anim_raw, str) and t_anim_raw in ANIMALS) or
+                (isinstance(tgt_tile, dict) and ("animal" in tgt_tile or tgt_tile.get("is_animal")))
+            )
+            raw_fert = getattr(tgt_tile, "fertilizer_available", False) if not isinstance(tgt_tile, dict) else tgt_tile.get("fertilizer_available", False)
+            fert_avail = (raw_fert is True)
+            if is_anim and fert_avail:
+                if u_inv is not None:
+                    u_inv["FERTILIZER"] = u_inv.get("FERTILIZER", 0) + 1
+            else:
+                mark_unverified("unverifiable_collect_fertilizer")
 
     post_unit_shed_occupancy = sum(qty for qty in post_unit_shed.values() if qty > 0)
     post_unit_worker_inventory_total = sum(sum(qty for qty in inv.values() if qty > 0) for inv in post_unit_workers)

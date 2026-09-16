@@ -2635,43 +2635,67 @@ def test_c2b_post_unit_place_occupies_structure():
     from strategy.feed_feasibility import build_feed_execution_snapshot
     ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
     ctx["farm"].workers[0].inventory = {"COW": 1}
+    ctx["private"].inventories = [{"COW": 1}]
     class MockPastureTile:
         kind = "PASTURE"
         is_animal = False
+        animal = None
         pos = (1, 1)
-    ctx["farm"].tiles = [[MockPastureTile()]]
+    ctx["farm"].tiles = [[None, None], [None, MockPastureTile()]]
     ctx["farm"].iter_tiles = lambda: [MockPastureTile()]
-    ctx["assignment"] = {0: {"task": "PLACE", "args": ["COW"]}}
+    ctx["farm"].quadrant_of = lambda pos: "NW"
+    ctx["assignment"] = {0: {"task": "PLACE", "target": (1, 1), "args": ["COW"]}}
     ctx["actions"] = {0: ["PLACE", "COW"]}
 
     snapshot = build_feed_execution_snapshot(ctx)
     assert snapshot.post_unit_worker_inventories[0].get("COW", 0) == 0
     assert snapshot.post_unit_placed_herd["COW"] == 1
     assert snapshot.post_unit_empty_pastures == 0
+    assert snapshot.post_unit_state_verified is True
 
 
 def test_c2b_pre_cutoff_build_credit():
     """Test 90: Before Day 12, actual verified BUILD_PASTURE increments post_unit_empty_pastures."""
     from strategy.feed_feasibility import build_feed_execution_snapshot
     ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
-    ctx["farm"].iter_tiles = lambda: []
-    ctx["assignment"] = {0: {"task": "BUILD_PASTURE", "args": []}}
+    class MockEmptyTile:
+        kind = "EMPTY"
+        raw = None
+        is_animal = False
+        animal = None
+        crop = None
+        pos = (1, 1)
+    ctx["farm"].tiles = [[None, None], [None, MockEmptyTile()]]
+    ctx["farm"].iter_tiles = lambda: [MockEmptyTile()]
+    ctx["farm"].quadrant_of = lambda pos: "NW"
+    ctx["assignment"] = {0: {"task": "BUILD_PASTURE", "target": (1, 1), "args": []}}
     ctx["actions"] = {0: ["BUILD_PASTURE"]}
 
     snapshot = build_feed_execution_snapshot(ctx)
     assert snapshot.post_unit_empty_pastures == 1
+    assert snapshot.post_unit_state_verified is True
 
 
 def test_c2b_post_cutoff_build_zero_credit():
     """Test 91: On Day 12+, verified BUILD_PASTURE yields zero candidate housing credit."""
     from strategy.feed_feasibility import build_feed_execution_snapshot
     ctx = make_mock_farm_ctx(day=12, hour=0, money=5000.0, shed_wheat=0)
-    ctx["farm"].iter_tiles = lambda: []
-    ctx["assignment"] = {0: {"task": "BUILD_PASTURE", "args": []}}
+    class MockEmptyTile:
+        kind = "EMPTY"
+        raw = None
+        is_animal = False
+        animal = None
+        crop = None
+        pos = (1, 1)
+    ctx["farm"].tiles = [[None, None], [None, MockEmptyTile()]]
+    ctx["farm"].iter_tiles = lambda: [MockEmptyTile()]
+    ctx["farm"].quadrant_of = lambda pos: "NW"
+    ctx["assignment"] = {0: {"task": "BUILD_PASTURE", "target": (1, 1), "args": []}}
     ctx["actions"] = {0: ["BUILD_PASTURE"]}
 
     snapshot = build_feed_execution_snapshot(ctx)
     assert snapshot.post_unit_empty_pastures == 0
+    assert snapshot.post_unit_state_verified is True
 
 
 def test_c2b_existing_unplaced_housing_first_claim(monkeypatch):
@@ -3049,3 +3073,280 @@ def test_c2b_intraday_uses_shared_c2b_authority(monkeypatch):
     orders_reinvest, ledger_reinvest = builder.reinvest_livestock(ctx, intents)
     assert ledger_reinvest.get("live_animal_authority") == "c2b_sequential"
     assert any(o[0] == "BUY_ANIMAL" and o[1] == "SHEEP" for o in orders_reinvest)
+
+
+# ============================================================================
+# Phase C2B Verification Layer Hardening Tests
+# ============================================================================
+
+def test_c2b_repair_missing_snapshot_fails_closed(monkeypatch):
+    """Test 102: In live mode, missing execution_snapshot rejects all candidate livestock with post_unit_state_unverified, preserving non-animal orders."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 1,
+        "buy_land": False,
+        "buy_seed": {"CARROT": 1},
+        "buy_wheat": 5,
+        "buy_animal": {"COW": 1},
+        "buy_animal_sequence": ["COW"],
+        "pending_structures": {},
+        "execution_snapshot": None,
+    }
+    ctx["feed_execution_snapshot"] = None
+
+    orders, ledger = builder.build(ctx, intents)
+
+    # 1. Zero BUY_ANIMAL orders emitted
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    # 2. Rejection reason is post_unit_state_unverified
+    assert any(
+        d.get("kind") == "animal" and d.get("reason") == "post_unit_state_unverified"
+        for d in ledger.get("dropped", [])
+    )
+    # 3. Higher priority non-animal purchases remain intact
+    assert any(o[0] == "HIRE" for o in orders)
+    assert any(o[0] == "BUY_SEED" for o in orders)
+
+
+def test_c2b_repair_crop_harvest_verified():
+    """Test 103: Scheduler HARVEST on mature plant credits worker inventory with yield units."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    class MockStrawberryTile:
+        kind = "PLANT"
+        crop = "STRAWBERRY"
+        is_plant = True
+        is_animal = False
+        animal = None
+        yield_units = 3
+        pos = (2, 3)
+    ctx["farm"].tiles = [[None for _ in range(10)] for _ in range(10)]
+    ctx["farm"].tiles[3][2] = MockStrawberryTile()
+    ctx["farm"].iter_tiles = lambda: [MockStrawberryTile()]
+    ctx["assignment"] = {0: {"task": "HARVEST", "target": (2, 3), "args": []}}
+    ctx["actions"] = {0: ["HARVEST"]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_state_verified is True
+    assert snapshot.post_unit_worker_inventories[0].get("STRAWBERRY", 0) == 3
+
+
+def test_c2b_repair_animal_harvest_verified():
+    """Test 104: Scheduler HARVEST on mature animal credits worker inventory with animal product."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    class MockSheepTile:
+        kind = "PASTURE"
+        crop = None
+        is_plant = False
+        is_animal = True
+        animal = "SHEEP"
+        yield_units = 2
+        pos = (2, 3)
+    ctx["farm"].tiles = [[None for _ in range(10)] for _ in range(10)]
+    ctx["farm"].tiles[3][2] = MockSheepTile()
+    ctx["farm"].iter_tiles = lambda: [MockSheepTile()]
+    ctx["assignment"] = {0: {"task": "HARVEST", "target": (2, 3), "args": []}}
+    ctx["actions"] = {0: ["HARVEST"]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_state_verified is True
+    assert snapshot.post_unit_worker_inventories[0].get("WOOL", 0) == 2
+
+
+def test_c2b_repair_hour23_rollover_with_real_harvest(monkeypatch):
+    """Test 105: Hour-23 rollover with real HARVEST causing post-market shed overflow rejects candidate SHEEP with end_of_day_rollover_capacity."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+
+    # Shed has 98 items
+    ctx = make_mock_farm_ctx(day=5, hour=23, money=10000.0, shed_wheat=98)
+    ctx["private"].shed = {"WHEAT": 98}
+
+    # Worker harvests 3 WOOL from SHEEP
+    class MockSheepTile:
+        kind = "PASTURE"
+        crop = None
+        is_plant = False
+        is_animal = True
+        animal = "SHEEP"
+        yield_units = 3
+        fed_today = True
+        pos = (2, 3)
+    class MockPastureEmptyTile:
+        kind = "PASTURE"
+        crop = None
+        is_plant = False
+        is_animal = False
+        animal = None
+        pos = (1, 1)
+    ctx["farm"].tiles = [[None for _ in range(10)] for _ in range(10)]
+    ctx["farm"].tiles[3][2] = MockSheepTile()
+    ctx["farm"].tiles[1][1] = MockPastureEmptyTile()
+    ctx["farm"].iter_tiles = lambda: [MockSheepTile(), MockPastureEmptyTile()]
+    ctx["farm"].quadrant_of = lambda pos: "NW"
+    ctx["assignment"] = {0: {"task": "HARVEST", "target": (2, 3), "args": []}}
+    ctx["actions"] = {0: ["HARVEST"]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_state_verified is True
+    assert snapshot.post_unit_shed_occupancy == 98
+    assert snapshot.post_unit_worker_inventory_total == 3
+    assert snapshot.post_unit_empty_pastures == 1
+
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+        "execution_snapshot": snapshot,
+    }
+
+    orders, ledger = builder.build(ctx, intents)
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    decisions = ledger["candidate_decisions"]
+    assert len(decisions) == 1
+    assert decisions[0]["species"] == "SHEEP"
+    assert decisions[0]["accepted"] is False
+    assert decisions[0]["rejection_reason"] == "end_of_day_rollover_capacity"
+
+
+def test_c2b_repair_invalid_place_fails_closed(monkeypatch):
+    """Test 106: Invalid PLACE when worker does not hold animal fails verification and rejects candidate in live mode."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=50)
+    ctx["farm"].workers[0].inventory = {}
+    ctx["private"].inventories = [{}]
+    class MockPastureTile:
+        kind = "PASTURE"
+        is_animal = False
+        animal = None
+        pos = (1, 1)
+    ctx["farm"].tiles = [[None, None], [None, MockPastureTile()]]
+    ctx["farm"].iter_tiles = lambda: [MockPastureTile()]
+    ctx["farm"].quadrant_of = lambda pos: "NW"
+    ctx["assignment"] = {0: {"task": "PLACE", "target": (1, 1), "args": ["COW"]}}
+    ctx["actions"] = {0: ["PLACE", "COW"]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_state_verified is False
+    assert snapshot.post_unit_state_reason == "unverifiable_place"
+
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+        "execution_snapshot": snapshot,
+    }
+
+    orders, ledger = builder.build(ctx, intents)
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert any(
+        d.get("kind") == "animal" and d.get("reason") == "post_unit_state_unverified"
+        for d in ledger.get("dropped", [])
+    )
+
+
+def test_c2b_repair_invalid_pickup_fails_closed():
+    """Test 107: PICKUP requesting more quantity than available in shed fails verification."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=1)
+    ctx["private"].shed = {"WHEAT": 1}
+    ctx["assignment"] = {0: {"task": "PICKUP", "args": ["WHEAT", 3]}}
+    ctx["actions"] = {0: ["PICKUP", "WHEAT", 3]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_state_verified is False
+    assert snapshot.post_unit_state_reason == "unverifiable_pickup"
+
+
+def test_c2b_repair_invalid_drop_fails_closed():
+    """Test 108: DROP requesting item worker does not hold fails verification."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    ctx["farm"].workers[0].inventory = {}
+    ctx["private"].inventories = [{}]
+    ctx["assignment"] = {0: {"task": "DROP", "args": ["WHEAT", 1]}}
+    ctx["actions"] = {0: ["DROP", "WHEAT", 1]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_state_verified is False
+    assert snapshot.post_unit_state_reason == "unverifiable_drop"
+
+
+def test_c2b_repair_build_pre_and_post_day12():
+    """Test 109: Pre-Day 12 valid build gains housing; invalid build fails verification; Day 12+ gains zero credit."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+
+    # 1. Valid pre-Day 12
+    ctx_valid = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    class MockEmptyTile:
+        kind = "EMPTY"
+        raw = None
+        is_animal = False
+        animal = None
+        crop = None
+        pos = (1, 1)
+    ctx_valid["farm"].tiles = [[None, None], [None, MockEmptyTile()]]
+    ctx_valid["farm"].iter_tiles = lambda: [MockEmptyTile()]
+    ctx_valid["farm"].quadrant_of = lambda pos: "NW"
+    ctx_valid["assignment"] = {0: {"task": "BUILD_PASTURE", "target": (1, 1), "args": []}}
+    ctx_valid["actions"] = {0: ["BUILD_PASTURE"]}
+
+    snap_valid = build_feed_execution_snapshot(ctx_valid)
+    assert snap_valid.post_unit_state_verified is True
+    assert snap_valid.post_unit_empty_pastures == 1
+
+    # 2. Invalid pre-Day 12: target is already occupied
+    ctx_invalid = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    class MockOccupiedTile:
+        kind = "PASTURE"
+        raw = {"kind": "PASTURE"}
+        is_animal = False
+        animal = None
+        crop = None
+        pos = (1, 1)
+    ctx_invalid["farm"].tiles = [[None, None], [None, MockOccupiedTile()]]
+    ctx_invalid["farm"].iter_tiles = lambda: [MockOccupiedTile()]
+    ctx_invalid["farm"].quadrant_of = lambda pos: "NW"
+    ctx_invalid["assignment"] = {0: {"task": "BUILD_PASTURE", "target": (1, 1), "args": []}}
+    ctx_invalid["actions"] = {0: ["BUILD_PASTURE"]}
+
+    snap_invalid = build_feed_execution_snapshot(ctx_invalid)
+    assert snap_invalid.post_unit_state_verified is False
+    assert snap_invalid.post_unit_state_reason == "unverifiable_build"
+
+    # 3. Day 12+: zero credit, regardless of build
+    ctx_d12 = make_mock_farm_ctx(day=12, hour=0, money=5000.0, shed_wheat=0)
+    ctx_d12["farm"].tiles = [[None, None], [None, MockEmptyTile()]]
+    ctx_d12["farm"].iter_tiles = lambda: [MockEmptyTile()]
+    ctx_d12["farm"].quadrant_of = lambda pos: "NW"
+    ctx_d12["assignment"] = {0: {"task": "BUILD_PASTURE", "target": (1, 1), "args": []}}
+    ctx_d12["actions"] = {0: ["BUILD_PASTURE"]}
+
+    snap_d12 = build_feed_execution_snapshot(ctx_d12)
+    assert snap_d12.post_unit_state_verified is True
+    assert snap_d12.post_unit_empty_pastures == 0

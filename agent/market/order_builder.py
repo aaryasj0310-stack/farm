@@ -548,7 +548,9 @@ class OrderBuilder:
                     global_rejection_reason = "existing_herd_infeasible"
                 elif not is_safe_exec:
                     global_rejection_reason = "feed_execution_unverified"
-                elif snapshot is not None and not getattr(snapshot, "post_unit_state_verified", True):
+                elif snapshot is None:
+                    global_rejection_reason = "post_unit_state_unverified"
+                elif not getattr(snapshot, "post_unit_state_verified", True):
                     global_rejection_reason = "post_unit_state_unverified"
 
             accepted_candidates = []
@@ -584,14 +586,8 @@ class OrderBuilder:
                 base_shed_occupancy = getattr(snapshot, "post_unit_shed_occupancy", 0)
                 worker_rollover_inventory = getattr(snapshot, "post_unit_worker_inventory_total", 0)
             else:
-                priv = ctx.get("private")
-                base_shed_occupancy = sum(priv.shed.values()) if priv and hasattr(priv, "shed") else 0
-                workers_list = getattr(farm, "workers", []) if farm else []
-                worker_rollover_inventory = sum(
-                    sum(w_inv.values()) for w in workers_list
-                    for w_inv in [getattr(w, "inventory", {}) if not isinstance(w, dict) else w.get("inventory", {})]
-                    if isinstance(w_inv, dict)
-                )
+                base_shed_occupancy = 0
+                worker_rollover_inventory = 0
 
             total_retained_wheat = w_protected_buyable + w_opt_buyable
 
