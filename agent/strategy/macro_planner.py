@@ -1020,7 +1020,7 @@ class MacroPlanner:
                             physical_housing_capacity=phys_housing_cap,
                         )
                         target_pastures = max(
-                            herd_plan.required_pastures,
+                            getattr(herd_plan, "forward_required_pastures", herd_plan.required_pastures),
                             counts.get("COW", 0) + counts.get("SHEEP", 0)
                         )
                         dynamic_targets = dict(herd_plan.desired_herd)

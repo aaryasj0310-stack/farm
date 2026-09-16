@@ -50,6 +50,8 @@ try:
         SHED_CAPACITY,
         WHEAT_BUY_PRICE_BUFFER,
         get_point2_feed_mode,
+        get_point2_funding_horizon_fix_enabled,
+        get_feed_financial_horizon_days,
     )
 except ImportError:
     ANIMAL_FEED_CUTOFF_DAY = 29
@@ -68,6 +70,12 @@ except ImportError:
 
     def get_point2_feed_mode() -> str:
         return "shadow"
+
+    def get_point2_funding_horizon_fix_enabled() -> bool:
+        return False
+
+    def get_feed_financial_horizon_days() -> int:
+        return 8
 
 try:
     from market.price_math import estimate_wheat_buy_price, market_price
@@ -1821,15 +1829,49 @@ def evaluate_existing_herd_feasibility(
         return False, res
 
     last_op_day = operational_days[-1] if operational_days else day - 1
-    remaining_feeding_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
 
-    placed_lifetime_units = n_placed * remaining_feeding_days_beyond
-    total_feeding_days_from_today = max(0, ANIMAL_FEED_CUTOFF_DAY - day)
-    unplaced_lifetime_units = n_unplaced * total_feeding_days_from_today
-    total_remaining_lifetime_units = placed_lifetime_units + unplaced_lifetime_units
+    if get_point2_funding_horizon_fix_enabled():
+        fin_horizon = get_feed_financial_horizon_days()
+        # Rolling financial horizon: today through min(day + fin_horizon - 1, 28)
+        fin_cutoff_day = min(day + fin_horizon, ANIMAL_FEED_CUTOFF_DAY)
+        fin_future_days = max(0, fin_cutoff_day - (day + 1))
+
+        # Total feed needed across the rolling window:
+        # Today: unfed_placed_today (unplaced animals do not eat today)
+        # Future days: total_owned animals (placed + unplaced) eat 1 unit/day
+        total_window_needed = ledger.unfed_placed_today + (total_owned * fin_future_days)
+
+        # Non-market wheat available:
+        # 1. On-hand total wheat
+        # 2. Secured physical deliveries arriving before fin_cutoff_day
+        #    (collect_secured_wheat_deliveries() remains on 4-day horizon per invariant 7)
+        total_secured_deliveries = sum(d.units for d in ledger.secured_wheat_deliveries if d.day < fin_cutoff_day)
+        # 3. Existing ledger-scheduled market purchases (e.g. from retained protected wheat)
+        existing_market_scheduled = sum(
+            int(buy.get("units", 0)) for buy in ledger.scheduled_market_purchases
+            if not str(buy.get("purpose", "")).startswith("candidate_") and buy.get("day", 99) < fin_cutoff_day
+        )
+        total_avail_wheat = ledger.current_total_wheat_on_hand + total_secured_deliveries + existing_market_scheduled
+        total_window_deficit = max(0, total_window_needed - total_avail_wheat)
+
+        # New operational buys scheduled during days 0..3:
+        new_op_buys_units = sum(b["units"] for b in scheduled_buys)
+
+        # Single financial liability per deficit unit:
+        # Remaining future deficit units to be funded beyond operational buys:
+        future_deficit_units = max(0, total_window_deficit - new_op_buys_units)
+
+        total_remaining_lifetime_units = future_deficit_units
+        existing_future_market_req = total_window_deficit
+    else:
+        remaining_feeding_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
+        placed_lifetime_units = n_placed * remaining_feeding_days_beyond
+        total_feeding_days_from_today = max(0, ANIMAL_FEED_CUTOFF_DAY - day)
+        unplaced_lifetime_units = n_unplaced * total_feeding_days_from_today
+        total_remaining_lifetime_units = placed_lifetime_units + unplaced_lifetime_units
+        existing_future_market_req = cumulative_market_purchased + total_remaining_lifetime_units
 
     if ledger.lifetime_price_policy == "engine_stress_bound_v1":
-        existing_future_market_req = cumulative_market_purchased + total_remaining_lifetime_units
         stress_price, stress_diag = compute_engine_stress_wheat_price(
             current_market_wheat_inventory=ledger.wheat_market_inventory,
             worst_case_town_drain=ledger.town_wheat_drain,
@@ -1847,11 +1889,15 @@ def evaluate_existing_herd_feasibility(
         ledger.lifetime_wheat_price = ledger.wheat_price_current
         stress_diag = {}
 
-    placed_lifetime_cost = float(placed_lifetime_units * lifetime_wheat_price)
-    unplaced_lifetime_cost = float(unplaced_lifetime_units * lifetime_wheat_price)
-    total_remaining_lifetime_cost = placed_lifetime_cost + unplaced_lifetime_cost
-
     near_term_market_wheat_cost = sum(b["cost"] for b in scheduled_buys)
+    if get_point2_funding_horizon_fix_enabled():
+        placed_lifetime_cost = float(total_remaining_lifetime_units * lifetime_wheat_price)
+        unplaced_lifetime_cost = 0.0
+        total_remaining_lifetime_cost = placed_lifetime_cost
+    else:
+        placed_lifetime_cost = float(placed_lifetime_units * lifetime_wheat_price)
+        unplaced_lifetime_cost = float(unplaced_lifetime_units * lifetime_wheat_price)
+        total_remaining_lifetime_cost = placed_lifetime_cost + unplaced_lifetime_cost
     total_existing_feed_cash_required = near_term_market_wheat_cost + total_remaining_lifetime_cost
 
     if total_existing_feed_cash_required > cash_available_for_existing_feed:
@@ -2146,7 +2192,12 @@ def evaluate_incremental_candidate(
 
     # Lifetime feeding beyond operational horizon for candidate
     last_op_day = operational_days[-1] if operational_days else day - 1
-    cand_lifetime_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
+    if get_point2_funding_horizon_fix_enabled():
+        fin_horizon = get_feed_financial_horizon_days()
+        fin_cutoff_day = min(day + fin_horizon, ANIMAL_FEED_CUTOFF_DAY)
+        cand_lifetime_days_beyond = max(0, fin_cutoff_day - (last_op_day + 1))
+    else:
+        cand_lifetime_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
     cand_lifetime_units = cand_lifetime_days_beyond * 1
     cand_near_term_market_units = cand_cumulative_market_purchased
     cand_near_term_market_cost = sum(b["cost"] for b in cand_scheduled_buys)

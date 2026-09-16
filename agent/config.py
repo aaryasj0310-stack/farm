@@ -103,9 +103,26 @@ BUY_WHEAT_TRIGGER_DAYS = 2.0
 POINT2_FEED_MODE = "shadow"
 FEED_OPERATIONAL_HORIZON_DAYS = FEED_WHEAT_BUFFER_DAYS
 
+# Point 2 Performance Experiment Switches (Diagnostic/Experimental only, default False)
+POINT2_HOUSING_FIX_ENABLED = False
+POINT2_FUNDING_HORIZON_FIX_ENABLED = False
+FEED_FINANCIAL_HORIZON_DAYS = 8
+
 def get_point2_feed_mode() -> str:
     """Return the active Point-2 feed/herd sustainability rollout mode."""
     return POINT2_FEED_MODE
+
+def get_point2_housing_fix_enabled() -> bool:
+    """Return whether experimental forward housing decoupling is enabled."""
+    return bool(POINT2_HOUSING_FIX_ENABLED)
+
+def get_point2_funding_horizon_fix_enabled() -> bool:
+    """Return whether experimental 8-day rolling financial feed horizon is enabled."""
+    return bool(POINT2_FUNDING_HORIZON_FIX_ENABLED)
+
+def get_feed_financial_horizon_days() -> int:
+    """Return the financial funding horizon in days (default 8)."""
+    return int(FEED_FINANCIAL_HORIZON_DAYS)
 
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
