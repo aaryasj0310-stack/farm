@@ -143,6 +143,8 @@ def generate_dynamic_herd_plan(
     opponent_stress_supplies: Optional[Dict[str, Dict[int, float]]] = None,
     guard_threshold: float = 0.15,
     feed_ledger: Optional[Any] = None,
+    late_selective_mode: bool = False,
+    physical_housing_capacity: Optional[Dict[str, int]] = None,
 ) -> DynamicHerdPlan:
     """Generate forward infrastructure herd targets using transactional shadow-state economics.
 
@@ -158,6 +160,9 @@ def generate_dynamic_herd_plan(
       - Picks the argmax profitable species.
       - Updates shadow herd, shadow future supply, shadow feed demand, and required housing.
       - Stops when no candidate clears the economic hurdle or constraints (caps, feed sustainability) bind.
+      - Phase C2B: When late_selective_mode=True and day in [12, 14], restricts candidates to observed
+        physical housing only, applies SELECTIVE_LIVESTOCK_GATE_THRESHOLD ($500 hurdle), and generates
+        the authoritative late-selective candidate sequence.
     """
     day = int(day)
     caps = active_caps or get_active_livestock_caps()
@@ -170,16 +175,18 @@ def generate_dynamic_herd_plan(
     g0 = max(0, int(current_herd.get("GOOSE", 0)))
 
     # On or after Day 12 cutoff: new infrastructure cannot amortize construction cost
+    # Unless late_selective_mode is active (live mode only, Day 12-14, physical housing only)
     if day >= C4_LIVESTOCK_CUTOFF_DAY:
-        return DynamicHerdPlan(
-            desired_herd={"COW": c0, "SHEEP": s0, "GOOSE": 0},
-            required_pastures=c0 + s0,
-            required_coops=g0,
-            marginal_value_sequence=[f"Day {day} >= cutoff ({C4_LIVESTOCK_CUTOFF_DAY}) -> 0 new forward housing"],
-            decision_records=[],
-            horizon_days=horizon_days,
-            rationale="late_season_cutoff",
-        )
+        if not (late_selective_mode and day <= SELECTIVE_LIVESTOCK_MAX_DAY):
+            return DynamicHerdPlan(
+                desired_herd={"COW": c0, "SHEEP": s0, "GOOSE": 0},
+                required_pastures=c0 + s0,
+                required_coops=g0,
+                marginal_value_sequence=[f"Day {day} >= cutoff ({C4_LIVESTOCK_CUTOFF_DAY}) -> 0 new forward housing"],
+                decision_records=[],
+                horizon_days=horizon_days,
+                rationale="late_season_cutoff",
+            )
 
     # Initialize transactional shadow state
     shadow_herd = {"COW": c0, "SHEEP": s0, "GOOSE": 0}
@@ -235,8 +242,16 @@ def generate_dynamic_herd_plan(
         target_cap = min(herd_cap, eff_max_sustainable)
 
     # Infrastructure build cost allowance:
-    # A planned prospective animal must earn enough to pay for its $100 pasture fence + $25 build action + logistics
-    housing_build_hurdle = 150.0
+    # Under late selective mode: candidates must clear $500 hurdle and use physical housing only
+    if late_selective_mode and day >= C4_LIVESTOCK_CUTOFF_DAY:
+        avail_pastures = max(0, int(physical_housing_capacity.get("PASTURE", 0))) if physical_housing_capacity else 0
+        avail_coops = max(0, int(physical_housing_capacity.get("COOP", 0))) if physical_housing_capacity else 0
+        target_cap = (c0 + s0 + g0) + avail_pastures + avail_coops
+        housing_build_hurdle = float(SELECTIVE_LIVESTOCK_GATE_THRESHOLD)
+    else:
+        avail_pastures = 999
+        avail_coops = 999
+        housing_build_hurdle = 150.0
 
     while sum(shadow_herd.values()) < target_cap:
         curr_total = sum(shadow_herd.values())
@@ -245,8 +260,12 @@ def generate_dynamic_herd_plan(
         cand_results: Dict[str, Any] = {}
         infeasible_feed_cands: Dict[str, Any] = {}
 
+        pastures_used = (shadow_herd["COW"] - c0) + (shadow_herd["SHEEP"] - s0)
+        coops_used = shadow_herd["GOOSE"] - g0
+
         # 1. Evaluate COW
-        if shadow_herd["COW"] < cow_cap and (curr_total + 1) <= target_cap:
+        cow_housing_ok = (not late_selective_mode or day < C4_LIVESTOCK_CUTOFF_DAY or pastures_used < avail_pastures)
+        if shadow_herd["COW"] < cow_cap and (curr_total + 1) <= target_cap and cow_housing_ok:
             cand_feasible = True
             cand_res = None
             if feed_ledger is not None:
@@ -283,7 +302,8 @@ def generate_dynamic_herd_plan(
                     stress_evals["COW"] = eval_c_stress
 
         # 2. Evaluate SHEEP
-        if shadow_herd["SHEEP"] < sheep_cap and (curr_total + 1) <= target_cap:
+        sheep_housing_ok = (not late_selective_mode or day < C4_LIVESTOCK_CUTOFF_DAY or pastures_used < avail_pastures)
+        if shadow_herd["SHEEP"] < sheep_cap and (curr_total + 1) <= target_cap and sheep_housing_ok:
             cand_feasible = True
             cand_res = None
             if feed_ledger is not None:
@@ -320,7 +340,8 @@ def generate_dynamic_herd_plan(
                     stress_evals["SHEEP"] = eval_s_stress
 
         # 3. Evaluate GOOSE (strict zero-geese check: evaluate real ROI)
-        if (curr_total + 1) <= target_cap:
+        goose_housing_ok = (not late_selective_mode or day < C4_LIVESTOCK_CUTOFF_DAY or coops_used < avail_coops)
+        if (curr_total + 1) <= target_cap and goose_housing_ok:
             cand_feasible = True
             cand_res = None
             if feed_ledger is not None:
@@ -408,14 +429,14 @@ def generate_dynamic_herd_plan(
                 "provisional_status": "rejected",
                 "feed_feasible": True,
                 "execution_status": "rejected",
-                "reason": "below_housing_hurdle",
+                "reason": "below_housing_hurdle" if not late_selective_mode else "below_selective_hurdle",
                 "feed_diagnostics": cand_diag,
                 "feed_feasibility": cand_diag,
             })
             break
 
         # ACCEPT candidate into forward shadow state
-        status = "admitted"
+        status = "admitted_late_selective" if late_selective_mode else "admitted"
         feed_diag = None
         if feed_ledger is not None:
             best_cand_res = cand_results[best_sp]

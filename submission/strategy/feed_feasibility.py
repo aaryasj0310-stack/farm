@@ -121,9 +121,126 @@ class FeedExecutionSnapshot:
     is_live_livestock_safe: bool = True
     live_execution_status: str = "safe"  # "safe" or "feed_execution_unverified"
     live_execution_reason: str = ""
+    # Phase C2B post-unit / pre-market state
+    post_unit_shed_inventory: Dict[str, int] = field(default_factory=dict)
+    post_unit_worker_inventories: List[Dict[str, int]] = field(default_factory=list)
+    post_unit_shed_occupancy: int = 0
+    post_unit_worker_inventory_total: int = 0
+    post_unit_total_storable_inventory: int = 0
+    post_unit_empty_pastures: int = 0
+    post_unit_empty_coops: int = 0
+    post_unit_unplaced_pasture_animals: int = 0
+    post_unit_unplaced_coop_animals: int = 0
+    post_unit_placed_herd: Dict[str, int] = field(default_factory=dict)
+    post_unit_state_verified: bool = True
+    post_unit_state_reason: str = "ok"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+@dataclass
+class LiveHousingState:
+    """One shared live housing authority tracking residual structure claims."""
+    empty_pastures: int
+    empty_coops: int
+    existing_unplaced_pasture_claims: int = 0
+    existing_unplaced_coop_claims: int = 0
+    accepted_candidate_pasture_claims: int = 0
+    accepted_candidate_coop_claims: int = 0
+
+    def residual_pastures(self) -> int:
+        return max(0, self.empty_pastures - self.existing_unplaced_pasture_claims - self.accepted_candidate_pasture_claims)
+
+    def residual_coops(self) -> int:
+        return max(0, self.empty_coops - self.existing_unplaced_coop_claims - self.accepted_candidate_coop_claims)
+
+    def can_house(self, species: str) -> bool:
+        if species in ("COW", "SHEEP"):
+            return self.residual_pastures() > 0
+        elif species == "GOOSE":
+            return self.residual_coops() > 0
+        return False
+
+    def reserve(self, species: str) -> None:
+        if species in ("COW", "SHEEP"):
+            self.accepted_candidate_pasture_claims += 1
+        elif species == "GOOSE":
+            self.accepted_candidate_coop_claims += 1
+
+    def clone(self) -> "LiveHousingState":
+        s = LiveHousingState(
+            empty_pastures=self.empty_pastures,
+            empty_coops=self.empty_coops,
+            existing_unplaced_pasture_claims=self.existing_unplaced_pasture_claims,
+            existing_unplaced_coop_claims=self.existing_unplaced_coop_claims,
+            accepted_candidate_pasture_claims=self.accepted_candidate_pasture_claims,
+            accepted_candidate_coop_claims=self.accepted_candidate_coop_claims,
+        )
+        return s
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "empty_pastures": self.empty_pastures,
+            "empty_coops": self.empty_coops,
+            "existing_unplaced_pasture_claims": self.existing_unplaced_pasture_claims,
+            "existing_unplaced_coop_claims": self.existing_unplaced_coop_claims,
+            "accepted_candidate_pasture_claims": self.accepted_candidate_pasture_claims,
+            "accepted_candidate_coop_claims": self.accepted_candidate_coop_claims,
+            "residual_pastures": self.residual_pastures(),
+            "residual_coops": self.residual_coops(),
+        }
+
+
+def build_live_housing_state(
+    execution_snapshot: Optional[FeedExecutionSnapshot] = None,
+    farm: Any = None,
+    private: Any = None,
+    day: int = 0,
+) -> LiveHousingState:
+    """Build a LiveHousingState instance from verified snapshot or observation."""
+    if execution_snapshot is not None:
+        return LiveHousingState(
+            empty_pastures=int(getattr(execution_snapshot, "post_unit_empty_pastures", 0)),
+            empty_coops=int(getattr(execution_snapshot, "post_unit_empty_coops", 0)),
+            existing_unplaced_pasture_claims=int(getattr(execution_snapshot, "post_unit_unplaced_pasture_animals", 0)),
+            existing_unplaced_coop_claims=int(getattr(execution_snapshot, "post_unit_unplaced_coop_animals", 0)),
+        )
+
+    empty_pastures = 0
+    empty_coops = 0
+    if farm and hasattr(farm, "iter_tiles"):
+        for t in farm.iter_tiles():
+            if t is None or t == "LOCKED":
+                continue
+            is_anim = getattr(t, "is_animal", False) if not isinstance(t, dict) else t.get("is_animal", False)
+            if not is_anim:
+                k = getattr(t, "kind", "") if not isinstance(t, dict) else t.get("kind", "")
+                pos = getattr(t, "pos", None) if not isinstance(t, dict) else t.get("pos")
+                if pos and hasattr(farm, "unlocked") and hasattr(farm, "quadrant_of"):
+                    if farm.quadrant_of(pos) not in farm.unlocked:
+                        continue
+                if k == "PASTURE":
+                    empty_pastures += 1
+                elif k == "COOP":
+                    empty_coops += 1
+
+    shed = getattr(private, "shed", {}) if private else {}
+    workers = getattr(farm, "workers", []) if farm else []
+    unplaced_pasture = int(shed.get("COW", 0)) + int(shed.get("SHEEP", 0))
+    unplaced_coop = int(shed.get("GOOSE", 0))
+    for w in workers:
+        w_inv = getattr(w, "inventory", {}) if not isinstance(w, dict) else w.get("inventory", {})
+        if isinstance(w_inv, dict):
+            unplaced_pasture += int(w_inv.get("COW", 0)) + int(w_inv.get("SHEEP", 0))
+            unplaced_coop += int(w_inv.get("GOOSE", 0))
+
+    return LiveHousingState(
+        empty_pastures=empty_pastures,
+        empty_coops=empty_coops,
+        existing_unplaced_pasture_claims=unplaced_pasture,
+        existing_unplaced_coop_claims=unplaced_coop,
+    )
 
 
 WHEAT_CONSUMING_SHOPS = {
@@ -545,6 +662,13 @@ def build_feed_execution_snapshot(
         if hands and hasattr(hands, "__len__"):
             n_active_units += len(hands)
 
+    if assignment is None and isinstance(ctx, dict):
+        assignment = ctx.get("assignment")
+    if actions is None and isinstance(ctx, dict):
+        actions = ctx.get("actions")
+    if tasks is None and isinstance(ctx, dict):
+        tasks = ctx.get("tasks")
+
     # Unpack assignment and actions
     asg_map = {}
     actions_map = {}
@@ -634,7 +758,7 @@ def build_feed_execution_snapshot(
         if act and isinstance(act, (list, tuple)) and len(act) > 0 and act[0] == "FEED":
             u_task = asg_map.get(u_idx) if isinstance(asg_map, dict) else None
             tgt = None
-            if isinstance(u_task, dict) and (u_task.get("op") == "FEED" or str(u_task.get("kind", "")).startswith("feed")) and u_task.get("target") is not None:
+            if isinstance(u_task, dict) and (u_task.get("op") == "FEED" or u_task.get("task") == "FEED" or str(u_task.get("kind", "")).startswith("feed")) and u_task.get("target") is not None:
                 tgt = tuple(u_task["target"])
             if tgt is not None and tgt in targets_remaining:
                 targets_remaining.remove(tgt)
@@ -679,6 +803,171 @@ def build_feed_execution_snapshot(
         live_execution_status = "safe"
         live_execution_reason = "All placed animals already fed today"
 
+    # -------------------------------------------------------------
+    # Post-Unit State Simulation (Phase C2B)
+    # -------------------------------------------------------------
+    post_unit_shed: Dict[str, int] = {}
+    if private is not None:
+        if hasattr(private, "shed") and isinstance(private.shed, dict):
+            post_unit_shed = {str(k): int(v) for k, v in private.shed.items()}
+        elif isinstance(private, dict) and "shed" in private and isinstance(private["shed"], dict):
+            post_unit_shed = {str(k): int(v) for k, v in private["shed"].items()}
+
+    post_unit_workers: List[Dict[str, int]] = []
+    if private is not None:
+        raw_invs = getattr(private, "inventories", None) or (private.get("inventories") if isinstance(private, dict) else None)
+        if raw_invs and isinstance(raw_invs, list):
+            for inv in raw_invs:
+                if isinstance(inv, dict):
+                    post_unit_workers.append({str(k): int(v) for k, v in inv.items()})
+                else:
+                    post_unit_workers.append({})
+    if (not post_unit_workers or all(len(inv) == 0 for inv in post_unit_workers)) and farm and hasattr(farm, "workers"):
+        post_unit_workers = []
+        for w in farm.workers:
+            w_inv = getattr(w, "inventory", None) or (w.get("inventory") if isinstance(w, dict) else {})
+            if isinstance(w_inv, dict):
+                post_unit_workers.append({str(k): int(v) for k, v in w_inv.items()})
+            else:
+                post_unit_workers.append({})
+    while len(post_unit_workers) < n_active_units:
+        post_unit_workers.append({})
+
+    # Observed structures & placed animals
+    empty_pastures = 0
+    empty_coops = 0
+    sim_placed_herd = {a: 0 for a in ("COW", "SHEEP", "GOOSE")}
+    if farm is not None and hasattr(farm, "iter_tiles"):
+        for t in farm.iter_tiles():
+            if t is None or t == "LOCKED":
+                continue
+            is_anim = getattr(t, "is_animal", False)
+            k = getattr(t, "kind", "")
+            if is_anim:
+                species = getattr(t, "animal", None)
+                if species in sim_placed_herd:
+                    sim_placed_herd[species] += 1
+            elif k == "PASTURE":
+                pos = getattr(t, "pos", None)
+                if pos and hasattr(farm, "unlocked") and hasattr(farm, "quadrant_of"):
+                    if farm.quadrant_of(pos) in farm.unlocked:
+                        empty_pastures += 1
+                else:
+                    empty_pastures += 1
+            elif k == "COOP":
+                pos = getattr(t, "pos", None)
+                if pos and hasattr(farm, "unlocked") and hasattr(farm, "quadrant_of"):
+                    if farm.quadrant_of(pos) in farm.unlocked:
+                        empty_coops += 1
+                else:
+                    empty_coops += 1
+    elif farm is not None and isinstance(farm, dict) and "tiles" in farm:
+        tiles = farm.get("tiles")
+        if isinstance(tiles, list):
+            for row in tiles:
+                if isinstance(row, list):
+                    for t in row:
+                        if isinstance(t, dict):
+                            is_anim = t.get("is_animal", False)
+                            k = t.get("kind", "")
+                            if is_anim:
+                                sp = t.get("animal", "")
+                                if sp in sim_placed_herd:
+                                    sim_placed_herd[sp] += 1
+                            elif k == "PASTURE":
+                                empty_pastures += 1
+                            elif k == "COOP":
+                                empty_coops += 1
+
+    post_unit_verified = True
+    post_unit_reason = "ok"
+
+    for u_idx, act in actions_map.items():
+        if not act or not isinstance(act, (list, tuple)):
+            continue
+        op_act = act[0]
+        u_task = asg_map.get(u_idx) if isinstance(asg_map, dict) else None
+        task_args = u_task.get("args", []) if isinstance(u_task, dict) else []
+        act_args = act[1:] if len(act) > 1 else task_args
+        u_inv = post_unit_workers[u_idx] if u_idx < len(post_unit_workers) else None
+
+        if op_act == "FEED":
+            tgt = tuple(u_task.get("target")) if (isinstance(u_task, dict) and u_task.get("target") is not None) else None
+            if tgt in verified_feed_targets:
+                if u_inv is not None and u_inv.get("WHEAT", 0) > 0:
+                    u_inv["WHEAT"] -= 1
+
+        elif op_act == "PLACE":
+            animal_to_place = None
+            if act_args and act_args[0] in ("COW", "SHEEP", "GOOSE"):
+                animal_to_place = act_args[0]
+            elif task_args and task_args[0] in ("COW", "SHEEP", "GOOSE"):
+                animal_to_place = task_args[0]
+            elif u_inv:
+                for a in ("COW", "SHEEP", "GOOSE"):
+                    if u_inv.get(a, 0) > 0:
+                        animal_to_place = a
+                        break
+
+            if animal_to_place:
+                if u_inv and u_inv.get(animal_to_place, 0) > 0:
+                    u_inv[animal_to_place] -= 1
+                sim_placed_herd[animal_to_place] = sim_placed_herd.get(animal_to_place, 0) + 1
+                struct = ANIMALS[animal_to_place]["structure"] if animal_to_place in ANIMALS else "PASTURE"
+                if struct == "PASTURE":
+                    empty_pastures = max(0, empty_pastures - 1)
+                elif struct == "COOP":
+                    empty_coops = max(0, empty_coops - 1)
+
+        elif op_act == "BUILD_PASTURE":
+            if day < 12:
+                empty_pastures += 1
+
+        elif op_act == "BUILD_COOP":
+            if day < 12:
+                empty_coops += 1
+
+        elif op_act == "PICKUP":
+            item = act_args[0] if act_args else (task_args[0] if task_args else None)
+            qty = int(act_args[1]) if len(act_args) > 1 else (int(task_args[1]) if len(task_args) > 1 else 1)
+            if item:
+                post_unit_shed[item] = max(0, post_unit_shed.get(item, 0) - qty)
+                if u_inv is not None:
+                    u_inv[item] = u_inv.get(item, 0) + qty
+
+        elif op_act == "DROP":
+            item = act_args[0] if act_args else (task_args[0] if task_args else None)
+            qty = int(act_args[1]) if len(act_args) > 1 else (int(task_args[1]) if len(task_args) > 1 else 1)
+            if item and u_inv is not None:
+                u_inv[item] = max(0, u_inv.get(item, 0) - qty)
+                post_unit_shed[item] = post_unit_shed.get(item, 0) + qty
+
+        elif op_act == "FERTILIZE":
+            if u_inv is not None and u_inv.get("FERTILIZER", 0) > 0:
+                u_inv["FERTILIZER"] -= 1
+
+        elif op_act == "COLLECT_FERTILIZER":
+            if u_inv is not None:
+                u_inv["FERTILIZER"] = u_inv.get("FERTILIZER", 0) + 1
+
+        elif op_act == "HARVEST":
+            crop = act_args[0] if act_args else (task_args[0] if task_args else None)
+            if crop and u_inv is not None:
+                u_inv[crop] = u_inv.get(crop, 0) + 1
+
+    post_unit_shed_occupancy = sum(qty for qty in post_unit_shed.values() if qty > 0)
+    post_unit_worker_inventory_total = sum(sum(qty for qty in inv.values() if qty > 0) for inv in post_unit_workers)
+    post_unit_total_storable_inventory = post_unit_shed_occupancy + post_unit_worker_inventory_total
+
+    unplaced_cow_sheep = (
+        post_unit_shed.get("COW", 0) + post_unit_shed.get("SHEEP", 0) +
+        sum(inv.get("COW", 0) + inv.get("SHEEP", 0) for inv in post_unit_workers)
+    )
+    unplaced_goose = (
+        post_unit_shed.get("GOOSE", 0) +
+        sum(inv.get("GOOSE", 0) for inv in post_unit_workers)
+    )
+
     return FeedExecutionSnapshot(
         day=day,
         hour=hour,
@@ -702,6 +991,18 @@ def build_feed_execution_snapshot(
         is_live_livestock_safe=is_live_livestock_safe,
         live_execution_status=live_execution_status,
         live_execution_reason=live_execution_reason,
+        post_unit_shed_inventory=post_unit_shed,
+        post_unit_worker_inventories=post_unit_workers,
+        post_unit_shed_occupancy=post_unit_shed_occupancy,
+        post_unit_worker_inventory_total=post_unit_worker_inventory_total,
+        post_unit_total_storable_inventory=post_unit_total_storable_inventory,
+        post_unit_empty_pastures=empty_pastures,
+        post_unit_empty_coops=empty_coops,
+        post_unit_unplaced_pasture_animals=unplaced_cow_sheep,
+        post_unit_unplaced_coop_animals=unplaced_goose,
+        post_unit_placed_herd=sim_placed_herd,
+        post_unit_state_verified=post_unit_verified,
+        post_unit_state_reason=post_unit_reason,
     )
 
 
@@ -838,60 +1139,69 @@ def build_feed_resource_ledger(
         if invs and isinstance(invs, list):
             inventories = invs
 
-    wheat_in_shed = int(shed.get("WHEAT", 0))
-    wheat_on_workers = sum(int(inv.get("WHEAT", 0)) for inv in inventories if isinstance(inv, dict))
-    shed_other_units = sum(int(v) for k, v in shed.items() if k != "WHEAT")
-
     placed_herd: Dict[str, int] = {a: 0 for a in ANIMAL_LIST}
     owned_unplaced_herd: Dict[str, int] = {a: 0 for a in ANIMAL_LIST}
     unfed_placed_today = 0
 
-    if current_herd is not None and isinstance(current_herd, dict):
-        if "placed" in current_herd and isinstance(current_herd["placed"], dict):
-            for a in ANIMAL_LIST:
-                placed_herd[a] = int(current_herd["placed"].get(a, 0))
-        else:
-            for a in ANIMAL_LIST:
-                placed_herd[a] = int(current_herd.get(a, 0))
-
-        if "unplaced" in current_herd and isinstance(current_herd["unplaced"], dict):
-            for a in ANIMAL_LIST:
-                owned_unplaced_herd[a] = int(current_herd["unplaced"].get(a, 0))
-
-        if "unfed_placed_today" in current_herd:
-            unfed_placed_today = int(current_herd["unfed_placed_today"])
-        elif farm and hasattr(farm, "iter_tiles"):
-            for t in farm.iter_tiles():
-                if t is None or t == "LOCKED":
-                    continue
-                is_anim = getattr(t, "is_animal", False) if not isinstance(t, dict) else t.get("is_animal", False)
-                if is_anim:
-                    fed = getattr(t, "fed_today", False) if not isinstance(t, dict) else t.get("fed_today", False)
-                    if not fed:
-                        unfed_placed_today += 1
-        else:
-            unfed_placed_today = sum(placed_herd.values())
-    else:
-        if farm and hasattr(farm, "iter_tiles"):
-            for t in farm.iter_tiles():
-                if t is None or t == "LOCKED":
-                    continue
-                is_anim = getattr(t, "is_animal", False) if not isinstance(t, dict) else t.get("is_animal", False)
-                if is_anim:
-                    species = getattr(t, "animal", None) if not isinstance(t, dict) else t.get("animal")
-                    if species in placed_herd:
-                        placed_herd[species] += 1
-                    fed = getattr(t, "fed_today", False) if not isinstance(t, dict) else t.get("fed_today", False)
-                    if not fed:
-                        unfed_placed_today += 1
-        elif execution_snapshot is not None:
-            unfed_placed_today = execution_snapshot.feeds_due_today
-
+    if current_herd is None and execution_snapshot is not None and getattr(execution_snapshot, "post_unit_shed_inventory", None):
+        wheat_in_shed = int(execution_snapshot.post_unit_shed_inventory.get("WHEAT", 0))
+        wheat_on_workers = sum(int(inv.get("WHEAT", 0)) for inv in execution_snapshot.post_unit_worker_inventories if isinstance(inv, dict))
+        shed_other_units = sum(int(v) for k, v in execution_snapshot.post_unit_shed_inventory.items() if k != "WHEAT")
         for a in ANIMAL_LIST:
-            owned_unplaced_herd[a] += int(shed.get(a, 0))
-            for inv in inventories:
-                if isinstance(inv, dict):
-                    owned_unplaced_herd[a] += int(inv.get(a, 0))
+            placed_herd[a] = int(execution_snapshot.post_unit_placed_herd.get(a, 0))
+            owned_unplaced_herd[a] = int(execution_snapshot.post_unit_shed_inventory.get(a, 0)) + sum(int(inv.get(a, 0)) for inv in execution_snapshot.post_unit_worker_inventories if isinstance(inv, dict))
+        unfed_placed_today = max(0, execution_snapshot.unfed_placed_today - execution_snapshot.verified_feed_count)
+    else:
+        wheat_in_shed = int(shed.get("WHEAT", 0))
+        wheat_on_workers = sum(int(inv.get("WHEAT", 0)) for inv in inventories if isinstance(inv, dict))
+        shed_other_units = sum(int(v) for k, v in shed.items() if k != "WHEAT")
+
+        if current_herd is not None and isinstance(current_herd, dict):
+            if "placed" in current_herd and isinstance(current_herd["placed"], dict):
+                for a in ANIMAL_LIST:
+                    placed_herd[a] = int(current_herd["placed"].get(a, 0))
+            else:
+                for a in ANIMAL_LIST:
+                    placed_herd[a] = int(current_herd.get(a, 0))
+
+            if "unplaced" in current_herd and isinstance(current_herd["unplaced"], dict):
+                for a in ANIMAL_LIST:
+                    owned_unplaced_herd[a] = int(current_herd["unplaced"].get(a, 0))
+
+            if "unfed_placed_today" in current_herd:
+                unfed_placed_today = int(current_herd["unfed_placed_today"])
+            elif farm and hasattr(farm, "iter_tiles"):
+                for t in farm.iter_tiles():
+                    if t is None or t == "LOCKED":
+                        continue
+                    is_anim = getattr(t, "is_animal", False) if not isinstance(t, dict) else t.get("is_animal", False)
+                    if is_anim:
+                        fed = getattr(t, "fed_today", False) if not isinstance(t, dict) else t.get("fed_today", False)
+                        if not fed:
+                            unfed_placed_today += 1
+            else:
+                unfed_placed_today = sum(placed_herd.values())
+        else:
+            if farm and hasattr(farm, "iter_tiles"):
+                for t in farm.iter_tiles():
+                    if t is None or t == "LOCKED":
+                        continue
+                    is_anim = getattr(t, "is_animal", False) if not isinstance(t, dict) else t.get("is_animal", False)
+                    if is_anim:
+                        species = getattr(t, "animal", None) if not isinstance(t, dict) else t.get("animal")
+                        if species in placed_herd:
+                            placed_herd[species] += 1
+                        fed = getattr(t, "fed_today", False) if not isinstance(t, dict) else t.get("fed_today", False)
+                        if not fed:
+                            unfed_placed_today += 1
+            elif execution_snapshot is not None:
+                unfed_placed_today = execution_snapshot.feeds_due_today
+
+            for a in ANIMAL_LIST:
+                owned_unplaced_herd[a] += int(shed.get(a, 0))
+                for inv in inventories:
+                    if isinstance(inv, dict):
+                        owned_unplaced_herd[a] += int(inv.get(a, 0))
 
     if market_inventory is None and ctx is not None:
         m = ctx.get("market") if isinstance(ctx, dict) else getattr(ctx, "market", None)

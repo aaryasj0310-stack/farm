@@ -2151,13 +2151,12 @@ def test_c2a_test14_injected_live_failure_fails_closed_for_discretionary_spendin
 
 
 def test_c2a_test15_c2a_normal_diagnostics_do_not_alter_legacy_animal_orders(monkeypatch):
-    """Test 15: In live mode, normal C2A diagnostics (e.g. unverified feed execution or tight herd)
-    do not alter legacy BUY_ANIMAL orders (C2A foundation only, C2B enforcement deferred)."""
+    """Test 15: In C2B live mode, feed execution gate is activated and suppresses BUY_ANIMAL when unverified."""
     import config
     # 1. Default mode remains shadow
     assert config.POINT2_FEED_MODE == "shadow"
 
-    # 2. In live mode, even when feed execution is unverified, normal operation does NOT suppress legacy animal orders!
+    # 2. In live mode, when feed execution is unverified, C2B suppresses animal orders!
     monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
     monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
     from market.order_builder import OrderBuilder
@@ -2185,8 +2184,868 @@ def test_c2a_test15_c2a_normal_diagnostics_do_not_alter_legacy_animal_orders(mon
     assert ledger["is_live_livestock_safe"] is False
     assert ledger["live_execution_status"] == "feed_execution_unverified"
 
-    # BUT in C2A, normal animal purchasing is NOT suppressed by C2A diagnostics!
-    assert any(o[0] == "BUY_ANIMAL" and o[1] == "SHEEP" for o in orders), (
-        "C2A must not suppress legacy BUY_ANIMAL during normal operation; C2B enforcement is deferred."
+    # In C2B, feed execution unverified suppresses BUY_ANIMAL:
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders), (
+        "C2B must suppress BUY_ANIMAL when feed execution is unverified."
     )
+    assert any(d.get("kind") == "animal" and d.get("reason") == "feed_execution_unverified" for d in ledger.get("dropped", []))
 
+
+
+# ============================================================================
+# Phase C2B — Sequential Live Candidate Authority Tests
+# ============================================================================
+
+def test_c2b_interleaved_sequence_order(monkeypatch):
+    """Test 74: Interleaved candidate sequence [SHEEP, COW, SHEEP] is evaluated in exact order
+    and emitted grouped by first-appearance species [SHEEP x2, COW x1]."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=20000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"COW": 1, "SHEEP": 2},
+        "buy_animal_sequence": ["SHEEP", "COW", "SHEEP"],
+        "pending_structures": {},
+    }
+    # Mock housing with 3 empty pastures
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=3, post_unit_empty_coops=0,
+        post_unit_unplaced_pasture_animals=0, post_unit_unplaced_coop_animals=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=0,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+
+    # 1. Candidate evaluation order preserved exactly
+    decisions = ledger["candidate_decisions"]
+    assert len(decisions) == 3
+    assert decisions[0]["species"] == "SHEEP"
+    assert decisions[1]["species"] == "COW"
+    assert decisions[2]["species"] == "SHEEP"
+    assert all(d["accepted"] for d in decisions)
+
+    # 2. Emitted orders grouped in first-appearance order (SHEEP first, then COW)
+    animal_orders = [o for o in orders if o[0] == "BUY_ANIMAL"]
+    assert len(animal_orders) == 2
+    assert animal_orders[0] == ["BUY_ANIMAL", "SHEEP", 2]
+    assert animal_orders[1] == ["BUY_ANIMAL", "COW", 1]
+    assert ledger["animal_order_slots_used"] == 2
+
+
+def test_c2b_sequence_not_sorted_buy_animal_aggregate(monkeypatch):
+    """Test 75: Live mode evaluates candidates in sequence order, not sorted buy_animal aggregate."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=20000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    # buy_animal has {"SHEEP": 1, "COW": 1}, but sequence has ["COW", "SHEEP"]
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1, "COW": 1},
+        "buy_animal_sequence": ["COW", "SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_empty_coops=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=0,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+
+    decisions = ledger["candidate_decisions"]
+    assert len(decisions) == 2
+    assert decisions[0]["species"] == "COW"
+    assert decisions[1]["species"] == "SHEEP"
+
+
+def test_c2b_missing_or_malformed_sequence_fails_closed(monkeypatch):
+    """Test 76: In live mode, missing or malformed sequence with legacy buy_animal fails closed."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=50)
+    builder = OrderBuilder()
+
+    # Case A: sequence is None
+    intents_none = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {"CARROT": 5},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": None,
+    }
+    orders, ledger = builder.build(ctx, intents_none)
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert any(o[0] == "BUY_SEED" for o in orders)  # Seeds preserved
+    assert any(d.get("kind") == "animal" and d.get("reason") == "invalid_candidate_sequence" for d in ledger.get("dropped", []))
+
+    # Case B: sequence is not a list
+    intents_bad = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": "SHEEP",
+    }
+    orders2, ledger2 = builder.build(ctx, intents_bad)
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders2)
+    assert any(d.get("kind") == "animal" and d.get("reason") == "invalid_candidate_sequence" for d in ledger2.get("dropped", []))
+
+
+def test_c2b_shadow_and_herd_plan_unaffected_by_malformed_sequence(monkeypatch):
+    """Test 77: In shadow mode, missing/malformed sequence does NOT fail closed (uses legacy buy_animal)."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "shadow")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "shadow")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": None,
+        "pending_structures": {"PASTURE": 1},
+    }
+    orders, ledger = builder.build(ctx, intents)
+    assert any(o[0] == "BUY_ANIMAL" and o[1] == "SHEEP" for o in orders)
+
+
+def test_c2b_day12_14_late_selective_candidate_generation(monkeypatch):
+    """Test 78: On Days 12-14 in live mode, late selective mode generates candidates using physical housing."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from strategy.macro_planner import MacroPlanner
+
+    planner = MacroPlanner(DummyFC())
+    # Mock farm on Day 12 with 1 empty pasture and ample money
+    ctx = make_mock_farm_ctx(day=12, hour=0, money=15000.0, shed_wheat=50)
+    farm = ctx["farm"]
+    # Mock farm having 1 pasture
+    t = make_mock_tile((1, 1), kind="PASTURE")
+    farm.tiles = [[t]]
+    farm.iter_tiles = lambda: [t]
+    farm.unlocked = ["NW"]
+    farm.quadrant_of = lambda pos: "NW"
+
+    plan = planner.build(ctx)
+    assert hasattr(plan, "buy_animal_sequence")
+    # In live mode on Day 12 with physical pasture and high cash, late selective candidate admitted
+    assert len(plan.buy_animal_sequence) >= 1
+    assert plan.buy_animal_sequence[0] in ("COW", "SHEEP")
+
+
+def test_c2b_day12_14_no_credit_for_planned_housing(monkeypatch):
+    """Test 79: On Days 12-14 in live mode, planned housing produces zero candidate sequence."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from strategy.macro_planner import MacroPlanner
+
+    planner = MacroPlanner(DummyFC())
+    ctx = make_mock_farm_ctx(day=12, hour=0, money=15000.0, shed_wheat=50)
+    farm = ctx["farm"]
+    farm.iter_tiles = lambda: []  # 0 physical structures
+    farm.unlocked = ["NW"]
+    farm.quadrant_of = lambda pos: "NW"
+
+    plan = planner.build(ctx)
+    assert plan.buy_animal_sequence == []
+
+
+def test_c2b_day_after_14_cutoff_no_candidates(monkeypatch):
+    """Test 80: On Day 15+, candidate sequence is strictly empty in live mode."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from strategy.macro_planner import MacroPlanner
+
+    planner = MacroPlanner(DummyFC())
+    ctx = make_mock_farm_ctx(day=15, hour=0, money=25000.0, shed_wheat=100)
+    farm = ctx["farm"]
+    t = make_mock_tile((1, 1), kind="PASTURE")
+    farm.iter_tiles = lambda: [t]
+    farm.unlocked = ["NW"]
+    farm.quadrant_of = lambda pos: "NW"
+
+    plan = planner.build(ctx)
+    assert plan.buy_animal_sequence == []
+
+
+def test_c2b_existing_herd_infeasible_gate(monkeypatch):
+    """Test 81: When existing herd is infeasible, all candidates are rejected with existing_herd_infeasible."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    # 4 placed COWs, 0 wheat in shed, money $200 (cannot fund existing herd)
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=200.0, shed_wheat=0, placed_animals=["COW", "COW", "COW", "COW"])
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=10, hour=0, turns_remaining_today=24, feeds_due_today=4,
+        feeds_assigned_this_turn=4, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=0, n_active_units=4,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_state_verified=True,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert any(d.get("kind") == "animal" and d.get("reason") == "existing_herd_infeasible" for d in ledger.get("dropped", []))
+
+
+def test_c2b_candidate_transactional_rollback(monkeypatch):
+    """Test 83: Rejection releases trial resources and allows subsequent candidates to be evaluated."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    # 1 pasture, 1 coop. Candidate sequence: SHEEP, COW, GOOSE.
+    # SHEEP claims pasture. COW fails housing. GOOSE claims coop.
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1, "COW": 1, "GOOSE": 1},
+        "buy_animal_sequence": ["SHEEP", "COW", "GOOSE"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=1, post_unit_empty_coops=1,
+        post_unit_unplaced_pasture_animals=0, post_unit_unplaced_coop_animals=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=0,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+
+    decisions = ledger["candidate_decisions"]
+    assert len(decisions) == 3
+    assert decisions[0]["species"] == "SHEEP" and decisions[0]["accepted"] is True
+    assert decisions[1]["species"] == "COW" and decisions[1]["accepted"] is False
+    assert decisions[1]["rejection_reason"] == "no_physical_housing"
+    assert decisions[2]["species"] == "GOOSE" and decisions[2]["accepted"] is True
+
+    animal_orders = [o for o in orders if o[0] == "BUY_ANIMAL"]
+    assert len(animal_orders) == 2
+    assert ["BUY_ANIMAL", "SHEEP", 1] in animal_orders
+    assert ["BUY_ANIMAL", "GOOSE", 1] in animal_orders
+
+
+def test_c2b_cumulative_stress_repricing(monkeypatch):
+    """Test 84: Each admitted candidate increases market feed liability and stress wheat price."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    # Constrained market wheat inventory so stress repricing is active
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=25000.0, shed_wheat=50)
+    ctx["market"].inventory = {"WHEAT": 80.0}
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"COW": 2},
+        "buy_animal_sequence": ["COW", "COW"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_empty_coops=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=0,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    decisions = ledger["candidate_decisions"]
+    assert len(decisions) == 2
+    assert decisions[0]["accepted"] is True
+    assert decisions[1]["accepted"] is True
+    # Candidate 2 stress price is >= Candidate 1 stress price
+    assert decisions[1]["stress_price_after"] >= decisions[0]["stress_price_after"]
+
+
+def test_c2b_higher_priority_cash_cannot_be_reused(monkeypatch):
+    """Test 85: Cash committed to land or seeds cannot be double spent on candidate animals."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    # Money is $2400. Reserve is $300. Available is $2100.
+    # Land costs $2000. Remaining discretionary is $100.
+    # Candidate COW costs $500 -> must fail for insufficient cash / feed.
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=2400.0, shed_wheat=50)
+    builder = OrderBuilder(money_reserve=300.0)
+    intents = {
+        "hire": 0,
+        "buy_land": True,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"COW": 1},
+        "buy_animal_sequence": ["COW"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=1, post_unit_state_verified=True,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    # Land order is preserved
+    assert any(o[0] == "BUY_LAND" for o in orders)
+    # COW is rejected due to cash
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert any(d.get("kind") == "animal" and d.get("reason") in ("insufficient_cash", "feed_infeasible") for d in ledger.get("dropped", []))
+
+
+def test_c2b_retained_wheat_credit_and_cost(monkeypatch):
+    """Test 86: Retained wheat order is charged to cash and credited as physical feed in candidate ledger."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=5)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 10,
+        "protected_feed_wheat": 10,
+        "buy_animal": {"COW": 1},
+        "buy_animal_sequence": ["COW"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=5, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=1, post_unit_state_verified=True,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    decisions = ledger["candidate_decisions"]
+    assert len(decisions) == 1
+    assert decisions[0]["accepted"] is True
+    assert decisions[0]["relies_on_retained_protected_wheat"] is True
+
+
+def test_c2b_post_unit_pickup_frees_shed_capacity():
+    """Test 87: Verified PICKUP moves items from shed to worker, freeing immediate shed space."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=50)
+    ctx["private"].shed["WHEAT"] = 50
+    ctx["assignment"] = {0: {"task": "PICKUP", "args": ["WHEAT", 10]}}
+    ctx["actions"] = {0: ["PICKUP", "WHEAT", 10]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_shed_inventory["WHEAT"] == 40
+    assert snapshot.post_unit_worker_inventories[0]["WHEAT"] == 10
+    assert snapshot.post_unit_shed_occupancy == 40
+
+
+def test_c2b_post_unit_feed_consumes_worker_wheat():
+    """Test 88: Verified FEED decrements worker wheat and satisfies unfed placed animal."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0, placed_animals=["COW"])
+    ctx["farm"].workers[0].inventory = {"WHEAT": 2}
+    ctx["private"].inventories = [{"WHEAT": 2}]
+    ctx["assignment"] = {0: {"task": "FEED", "target": (0, 0), "args": []}}
+    ctx["actions"] = {0: ["FEED"]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.verified_feed_count == 1
+    assert snapshot.post_unit_worker_inventories[0]["WHEAT"] == 1
+
+
+def test_c2b_post_unit_place_occupies_structure():
+    """Test 89: Verified PLACE decrements worker animal inventory and occupies physical structure."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    ctx["farm"].workers[0].inventory = {"COW": 1}
+    class MockPastureTile:
+        kind = "PASTURE"
+        is_animal = False
+        pos = (1, 1)
+    ctx["farm"].tiles = [[MockPastureTile()]]
+    ctx["farm"].iter_tiles = lambda: [MockPastureTile()]
+    ctx["assignment"] = {0: {"task": "PLACE", "args": ["COW"]}}
+    ctx["actions"] = {0: ["PLACE", "COW"]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_worker_inventories[0].get("COW", 0) == 0
+    assert snapshot.post_unit_placed_herd["COW"] == 1
+    assert snapshot.post_unit_empty_pastures == 0
+
+
+def test_c2b_pre_cutoff_build_credit():
+    """Test 90: Before Day 12, actual verified BUILD_PASTURE increments post_unit_empty_pastures."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    ctx["farm"].iter_tiles = lambda: []
+    ctx["assignment"] = {0: {"task": "BUILD_PASTURE", "args": []}}
+    ctx["actions"] = {0: ["BUILD_PASTURE"]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_empty_pastures == 1
+
+
+def test_c2b_post_cutoff_build_zero_credit():
+    """Test 91: On Day 12+, verified BUILD_PASTURE yields zero candidate housing credit."""
+    from strategy.feed_feasibility import build_feed_execution_snapshot
+    ctx = make_mock_farm_ctx(day=12, hour=0, money=5000.0, shed_wheat=0)
+    ctx["farm"].iter_tiles = lambda: []
+    ctx["assignment"] = {0: {"task": "BUILD_PASTURE", "args": []}}
+    ctx["actions"] = {0: ["BUILD_PASTURE"]}
+
+    snapshot = build_feed_execution_snapshot(ctx)
+    assert snapshot.post_unit_empty_pastures == 0
+
+
+def test_c2b_existing_unplaced_housing_first_claim(monkeypatch):
+    """Test 92: Existing unplaced animals in shed claim physical housing before new candidates."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    # 1 empty pasture, but shed already holds 1 COW (unplaced)
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=50)
+    ctx["private"].shed["COW"] = 1
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=1, post_unit_empty_coops=0,
+        post_unit_unplaced_pasture_animals=1, post_unit_unplaced_coop_animals=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=1,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert any(d.get("kind") == "animal" and d.get("reason") == "no_physical_housing" for d in ledger.get("dropped", []))
+
+
+def test_c2b_shared_pasture_pool(monkeypatch):
+    """Test 93: COW and SHEEP share the same pasture pool; accepted COW exhausts pasture for SHEEP."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    # 1 pasture. Sequence: COW, SHEEP.
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"COW": 1, "SHEEP": 1},
+        "buy_animal_sequence": ["COW", "SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=1, post_unit_empty_coops=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=0,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    decisions = ledger["candidate_decisions"]
+    assert decisions[0]["species"] == "COW" and decisions[0]["accepted"] is True
+    assert decisions[1]["species"] == "SHEEP" and decisions[1]["accepted"] is False
+    assert decisions[1]["rejection_reason"] == "no_physical_housing"
+
+
+def test_c2b_coop_separation(monkeypatch):
+    """Test 94: GOOSE requires COOP; pasture cannot house GOOSE, COOP cannot house COW."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"COW": 1, "GOOSE": 1},
+        "buy_animal_sequence": ["COW", "GOOSE"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    # 0 pastures, 1 coop
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=0, post_unit_empty_coops=1,
+        post_unit_state_verified=True, post_unit_shed_occupancy=0,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    decisions = ledger["candidate_decisions"]
+    assert decisions[0]["species"] == "COW" and decisions[0]["accepted"] is False
+    assert decisions[1]["species"] == "GOOSE" and decisions[1]["accepted"] is True
+
+
+def test_c2b_immediate_shed_capacity(monkeypatch):
+    """Test 95: Animal purchase requires 1 immediate shed slot; rejected if shed is full."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=100)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    # Shed occupancy is 100
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=100, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_empty_coops=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=100,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert any(d.get("kind") == "animal" and d.get("reason") == "shed_capacity" for d in ledger.get("dropped", []))
+
+
+def test_c2b_hour23_rollover_protection(monkeypatch):
+    """Test 96: At Hour 23, candidate fails if post-market shed + worker carried inventory > 100."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    # Hour 23. Shed has 99 items, worker carries 1 item.
+    ctx = make_mock_farm_ctx(day=5, hour=23, money=10000.0, shed_wheat=99)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=23, turns_remaining_today=1, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=1, shed_wheat=99, n_active_units=1,
+        market_purchase_can_help_today=False, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_empty_coops=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=99,
+        post_unit_worker_inventory_total=1,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert any(d.get("kind") == "animal" and d.get("reason") == "end_of_day_rollover_capacity" for d in ledger.get("dropped", []))
+
+
+def test_c2b_seeds_do_not_consume_shed(monkeypatch):
+    """Test 97: Seed purchases do not consume shed slots or impact animal shed capacity."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    # Shed has 99 items. We buy 10 seeds. 99 + 1 (animal) <= 100 shed slots.
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=10000.0, shed_wheat=99)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {"CARROT": 10},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=99, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_empty_coops=0,
+        post_unit_state_verified=True, post_unit_shed_occupancy=99,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    assert any(o[0] == "BUY_SEED" for o in orders)
+    assert any(o[0] == "BUY_ANIMAL" and o[1] == "SHEEP" for o in orders)
+
+
+def test_c2b_animal_order_slots_grouping(monkeypatch):
+    """Test 98: Multiple accepted animals of same species use only 1 market order slot."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=20000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 3},
+        "buy_animal_sequence": ["SHEEP", "SHEEP", "SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=3, post_unit_state_verified=True,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents)
+    animal_orders = [o for o in orders if o[0] == "BUY_ANIMAL"]
+    assert len(animal_orders) == 1
+    assert animal_orders[0] == ["BUY_ANIMAL", "SHEEP", 3]
+    assert ledger["animal_order_slots_used"] == 1
+
+
+def test_c2b_slot_exhaustion_blocks_candidates(monkeypatch):
+    """Test 99: When max_slots is reached, candidates requiring a new slot are blocked with market_order_slots."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    # max_slots = 2. Kept prefix has 1 seed order (using 1 slot).
+    # Remaining slots for animals = 1.
+    # Sequence = [SHEEP, COW]. SHEEP uses the 1 slot; COW requires a new slot and is blocked.
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=20000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {"CARROT": 1},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1, "COW": 1},
+        "buy_animal_sequence": ["SHEEP", "COW"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_state_verified=True,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    orders, ledger = builder.build(ctx, intents, max_slots=2)
+    decisions = ledger["candidate_decisions"]
+    assert decisions[0]["species"] == "SHEEP" and decisions[0]["accepted"] is True
+    assert decisions[1]["species"] == "COW" and decisions[1]["accepted"] is False
+    assert decisions[1]["rejection_reason"] == "market_order_slots"
+
+
+def test_c2b_candidate_exception_discards_all_animals_preserves_higher_priority(monkeypatch):
+    """Test 100: Unexpected exception during candidate replay discards all candidate animals but preserves higher tiers."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=20000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {"CARROT": 2},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 2},
+        "buy_animal_sequence": ["SHEEP", "SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_state_verified=True,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    # Mock evaluate_incremental_candidate to raise an error on second call
+    call_count = 0
+    import strategy.feed_feasibility as ff
+    orig_eval = ff.evaluate_incremental_candidate
+
+    def mock_eval(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 2:
+            raise RuntimeError("Corrupted feed evaluator!")
+        return orig_eval(*args, **kwargs)
+
+    monkeypatch.setattr(ff, "evaluate_incremental_candidate", mock_eval)
+
+    orders, ledger = builder.build(ctx, intents)
+
+    # 1. Zero BUY_ANIMAL orders emitted
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    # 2. Higher priority seed order preserved intact
+    assert any(o[0] == "BUY_SEED" for o in orders)
+    # 3. Discard recorded with live_candidate_exception
+    assert any(d.get("kind") == "animal" and d.get("reason") == "live_candidate_exception" for d in ledger.get("dropped", []))
+
+
+def test_c2b_intraday_uses_shared_c2b_authority(monkeypatch):
+    """Test 101: build_intraday() and reinvest_livestock() delegate to unified C2B sequential authority."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=10, money=20000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+    }
+    from strategy.feed_feasibility import FeedExecutionSnapshot
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=10, turns_remaining_today=14, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=1, post_unit_state_verified=True,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    # Test build_intraday()
+    orders_intra, ledger_intra = builder.build_intraday(ctx, intents)
+    assert ledger_intra["live_animal_authority"] == "c2b_sequential"
+    assert any(o[0] == "BUY_ANIMAL" and o[1] == "SHEEP" for o in orders_intra)
+
+    # Test reinvest_livestock()
+    orders_reinvest, ledger_reinvest = builder.reinvest_livestock(ctx, intents)
+    assert ledger_reinvest.get("live_animal_authority") == "c2b_sequential"
+    assert any(o[0] == "BUY_ANIMAL" and o[1] == "SHEEP" for o in orders_reinvest)

@@ -26,6 +26,7 @@ from config import (
     MONEY_RESERVE_DEFAULT,
     WHEAT_BUY_PRICE_BUFFER,
     C4_LIVESTOCK_CUTOFF_DAY,
+    SHED_CAPACITY,
 )
 from market.price_math import market_price, estimate_wheat_buy_price
 
@@ -63,6 +64,16 @@ class OrderBuilder:
         repeating morning hires.
         """
         try:
+            from config import get_point2_feed_mode
+            _feed_mode = get_point2_feed_mode()
+        except Exception:
+            _feed_mode = "shadow"
+
+        if _feed_mode == "live":
+            # In live mode, delegate to unified C2B sequential candidate authority
+            return self.build(ctx, intents, max_slots=max_slots)
+
+        try:
             from config import SELECTIVE_LIVESTOCK_GATE_ENABLED, SELECTIVE_LIVESTOCK_MAX_DAY
         except ImportError:
             SELECTIVE_LIVESTOCK_GATE_ENABLED = False
@@ -73,8 +84,26 @@ class OrderBuilder:
         )
         if (not allow_reinvest
                 or not 2 <= ctx["hour"] <= 18
-                or not intents.get("buy_animal")):
+                or (not intents.get("buy_animal") and not intents.get("buy_animal_sequence"))):
             return [], {}
+
+        try:
+            from config import get_point2_feed_mode
+            _feed_mode = get_point2_feed_mode()
+        except Exception:
+            _feed_mode = "shadow"
+
+        if _feed_mode == "live":
+            # Delegate directly to build() with unified C2B candidate authority
+            return self.build(ctx, {
+                "buy_animal": intents.get("buy_animal", {}),
+                "buy_animal_sequence": intents.get("buy_animal_sequence", []),
+                "buy_wheat": intents.get("buy_wheat", 0),
+                "protected_feed_wheat": intents.get("protected_feed_wheat", 0),
+                "optional_feed_wheat": intents.get("optional_feed_wheat", 0),
+                "pending_structures": {},
+                "execution_snapshot": intents.get("execution_snapshot"),
+            }, max_slots=max_slots)
 
         # Post-cutoff selective livestock: strictly require physically built, empty, unreserved housing.
         # Queued/planned structures, positive candidates, or dynamic capacity never authorize purchases.
@@ -169,6 +198,30 @@ class OrderBuilder:
 
         Does not repeat morning hires (hire=0).
         """
+        try:
+            from config import get_point2_feed_mode
+            _feed_mode = get_point2_feed_mode()
+        except Exception:
+            _feed_mode = "shadow"
+
+        if _feed_mode == "live":
+            # Shared C2B sequential live livestock authority
+            intents_intraday = {
+                "hire": 0,
+                "buy_wheat": intents.get("buy_wheat", 0),
+                "protected_feed_wheat": intents.get("protected_feed_wheat", 0),
+                "optional_feed_wheat": intents.get("optional_feed_wheat", 0),
+                "buy_land": bool(intents.get("buy_land", False)),
+                "buy_seed": intents.get("buy_seed", {}),
+                "buy_animal": intents.get("buy_animal", {}),
+                "buy_animal_sequence": intents.get("buy_animal_sequence", []),
+                "pending_structures": intents.get("pending_structures", {}),
+                "execution_snapshot": intents.get("execution_snapshot") or (
+                    ctx.get("feed_execution_snapshot") if isinstance(ctx, dict) else getattr(ctx, "feed_execution_snapshot", None)
+                ),
+            }
+            return self.build(ctx, intents_intraday, max_slots=max_slots)
+
         # Determine permitted livestock under housing checks
         capped_animal = intents.get("buy_animal", {})
         if ctx["day"] >= C4_LIVESTOCK_CUTOFF_DAY:
@@ -445,70 +498,415 @@ class OrderBuilder:
                 sw_shadow_reserve = 2000.0
 
         can_buy_animals = True
-        if is_live_feed_mode and live_failure_reason is not None:
-            # Only catastrophic failure fails closed for new livestock in C2A.
-            # Normal C2A execution/feasibility checks remain diagnostic-only until C2B.
-            can_buy_animals = False
+        if is_live_feed_mode:
+            # =========================================================================
+            # Point 2 Phase C2B — Sequential Live Candidate Authority
+            # =========================================================================
+            candidate_sequence_requested: List[str] = []
+            candidate_sequence_source: str = "none"
+            candidate_sequence_accepted: List[str] = []
+            candidate_sequence_rejected: List[str] = []
+            candidate_decisions: List[Dict[str, Any]] = []
 
-        claimed_structures = {}
-        for animal, k_anim in sorted(intents.get("buy_animal", {}).items()):
-            k_anim = int(k_anim)
-            if k_anim > 0 and animal in ANIMALS:
-                if is_live_feed_mode and not can_buy_animals:
-                    ledger["dropped"].append({
-                        "kind": "animal",
-                        "animal": animal,
-                        "reason": "live_failure",
-                    })
-                    continue
-                struct_type = ANIMALS[animal]["structure"]
-                pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
-                def _tile_free(t):
-                    t_kind = t.get("kind") if isinstance(t, dict) else getattr(t, "kind", "")
-                    t_anim = t.get("is_animal") if isinstance(t, dict) else getattr(t, "is_animal", False)
-                    if t_kind != struct_type or t_anim:
-                        return False
-                    if hasattr(farm, "unlocked") and hasattr(farm, "quadrant_of"):
-                        t_pos = tuple(t.get("pos")) if isinstance(t, dict) else tuple(t.pos)
-                        return farm.quadrant_of(t_pos) in farm.unlocked
-                    return True
+            # Check sequence input
+            candidate_sequence_input = intents.get("buy_animal_sequence")
+            legacy_buy_animal = intents.get("buy_animal", {})
+            has_legacy_animals = any(int(v) > 0 for v in legacy_buy_animal.values()) if isinstance(legacy_buy_animal, dict) else False
 
-                free_structures = sum(1 for t in farm.iter_tiles() if _tile_free(t)) + pending_structures
-                matching_animals = [a for a, info in ANIMALS.items() if info["structure"] == struct_type]
-                animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
-                claimed = claimed_structures.get(struct_type, 0)
-                max_buyable = max(0, free_structures - animals_in_shed - claimed)
-                room_limited = min(k_anim, max_buyable, remaining_shed_room)
-                if room_limited <= 0:
-                    ledger["dropped"].append({
-                        "kind": "animal",
-                        "animal": animal,
-                        "reason": "shed_full" if remaining_shed_room <= 0 else "no_empty_structure",
-                    })
-                    continue
+            valid_sequence = True
+            if candidate_sequence_input is None:
+                if has_legacy_animals:
+                    valid_sequence = False
+                    ledger["dropped"].append({"kind": "animal", "reason": "invalid_candidate_sequence"})
+                else:
+                    candidate_sequence_requested = []
+            elif not isinstance(candidate_sequence_input, list):
+                valid_sequence = False
+                ledger["dropped"].append({"kind": "animal", "reason": "invalid_candidate_sequence"})
+            else:
+                candidate_sequence_requested = [str(a) for a in candidate_sequence_input]
+                candidate_sequence_source = "macro_sequence" if ctx.get("day", 0) < 12 else "late_selective"
 
-                unit = ANIMALS[animal]["cost"]
-                animal_discretionary = max(0.0, remaining_discretionary - sw_shadow_reserve)
-                n_max = int(animal_discretionary // unit)
-                actual_buy = min(room_limited, n_max)
-                if actual_buy < room_limited and sw_shadow_reserve > 0:
-                    discretionary_livestock_suppressed = True
-                if actual_buy > 0:
-                    claimed_structures[struct_type] = claimed + actual_buy
-                    remaining_shed_room = max(0, remaining_shed_room - actual_buy)
-                    kept.append((TIER_ANIMALS, "animal", {"animal": animal, "n": actual_buy}, float(unit * actual_buy)))
-                    remaining_discretionary -= unit * actual_buy
-                    if actual_buy < room_limited:
+            # Compute remaining market order slots available for animals
+            available_animal_order_slots = None
+            if max_slots is not None:
+                non_hire_prefix_slots = sum(1 for t in kept if t[1] in ("wheat", "wheat_protected", "wheat_optional", "land", "seed"))
+                hire_payload_count = sum(t[2]["count"] for t in kept if t[1] == "hire")
+                max_hire = max(MIN_HANDS_BASE, max_slots - non_hire_prefix_slots) if hire_payload_count > 0 else 0
+                actual_hires = min(hire_payload_count, max_hire, max_slots)
+                slots_used_by_prefix = actual_hires + non_hire_prefix_slots
+                available_animal_order_slots = max(0, max_slots - slots_used_by_prefix)
+
+            # Global Gates & Execution Check
+            can_start_replay = valid_sequence and (len(candidate_sequence_requested) > 0)
+            global_rejection_reason = None
+
+            if can_start_replay:
+                if live_failure_reason is not None:
+                    global_rejection_reason = "live_failure"
+                elif not existing_herd_feasible:
+                    global_rejection_reason = "existing_herd_infeasible"
+                elif not is_safe_exec:
+                    global_rejection_reason = "feed_execution_unverified"
+                elif snapshot is not None and not getattr(snapshot, "post_unit_state_verified", True):
+                    global_rejection_reason = "post_unit_state_unverified"
+
+            accepted_candidates = []
+            accepted_species_order = []
+            accepted_species_set = set()
+            accepted_housing = None
+            working_ledger = None
+            day = ctx.get("day", 0)
+            hour = ctx.get("hour", 0)
+
+            # Build LiveHousingState
+            try:
+                from strategy.feed_feasibility import (
+                    build_live_housing_state,
+                    evaluate_incremental_candidate,
+                    commit_candidate_reservation,
+                    evaluate_existing_herd_feasibility,
+                    build_fresh_live_ledger,
+                )
+                accepted_housing = build_live_housing_state(
+                    execution_snapshot=snapshot,
+                    farm=farm,
+                    private=ctx.get("private"),
+                    day=day,
+                )
+            except Exception as exc:
+                can_start_replay = False
+                global_rejection_reason = "live_candidate_exception"
+                ledger["dropped"].append({"kind": "animal", "reason": "live_candidate_exception", "error": str(exc)})
+
+            # Post-unit shed occupancy and worker storable inventory
+            if snapshot is not None:
+                base_shed_occupancy = getattr(snapshot, "post_unit_shed_occupancy", 0)
+                worker_rollover_inventory = getattr(snapshot, "post_unit_worker_inventory_total", 0)
+            else:
+                priv = ctx.get("private")
+                base_shed_occupancy = sum(priv.shed.values()) if priv and hasattr(priv, "shed") else 0
+                workers_list = getattr(farm, "workers", []) if farm else []
+                worker_rollover_inventory = sum(
+                    sum(w_inv.values()) for w in workers_list
+                    for w_inv in [getattr(w, "inventory", {}) if not isinstance(w, dict) else w.get("inventory", {})]
+                    if isinstance(w_inv, dict)
+                )
+
+            total_retained_wheat = w_protected_buyable + w_opt_buyable
+
+            # Construct working candidate ledger from retained prefix
+            if can_start_replay and global_rejection_reason is None:
+                try:
+                    committed_non_animal_spend = (
+                        mandatory_hire_budget
+                        + sum(float(t[3]) for t in kept if t[1] == "land")
+                        + sum(float(t[3]) for t in kept if t[1] == "seed")
+                    )
+                    working_ledger = build_fresh_live_ledger(
+                        ctx=ctx,
+                        hard_cash_hold=self.reserve + committed_non_animal_spend,
+                        strategic_cash_hold=sw_shadow_reserve,
+                        execution_snapshot=snapshot,
+                        market_inventory=inv,
+                    )
+                    if total_retained_wheat > 0:
+                        wheat_cost = float(total_retained_wheat * unit_wheat_px)
+                        working_ledger.scheduled_market_purchases.append({
+                            "day": working_ledger.day,
+                            "units": total_retained_wheat,
+                            "cost": wheat_cost,
+                            "purpose": "retained_wheat",
+                        })
+                        working_ledger.observed_cash = max(0.0, working_ledger.observed_cash - wheat_cost)
+
+                    ok_prefix, res_prefix = evaluate_existing_herd_feasibility(working_ledger)
+                    if not ok_prefix:
+                        global_rejection_reason = "existing_herd_infeasible"
+                    else:
+                        working_ledger.existing_feed_cash_hold = float(res_prefix.existing_feed_cash_hold)
+                except Exception as exc:
+                    global_rejection_reason = "live_candidate_exception"
+                    ledger["dropped"].append({"kind": "animal", "reason": "live_candidate_exception", "error": str(exc)})
+
+            # Evaluate sequence
+            if can_start_replay:
+                slots_left = available_animal_order_slots
+                provisional_list = intents.get("provisional_candidates", [])
+
+                try:
+                    for seq_idx, species in enumerate(candidate_sequence_requested):
+                        cand_id = f"live_{day}_{seq_idx}_{species}"
+                        if isinstance(provisional_list, list) and seq_idx < len(provisional_list):
+                            cand_id = provisional_list[seq_idx].get("candidate_id", cand_id)
+
+                        if global_rejection_reason is not None:
+                            candidate_sequence_rejected.append(species)
+                            ledger["dropped"].append({"kind": "animal", "animal": species, "reason": global_rejection_reason})
+                            candidate_decisions.append({
+                                "candidate_id": cand_id,
+                                "sequence_index": seq_idx,
+                                "species": species,
+                                "accepted": False,
+                                "rejection_reason": global_rejection_reason,
+                                "feed_feasible": False,
+                            })
+                            continue
+
+                        # Gate 1: Species validity
+                        if species not in ANIMALS:
+                            candidate_sequence_rejected.append(species)
+                            ledger["dropped"].append({"kind": "animal", "animal": species, "reason": "invalid_species"})
+                            candidate_decisions.append({
+                                "candidate_id": cand_id,
+                                "sequence_index": seq_idx,
+                                "species": species,
+                                "accepted": False,
+                                "rejection_reason": "invalid_species",
+                                "feed_feasible": False,
+                            })
+                            continue
+
+                        # Gate 2: Physical Housing
+                        housing_before = accepted_housing.to_dict()
+                        if not accepted_housing.can_house(species):
+                            h_reason = "post_cutoff_physical_housing_required" if day >= 12 else "no_physical_housing"
+                            candidate_sequence_rejected.append(species)
+                            ledger["dropped"].append({"kind": "animal", "animal": species, "reason": h_reason})
+                            candidate_decisions.append({
+                                "candidate_id": cand_id,
+                                "sequence_index": seq_idx,
+                                "species": species,
+                                "accepted": False,
+                                "rejection_reason": h_reason,
+                                "feed_feasible": True,
+                                "housing_before": housing_before,
+                                "housing_after": housing_before,
+                            })
+                            continue
+
+                        # Gate 3: Immediate Shed Capacity
+                        current_shed_load = base_shed_occupancy + total_retained_wheat + len(accepted_candidates)
+                        shed_room_before = max(0, SHED_CAPACITY - current_shed_load)
+                        if current_shed_load + 1 > SHED_CAPACITY:
+                            candidate_sequence_rejected.append(species)
+                            ledger["dropped"].append({"kind": "animal", "animal": species, "reason": "shed_capacity"})
+                            candidate_decisions.append({
+                                "candidate_id": cand_id,
+                                "sequence_index": seq_idx,
+                                "species": species,
+                                "accepted": False,
+                                "rejection_reason": "shed_capacity",
+                                "feed_feasible": True,
+                                "housing_before": housing_before,
+                                "shed_room_before": shed_room_before,
+                                "shed_room_after": shed_room_before,
+                            })
+                            continue
+
+                        # Gate 4: Hour-23 Rollover Capacity
+                        rollover_room_after = None
+                        if hour >= 23:
+                            total_post_market_and_carried = (current_shed_load + 1) + worker_rollover_inventory
+                            rollover_room_after = max(0, SHED_CAPACITY - total_post_market_and_carried)
+                            if total_post_market_and_carried > SHED_CAPACITY:
+                                candidate_sequence_rejected.append(species)
+                                ledger["dropped"].append({"kind": "animal", "animal": species, "reason": "end_of_day_rollover_capacity"})
+                                candidate_decisions.append({
+                                    "candidate_id": cand_id,
+                                    "sequence_index": seq_idx,
+                                    "species": species,
+                                    "accepted": False,
+                                    "rejection_reason": "end_of_day_rollover_capacity",
+                                    "feed_feasible": True,
+                                    "housing_before": housing_before,
+                                    "shed_room_before": shed_room_before,
+                                    "rollover_room_after": rollover_room_after,
+                                })
+                                continue
+
+                        # Gate 5: Market Order Slots
+                        delta_slot = 0 if species in accepted_species_set else 1
+                        if slots_left is not None and slots_left < delta_slot:
+                            candidate_sequence_rejected.append(species)
+                            ledger["dropped"].append({"kind": "animal", "animal": species, "reason": "market_order_slots"})
+                            candidate_decisions.append({
+                                "candidate_id": cand_id,
+                                "sequence_index": seq_idx,
+                                "species": species,
+                                "accepted": False,
+                                "rejection_reason": "market_order_slots",
+                                "feed_feasible": True,
+                                "housing_before": housing_before,
+                                "slot_delta": delta_slot,
+                            })
+                            continue
+
+                        # Gate 6: Feed & Cash Feasibility
+                        purchase_cost = float(ANIMALS[species]["cost"])
+                        cand_res = evaluate_incremental_candidate(
+                            working_ledger,
+                            species,
+                            purchase_cost=purchase_cost,
+                        )
+
+                        if not cand_res.feasible:
+                            f_reason = cand_res.blocking_reason or "feed_infeasible"
+                            candidate_sequence_rejected.append(species)
+                            ledger["dropped"].append({"kind": "animal", "animal": species, "reason": f_reason})
+                            candidate_decisions.append({
+                                "candidate_id": cand_id,
+                                "sequence_index": seq_idx,
+                                "species": species,
+                                "accepted": False,
+                                "rejection_reason": f_reason,
+                                "feed_feasible": False,
+                                "feed_blocking_reason": cand_res.blocking_reason,
+                                "purchase_cost": purchase_cost,
+                                "housing_before": housing_before,
+                            })
+                            continue
+
+                        # ALL GATES PASSED -> COMMIT TRANSACTIONALLY
+                        commit_candidate_reservation(working_ledger, cand_res, purchase_cost=purchase_cost)
+                        accepted_housing.reserve(species)
+                        if delta_slot > 0:
+                            accepted_species_set.add(species)
+                            accepted_species_order.append(species)
+                            if slots_left is not None:
+                                slots_left -= delta_slot
+
+                        accepted_candidates.append({
+                            "candidate_id": cand_id,
+                            "species": species,
+                            "purchase_cost": purchase_cost,
+                        })
+                        candidate_sequence_accepted.append(species)
+
+                        diag = cand_res.diagnostics or {}
+                        candidate_decisions.append({
+                            "candidate_id": cand_id,
+                            "sequence_index": seq_idx,
+                            "species": species,
+                            "accepted": True,
+                            "rejection_reason": None,
+                            "feed_feasible": True,
+                            "feed_blocking_reason": None,
+                            "purchase_cost": purchase_cost,
+                            "candidate_feed_hold": float(cand_res.candidate_feed_cash_hold),
+                            "existing_feed_hold_after": float(working_ledger.existing_feed_cash_hold),
+                            "candidate_feed_hold_after": float(working_ledger.candidate_feed_cash_hold),
+                            "stress_price_after": float(working_ledger.lifetime_wheat_price),
+                            "housing_before": housing_before,
+                            "housing_after": accepted_housing.to_dict(),
+                            "shed_room_before": shed_room_before,
+                            "shed_room_after": max(0, SHED_CAPACITY - (current_shed_load + 1)),
+                            "rollover_room_after": rollover_room_after,
+                            "slot_delta": delta_slot,
+                            "relies_on_retained_protected_wheat": (w_protected_buyable > 0),
+                            "relies_on_retained_optional_wheat": (w_opt_buyable > 0),
+                        })
+
+                except Exception as exc:
+                    # Transactional rollback on unexpected exception: discard all accepted candidates for this turn
+                    accepted_candidates.clear()
+                    accepted_species_order.clear()
+                    accepted_species_set.clear()
+                    candidate_sequence_accepted.clear()
+                    ledger["dropped"].append({"kind": "animal", "reason": "live_candidate_exception", "error": str(exc)})
+
+            # Consolidated emission into kept (in first-appearance species order)
+            for sp in accepted_species_order:
+                sp_count = sum(1 for c in accepted_candidates if c["species"] == sp)
+                if sp_count > 0:
+                    u_cost = float(ANIMALS[sp]["cost"])
+                    total_c = u_cost * sp_count
+                    kept.append((TIER_ANIMALS, "animal", {"animal": sp, "n": sp_count}, total_c))
+                    remaining_discretionary -= total_c
+
+            # Record Diagnostics
+            ledger["live_animal_authority"] = "c2b_sequential"
+            ledger["candidate_sequence_requested"] = candidate_sequence_requested
+            ledger["candidate_sequence_source"] = candidate_sequence_source
+            ledger["candidate_sequence_accepted"] = candidate_sequence_accepted
+            ledger["candidate_sequence_rejected"] = candidate_sequence_rejected
+            ledger["candidate_decisions"] = candidate_decisions
+            ledger["final_existing_feed_hold"] = float(working_ledger.existing_feed_cash_hold) if working_ledger else remaining_existing_feed_hold
+            ledger["final_candidate_feed_hold"] = float(working_ledger.candidate_feed_cash_hold) if working_ledger else 0.0
+            ledger["final_candidate_purchase_spend"] = float(working_ledger.candidate_purchase_cash_spent) if working_ledger else 0.0
+            ledger["final_stress_wheat_price"] = float(working_ledger.lifetime_wheat_price) if working_ledger else 0.0
+            ledger["post_unit_state_verified"] = getattr(snapshot, "post_unit_state_verified", True) if snapshot else True
+            ledger["post_unit_shed_occupancy"] = base_shed_occupancy
+            ledger["post_unit_worker_inventory_total"] = worker_rollover_inventory
+            ledger["housing_state_final"] = accepted_housing.to_dict() if accepted_housing else None
+            ledger["animal_order_slots_used"] = len(accepted_species_order)
+            ledger["live_c2b_diagnostics"] = {
+                "candidate_sequence_requested": candidate_sequence_requested,
+                "candidate_sequence_source": candidate_sequence_source,
+                "candidate_sequence_accepted": candidate_sequence_accepted,
+                "candidate_sequence_rejected": candidate_sequence_rejected,
+                "candidate_decisions": candidate_decisions,
+                "final_existing_feed_hold": ledger["final_existing_feed_hold"],
+                "final_candidate_feed_hold": ledger["final_candidate_feed_hold"],
+                "final_candidate_purchase_spend": ledger["final_candidate_purchase_spend"],
+                "final_stress_wheat_price": ledger["final_stress_wheat_price"],
+                "housing_state_final": ledger["housing_state_final"],
+                "animal_order_slots_used": ledger["animal_order_slots_used"],
+            }
+        else:
+            can_buy_animals = True
+            claimed_structures = {}
+            for animal, k_anim in sorted(intents.get("buy_animal", {}).items()):
+                k_anim = int(k_anim)
+                if k_anim > 0 and animal in ANIMALS:
+                    struct_type = ANIMALS[animal]["structure"]
+                    pending_structures = int(intents.get("pending_structures", {}).get(struct_type, 0))
+                    def _tile_free(t):
+                        t_kind = t.get("kind") if isinstance(t, dict) else getattr(t, "kind", "")
+                        t_anim = t.get("is_animal") if isinstance(t, dict) else getattr(t, "is_animal", False)
+                        if t_kind != struct_type or t_anim:
+                            return False
+                        if hasattr(farm, "unlocked") and hasattr(farm, "quadrant_of"):
+                            t_pos = tuple(t.get("pos")) if isinstance(t, dict) else tuple(t.pos)
+                            return farm.quadrant_of(t_pos) in farm.unlocked
+                        return True
+
+                    free_structures = sum(1 for t in farm.iter_tiles() if _tile_free(t)) + pending_structures
+                    matching_animals = [a for a, info in ANIMALS.items() if info["structure"] == struct_type]
+                    animals_in_shed = sum(int(ctx["private"].shed.get(a, 0)) for a in matching_animals) if ctx.get("private") else 0
+                    claimed = claimed_structures.get(struct_type, 0)
+                    max_buyable = max(0, free_structures - animals_in_shed - claimed)
+                    room_limited = min(k_anim, max_buyable, remaining_shed_room)
+                    if room_limited <= 0:
+                        ledger["dropped"].append({
+                            "kind": "animal",
+                            "animal": animal,
+                            "reason": "shed_full" if remaining_shed_room <= 0 else "no_empty_structure",
+                        })
+                        continue
+
+                    unit = ANIMALS[animal]["cost"]
+                    animal_discretionary = max(0.0, remaining_discretionary - sw_shadow_reserve)
+                    n_max = int(animal_discretionary // unit)
+                    actual_buy = min(room_limited, n_max)
+                    if actual_buy < room_limited and sw_shadow_reserve > 0:
+                        discretionary_livestock_suppressed = True
+                    if actual_buy > 0:
+                        claimed_structures[struct_type] = claimed + actual_buy
+                        remaining_shed_room = max(0, remaining_shed_room - actual_buy)
+                        kept.append((TIER_ANIMALS, "animal", {"animal": animal, "n": actual_buy}, float(unit * actual_buy)))
+                        remaining_discretionary -= unit * actual_buy
+                        if actual_buy < room_limited:
+                            ledger["dropped"].append({
+                                "kind": "animal", "animal": animal,
+                                "trimmed_from": room_limited, "to": actual_buy,
+                                "reason": "sw_capital_protected" if sw_shadow_reserve > 0 else "budget",
+                            })
+                    else:
                         ledger["dropped"].append({
                             "kind": "animal", "animal": animal,
-                            "trimmed_from": room_limited, "to": actual_buy,
-                            "reason": "sw_capital_protected" if sw_shadow_reserve > 0 else "budget",
+                            "reason": "sw_capital_protected" if (sw_shadow_reserve > 0 and int(remaining_discretionary // unit) > 0) else "budget"
                         })
-                else:
-                    ledger["dropped"].append({
-                        "kind": "animal", "animal": animal,
-                        "reason": "sw_capital_protected" if (sw_shadow_reserve > 0 and int(remaining_discretionary // unit) > 0) else "budget"
-                    })
 
         ledger["discretionary_livestock_suppressed_for_sw"] = discretionary_livestock_suppressed
 

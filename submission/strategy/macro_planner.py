@@ -710,6 +710,12 @@ class MacroPlanner:
         private = ctx["private"]
         plan = MacroPlan(day=day)
 
+        try:
+            from config import get_point2_feed_mode
+            point2_mode = get_point2_feed_mode()
+        except Exception:
+            point2_mode = "shadow"
+
         town_obj = ctx.get("town")
         town_shops = []
         if town_obj:
@@ -966,6 +972,36 @@ class MacroPlanner:
                     }
                 else:
                     try:
+                        is_late_selective = False
+                        phys_housing_cap = None
+                        if point2_mode == "live" and day >= C4_LIVESTOCK_CUTOFF_DAY and allow_livestock:
+                            is_late_selective = True
+                            obs_empty_pastures = sum(
+                                1 for t in farm.iter_tiles()
+                                if getattr(t, "kind", None) == "PASTURE" and not getattr(t, "is_animal", False)
+                                and (farm.quadrant_of(t.pos) in farm.unlocked if hasattr(farm, "quadrant_of") else True)
+                            ) if farm and hasattr(farm, "iter_tiles") else 0
+                            obs_empty_coops = sum(
+                                1 for t in farm.iter_tiles()
+                                if getattr(t, "kind", None) == "COOP" and not getattr(t, "is_animal", False)
+                                and (farm.quadrant_of(t.pos) in farm.unlocked if hasattr(farm, "quadrant_of") else True)
+                            ) if farm and hasattr(farm, "iter_tiles") else 0
+
+                            unplaced_large = (
+                                sum(int(private.shed.get(a, 0)) for a in ("COW", "SHEEP")) if private and hasattr(private, "shed") else 0
+                            ) + (
+                                sum(sum(int(inv.get(a, 0)) for a in ("COW", "SHEEP")) for inv in private.inventories) if private and hasattr(private, "inventories") else 0
+                            )
+                            unplaced_small = (
+                                int(private.shed.get("GOOSE", 0)) if private and hasattr(private, "shed") else 0
+                            ) + (
+                                sum(int(inv.get("GOOSE", 0)) for inv in private.inventories) if private and hasattr(private, "inventories") else 0
+                            )
+                            phys_housing_cap = {
+                                "PASTURE": max(0, obs_empty_pastures - unplaced_large),
+                                "COOP": max(0, obs_empty_coops - unplaced_small),
+                            }
+
                         herd_plan = generate_dynamic_herd_plan(
                             day=day,
                             hour=hour,
@@ -980,6 +1016,8 @@ class MacroPlanner:
                             opponent_stress_supplies=opp_stress_supply,
                             guard_threshold=guard_threshold,
                             feed_ledger=planning_feed_ledger,
+                            late_selective_mode=is_late_selective,
+                            physical_housing_capacity=phys_housing_cap,
                         )
                         target_pastures = max(
                             herd_plan.required_pastures,
@@ -2009,6 +2047,12 @@ class MacroPlanner:
         # Phase C1: ordered provisional animal candidate sequence
         provisional_seq = list(herd_plan.buy_animal_sequence) if herd_plan is not None else []
         plan.buy_animal_sequence = provisional_seq
+        if point2_mode == "live" and day >= C4_LIVESTOCK_CUTOFF_DAY:
+            buy_animal = {
+                "COW": provisional_seq.count("COW"),
+                "SHEEP": provisional_seq.count("SHEEP"),
+                "GOOSE": provisional_seq.count("GOOSE"),
+            }
         plan.intents = {
             "hire": hires,
             "buy_land": buy_land,
