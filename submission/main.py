@@ -846,7 +846,35 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     market = []
     _cp_diag = None
 
-    if active_mode in ("legacy", "historical_stack", "expanded_legacy"):
+    from config import POINT2_FEED_MODE
+    if POINT2_FEED_MODE == "live":
+        try:
+            market, _cp_diag = central_planner.plan_market(
+                ctx,
+                macro_plan=plan,
+                purchase_orders=purchase_orders,
+                purchase_ledger=_ledger,
+                sell_orders=sell_orders,
+                sell_details=_d,
+                opp_advice=opp_advice,
+            )
+            _LAST_CENTRAL_PLANNER_DIAGNOSTIC = _cp_diag
+        except Exception as exc:
+            try:
+                market, _cp_diag = central_planner.dependency_safe_live_fallback(
+                    ctx=ctx,
+                    purchase_orders=purchase_orders,
+                    purchase_ledger=_ledger,
+                    sell_orders=sell_orders,
+                    sell_details=_d,
+                    cap=10,
+                    error=str(exc),
+                )
+                _LAST_CENTRAL_PLANNER_DIAGNOSTIC = _cp_diag
+            except Exception:
+                market = []
+                _LAST_CENTRAL_PLANNER_DIAGNOSTIC = None
+    elif active_mode in ("legacy", "historical_stack", "expanded_legacy"):
         try:
             market = legacy_compose_market(
                 purchase_orders, sell_orders, ctx, cap=10

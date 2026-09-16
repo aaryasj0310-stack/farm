@@ -1378,6 +1378,74 @@ def compute_remaining_existing_feed_hold(
     return ok, res, remaining_hold
 
 
+def derive_feed_sale_reservation(
+    ledger: Any,
+    operational_min_wheat_slack: float,
+    valid: bool = True,
+    day: Optional[int] = None,
+    requires_resource_keys: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Derives authoritative physical WHEAT sale reservation and sellable shed wheat.
+
+    Contract:
+      - Current on-hand wheat: post_unit_shed_wheat + post_unit_worker_wheat.
+      - Releasable total: min(current_total, floor(operational_min_wheat_slack)).
+      - Required total: current_total - releasable_total.
+      - Worker wheat gets first protection claim (worker wheat cannot be sold from shed).
+      - Protected shed wheat = required_total - protected_worker_wheat.
+      - Sellable shed wheat = post_unit_shed_wheat - protected_shed_wheat.
+      - Day 29 exception: Feeding obligations end after Day 28; all shed wheat is sellable (reservation=0).
+      - Invalid/unverifiable (before Day 29): sellable_shed_wheat = 0.
+      - requires_resource_keys: explicit resource keys (e.g. wheat:protected, wheat:optional)
+        whose arrival was assumed in operational_min_wheat_slack.
+    """
+    post_unit_shed_wheat = int(getattr(ledger, "wheat_in_shed", 0)) if ledger else 0
+    post_unit_worker_wheat = int(getattr(ledger, "wheat_on_workers", 0)) if ledger else 0
+    current_total_wheat_on_hand = post_unit_shed_wheat + post_unit_worker_wheat
+    final_operational_min_wheat_slack = float(operational_min_wheat_slack)
+
+    cur_day = int(getattr(ledger, "day", 0)) if (ledger and hasattr(ledger, "day")) else (0 if day is None else int(day))
+    req_keys = list(requires_resource_keys) if requires_resource_keys is not None else []
+
+    if cur_day >= 29:
+        releasable_total_on_hand = current_total_wheat_on_hand
+        required_total_on_hand = 0
+        protected_worker_wheat = 0
+        protected_shed_wheat = 0
+        sellable_shed_wheat = post_unit_shed_wheat
+    elif not valid:
+        releasable_total_on_hand = 0
+        required_total_on_hand = current_total_wheat_on_hand
+        protected_worker_wheat = min(post_unit_worker_wheat, required_total_on_hand)
+        protected_shed_wheat = min(post_unit_shed_wheat, max(0, required_total_on_hand - protected_worker_wheat))
+        sellable_shed_wheat = 0
+    else:
+        releasable_total_on_hand = min(
+            current_total_wheat_on_hand,
+            max(0, int(math.floor(final_operational_min_wheat_slack + 1e-9)))
+        )
+        required_total_on_hand = max(0, current_total_wheat_on_hand - releasable_total_on_hand)
+        protected_worker_wheat = min(post_unit_worker_wheat, required_total_on_hand)
+        protected_shed_wheat = min(post_unit_shed_wheat, max(0, required_total_on_hand - protected_worker_wheat))
+        sellable_shed_wheat = max(0, post_unit_shed_wheat - protected_shed_wheat)
+
+    return {
+        "version": "point2_c2c_v1",
+        "valid": bool(valid),
+        "post_unit_shed_wheat": post_unit_shed_wheat,
+        "post_unit_worker_wheat": post_unit_worker_wheat,
+        "current_total_wheat_on_hand": current_total_wheat_on_hand,
+        "final_operational_min_wheat_slack": final_operational_min_wheat_slack,
+        "releasable_total_on_hand": releasable_total_on_hand,
+        "required_total_on_hand": required_total_on_hand,
+        "protected_worker_wheat": protected_worker_wheat,
+        "protected_shed_wheat": protected_shed_wheat,
+        "sellable_shed_wheat": sellable_shed_wheat,
+        "requires_resource_keys": req_keys,
+        "source": "feed_feasibility",
+    }
+
+
 # ============================================================================
 # Ledger Builder
 # ============================================================================

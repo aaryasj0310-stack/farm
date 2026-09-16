@@ -386,9 +386,9 @@ class OrderBuilder:
             ledger["retained_protected_wheat"] = w_protected_buyable
             ledger["retained_optional_wheat"] = 0
             if snapshot:
-                ledger["execution_confidence"] = snapshot.execution_confidence
-                ledger["verified_feed_targets"] = list(snapshot.verified_feed_targets)
-                ledger["verified_feed_count"] = snapshot.verified_feed_count
+                ledger["execution_confidence"] = getattr(snapshot, "execution_confidence", "high")
+                ledger["verified_feed_targets"] = list(getattr(snapshot, "verified_feed_targets", []))
+                ledger["verified_feed_count"] = getattr(snapshot, "verified_feed_count", len(getattr(snapshot, "verified_feed_targets", [])))
 
         if affordable_hires < k:
             ledger["dropped"].append({
@@ -625,6 +625,13 @@ class OrderBuilder:
                     global_rejection_reason = "live_candidate_exception"
                     ledger["dropped"].append({"kind": "animal", "reason": "live_candidate_exception", "error": str(exc)})
 
+            baseline_operational_min_wheat_slack = (
+                float(res_prefix.minimum_wheat_slack)
+                if (can_start_replay and global_rejection_reason is None and 'res_prefix' in locals() and ok_prefix and res_prefix and hasattr(res_prefix, "minimum_wheat_slack"))
+                else (float(existing_res.minimum_wheat_slack) if ('existing_res' in locals() and existing_res and hasattr(existing_res, "minimum_wheat_slack")) else 0.0)
+            )
+            current_operational_min_wheat_slack = baseline_operational_min_wheat_slack
+
             # Evaluate sequence
             if can_start_replay:
                 candidate_stage_base_ledger = working_ledger.clone() if working_ledger is not None else None
@@ -766,8 +773,16 @@ class OrderBuilder:
                             continue
 
                         # ALL GATES PASSED -> COMMIT TRANSACTIONALLY
+                        cand_deps = []
+                        if w_protected_buyable > 0:
+                            cand_deps.append("wheat:protected")
+                        if w_opt_buyable > 0:
+                            cand_deps.append("wheat:optional")
+
                         commit_candidate_reservation(working_ledger, cand_res, purchase_cost=purchase_cost)
                         accepted_housing.reserve(species)
+                        if hasattr(cand_res, "minimum_wheat_slack") and cand_res.minimum_wheat_slack is not None:
+                            current_operational_min_wheat_slack = float(cand_res.minimum_wheat_slack)
                         if delta_slot > 0:
                             accepted_species_set.add(species)
                             accepted_species_order.append(species)
@@ -778,6 +793,7 @@ class OrderBuilder:
                             "candidate_id": cand_id,
                             "species": species,
                             "purchase_cost": purchase_cost,
+                            "requires_resource_keys": list(cand_deps),
                         })
                         candidate_sequence_accepted.append(species)
 
@@ -803,6 +819,7 @@ class OrderBuilder:
                             "slot_delta": delta_slot,
                             "relies_on_retained_protected_wheat": (w_protected_buyable > 0),
                             "relies_on_retained_optional_wheat": (w_opt_buyable > 0),
+                            "requires_resource_keys": list(cand_deps),
                         })
 
                 except Exception as exc:
@@ -814,6 +831,7 @@ class OrderBuilder:
                     accepted_species_set.clear()
                     candidate_sequence_accepted.clear()
                     slots_left = available_animal_order_slots
+                    current_operational_min_wheat_slack = baseline_operational_min_wheat_slack
                     for d in candidate_decisions:
                         d["accepted"] = False
                         d["rejection_reason"] = "live_candidate_exception"
@@ -821,13 +839,61 @@ class OrderBuilder:
                     ledger["dropped"].append({"kind": "animal", "reason": "live_candidate_exception", "error": str(exc)})
 
             # Consolidated emission into kept (in first-appearance species order)
-            for sp in accepted_species_order:
-                sp_count = sum(1 for c in accepted_candidates if c["species"] == sp)
+            for sp_idx, sp in enumerate(accepted_species_order):
+                sp_candidates = [c for c in accepted_candidates if c["species"] == sp]
+                sp_count = len(sp_candidates)
                 if sp_count > 0:
+                    cand_ids = [c["candidate_id"] for c in sp_candidates]
+                    dep_union = sorted(list(set(k for c in sp_candidates for k in c.get("requires_resource_keys", []))))
                     u_cost = float(ANIMALS[sp]["cost"])
                     total_c = u_cost * sp_count
-                    kept.append((TIER_ANIMALS, "animal", {"animal": sp, "n": sp_count}, total_c))
+                    kept.append((
+                        TIER_ANIMALS,
+                        "animal",
+                        {
+                            "animal": sp,
+                            "n": sp_count,
+                            "candidate_ids": cand_ids,
+                            "dependency_group": f"animal:{sp}:{sp_idx}",
+                            "requires_resource_keys": dep_union,
+                        },
+                        total_c,
+                    ))
                     remaining_discretionary -= total_c
+
+            # Feed-sale reservation derivation (C2C)
+            res_keys = []
+            if w_protected_buyable > 0:
+                res_keys.append("wheat:protected")
+            if w_opt_buyable > 0:
+                res_keys.append("wheat:optional")
+
+            try:
+                from strategy.feed_feasibility import derive_feed_sale_reservation
+            except Exception:
+                try:
+                    from feed_feasibility import derive_feed_sale_reservation
+                except Exception:
+                    derive_feed_sale_reservation = None
+
+            if derive_feed_sale_reservation is not None:
+                feed_sale_res = derive_feed_sale_reservation(
+                    ledger=working_ledger if working_ledger is not None else live_ledger,
+                    operational_min_wheat_slack=current_operational_min_wheat_slack,
+                    valid=(live_failure_reason is None and (snapshot is not None and getattr(snapshot, "post_unit_state_verified", False) is True)),
+                    day=day,
+                    requires_resource_keys=res_keys,
+                )
+            else:
+                feed_sale_res = {
+                    "version": "point2_c2c_v1",
+                    "valid": False,
+                    "sellable_shed_wheat": 0,
+                    "requires_resource_keys": res_keys,
+                }
+
+            ledger["dependency_contract_version"] = "point2_c2c_v1"
+            ledger["feed_sale_reservation"] = feed_sale_res
 
             # Record Diagnostics
             ledger["live_animal_authority"] = "c2b_sequential"
@@ -968,10 +1034,14 @@ class OrderBuilder:
                     feed_class = "protected" if (kind == "wheat_protected" or payload.get("feed_class") == "protected" or payload.get("is_protected", False)) else "optional"
                     is_prot = (feed_class == "protected")
                     sem_kind = "wheat_protected" if is_prot else "wheat_optional"
+                    res_key = "wheat:protected" if is_prot else "wheat:optional"
                     order_metadata.append({
                         "kind": sem_kind,
                         "feed_class": feed_class,
                         "is_protected": is_prot,
+                        "hard_required": is_prot if is_live_feed_mode else False,
+                        "resource_key": res_key if is_live_feed_mode else None,
+                        "resource_role": "feed_resource" if is_live_feed_mode else None,
                         "tier": tier,
                         "n": int(payload["n"]),
                     })
@@ -1013,7 +1083,18 @@ class OrderBuilder:
             elif kind == "animal":
                 if take(None):
                     orders.append(["BUY_ANIMAL", payload["animal"], int(payload["n"])])
-                    order_metadata.append({"kind": "animal", "animal": payload["animal"], "tier": tier, "n": int(payload["n"]), "feed_class": None})
+                    meta_dict = {
+                        "kind": "animal",
+                        "animal": payload["animal"],
+                        "tier": tier,
+                        "n": int(payload["n"]),
+                        "feed_class": None,
+                    }
+                    if is_live_feed_mode:
+                        meta_dict["candidate_ids"] = list(payload.get("candidate_ids", []))
+                        meta_dict["dependency_group"] = payload.get("dependency_group")
+                        meta_dict["requires_resource_keys"] = list(payload.get("requires_resource_keys", []))
+                    order_metadata.append(meta_dict)
                     queued["animal"][payload["animal"]] = int(payload["n"])
                 else:
                     ledger["dropped"].append({
