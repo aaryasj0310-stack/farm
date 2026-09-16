@@ -293,11 +293,16 @@ class OrderBuilder:
                 is_safe_exec = False
                 live_execution_status = "feed_execution_unverified"
                 live_execution_reason = f"Phase-C exception: {exc}"
-                remaining_existing_feed_hold = 0.0
+                remaining_existing_feed_hold = None
 
         # ---- 3. Discretionary budget: land, optional feed buffer, seeds, animals ----
         if is_live_feed_mode:
-            discretionary_budget = max(0.0, available_for_purchases - protected_feed_budget - remaining_existing_feed_hold)
+            if live_failure_reason is not None:
+                # Catastrophic live failure: fail closed for discretionary spending!
+                # Unknown hold cannot release cash to land/seeds/animals.
+                discretionary_budget = 0.0
+            else:
+                discretionary_budget = max(0.0, available_for_purchases - protected_feed_budget - (remaining_existing_feed_hold or 0.0))
         else:
             discretionary_budget = max(0.0, available_for_purchases - protected_feed_budget)
 
@@ -311,7 +316,7 @@ class OrderBuilder:
             "w_opt_buyable": 0,
             "w_buyable": w_protected_buyable,
             "discretionary_budget": round(discretionary_budget, 2),
-            "remaining_existing_feed_hold": round(remaining_existing_feed_hold, 2),
+            "remaining_existing_feed_hold": round(remaining_existing_feed_hold, 2) if remaining_existing_feed_hold is not None else 0.0,
             "spent_estimate": 0.0,
             "queued": [],
             "dropped": [],
@@ -320,7 +325,7 @@ class OrderBuilder:
         if is_live_feed_mode:
             ledger["point2_live_authority"] = True
             ledger["existing_herd_feasible"] = existing_herd_feasible
-            ledger["remaining_existing_feed_hold"] = round(remaining_existing_feed_hold, 2)
+            ledger["remaining_existing_feed_hold"] = round(remaining_existing_feed_hold, 2) if remaining_existing_feed_hold is not None else None
             ledger["is_live_livestock_safe"] = is_safe_exec
             ledger["live_execution_status"] = live_execution_status
             ledger["live_execution_reason"] = live_execution_reason
@@ -368,7 +373,8 @@ class OrderBuilder:
                 kept.append((TIER_LAND, "land", {}, land_price))
                 remaining_discretionary -= land_price
             else:
-                ledger["dropped"].append({"kind": "land", "reason": "budget"})
+                reason = "live_failure" if live_failure_reason is not None else "budget"
+                ledger["dropped"].append({"kind": "land", "reason": reason})
 
         # Discretionary Tier: Optional Feed Wheat (routine buffer)
         w_opt_buyable = 0
@@ -390,7 +396,7 @@ class OrderBuilder:
                     "to": w_opt_buyable,
                 })
             else:
-                reason = "shed_full" if remaining_shed_room == 0 and int(remaining_discretionary // unit_wheat_px) > 0 else "budget"
+                reason = "live_failure" if live_failure_reason is not None else ("shed_full" if remaining_shed_room == 0 and int(remaining_discretionary // unit_wheat_px) > 0 else "budget")
                 ledger["dropped"].append({"kind": "wheat_optional", "reason": reason})
 
         if w_opt_buyable > 0:
@@ -413,7 +419,8 @@ class OrderBuilder:
                         "trimmed_from": n, "to": n_max,
                     })
                 else:
-                    ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": "budget"})
+                    reason = "live_failure" if live_failure_reason is not None else "budget"
+                    ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": reason})
 
         # Discretionary Tier: Animals
         # Near-term SW protection: protect SW land capital ($2000) from discretionary animals
@@ -438,20 +445,20 @@ class OrderBuilder:
                 sw_shadow_reserve = 2000.0
 
         can_buy_animals = True
-        if is_live_feed_mode:
-            if not existing_herd_feasible or not is_safe_exec or live_failure_reason is not None:
-                can_buy_animals = False
+        if is_live_feed_mode and live_failure_reason is not None:
+            # Only catastrophic failure fails closed for new livestock in C2A.
+            # Normal C2A execution/feasibility checks remain diagnostic-only until C2B.
+            can_buy_animals = False
 
         claimed_structures = {}
         for animal, k_anim in sorted(intents.get("buy_animal", {}).items()):
             k_anim = int(k_anim)
             if k_anim > 0 and animal in ANIMALS:
                 if is_live_feed_mode and not can_buy_animals:
-                    reason = "feed_execution_unverified" if not is_safe_exec else ("existing_herd_infeasible" if not existing_herd_feasible else "live_failure")
                     ledger["dropped"].append({
                         "kind": "animal",
                         "animal": animal,
-                        "reason": reason,
+                        "reason": "live_failure",
                     })
                     continue
                 struct_type = ANIMALS[animal]["structure"]

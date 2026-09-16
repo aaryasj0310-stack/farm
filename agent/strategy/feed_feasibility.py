@@ -627,23 +627,18 @@ def build_feed_execution_snapshot(
 
     unfed_placed_today = feeds_due_today
 
-    # Verify feeds: distinct units emitting FEED toward due animals
+    # Verify feeds: exact-target matching only, distinct units
     verified_feed_targets: List[Tuple[int, int]] = []
     targets_remaining = list(unfed_placed_positions)
     for u_idx, act in actions_map.items():
         if act and isinstance(act, (list, tuple)) and len(act) > 0 and act[0] == "FEED":
             u_task = asg_map.get(u_idx) if isinstance(asg_map, dict) else None
             tgt = None
-            if isinstance(u_task, dict) and u_task.get("target") is not None:
+            if isinstance(u_task, dict) and (u_task.get("op") == "FEED" or str(u_task.get("kind", "")).startswith("feed")) and u_task.get("target") is not None:
                 tgt = tuple(u_task["target"])
             if tgt is not None and tgt in targets_remaining:
                 targets_remaining.remove(tgt)
                 verified_feed_targets.append(tgt)
-            elif targets_remaining:
-                matched = targets_remaining.pop(0)
-                verified_feed_targets.append(tgt if tgt is not None else matched)
-            else:
-                verified_feed_targets.append(tgt if tgt is not None else (0, 0))
 
     verified_feed_count = len(verified_feed_targets)
     market_purchase_can_help_today = (hour < 23)

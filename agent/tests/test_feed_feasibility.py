@@ -1889,6 +1889,56 @@ def test_c2a_test3_two_due_animals_require_two_distinct_feed_actions():
     assert snap_full.live_execution_status == "safe"
 
 
+def test_c2a_feed_emitted_wrong_target_no_certification():
+    """FEED emitted for wrong target (e.g. non-animal or non-due target) -> no certification."""
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=2000.0, shed_wheat=10, placed_animals=["COW"])
+    # Animal is at (0, 0). Unit emits FEED but assigned target is (5, 5).
+    tasks = [{"op": "FEED", "target": (5, 5)}]
+    asg = {
+        "assignment": {0: {"op": "FEED", "target": (5, 5), "unit_pos": (0, 0)}},
+        "actions": {0: ["FEED"]},
+    }
+    snapshot = build_feed_execution_snapshot(ctx, tasks=tasks, assignment=asg)
+    assert snapshot.verified_feed_count == 0
+    assert snapshot.verified_feed_targets == []
+    assert snapshot.is_live_livestock_safe is False
+
+
+def test_c2a_feed_emitted_missing_target_no_certification():
+    """FEED emitted with missing target in task/assignment -> no certification."""
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=2000.0, shed_wheat=10, placed_animals=["COW"])
+    tasks = [{"op": "FEED"}]
+    asg = {
+        "assignment": {0: {"op": "FEED", "unit_pos": (0, 0)}},  # No target specified
+        "actions": {0: ["FEED"]},
+    }
+    snapshot = build_feed_execution_snapshot(ctx, tasks=tasks, assignment=asg)
+    assert snapshot.verified_feed_count == 0
+    assert snapshot.verified_feed_targets == []
+    assert snapshot.is_live_livestock_safe is False
+
+
+def test_c2a_two_feeds_same_target_no_double_certification():
+    """Two units emitting FEED for the same animal cannot certify it twice."""
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=2000.0, shed_wheat=10, placed_animals=["COW", "SHEEP"])
+    # 2 animals placed at (0, 0) and (1, 0).
+    # Both units 0 and 1 target (0, 0) and emit FEED.
+    tasks = [{"op": "FEED", "target": (0, 0)}, {"op": "FEED", "target": (0, 0)}]
+    asg = {
+        "assignment": {
+            0: {"op": "FEED", "target": (0, 0), "unit_pos": (0, 0)},
+            1: {"op": "FEED", "target": (0, 0), "unit_pos": (0, 0)},
+        },
+        "actions": {0: ["FEED"], 1: ["FEED"]},
+    }
+    snapshot = build_feed_execution_snapshot(ctx, tasks=tasks, assignment=asg)
+    # Only 1 feed should be verified! The second cannot double-certify (0, 0)
+    assert snapshot.verified_feed_count == 1
+    assert snapshot.verified_feed_targets == [(0, 0)]
+    assert snapshot.unfed_placed_today == 2
+    assert snapshot.is_live_livestock_safe is False
+
+
 def test_c2a_test4_missing_snapshot_with_unfed_herd_is_unsafe():
     """Test 4: Missing snapshot + unfed herd -> unsafe live execution status."""
     is_safe, status, reason = check_live_livestock_execution_safety(snapshot=None, unfed_placed_today=2)
@@ -2050,14 +2100,15 @@ def test_c2a_test13_herd_plan_hour1_behavior_unchanged(monkeypatch):
     assert any(o[0] == "BUY_LAND" for o in orders)
 
 
-def test_c2a_test14_injected_live_failure_preserves_survival_purchases(monkeypatch):
-    """Test 14: Injected live snapshot/ledger failure preserves survival/protected-WHEAT purchasing."""
+def test_c2a_test14_injected_live_failure_fails_closed_for_discretionary_spending(monkeypatch):
+    """Test 14: Injected live snapshot/ledger failure fails closed for discretionary spending,
+    blocking land, seeds, and animals, while preserving survival/protected-WHEAT purchasing."""
     import config
     monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
     monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
     from market.order_builder import OrderBuilder
 
-    ctx = make_mock_farm_ctx(day=10, hour=0, money=3000.0, shed_wheat=0, placed_animals=["COW"])
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=0, placed_animals=["COW"])
 
     # Inject failure into build_fresh_live_ledger
     import strategy.feed_feasibility
@@ -2071,31 +2122,53 @@ def test_c2a_test14_injected_live_failure_preserves_survival_purchases(monkeypat
         "hire": 1,
         "buy_wheat": 5,
         "protected_feed_wheat": 3,
+        "buy_land": True,
+        "buy_seed": {"CARROT": 10},
         "buy_animal": {"SHEEP": 1},
-        "buy_land": False,
-        "buy_seed": {},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {"PASTURE": 1},
     }
     orders, ledger = builder.build(ctx, intents)
 
-    # Survival purchases (hire and protected wheat) must be preserved!
+    # 1. Survival purchases (hire and protected wheat) must be preserved!
     assert any(o[0] == "HIRE" for o in orders)
     assert any(o[0] == "BUY_PRODUCT" and o[1] == "WHEAT" for o in orders)
-    # Livestock must be dropped!
+
+    # 2. Discretionary spending must fail closed: no land, no seeds, no new animals!
+    assert not any(o[0] == "BUY_LAND" for o in orders)
+    assert not any(o[0] == "BUY_SEED" for o in orders)
     assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+
+    # 3. Discretionary budget must be 0.0, hold is None, and failure reason is logged
+    assert ledger["discretionary_budget"] == 0.0
+    assert ledger["remaining_existing_feed_hold"] is None
     assert ledger.get("live_failure_reason") is not None
 
+    dropped_kinds = {d.get("kind"): d.get("reason") for d in ledger.get("dropped", [])}
+    assert dropped_kinds.get("land") == "live_failure"
+    assert dropped_kinds.get("seed") == "live_failure"
+    assert dropped_kinds.get("animal") == "live_failure"
 
-def test_c2a_test15_c2a_does_not_change_actual_live_buy_animal_authorization_yet(monkeypatch):
-    """Test 15: C2A does not change actual live BUY_ANIMAL authorization yet."""
+
+def test_c2a_test15_c2a_normal_diagnostics_do_not_alter_legacy_animal_orders(monkeypatch):
+    """Test 15: In live mode, normal C2A diagnostics (e.g. unverified feed execution or tight herd)
+    do not alter legacy BUY_ANIMAL orders (C2A foundation only, C2B enforcement deferred)."""
     import config
     # 1. Default mode remains shadow
     assert config.POINT2_FEED_MODE == "shadow"
 
-    # 2. In shadow mode, OrderBuilder uses legacy animal authorization
-    ctx = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=10, placed_animals=[])
+    # 2. In live mode, even when feed execution is unverified, normal operation does NOT suppress legacy animal orders!
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
     from market.order_builder import OrderBuilder
-    builder = OrderBuilder()
 
+    # Setup: 1 placed COW, unfed today, 0 feed actions emitted -> is_safe_exec is False.
+    # Money is $5000 so legacy logic easily affords SHEEP.
+    ctx = make_mock_farm_ctx(day=10, hour=0, money=5000.0, shed_wheat=10, placed_animals=["COW"])
+    ctx["assignment"] = {}
+    ctx["tasks"] = []
+
+    builder = OrderBuilder()
     intents = {
         "hire": 0,
         "buy_land": False,
@@ -2106,5 +2179,14 @@ def test_c2a_test15_c2a_does_not_change_actual_live_buy_animal_authorization_yet
         "buy_wheat": 0,
     }
     orders, ledger = builder.build(ctx, intents)
-    assert any(o[0] == "BUY_ANIMAL" and o[1] == "SHEEP" for o in orders)
+
+    # Diagnostics are computed and exposed:
+    assert ledger["point2_live_authority"] is True
+    assert ledger["is_live_livestock_safe"] is False
+    assert ledger["live_execution_status"] == "feed_execution_unverified"
+
+    # BUT in C2A, normal animal purchasing is NOT suppressed by C2A diagnostics!
+    assert any(o[0] == "BUY_ANIMAL" and o[1] == "SHEEP" for o in orders), (
+        "C2A must not suppress legacy BUY_ANIMAL during normal operation; C2B enforcement is deferred."
+    )
 
