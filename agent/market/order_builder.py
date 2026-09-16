@@ -550,7 +550,7 @@ class OrderBuilder:
                     global_rejection_reason = "feed_execution_unverified"
                 elif snapshot is None:
                     global_rejection_reason = "post_unit_state_unverified"
-                elif not getattr(snapshot, "post_unit_state_verified", True):
+                elif not getattr(snapshot, "post_unit_state_verified", False):
                     global_rejection_reason = "post_unit_state_unverified"
 
             accepted_candidates = []
@@ -627,6 +627,8 @@ class OrderBuilder:
 
             # Evaluate sequence
             if can_start_replay:
+                candidate_stage_base_ledger = working_ledger.clone() if working_ledger is not None else None
+                candidate_stage_base_housing = accepted_housing.clone() if accepted_housing is not None else None
                 slots_left = available_animal_order_slots
                 provisional_list = intents.get("provisional_candidates", [])
 
@@ -805,10 +807,17 @@ class OrderBuilder:
 
                 except Exception as exc:
                     # Transactional rollback on unexpected exception: discard all accepted candidates for this turn
+                    working_ledger = candidate_stage_base_ledger.clone() if candidate_stage_base_ledger is not None else None
+                    accepted_housing = candidate_stage_base_housing.clone() if candidate_stage_base_housing is not None else None
                     accepted_candidates.clear()
                     accepted_species_order.clear()
                     accepted_species_set.clear()
                     candidate_sequence_accepted.clear()
+                    slots_left = available_animal_order_slots
+                    for d in candidate_decisions:
+                        d["accepted"] = False
+                        d["rejection_reason"] = "live_candidate_exception"
+                        d["feed_feasible"] = False
                     ledger["dropped"].append({"kind": "animal", "reason": "live_candidate_exception", "error": str(exc)})
 
             # Consolidated emission into kept (in first-appearance species order)
@@ -831,7 +840,8 @@ class OrderBuilder:
             ledger["final_candidate_feed_hold"] = float(working_ledger.candidate_feed_cash_hold) if working_ledger else 0.0
             ledger["final_candidate_purchase_spend"] = float(working_ledger.candidate_purchase_cash_spent) if working_ledger else 0.0
             ledger["final_stress_wheat_price"] = float(working_ledger.lifetime_wheat_price) if working_ledger else 0.0
-            ledger["post_unit_state_verified"] = getattr(snapshot, "post_unit_state_verified", True) if snapshot else True
+            ledger["post_unit_state_verified"] = bool(getattr(snapshot, "post_unit_state_verified", False)) if snapshot is not None else False
+            ledger["post_unit_state_reason"] = getattr(snapshot, "post_unit_state_reason", "missing_snapshot") if snapshot is not None else "missing_snapshot"
             ledger["post_unit_shed_occupancy"] = base_shed_occupancy
             ledger["post_unit_worker_inventory_total"] = worker_rollover_inventory
             ledger["housing_state_final"] = accepted_housing.to_dict() if accepted_housing else None
@@ -848,6 +858,8 @@ class OrderBuilder:
                 "final_stress_wheat_price": ledger["final_stress_wheat_price"],
                 "housing_state_final": ledger["housing_state_final"],
                 "animal_order_slots_used": ledger["animal_order_slots_used"],
+                "post_unit_state_verified": ledger["post_unit_state_verified"],
+                "post_unit_state_reason": ledger["post_unit_state_reason"],
             }
         else:
             can_buy_animals = True

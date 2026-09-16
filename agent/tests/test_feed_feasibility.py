@@ -3037,6 +3037,15 @@ def test_c2b_candidate_exception_discards_all_animals_preserves_higher_priority(
     assert any(o[0] == "BUY_SEED" for o in orders)
     # 3. Discard recorded with live_candidate_exception
     assert any(d.get("kind") == "animal" and d.get("reason") == "live_candidate_exception" for d in ledger.get("dropped", []))
+    # 4. Full rollback of candidate financials, slots, sequence, and housing
+    assert ledger.get("final_candidate_purchase_spend") == 0.0
+    assert ledger.get("final_candidate_feed_hold") == 0.0
+    assert ledger.get("animal_order_slots_used") == 0
+    assert ledger.get("candidate_sequence_accepted") == []
+    assert not any(d.get("accepted") is True for d in ledger.get("candidate_decisions", []))
+    housing_final = ledger.get("housing_state_final")
+    assert housing_final is not None
+    assert housing_final.get("empty_pastures") == 2
 
 
 def test_c2b_intraday_uses_shared_c2b_authority(monkeypatch):
@@ -3350,3 +3359,207 @@ def test_c2b_repair_build_pre_and_post_day12():
     snap_d12 = build_feed_execution_snapshot(ctx_d12)
     assert snap_d12.post_unit_state_verified is True
     assert snap_d12.post_unit_empty_pastures == 0
+
+
+def test_c2b_empty_post_unit_shed_uses_snapshot_state():
+    """Test 110: Empty post-unit shed still uses snapshot state instead of falling back to pre-unit observation."""
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=100)
+    ctx["private"].shed["COW"] = 5
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=0, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_state_verified=True,
+        post_unit_shed_inventory={},
+        post_unit_worker_inventories=[{}],
+        post_unit_placed_herd={"COW": 2, "SHEEP": 0, "GOOSE": 0},
+    )
+    ledger = build_feed_resource_ledger(ctx, current_herd=None, execution_snapshot=snapshot)
+    assert ledger.wheat_in_shed == 0
+    assert ledger.placed_herd["COW"] == 2
+    assert ledger.owned_unplaced_herd["COW"] == 0
+
+
+def test_c2b_place_empties_worker_and_shed_remains_empty():
+    """Test 111: PLACE action empties worker while shed remains empty; ledger placed herd is correct."""
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    ctx["private"].shed = {}
+    ctx["private"].inventories = [{"COW": 1}]
+    
+    class MockPastureTile:
+        kind = "PASTURE"
+        raw = {"kind": "PASTURE"}
+        is_animal = False
+        animal = None
+        crop = None
+        pos = (1, 1)
+    
+    ctx["farm"].tiles = [[None, None], [None, MockPastureTile()]]
+    ctx["farm"].iter_tiles = lambda: [MockPastureTile()]
+    ctx["farm"].quadrant_of = lambda pos: "NW"
+    ctx["assignment"] = {0: {"task": "PLACE", "target": (1, 1), "args": ["COW"]}}
+    ctx["actions"] = {0: ["PLACE", "COW"]}
+    
+    snap = build_feed_execution_snapshot(ctx)
+    assert snap.post_unit_state_verified is True
+    assert snap.post_unit_shed_inventory == {}
+    assert snap.post_unit_worker_inventories == [{}]
+    assert snap.post_unit_placed_herd.get("COW") == 1
+
+    ledger = build_feed_resource_ledger(ctx, current_herd=None, execution_snapshot=snap)
+    assert ledger.placed_herd["COW"] == 1
+    assert ledger.owned_unplaced_herd["COW"] == 0
+    assert ledger.wheat_in_shed == 0
+
+
+def test_c2b_pickup_empties_shed_correct_worker_shed_wheat():
+    """Test 112: PICKUP empties shed; fresh live ledger reflects 0 shed wheat and 3 worker wheat."""
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=3)
+    ctx["private"].shed = {"WHEAT": 3}
+    ctx["private"].inventories = [{}]
+    ctx["assignment"] = {0: {"task": "PICKUP", "target": (0, 0), "args": ["WHEAT", 3]}}
+    ctx["actions"] = {0: ["PICKUP", "WHEAT", 3]}
+
+    snap = build_feed_execution_snapshot(ctx)
+    assert snap.post_unit_state_verified is True
+    assert snap.post_unit_shed_inventory == {}
+    assert snap.post_unit_worker_inventories == [{"WHEAT": 3}]
+
+    ledger = build_feed_resource_ledger(ctx, current_herd=None, execution_snapshot=snap)
+    assert ledger.wheat_in_shed == 0
+    assert ledger.wheat_on_workers == 3
+
+
+def test_c2b_candidate_exception_transactional_rollback(monkeypatch):
+    """Test 113: Candidate 1 accepted + candidate 2 exception -> full rollback of spend, feed hold, housing, decisions, and slots."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+    import strategy.feed_feasibility as ff
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=20000.0, shed_wheat=50)
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 2},
+        "buy_animal_sequence": ["SHEEP", "SHEEP"],
+        "pending_structures": {},
+    }
+    snapshot = FeedExecutionSnapshot(
+        day=5, hour=0, turns_remaining_today=24, feeds_due_today=0,
+        feeds_assigned_this_turn=0, wheat_pickups_assigned_this_turn=0,
+        worker_wheat=0, shed_wheat=50, n_active_units=1,
+        market_purchase_can_help_today=True, execution_confidence="high",
+        post_unit_empty_pastures=2, post_unit_state_verified=True,
+    )
+    intents["execution_snapshot"] = snapshot
+
+    call_count = 0
+    orig_eval = ff.evaluate_incremental_candidate
+    def mock_eval(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 2:
+            raise RuntimeError("Unexpected failure during candidate 2!")
+        return orig_eval(*args, **kwargs)
+
+    monkeypatch.setattr(ff, "evaluate_incremental_candidate", mock_eval)
+
+    orders, ledger = builder.build(ctx, intents)
+
+    # Zero animal orders
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    # Reverted financials and reservations
+    assert ledger["final_candidate_purchase_spend"] == 0.0
+    assert ledger["final_candidate_feed_hold"] == 0.0
+    assert ledger["animal_order_slots_used"] == 0
+    assert ledger["candidate_sequence_accepted"] == []
+    # All decisions rejected with live_candidate_exception
+    assert len(ledger["candidate_decisions"]) == 1
+    assert ledger["candidate_decisions"][0]["accepted"] is False
+    assert ledger["candidate_decisions"][0]["rejection_reason"] == "live_candidate_exception"
+    # Housing state restored
+    assert ledger["housing_state_final"]["empty_pastures"] == 2
+
+
+def test_c2b_missing_build_target_fails_verification():
+    """Test 114: Missing or off-grid BUILD target invalidates post_unit_state_verified."""
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    ctx["assignment"] = {0: {"task": "BUILD_PASTURE", "target": (99, 99), "args": []}}
+    ctx["actions"] = {0: ["BUILD_PASTURE"]}
+
+    snap = build_feed_execution_snapshot(ctx)
+    assert snap.post_unit_state_verified is False
+    assert snap.post_unit_state_reason == "unverifiable_build"
+
+
+def test_c2b_harvest_missing_exact_task_target_fails_verification():
+    """Test 115: HARVEST action missing exact assigned task target invalidates verification."""
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    ctx["assignment"] = {0: {"task": "HARVEST", "target": None, "args": []}}
+    ctx["actions"] = {0: ["HARVEST"]}
+
+    snap = build_feed_execution_snapshot(ctx)
+    assert snap.post_unit_state_verified is False
+    assert snap.post_unit_state_reason == "unverifiable_crop_harvest"
+
+
+def test_c2b_harvest_must_not_guess_adjacent_tile():
+    """Test 116: HARVEST verifier must not guess adjacent tile when target does not resolve."""
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=5000.0, shed_wheat=0)
+    class MockCropTile:
+        kind = "PLANT"
+        raw = {"kind": "PLANT"}
+        is_plant = True
+        is_animal = False
+        animal = None
+        crop = "CARROT"
+        yield_units = 5
+        pos = (1, 2)
+
+    # Tile at (1, 2) has a harvestable crop, but worker task target is (0, 0) (which is empty)
+    ctx["farm"].tiles = [[None, None, None], [None, None, MockCropTile()]]
+    ctx["farm"].iter_tiles = lambda: [MockCropTile()]
+    ctx["farm"].quadrant_of = lambda pos: "NW"
+    ctx["assignment"] = {0: {"task": "HARVEST", "target": (0, 0), "args": []}}
+    ctx["actions"] = {0: ["HARVEST"]}
+
+    snap = build_feed_execution_snapshot(ctx)
+    assert snap.post_unit_state_verified is False
+    # Verify worker did not magically harvest the adjacent crop
+    assert snap.post_unit_worker_inventories[0].get("CARROT", 0) == 0
+
+
+def test_c2b_missing_snapshot_diagnostic_reports_false(monkeypatch):
+    """Test 117: Missing snapshot diagnostic truthfully reports post_unit_state_verified = False."""
+    import config
+    monkeypatch.setattr(config, "POINT2_FEED_MODE", "live")
+    monkeypatch.setattr(config, "get_point2_feed_mode", lambda: "live")
+    from market.order_builder import OrderBuilder
+
+    ctx = make_mock_farm_ctx(day=5, hour=0, money=20000.0, shed_wheat=50)
+    ctx["feed_execution_snapshot"] = None
+    builder = OrderBuilder()
+    intents = {
+        "hire": 0,
+        "buy_land": False,
+        "buy_seed": {},
+        "buy_wheat": 0,
+        "buy_animal": {"SHEEP": 1},
+        "buy_animal_sequence": ["SHEEP"],
+        "pending_structures": {},
+        "execution_snapshot": None,
+    }
+
+    orders, ledger = builder.build(ctx, intents)
+
+    assert not any(o[0] == "BUY_ANIMAL" for o in orders)
+    assert ledger["post_unit_state_verified"] is False
+    assert ledger["post_unit_state_reason"] == "missing_snapshot"
+    assert ledger["live_c2b_diagnostics"]["post_unit_state_verified"] is False
+    assert ledger["live_c2b_diagnostics"]["post_unit_state_reason"] == "missing_snapshot"
