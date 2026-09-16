@@ -796,7 +796,7 @@ def test_c2c_dependency_safe_live_fallback_clamps_wheat_sales():
     ctx = make_ctx(day=5, hour=2, shed_wheat=40)
     sells = [["SELL", "WHEAT", 30]]
     ledger = {
-        "feed_sale_reservation": {"valid": True, "sellable_shed_wheat": 10, "requires_resource_keys": []},
+        "feed_sale_reservation": {"version": "point2_c2c_v1", "valid": True, "sellable_shed_wheat": 10, "requires_resource_keys": []},
     }
     orders, diag = cp.dependency_safe_live_fallback(
         ctx=ctx,
@@ -1442,3 +1442,277 @@ def test_fallback_day29_liquidation_unchanged():
     assert len(orders) == 1
     assert orders[0] == ["SELL", "WHEAT", 50]
     assert diag["effective_sellable_shed_wheat"] == 50
+
+def test_fallback_missing_wheat_resource_key_fails_closed():
+    """Test 56: Structurally valid BUY_PRODUCT WHEAT with missing resource_key cannot satisfy wheat:optional."""
+    cp = CentralPlanner()
+    ctx = make_ctx(day=5, hour=0, shed_wheat=40)
+    purchases = [
+        ["BUY_PRODUCT", "WHEAT", 5],
+    ]
+    sells = [
+        ["SELL", "WHEAT", 5],
+    ]
+    ledger = {
+        "order_metadata": [
+            {},  # Missing resource_key!
+        ],
+        "feed_sale_reservation": {
+            "version": "point2_c2c_v1",
+            "valid": True,
+            "sellable_shed_wheat": 5,
+            "requires_resource_keys": ["wheat:optional"],
+        },
+    }
+    orders, diag = cp.dependency_safe_live_fallback(
+        ctx=ctx,
+        purchase_orders=purchases,
+        purchase_ledger=ledger,
+        sell_orders=sells,
+        cap=5,
+    )
+    # wheat:optional is NOT in final_selected_resource_keys
+    assert "wheat:optional" not in diag["final_selected_resource_keys"]
+    assert diag["feed_sale_reservation_dependency_satisfied"] is False
+    assert diag["effective_sellable_shed_wheat"] == 0
+    # No pre-Day29 SELL WHEAT order allowed
+    assert not any(o[0] == "SELL" and o[1] == "WHEAT" for o in orders)
+    # BUY_PRODUCT WHEAT was retained as ordinary independent purchase
+    assert any(o[0] == "BUY_PRODUCT" and o[1] == "WHEAT" for o in orders)
+
+
+def test_fallback_invalid_wheat_resource_key_fails_closed():
+    """Test 57: WHEAT with invalid resource_key 'garbage' never satisfies dependencies or becomes optional."""
+    cp = CentralPlanner()
+    ctx = make_ctx(day=5, hour=0, shed_wheat=40)
+    purchases = [
+        ["BUY_PRODUCT", "WHEAT", 5],
+    ]
+    sells = [
+        ["SELL", "WHEAT", 5],
+    ]
+    ledger = {
+        "order_metadata": [
+            {"resource_key": "garbage"},  # Invalid!
+        ],
+        "feed_sale_reservation": {
+            "version": "point2_c2c_v1",
+            "valid": True,
+            "sellable_shed_wheat": 5,
+            "requires_resource_keys": ["wheat:optional"],
+        },
+    }
+    orders, diag = cp.dependency_safe_live_fallback(
+        ctx=ctx,
+        purchase_orders=purchases,
+        purchase_ledger=ledger,
+        sell_orders=sells,
+        cap=5,
+    )
+    assert "wheat:optional" not in diag["final_selected_resource_keys"]
+    assert "wheat:protected" not in diag["final_selected_resource_keys"]
+    assert diag["feed_sale_reservation_dependency_satisfied"] is False
+    assert diag["effective_sellable_shed_wheat"] == 0
+    assert not any(o[0] == "SELL" and o[1] == "WHEAT" for o in orders)
+
+
+def test_fallback_explicit_optional_resource_identity_satisfies_dependency():
+    """Test 58: Explicit wheat:optional identity satisfies reservation dependency normally."""
+    cp = CentralPlanner()
+    ctx = make_ctx(day=5, hour=0, shed_wheat=40)
+    purchases = [
+        ["BUY_PRODUCT", "WHEAT", 5],
+    ]
+    sells = [
+        ["SELL", "WHEAT", 5],
+    ]
+    ledger = {
+        "order_metadata": [
+            {"resource_key": "wheat:optional", "feed_class": "optional", "is_protected": False},
+        ],
+        "feed_sale_reservation": {
+            "version": "point2_c2c_v1",
+            "valid": True,
+            "sellable_shed_wheat": 5,
+            "requires_resource_keys": ["wheat:optional"],
+        },
+    }
+    orders, diag = cp.dependency_safe_live_fallback(
+        ctx=ctx,
+        purchase_orders=purchases,
+        purchase_ledger=ledger,
+        sell_orders=sells,
+        cap=5,
+    )
+    assert "wheat:optional" in diag["final_selected_resource_keys"]
+    assert diag["feed_sale_reservation_dependency_satisfied"] is True
+    assert diag["effective_sellable_shed_wheat"] == 5
+    wheat_sells = [o for o in orders if o[0] == "SELL" and o[1] == "WHEAT"]
+    assert len(wheat_sells) == 1
+    assert wheat_sells[0][2] == 5
+
+
+def test_fallback_explicit_protected_resource_identity_root_and_satisfies_dependency():
+    """Test 59: Explicit wheat:protected identity is selected as hard root and satisfies dependency."""
+    cp = CentralPlanner()
+    ctx = make_ctx(day=5, hour=0, shed_wheat=40)
+    purchases = [
+        ["BUY_PRODUCT", "WHEAT", 10],
+    ]
+    sells = [
+        ["SELL", "WHEAT", 10],
+    ]
+    ledger = {
+        "order_metadata": [
+            {"resource_key": "wheat:protected", "feed_class": "protected", "is_protected": True},
+        ],
+        "feed_sale_reservation": {
+            "version": "point2_c2c_v1",
+            "valid": True,
+            "sellable_shed_wheat": 10,
+            "requires_resource_keys": ["wheat:protected"],
+        },
+    }
+    orders, diag = cp.dependency_safe_live_fallback(
+        ctx=ctx,
+        purchase_orders=purchases,
+        purchase_ledger=ledger,
+        sell_orders=sells,
+        cap=5,
+    )
+    assert "wheat:protected" in diag["final_selected_resource_keys"]
+    assert diag["feed_sale_reservation_dependency_satisfied"] is True
+    assert diag["effective_sellable_shed_wheat"] == 10
+    wheat_sells = [o for o in orders if o[0] == "SELL" and o[1] == "WHEAT"]
+    assert len(wheat_sells) == 1
+    assert wheat_sells[0][2] == 10
+
+
+def test_fallback_missing_reservation_version_zero_sell():
+    """Test 60: Missing reservation version before Day 29 forces effective_sellable_shed_wheat = 0."""
+    cp = CentralPlanner()
+    ctx = make_ctx(day=5, hour=0, shed_wheat=40)
+    purchases = [
+        ["BUY_PRODUCT", "WHEAT", 5],
+    ]
+    sells = [
+        ["SELL", "WHEAT", 10],
+    ]
+    ledger = {
+        "order_metadata": [
+            {"resource_key": "wheat:protected", "feed_class": "protected", "is_protected": True},
+        ],
+        "feed_sale_reservation": {
+            # "version" missing!
+            "valid": True,
+            "sellable_shed_wheat": 10,
+            "requires_resource_keys": [],
+        },
+    }
+    orders, diag = cp.dependency_safe_live_fallback(
+        ctx=ctx,
+        purchase_orders=purchases,
+        purchase_ledger=ledger,
+        sell_orders=sells,
+        cap=5,
+    )
+    assert diag["feed_sale_reservation_dependency_satisfied"] is False
+    assert "invalid_reservation_version" in diag["missing_feed_sale_resource_keys"]
+    assert diag["effective_sellable_shed_wheat"] == 0
+    assert not any(o[0] == "SELL" and o[1] == "WHEAT" for o in orders)
+
+
+def test_fallback_wrong_reservation_version_zero_sell():
+    """Test 61: Wrong reservation version before Day 29 forces effective_sellable_shed_wheat = 0."""
+    cp = CentralPlanner()
+    ctx = make_ctx(day=5, hour=0, shed_wheat=40)
+    purchases = [
+        ["BUY_PRODUCT", "WHEAT", 5],
+    ]
+    sells = [
+        ["SELL", "WHEAT", 10],
+    ]
+    ledger = {
+        "order_metadata": [
+            {"resource_key": "wheat:protected", "feed_class": "protected", "is_protected": True},
+        ],
+        "feed_sale_reservation": {
+            "version": "old_contract",  # Wrong version!
+            "valid": True,
+            "sellable_shed_wheat": 10,
+            "requires_resource_keys": [],
+        },
+    }
+    orders, diag = cp.dependency_safe_live_fallback(
+        ctx=ctx,
+        purchase_orders=purchases,
+        purchase_ledger=ledger,
+        sell_orders=sells,
+        cap=5,
+    )
+    assert diag["feed_sale_reservation_dependency_satisfied"] is False
+    assert "invalid_reservation_version" in diag["missing_feed_sale_resource_keys"]
+    assert diag["effective_sellable_shed_wheat"] == 0
+    assert not any(o[0] == "SELL" and o[1] == "WHEAT" for o in orders)
+
+
+def test_fallback_correct_reservation_version_authoritative_sell():
+    """Test 62: Correct reservation version 'point2_c2c_v1' preserves authoritative sell allowance."""
+    cp = CentralPlanner()
+    ctx = make_ctx(day=5, hour=0, shed_wheat=40)
+    purchases = [
+        ["BUY_PRODUCT", "WHEAT", 5],
+    ]
+    sells = [
+        ["SELL", "WHEAT", 10],
+    ]
+    ledger = {
+        "order_metadata": [
+            {"resource_key": "wheat:protected", "feed_class": "protected", "is_protected": True},
+        ],
+        "feed_sale_reservation": {
+            "version": "point2_c2c_v1",  # Correct version!
+            "valid": True,
+            "sellable_shed_wheat": 10,
+            "requires_resource_keys": ["wheat:protected"],
+        },
+    }
+    orders, diag = cp.dependency_safe_live_fallback(
+        ctx=ctx,
+        purchase_orders=purchases,
+        purchase_ledger=ledger,
+        sell_orders=sells,
+        cap=5,
+    )
+    assert diag["feed_sale_reservation_dependency_satisfied"] is True
+    assert diag["effective_sellable_shed_wheat"] == 10
+    wheat_sells = [o for o in orders if o[0] == "SELL" and o[1] == "WHEAT"]
+    assert len(wheat_sells) == 1
+    assert wheat_sells[0][2] == 10
+
+
+def test_fallback_day29_wrong_version_liquidation_allowed():
+    """Test 63: On Day 29, wrong or missing reservation version does not block liquidation of shed wheat."""
+    cp = CentralPlanner()
+    ctx = make_ctx(day=29, hour=0, shed_wheat=60)
+    sells = [
+        ["SELL", "WHEAT", 60],
+    ]
+    ledger = {
+        "feed_sale_reservation": {
+            "version": "wrong_version",
+            "valid": False,
+            "sellable_shed_wheat": 0,
+            "requires_resource_keys": [],
+        },
+    }
+    orders, diag = cp.dependency_safe_live_fallback(
+        ctx=ctx,
+        sell_orders=sells,
+        purchase_ledger=ledger,
+        cap=5,
+    )
+    assert len(orders) == 1
+    assert orders[0] == ["SELL", "WHEAT", 60]
+    assert diag["effective_sellable_shed_wheat"] == 60
+

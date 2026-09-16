@@ -1260,10 +1260,12 @@ class CentralPlanner:
 
         if is_live_feed_mode:
             feed_sale_res = purchase_ledger.get("feed_sale_reservation", {}) if isinstance(purchase_ledger, dict) else {}
-            res_valid = isinstance(feed_sale_res, dict) and feed_sale_res.get("valid", False)
+            res_version_ok = isinstance(feed_sale_res, dict) and feed_sale_res.get("version") == "point2_c2c_v1"
+            res_valid = res_version_ok and feed_sale_res.get("valid", False) is True
             res_deps = feed_sale_res.get("requires_resource_keys") if isinstance(feed_sale_res, dict) else None
 
             res_deps_valid = (
+                res_version_ok and
                 isinstance(res_deps, list) and
                 all(k in ("wheat:protected", "wheat:optional") for k in res_deps)
             )
@@ -1277,7 +1279,9 @@ class CentralPlanner:
 
             if not c2c_contract_valid or not res_valid or missing_res_deps:
                 feed_sale_reservation_dependency_satisfied = False
-                if not res_deps_valid:
+                if not res_version_ok:
+                    missing_feed_sale_resource_keys = ["invalid_reservation_version"]
+                elif not res_deps_valid:
                     missing_feed_sale_resource_keys = ["malformed_reservation_dependencies"]
                 elif missing_res_deps:
                     missing_feed_sale_resource_keys = sorted(list(missing_res_deps))
@@ -1674,8 +1678,27 @@ class CentralPlanner:
             elif op == "BUY_PRODUCT" and len(o) > 1 and o[1] == "WHEAT":
                 meta = self._get_upstream_purchase_metadata(o, idx, purchase_ledger)
                 rk = meta.get("resource_key")
-                is_prot = bool(meta.get("is_protected") or meta.get("feed_class") == "protected" or rk == "wheat:protected")
-                resolved_rk = "wheat:protected" if is_prot else (rk if rk in ("wheat:protected", "wheat:optional") else "wheat:optional")
+                # Explicit resource identity only: CentralPlanner verifies, never invents
+                is_explicit_protected = (rk == "wheat:protected")
+                if is_explicit_protected:
+                    # Consistency check: if feed_class or is_protected are present, they must agree
+                    if meta.get("feed_class") is not None and meta.get("feed_class") != "protected":
+                        is_explicit_protected = False
+                    if meta.get("is_protected") is not None and meta.get("is_protected") is False:
+                        is_explicit_protected = False
+
+                if is_explicit_protected:
+                    resolved_rk = "wheat:protected"
+                    is_prot = True
+                elif rk == "wheat:optional":
+                    resolved_rk = "wheat:optional"
+                    is_prot = False
+                else:
+                    # Unknown, missing, or invalid resource_key: retains order as ordinary independent purchase
+                    # but resolved_rk = None, is_prot = False (cannot satisfy dependencies, cannot be protected root)
+                    resolved_rk = None
+                    is_prot = False
+
                 valid_buys.append((list(o[:3]), resolved_rk, is_prot))
             else:
                 valid_buys.append((list(o[:3]) if len(o) > 3 else list(o), None, False))
@@ -1763,10 +1786,13 @@ class CentralPlanner:
 
         # 5. Validate feed-sale reservation dependencies
         feed_sale_res = purchase_ledger.get("feed_sale_reservation") if isinstance(purchase_ledger, dict) else None
-        res_valid = isinstance(feed_sale_res, dict) and feed_sale_res.get("valid", False)
-        req_keys = feed_sale_res.get("requires_resource_keys") if isinstance(feed_sale_res, dict) else None
+        res_is_dict = isinstance(feed_sale_res, dict)
+        res_version_ok = res_is_dict and (feed_sale_res.get("version") == "point2_c2c_v1")
+        res_valid = res_version_ok and (feed_sale_res.get("valid", False) is True)
+        req_keys = feed_sale_res.get("requires_resource_keys") if res_is_dict else None
 
         req_keys_valid = (
+            res_version_ok and
             isinstance(req_keys, list) and
             all(k in ("wheat:protected", "wheat:optional") for k in req_keys)
         )
@@ -1779,7 +1805,9 @@ class CentralPlanner:
             res_valid = False
 
         feed_sale_reservation_dependency_satisfied = res_valid
-        if not req_keys_valid:
+        if not res_version_ok:
+            missing_feed_sale_resource_keys = ["invalid_reservation_version"]
+        elif not req_keys_valid:
             missing_feed_sale_resource_keys = ["malformed_reservation_dependencies"]
         elif missing_res_deps:
             missing_feed_sale_resource_keys = sorted(list(missing_res_deps))
