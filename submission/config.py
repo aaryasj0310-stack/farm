@@ -143,6 +143,15 @@ def get_one_at_a_time_late_housing_enabled() -> bool:
     """Return whether one-at-a-time late housing continuation is active."""
     return ONE_AT_A_TIME_LATE_HOUSING_ENABLED
 
+# Point 2 Pre-NE Capital Admission Policy Experiment
+# Supported modes: "off", "ne_first", "ne_escrow"
+POINT2_PRE_NE_CAPITAL_MODE: str = "off"
+
+def get_point2_pre_ne_capital_mode() -> str:
+    """Return the active Point-2 Pre-NE capital admission policy mode."""
+    return POINT2_PRE_NE_CAPITAL_MODE
+
+
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
 PHASE1_MELON_TILES_NW = 12        # NW melons for day-10 cash surge (Leader springboard)

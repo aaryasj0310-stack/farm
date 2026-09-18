@@ -910,6 +910,29 @@ class MacroPlanner:
             ne_fund_reserve = 600 if "NE" not in farm.unlocked and day < 3 else 0
             cash_for_animals = max(0.0, ctx["farm"].money - future_hire_cost - self.reserve - seed_reserve - land_reserve - day_0_seed_reserve - ne_fund_reserve)
 
+        ne_locked = bool("NE" not in farm.unlocked) if (farm and hasattr(farm, "unlocked")) else False
+        try:
+            from config import get_point2_pre_ne_capital_mode
+            pre_ne_mode = get_point2_pre_ne_capital_mode()
+        except Exception:
+            pre_ne_mode = "off"
+
+        farm_money_avail = float(ctx["farm"].money) if (ctx.get("farm") and hasattr(ctx["farm"], "money")) else (
+            float(ctx["farm"].get("money", 0.0)) if isinstance(ctx.get("farm"), dict) else 0.0
+        )
+        if ne_locked and pre_ne_mode in ("ne_first", "ne_escrow"):
+            if pre_ne_mode == "ne_first":
+                pre_ne_livestock_envelope = 0.0
+            else:
+                mand_hire = day_0_hire_cost if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else future_hire_cost
+                mand_seed = day_0_seed_reserve if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else seed_reserve
+                pre_ne_nonlivestock_holds = mand_hire + self.reserve + mand_seed
+                ne_land_hold = 1000.0
+                pre_ne_livestock_envelope = max(0.0, farm_money_avail - pre_ne_nonlivestock_holds - ne_land_hold)
+            cash_for_animals = min(cash_for_animals, pre_ne_livestock_envelope)
+        else:
+            pre_ne_livestock_envelope = None
+
         # Dynamic animal targets via corrected Astra heuristic
         # Stage 8B C4: Cease new livestock investment on or after C4_LIVESTOCK_CUTOFF_DAY (Day 12).
         # Days 3-5: Protect NE land fund ($1,000) and workforce ramp.
@@ -1086,6 +1109,9 @@ class MacroPlanner:
                             late_selective_mode=is_late_selective,
                             physical_housing_capacity=phys_housing_cap,
                             allow_late_continuation=allow_late_continuation,
+                            pre_ne_capital_mode=pre_ne_mode,
+                            ne_locked=ne_locked,
+                            pre_ne_livestock_envelope=pre_ne_livestock_envelope,
                         )
                         target_pastures = max(
                             herd_plan.required_pastures,
@@ -1099,6 +1125,8 @@ class MacroPlanner:
                         )
                         needed_new_pastures = housing_demand["needed_pastures"]
                         requested_herd_size = sum(dynamic_targets.values())
+                        if herd_plan and getattr(herd_plan, "pre_ne_diagnostics", None):
+                            plan.diagnostics["pre_ne_capital"] = dict(herd_plan.pre_ne_diagnostics)
                         if point2_mode in ("herd_plan", "live"):
                             final_feed_capped_herd_size = requested_herd_size
                             plan.diagnostics["point2_feed_authority"] = {
@@ -2197,7 +2225,7 @@ class MacroPlanner:
             from config import BOOTSTRAP_LIVESTOCK_ARM
         except Exception:
             BOOTSTRAP_LIVESTOCK_ARM = "none"
-        if (point2_mode == "live" and day >= C4_LIVESTOCK_CUTOFF_DAY) or (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)):
+        if point2_mode == "live" or (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)):
             buy_animal = {
                 "COW": provisional_seq.count("COW"),
                 "SHEEP": provisional_seq.count("SHEEP"),

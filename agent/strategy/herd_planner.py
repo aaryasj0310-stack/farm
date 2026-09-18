@@ -42,6 +42,7 @@ class DynamicHerdPlan:
         buy_animal_sequence: Optional[List[str]] = None,
         buy_animal: Optional[Dict[str, int]] = None,
         provisional_candidates: Optional[List[Dict[str, Any]]] = None,
+        pre_ne_diagnostics: Optional[Dict[str, Any]] = None,
     ):
         self.desired_herd = dict(desired_herd)
         self.desired_cows = int(desired_herd.get("COW", 0))
@@ -53,6 +54,7 @@ class DynamicHerdPlan:
         self.decision_records = list(decision_records)
         self.horizon_days = int(horizon_days)
         self.rationale = str(rationale)
+        self.pre_ne_diagnostics = dict(pre_ne_diagnostics) if pre_ne_diagnostics else {}
 
         if buy_animal_sequence is not None:
             self.buy_animal_sequence = list(buy_animal_sequence)
@@ -90,8 +92,8 @@ class DynamicHerdPlan:
                     c_id = rec.get("candidate_id") or f"cand_rej_{rej_counter}_{sp}"
                     s_idx = rec.get("sequence_index", -1)
                     rej_counter += 1
-                    status = "rejected"
-                    exec_status = "rejected"
+                    status = rec.get("provisional_status", "rejected")
+                    exec_status = rec.get("execution_status", "rejected")
 
                 feed_diag = rec.get("feed_diagnostics") or rec.get("feed_feasibility") or rec.get("feasibility_diag") or {}
                 self.provisional_candidates.append({
@@ -120,6 +122,7 @@ class DynamicHerdPlan:
             "buy_animal_sequence": list(self.buy_animal_sequence),
             "buy_animal": dict(self.buy_animal),
             "provisional_candidates": list(self.provisional_candidates),
+            "pre_ne_diagnostics": dict(self.pre_ne_diagnostics),
         }
 
     def __repr__(self) -> str:
@@ -146,6 +149,9 @@ def generate_dynamic_herd_plan(
     late_selective_mode: bool = False,
     physical_housing_capacity: Optional[Dict[str, int]] = None,
     allow_late_continuation: bool = False,
+    pre_ne_capital_mode: Optional[str] = None,
+    ne_locked: Optional[bool] = None,
+    pre_ne_livestock_envelope: Optional[float] = None,
 ) -> DynamicHerdPlan:
     """Generate forward infrastructure herd targets using transactional shadow-state economics.
 
@@ -164,6 +170,8 @@ def generate_dynamic_herd_plan(
       - Phase C2B: When late_selective_mode=True and day in [12, 14], restricts candidates to observed
         physical housing only, applies SELECTIVE_LIVESTOCK_GATE_THRESHOLD ($500 hurdle), and generates
         the authoritative late-selective candidate sequence.
+      - Pre-NE Capital Admission Policy: When pre_ne_capital_mode in ("ne_first", "ne_escrow") and ne_locked=True,
+        restricts candidate admission to protect NE acquisition capital.
     """
     day = int(day)
     caps = active_caps or get_active_livestock_caps()
@@ -174,6 +182,25 @@ def generate_dynamic_herd_plan(
     c0 = max(0, int(current_herd.get("COW", 0)))
     s0 = max(0, int(current_herd.get("SHEEP", 0)))
     g0 = max(0, int(current_herd.get("GOOSE", 0)))
+
+    try:
+        from config import get_point2_pre_ne_capital_mode
+        cfg_pre_ne_mode = get_point2_pre_ne_capital_mode()
+    except Exception:
+        cfg_pre_ne_mode = "off"
+
+    eff_pre_ne_mode = pre_ne_capital_mode if pre_ne_capital_mode is not None else cfg_pre_ne_mode
+    is_ne_locked = bool(ne_locked) if ne_locked is not None else False
+
+    if not is_ne_locked or eff_pre_ne_mode == "off":
+        envelope_before = float('inf')
+    elif eff_pre_ne_mode == "ne_first":
+        envelope_before = 0.0
+    else:  # ne_escrow
+        envelope_before = float(pre_ne_livestock_envelope) if pre_ne_livestock_envelope is not None else 0.0
+
+    rem_envelope = envelope_before
+    pre_ne_diag_records: List[Dict[str, Any]] = []
 
     # On or after Day 12 cutoff: new infrastructure cannot amortize construction cost
     # Unless late_selective_mode is active (live mode only, Day 12-14, physical housing only)
@@ -187,6 +214,13 @@ def generate_dynamic_herd_plan(
                 decision_records=[],
                 horizon_days=horizon_days,
                 rationale="late_season_cutoff",
+                pre_ne_diagnostics={
+                    "mode": eff_pre_ne_mode,
+                    "ne_locked": is_ne_locked,
+                    "envelope_before": envelope_before,
+                    "envelope_remaining": rem_envelope,
+                    "candidates": [],
+                },
             )
 
     # Initialize transactional shadow state
@@ -236,6 +270,13 @@ def generate_dynamic_herd_plan(
                 rationale="baseline_existing_herd_infeasible",
                 buy_animal_sequence=[],
                 buy_animal={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+                pre_ne_diagnostics={
+                    "mode": eff_pre_ne_mode,
+                    "ne_locked": is_ne_locked,
+                    "envelope_before": envelope_before,
+                    "envelope_remaining": rem_envelope,
+                    "candidates": [],
+                },
             )
         target_cap = herd_cap
     else:
@@ -261,6 +302,8 @@ def generate_dynamic_herd_plan(
     except Exception:
         BOOTSTRAP_LIVESTOCK_ARM = "none"
         get_bootstrap_target_sequence = lambda arm=None: []
+
+    LIVESTOCK_PURCHASE_COST = {"COW": 400.0, "SHEEP": 250.0, "GOOSE": 100.0}
 
     is_bootstrap_active = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
     if is_bootstrap_active:
@@ -345,12 +388,68 @@ def generate_dynamic_herd_plan(
                 })
                 break
 
+            # Pre-NE Capital Admission Policy Check
+            cand_feed_hold = float(cand_res.candidate_feed_cash_hold) if cand_res is not None else 0.0
+            cand_package_cost = LIVESTOCK_PURCHASE_COST.get(species, 0.0) + cand_feed_hold
+            cand_deferred = False
+            if is_ne_locked and eff_pre_ne_mode in ("ne_first", "ne_escrow"):
+                if eff_pre_ne_mode == "ne_first":
+                    cand_deferred = True
+                elif eff_pre_ne_mode == "ne_escrow":
+                    if cand_package_cost > rem_envelope:
+                        cand_deferred = True
+
+            if cand_deferred:
+                cand_diag = cand_res.to_dict() if cand_res else {}
+                pre_ne_diag_records.append({
+                    "species": species,
+                    "candidate_id": f"cand_rej_bootstrap_{cand_idx}_{species}",
+                    "admitted": False,
+                    "reason": "ne_capital_deferred",
+                    "package_cost": cand_package_cost,
+                    "envelope_before": rem_envelope,
+                    "envelope_after": rem_envelope,
+                })
+                decision_records.append({
+                    "candidate_id": f"cand_rej_bootstrap_{cand_idx}_{species}",
+                    "sequence_index": -1,
+                    "species": species,
+                    "candidate_num": shadow_herd.get(species, 0) + 1,
+                    "net_val": round(net_advantage, 2),
+                    "accepted": False,
+                    "provisional_status": "rejected",
+                    "feed_feasible": True,
+                    "execution_status": "rejected",
+                    "reason": "ne_capital_deferred",
+                    "rejection_reason": "ne_capital_deferred",
+                    "displaced_crop_investment": f"{displaced_melons} MELON",
+                    "displaced_crop_value": displaced_crop_value,
+                    "feed_diagnostics": cand_diag,
+                    "feed_feasibility": cand_diag,
+                })
+                marginal_value_seq.append(
+                    f"Bootstrap {species} #{cand_idx+1}: DEFERRED by Pre-NE policy ({eff_pre_ne_mode}, cost ${cand_package_cost:.0f} > rem ${rem_envelope:.0f}) -> STOP"
+                )
+                break
+
+            if is_ne_locked and eff_pre_ne_mode == "ne_escrow":
+                rem_envelope -= cand_package_cost
+
             if feed_ledger is not None and cand_res is not None:
                 commit_candidate_reservation(feed_ledger, cand_res)
 
             shadow_herd[species] = shadow_herd.get(species, 0) + 1
             seq_idx = len(buy_animal_seq)
             buy_animal_seq.append(species)
+            pre_ne_diag_records.append({
+                "species": species,
+                "candidate_id": f"cand_bootstrap_{seq_idx}_{species}",
+                "admitted": True,
+                "reason": "admitted",
+                "package_cost": cand_package_cost,
+                "envelope_before": rem_envelope + cand_package_cost if is_ne_locked and eff_pre_ne_mode == "ne_escrow" else envelope_before,
+                "envelope_after": rem_envelope,
+            })
             marginal_value_seq.append(f"Bootstrap {species} #{shadow_herd[species]}: +${val:.0f} (net advantage +${net_advantage:.0f})")
             feed_diag = cand_res.to_dict() if cand_res else {}
             decision_records.append({
@@ -383,6 +482,13 @@ def generate_dynamic_herd_plan(
             horizon_days=horizon_days,
             rationale=f"bootstrap_{BOOTSTRAP_LIVESTOCK_ARM}_c{shadow_herd['COW']}_s{shadow_herd['SHEEP']}_g{shadow_herd['GOOSE']}",
             buy_animal_sequence=buy_animal_seq,
+            pre_ne_diagnostics={
+                "mode": eff_pre_ne_mode,
+                "ne_locked": is_ne_locked,
+                "envelope_before": envelope_before,
+                "envelope_remaining": rem_envelope,
+                "candidates": pre_ne_diag_records,
+            },
         )
 
     while sum(shadow_herd.values()) < target_cap:
@@ -586,6 +692,70 @@ def generate_dynamic_herd_plan(
             })
             break
 
+        # Pre-NE Capital Admission Policy Check
+        cand_feed_hold = float(cand_results[best_sp].candidate_feed_cash_hold) if (feed_ledger is not None and best_sp in cand_results and cand_results[best_sp]) else 0.0
+        cand_package_cost = LIVESTOCK_PURCHASE_COST.get(best_sp, 0.0) + cand_feed_hold
+        cand_deferred = False
+        if is_ne_locked and eff_pre_ne_mode in ("ne_first", "ne_escrow"):
+            if eff_pre_ne_mode == "ne_first":
+                cand_deferred = True
+            elif eff_pre_ne_mode == "ne_escrow":
+                if cand_package_cost > rem_envelope:
+                    cand_deferred = True
+
+        if cand_deferred:
+            cand_diag = cand_results[best_sp].to_dict() if (best_sp in cand_results and cand_results[best_sp]) else {}
+            pre_ne_diag_records.append({
+                "species": best_sp,
+                "candidate_id": f"cand_rej_{len(decision_records)}_{best_sp}",
+                "admitted": False,
+                "reason": "ne_capital_deferred",
+                "package_cost": cand_package_cost,
+                "envelope_before": rem_envelope,
+                "envelope_after": rem_envelope,
+            })
+            decision_records.append({
+                "candidate_id": f"cand_rej_{len(decision_records)}_{best_sp}",
+                "sequence_index": -1,
+                "species": best_sp,
+                "candidate_num": next_count,
+                "net_val": round(best_val, 2),
+                "accepted": False,
+                "provisional_status": "rejected",
+                "feed_feasible": True,
+                "execution_status": "rejected",
+                "reason": "ne_capital_deferred",
+                "rejection_reason": "ne_capital_deferred",
+                "feed_diagnostics": cand_diag,
+                "feed_feasibility": cand_diag,
+            })
+            marginal_value_seq.append(
+                f"{best_sp} #{next_count}: DEFERRED by Pre-NE policy ({eff_pre_ne_mode}, cost ${cand_package_cost:.0f} > rem ${rem_envelope:.0f}) -> STOP"
+            )
+            break
+
+        if is_ne_locked and eff_pre_ne_mode == "ne_escrow":
+            rem_envelope -= cand_package_cost
+            pre_ne_diag_records.append({
+                "species": best_sp,
+                "candidate_id": f"cand_{len(buy_animal_seq)}_{best_sp}",
+                "admitted": True,
+                "reason": "admitted",
+                "package_cost": cand_package_cost,
+                "envelope_before": rem_envelope + cand_package_cost,
+                "envelope_after": rem_envelope,
+            })
+        elif is_ne_locked:
+            pre_ne_diag_records.append({
+                "species": best_sp,
+                "candidate_id": f"cand_{len(buy_animal_seq)}_{best_sp}",
+                "admitted": True,
+                "reason": "admitted",
+                "package_cost": cand_package_cost,
+                "envelope_before": envelope_before,
+                "envelope_after": rem_envelope,
+            })
+
         # ACCEPT candidate into forward shadow state
         is_forward_only = bool(
             late_selective_mode
@@ -677,6 +847,13 @@ def generate_dynamic_herd_plan(
         horizon_days=horizon_days,
         rationale=f"shadow_econ_plan_c{shadow_herd['COW']}_s{shadow_herd['SHEEP']}_g{shadow_herd['GOOSE']}",
         buy_animal_sequence=buy_animal_seq,
+        pre_ne_diagnostics={
+            "mode": eff_pre_ne_mode,
+            "ne_locked": is_ne_locked,
+            "envelope_before": envelope_before,
+            "envelope_remaining": rem_envelope,
+            "candidates": pre_ne_diag_records,
+        },
     )
 
 

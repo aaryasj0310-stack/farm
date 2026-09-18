@@ -212,7 +212,7 @@ class OrderBuilder:
                 "protected_feed_wheat": intents.get("protected_feed_wheat", 0),
                 "optional_feed_wheat": intents.get("optional_feed_wheat", 0),
                 "buy_land": bool(intents.get("buy_land", False)),
-                "buy_seed": intents.get("buy_seed", {}),
+                "buy_seed": {} if (int(ctx.get("day", 0)) == 0) else intents.get("buy_seed", {}),
                 "buy_animal": intents.get("buy_animal", {}),
                 "buy_animal_sequence": intents.get("buy_animal_sequence", []),
                 "pending_structures": intents.get("pending_structures", {}),
@@ -237,7 +237,7 @@ class OrderBuilder:
             "protected_feed_wheat": intents.get("protected_feed_wheat", 0),
             "optional_feed_wheat": intents.get("optional_feed_wheat", 0),
             "buy_land": bool(intents.get("buy_land", False)),
-            "buy_seed": intents.get("buy_seed", {}),
+            "buy_seed": {} if (int(ctx.get("day", 0)) == 0) else intents.get("buy_seed", {}),
             "buy_animal": capped_animal,
             "pending_structures": intents.get("pending_structures", {}),
             "execution_snapshot": intents.get("execution_snapshot"),
@@ -462,7 +462,7 @@ class OrderBuilder:
             from config import BOOTSTRAP_LIVESTOCK_ARM
         except Exception:
             BOOTSTRAP_LIVESTOCK_ARM = "none"
-        is_boot_day0 = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
+        is_boot_day0 = bool(day == 0 and hour == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
 
         if is_boot_day0:
             # Stage 2: Inviolable Minimum Crop Floor (4 Melons + 4 Wheat = $360) committed before animals
@@ -663,6 +663,35 @@ class OrderBuilder:
                 slots_left = available_animal_order_slots
                 provisional_list = intents.get("provisional_candidates", [])
 
+                # Pre-NE Capital Admission Policy State
+                ne_locked = bool("NE" not in farm.unlocked) if (farm and hasattr(farm, "unlocked")) else False
+                try:
+                    from config import get_point2_pre_ne_capital_mode
+                    pre_ne_capital_mode = get_point2_pre_ne_capital_mode()
+                except Exception:
+                    pre_ne_capital_mode = "off"
+
+                if ne_locked and pre_ne_capital_mode in ("ne_first", "ne_escrow"):
+                    if pre_ne_capital_mode == "ne_first":
+                        initial_ne_envelope = 0.0
+                    else:  # ne_escrow
+                        farm_cash = float(farm.money) if (farm and hasattr(farm, "money")) else (
+                            float(ctx.get("farm", {}).get("money", 0.0)) if isinstance(ctx.get("farm"), dict) else 0.0
+                        )
+                        non_livestock_holds = (
+                            mandatory_hire_budget
+                            + sum(float(t[3]) for t in kept if t[1] == "land")
+                            + sum(float(t[3]) for t in kept if t[1] == "seed")
+                            + (float(total_retained_wheat * unit_wheat_px) if total_retained_wheat > 0 else 0.0)
+                            + float(self.reserve)
+                        )
+                        ne_land_hold = 1000.0
+                        initial_ne_envelope = max(0.0, farm_cash - non_livestock_holds - ne_land_hold)
+                else:
+                    initial_ne_envelope = float('inf')
+
+                remaining_ne_envelope = initial_ne_envelope
+
                 try:
                     for seq_idx, species in enumerate(candidate_sequence_requested):
                         cand_id = f"live_{day}_{seq_idx}_{species}"
@@ -752,7 +781,7 @@ class OrderBuilder:
                                     "housing_before": housing_before,
                                     "shed_room_before": shed_room_before,
                                     "rollover_room_after": rollover_room_after,
-                                })
+                                    })
                                 continue
 
                         # Gate 5: Market Order Slots
@@ -802,6 +831,28 @@ class OrderBuilder:
                                 "housing_before": housing_before,
                             })
                             continue
+
+                        # Gate 7: Pre-NE Capital Gate
+                        candidate_package_cost = purchase_cost + float(cand_res.candidate_feed_cash_hold)
+                        if ne_locked and pre_ne_capital_mode in ("ne_first", "ne_escrow"):
+                            if candidate_package_cost > remaining_ne_envelope:
+                                candidate_sequence_rejected.append(species)
+                                ledger["dropped"].append({"kind": "animal", "animal": species, "reason": "ne_capital_deferred"})
+                                candidate_decisions.append({
+                                    "candidate_id": cand_id,
+                                    "sequence_index": seq_idx,
+                                    "species": species,
+                                    "accepted": False,
+                                    "rejection_reason": "ne_capital_deferred",
+                                    "feed_feasible": True,
+                                    "purchase_cost": purchase_cost,
+                                    "package_cost": candidate_package_cost,
+                                    "remaining_ne_envelope": remaining_ne_envelope,
+                                    "housing_before": housing_before,
+                                })
+                                continue
+                            else:
+                                remaining_ne_envelope -= candidate_package_cost
 
                         # ALL GATES PASSED -> COMMIT TRANSACTIONALLY
                         cand_deps = []
@@ -863,6 +914,7 @@ class OrderBuilder:
                     candidate_sequence_accepted.clear()
                     slots_left = available_animal_order_slots
                     current_operational_min_wheat_slack = baseline_operational_min_wheat_slack
+                    remaining_ne_envelope = initial_ne_envelope
                     for d in candidate_decisions:
                         d["accepted"] = False
                         d["rejection_reason"] = "live_candidate_exception"
@@ -972,6 +1024,9 @@ class OrderBuilder:
                 "candidate_sequence_accepted": candidate_sequence_accepted,
                 "candidate_sequence_rejected": candidate_sequence_rejected,
                 "candidate_decisions": candidate_decisions,
+                "pre_ne_capital_mode": pre_ne_capital_mode if 'pre_ne_capital_mode' in locals() else "off",
+                "pre_ne_envelope_initial": initial_ne_envelope if 'initial_ne_envelope' in locals() else None,
+                "pre_ne_envelope_remaining": remaining_ne_envelope if 'remaining_ne_envelope' in locals() else None,
                 "final_existing_feed_hold": ledger["final_existing_feed_hold"],
                 "final_candidate_feed_hold": ledger["final_candidate_feed_hold"],
                 "final_candidate_purchase_spend": ledger["final_candidate_purchase_spend"],
