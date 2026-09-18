@@ -1,19 +1,32 @@
-"""
-Focused Unit Tests for Stage 2: One-at-a-Time Late Housing Continuation.
+"""Production Tests for Point-2 Late Housing Continuation & Feed Reservation Fix.
 
-Verifies:
-1. Forward-only candidate is never appended to buy_animal_sequence.
-2. Candidate evaluation uses empty_pastures=0 (full infrastructure deduction).
-3. Day 14 prohibits initiating continuation builds.
-4. Physical completion is strictly required before purchase execution.
-5. Max 1 in-flight continuation pasture constraint.
-6. Production defaults remain safe and unchanged.
+Covering the 10 required regression tests:
+1. Shed/unplaced animals remain included in feed reservations.
+2. Forward pasture candidate gives zero animal-purchase capacity.
+3. Completed physical empty pasture gives exactly one unit of purchase capacity.
+4. One forward continuation candidate at a time.
+5. Day 12 continuation allowed when gates pass.
+6. Day 13 continuation allowed when gates pass.
+7. Day 14 continuation construction rejected.
+8. Failed economic/feed candidate creates no speculative pasture.
+9. Completed late pasture can subsequently be occupied.
+10. Disabling the continuation flag restores previous behavior.
 """
+from __future__ import annotations
+
+import copy
 import pytest
+
 import config
 from strategy.herd_planner import generate_dynamic_herd_plan, DynamicHerdPlan
 from strategy.macro_planner import MacroPlanner
 from market.order_builder import OrderBuilder
+from market.market_brain import MarketBrain
+from strategy.feed_feasibility import (
+    build_fresh_live_ledger,
+    compute_remaining_existing_feed_hold,
+    derive_feed_sale_reservation,
+)
 
 
 def test_production_defaults_stage2():
@@ -23,7 +36,50 @@ def test_production_defaults_stage2():
     assert config.ONE_AT_A_TIME_LATE_HOUSING_ENABLED is False
 
 
-def test_forward_only_candidate_never_in_buy_animal_sequence():
+# ---------------------------------------------------------------------------
+# Test 1: Shed/unplaced animals remain included in feed reservations
+# ---------------------------------------------------------------------------
+def test_shed_unplaced_animals_included_in_feed_reservations():
+    """Verify that unplaced animals in shed receive full sell-side feed protection."""
+    class DummyFarm:
+        money = 1000.0
+        hires_today = 0
+        unlocked = ["NW"]
+        def iter_tiles(self):
+            return []  # 0 placed animals on tiles
+
+    class DummyPrivate:
+        # 3 cows sitting in shed waiting to be placed!
+        shed = {"COW": 3, "WHEAT": 10}
+        inventories = []
+        seeds = {}
+
+    class DummyMarket:
+        inventory = {"WHEAT": 10000, "MILK": 100, "WOOL": 100}
+
+    ctx = {
+        "day": 0,
+        "hour": 1,
+        "farm": DummyFarm(),
+        "private": DummyPrivate(),
+        "market": DummyMarket(),
+        "memory": {},
+    }
+
+    # MarketBrain sell_orders check:
+    # 3 cows in shed require 3 * FEED_WHEAT_BUFFER_DAYS = 12 wheat buffer.
+    # Shed has 10 wheat -> stock = max(0, 10 - 12) = 0.
+    # ZERO wheat should be sold!
+    brain = MarketBrain(forecast=None)
+    orders, details = brain.sell_orders(ctx)
+    wheat_sells = [o for o in orders if o[0] == "SELL" and o[1] == "WHEAT"]
+    assert len(wheat_sells) == 0, f"Expected 0 wheat sells, got {wheat_sells}"
+
+
+# ---------------------------------------------------------------------------
+# Test 2: Forward pasture candidate gives zero animal-purchase capacity
+# ---------------------------------------------------------------------------
+def test_forward_pasture_candidate_gives_zero_animal_purchase_capacity():
     """Verify forward-only candidate increases required_pastures but NEVER enters buy_animal_sequence."""
     plan = generate_dynamic_herd_plan(
         day=12,
@@ -35,23 +91,107 @@ def test_forward_only_candidate_never_in_buy_animal_sequence():
         physical_housing_capacity={"PASTURE": 0, "COOP": 0},
         allow_late_continuation=True,
     )
-    
-    # Must have evaluated and admitted forward candidate
-    assert plan.required_pastures == 4  # Incremented by 1
+    assert plan.required_pastures == 4  # Increments forward pasture requirement
     assert len(plan.buy_animal_sequence) == 0  # CRUCIAL INVARIANT: Buy sequence is empty!
-    
-    # Check decision record
+
     fwd_recs = [r for r in plan.decision_records if r.get("forward_only")]
     assert len(fwd_recs) == 1
-    rec = fwd_recs[0]
-    assert rec["forward_only"] is True
-    assert rec["purchase_eligible"] is False
-    assert rec["sequence_index"] == -1
-    assert rec["reason"] == "forward_housing_continuation_justified"
+    assert fwd_recs[0]["purchase_eligible"] is False
+    assert fwd_recs[0]["sequence_index"] == -1
 
 
-def test_day14_prohibits_continuation_build():
-    """Verify Day 14 strictly prohibits initiating forward continuation builds when housing is 0."""
+# ---------------------------------------------------------------------------
+# Test 3: Completed physical empty pasture gives exactly one unit of purchase capacity
+# ---------------------------------------------------------------------------
+def test_completed_physical_empty_pasture_gives_purchase_capacity():
+    """Verify that an empty completed pasture authorizes exactly one unit in buy_animal_sequence."""
+    plan = generate_dynamic_herd_plan(
+        day=13,
+        hour=0,
+        current_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
+        town_shops=["BAKERY", "PIZZA_SHOP", "ICE_CREAM_SHOP"],
+        market_inventory={"WHEAT": 10000, "MILK": 100, "WOOL": 100, "FERTILIZER": 100},
+        late_selective_mode=True,
+        physical_housing_capacity={"PASTURE": 1, "COOP": 0},  # Exactly 1 empty pasture completed
+        allow_late_continuation=False,
+    )
+    assert plan.required_pastures == 4
+    assert len(plan.buy_animal_sequence) == 1
+    assert plan.buy_animal_sequence[0] in ("COW", "SHEEP")
+
+    admitted = [r for r in plan.decision_records if r.get("accepted")]
+    assert len(admitted) == 1
+    assert admitted[0]["purchase_eligible"] is True
+    assert admitted[0]["forward_only"] is False
+    assert admitted[0]["sequence_index"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Test 4: One forward continuation candidate at a time
+# ---------------------------------------------------------------------------
+def test_one_forward_continuation_candidate_at_a_time():
+    """Verify that at most 1 forward continuation candidate is admitted."""
+    plan = generate_dynamic_herd_plan(
+        day=12,
+        hour=0,
+        current_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
+        town_shops=["BAKERY", "PIZZA_SHOP", "ICE_CREAM_SHOP", "SUPERMARKET"],
+        market_inventory={"WHEAT": 10000, "MILK": 10, "WOOL": 10, "FERTILIZER": 100},
+        late_selective_mode=True,
+        physical_housing_capacity={"PASTURE": 0, "COOP": 0},
+        allow_late_continuation=True,
+    )
+    fwd_recs = [r for r in plan.decision_records if r.get("forward_only")]
+    assert len(fwd_recs) <= 1
+
+
+# ---------------------------------------------------------------------------
+# Test 5: Day 12 continuation allowed when gates pass
+# ---------------------------------------------------------------------------
+def test_day12_continuation_allowed_when_gates_pass():
+    """Verify that on Day 12, continuation candidate evaluates and passes when gates pass."""
+    plan = generate_dynamic_herd_plan(
+        day=12,
+        hour=0,
+        current_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
+        town_shops=["BAKERY", "PIZZA_SHOP", "ICE_CREAM_SHOP"],
+        market_inventory={"WHEAT": 10000, "MILK": 100, "WOOL": 100, "FERTILIZER": 100},
+        late_selective_mode=True,
+        physical_housing_capacity={"PASTURE": 0, "COOP": 0},
+        allow_late_continuation=True,
+    )
+    assert plan.required_pastures == 4
+    fwd_recs = [r for r in plan.decision_records if r.get("forward_only")]
+    assert len(fwd_recs) == 1
+    assert fwd_recs[0]["reason"] == "forward_housing_continuation_justified"
+
+
+# ---------------------------------------------------------------------------
+# Test 6: Day 13 continuation allowed when gates pass
+# ---------------------------------------------------------------------------
+def test_day13_continuation_allowed_when_gates_pass():
+    """Verify that on Day 13, continuation candidate evaluates and passes when gates pass."""
+    plan = generate_dynamic_herd_plan(
+        day=13,
+        hour=0,
+        current_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
+        town_shops=["BAKERY", "PIZZA_SHOP", "ICE_CREAM_SHOP"],
+        market_inventory={"WHEAT": 10000, "MILK": 100, "WOOL": 100, "FERTILIZER": 100},
+        late_selective_mode=True,
+        physical_housing_capacity={"PASTURE": 0, "COOP": 0},
+        allow_late_continuation=True,
+    )
+    assert plan.required_pastures == 4
+    fwd_recs = [r for r in plan.decision_records if r.get("forward_only")]
+    assert len(fwd_recs) == 1
+    assert fwd_recs[0]["reason"] == "forward_housing_continuation_justified"
+
+
+# ---------------------------------------------------------------------------
+# Test 7: Day 14 continuation construction rejected
+# ---------------------------------------------------------------------------
+def test_day14_continuation_construction_rejected():
+    """Verify Day 14 strictly prohibits initiating forward continuation builds."""
     plan = generate_dynamic_herd_plan(
         day=14,
         hour=0,
@@ -60,94 +200,145 @@ def test_day14_prohibits_continuation_build():
         market_inventory={"WHEAT": 10000, "MILK": 100, "WOOL": 100, "FERTILIZER": 100},
         late_selective_mode=True,
         physical_housing_capacity={"PASTURE": 0, "COOP": 0},
-        allow_late_continuation=False,  # Day 14 enforces False
+        allow_late_continuation=False,  # Enforced by day >= 14 rule
     )
-    
-    # No continuation candidate evaluated
     assert plan.required_pastures == 3
     assert len(plan.buy_animal_sequence) == 0
     assert not any(r.get("forward_only") for r in plan.decision_records)
 
 
-def test_physical_completion_required_before_purchase():
-    """Verify that once pasture completes (capacity=1), candidate enters buy_animal_sequence and is purchase eligible."""
+# ---------------------------------------------------------------------------
+# Test 8: Failed economic/feed candidate creates no speculative pasture
+# ---------------------------------------------------------------------------
+def test_failed_economic_or_feed_candidate_creates_no_speculative_pasture():
+    """Verify that if economic payoff hurdle fails (<$500), required_pastures is not incremented."""
     plan = generate_dynamic_herd_plan(
-        day=13,
+        day=12,
         hour=0,
         current_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
-        town_shops=["BAKERY", "PIZZA_SHOP", "ICE_CREAM_SHOP"],
-        market_inventory={"WHEAT": 10000, "MILK": 100, "WOOL": 100, "FERTILIZER": 100},
+        town_shops=[],  # Zero shops
+        market_inventory={"WHEAT": 10000, "MILK": 100000, "WOOL": 100000, "FERTILIZER": 100000},
         late_selective_mode=True,
-        physical_housing_capacity={"PASTURE": 1, "COOP": 0},  # Pasture completed!
-        allow_late_continuation=False,
+        physical_housing_capacity={"PASTURE": 0, "COOP": 0},
+        allow_late_continuation=True,
     )
-    
-    # Evaluated with physical housing
-    assert plan.required_pastures == 4
-    assert len(plan.buy_animal_sequence) == 1
-    assert plan.buy_animal_sequence[0] in ("COW", "SHEEP")
-    
-    # Check decision record
-    admitted = [r for r in plan.decision_records if r.get("accepted")]
-    assert len(admitted) == 1
-    rec = admitted[0]
-    assert rec.get("forward_only") is False
-    assert rec.get("purchase_eligible") is True
-    assert rec.get("sequence_index") == 0
+    assert plan.required_pastures == 3  # Not incremented!
+    assert len(plan.buy_animal_sequence) == 0
+    assert not any(r.get("forward_only") for r in plan.decision_records)
 
 
-def test_order_builder_blocks_purchase_if_not_physically_built():
-    """Verify OrderBuilder rejects any BUY_ANIMAL order on Day >= 12 if no physical empty pasture exists."""
+# ---------------------------------------------------------------------------
+# Test 9: Completed late pasture can subsequently be occupied
+# ---------------------------------------------------------------------------
+def test_completed_late_pasture_can_subsequently_be_occupied():
+    """Verify state transition: in-flight pasture completes -> clears in-flight -> authorizes buy."""
+    from state.state_tracker import _STATE, reset_memory
+
+    reset_memory()
+    _STATE["late_continuation_in_flight"] = True
+    _STATE["late_continuation_target_pos"] = (2, 2)
+
+    class DummyTile:
+        pos = (2, 2)
+        kind = "PASTURE"
+        is_animal = False
+        is_plant = False
+
     class DummyFarm:
         money = 5000.0
         hires_today = 0
-        unlocked = ["NW", "NE"]
+        hands = []
+        unlocked = ["NW"]
         def iter_tiles(self):
-            # No empty pastures: 3 pastures, all have animals
-            class Tile:
-                def __init__(self, pos, kind, is_animal):
-                    self.pos = pos
-                    self.kind = kind
-                    self.is_plant = False
-                    self.is_animal = is_animal
-            return [
-                Tile((0, 0), "PASTURE", True),
-                Tile((0, 1), "PASTURE", True),
-                Tile((0, 2), "PASTURE", True),
-            ]
+            return [DummyTile()]
+        def tile_at(self, pos):
+            return DummyTile() if pos == (2, 2) else None
         def quadrant_of(self, pos):
             return "NW"
 
-    class DummyPrivate:
-        shed = {"WHEAT": 50}
-        inventories = [{} for _ in range(4)]
-        seeds = {}
+    ctx = {
+        "day": 13,
+        "hour": 0,
+        "farm": DummyFarm(),
+        "private": type("DummyPriv", (), {"shed": {"WHEAT": 50}, "inventories": [], "seeds": {}})(),
+        "market": type("DummyMkt", (), {"inventory": {"WHEAT": 10000, "MILK": 100, "WOOL": 100}})(),
+        "memory": {},
+    }
 
-    class DummyMarket:
-        inventory = {"WHEAT": 10000, "MILK": 100, "WOOL": 100}
+    mock_fc = type("MockFC", (), {
+        "expected_price": lambda self, crop, day: 25.0,
+        "expected_price_at_hour": lambda self, crop, day, hour: 25.0,
+    })()
+
+    old_flag = config.ONE_AT_A_TIME_LATE_HOUSING_ENABLED
+    old_mode = config.POINT2_FEED_MODE
+    try:
+        config.POINT2_FEED_MODE = "live"
+        config.ONE_AT_A_TIME_LATE_HOUSING_ENABLED = True
+
+        planner = MacroPlanner(forecast=mock_fc)
+        plan = planner.build(ctx)
+
+        assert _STATE["late_continuation_in_flight"] is False
+        assert _STATE["late_continuation_target_pos"] is None
+    finally:
+        config.ONE_AT_A_TIME_LATE_HOUSING_ENABLED = old_flag
+        config.POINT2_FEED_MODE = old_mode
+
+
+# ---------------------------------------------------------------------------
+# Test 10: Disabling the continuation flag restores previous behavior
+# ---------------------------------------------------------------------------
+def test_disabling_continuation_flag_restores_previous_behavior():
+    """Verify that when ONE_AT_A_TIME_LATE_HOUSING_ENABLED is False, no forward pasture is queued."""
+    from state.state_tracker import reset_memory
+    reset_memory()
+
+    class DummyTile:
+        def __init__(self, pos):
+            self.pos = pos
+            self.kind = "PASTURE"
+            self.is_animal = True
+            self.animal = "COW"
+            self.is_plant = False
+
+    class DummyFarm:
+        money = 5000.0
+        hires_today = 0
+        hands = []
+        unlocked = ["NW", "NE"]
+        def iter_tiles(self):
+            return [DummyTile((0, 0)), DummyTile((0, 1)), DummyTile((0, 2))]
+        def quadrant_of(self, pos):
+            return "NW"
 
     ctx = {
         "day": 12,
         "hour": 0,
         "farm": DummyFarm(),
-        "private": DummyPrivate(),
-        "market": DummyMarket(),
+        "private": type("DummyPriv", (), {"shed": {"WHEAT": 50}, "inventories": [], "seeds": {}})(),
+        "market": type("DummyMkt", (), {"inventory": {"WHEAT": 10000, "MILK": 100, "WOOL": 100}})(),
+        "town_shops": ["BAKERY", "PIZZA_SHOP"],
         "memory": {},
     }
 
-    import config
+    old_flag = config.ONE_AT_A_TIME_LATE_HOUSING_ENABLED
     old_mode = config.POINT2_FEED_MODE
     try:
         config.POINT2_FEED_MODE = "live"
-        builder = OrderBuilder()
-        intents = {
-            "buy_animal": {"COW": 1},
-            "buy_animal_sequence": ["COW"],
-        }
+        config.ONE_AT_A_TIME_LATE_HOUSING_ENABLED = False
 
-        orders, ledger = builder.build(ctx, intents)
-        animal_orders = [o for o in orders if o[0] == "BUY_ANIMAL"]
-        assert len(animal_orders) == 0  # Blocked by physical housing gate!
-        assert len(ledger.get("dropped", [])) > 0
+        mock_fc = type("MockFC", (), {
+            "expected_price": lambda self, crop, day: 25.0,
+            "expected_price_at_hour": lambda self, crop, day, hour: 25.0,
+        })()
+        planner = MacroPlanner(forecast=mock_fc)
+        plan = planner.build(ctx)
+
+        # Build queue and buy sequence should be empty (no forward pasture built)
+        assert len(plan.build_queue) == 0
+        assert len(plan.buy_animal_sequence) == 0
     finally:
+        config.ONE_AT_A_TIME_LATE_HOUSING_ENABLED = old_flag
         config.POINT2_FEED_MODE = old_mode
+

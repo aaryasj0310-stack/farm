@@ -1046,18 +1046,22 @@ class MacroPlanner:
                                         in_flight = False
                                         if mem:
                                             mem["late_continuation_in_flight"] = False
+                                            mem["late_continuation_target_pos"] = None
                                         try:
                                             from state.state_tracker import _STATE
                                             _STATE["late_continuation_in_flight"] = False
+                                            _STATE["late_continuation_target_pos"] = None
                                         except Exception:
                                             pass
                                 elif effective_empty_pastures > 0:
                                     in_flight = False
                                     if mem:
                                         mem["late_continuation_in_flight"] = False
+                                        mem["late_continuation_target_pos"] = None
                                     try:
                                         from state.state_tracker import _STATE
                                         _STATE["late_continuation_in_flight"] = False
+                                        _STATE["late_continuation_target_pos"] = None
                                     except Exception:
                                         pass
 
