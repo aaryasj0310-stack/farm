@@ -150,18 +150,22 @@ class LiveHousingState:
     existing_unplaced_coop_claims: int = 0
     accepted_candidate_pasture_claims: int = 0
     accepted_candidate_coop_claims: int = 0
+    pending_pastures: int = 0
+    pending_coops: int = 0
 
-    def residual_pastures(self) -> int:
-        return max(0, self.empty_pastures - self.existing_unplaced_pasture_claims - self.accepted_candidate_pasture_claims)
+    def residual_pastures(self, allow_pending: bool = False) -> int:
+        base = self.empty_pastures + (self.pending_pastures if allow_pending else 0)
+        return max(0, base - self.existing_unplaced_pasture_claims - self.accepted_candidate_pasture_claims)
 
-    def residual_coops(self) -> int:
-        return max(0, self.empty_coops - self.existing_unplaced_coop_claims - self.accepted_candidate_coop_claims)
+    def residual_coops(self, allow_pending: bool = False) -> int:
+        base = self.empty_coops + (self.pending_coops if allow_pending else 0)
+        return max(0, base - self.existing_unplaced_coop_claims - self.accepted_candidate_coop_claims)
 
-    def can_house(self, species: str) -> bool:
+    def can_house(self, species: str, allow_pending: bool = False) -> bool:
         if species in ("COW", "SHEEP"):
-            return self.residual_pastures() > 0
+            return self.residual_pastures(allow_pending=allow_pending) > 0
         elif species == "GOOSE":
-            return self.residual_coops() > 0
+            return self.residual_coops(allow_pending=allow_pending) > 0
         return False
 
     def reserve(self, species: str) -> None:
@@ -178,6 +182,8 @@ class LiveHousingState:
             existing_unplaced_coop_claims=self.existing_unplaced_coop_claims,
             accepted_candidate_pasture_claims=self.accepted_candidate_pasture_claims,
             accepted_candidate_coop_claims=self.accepted_candidate_coop_claims,
+            pending_pastures=self.pending_pastures,
+            pending_coops=self.pending_coops,
         )
         return s
 
@@ -189,6 +195,8 @@ class LiveHousingState:
             "existing_unplaced_coop_claims": self.existing_unplaced_coop_claims,
             "accepted_candidate_pasture_claims": self.accepted_candidate_pasture_claims,
             "accepted_candidate_coop_claims": self.accepted_candidate_coop_claims,
+            "pending_pastures": self.pending_pastures,
+            "pending_coops": self.pending_coops,
             "residual_pastures": self.residual_pastures(),
             "residual_coops": self.residual_coops(),
         }
@@ -414,6 +422,7 @@ class FeedResourceLedger:
     stressed_wheat_inventory: float = 10000.0
     stress_raw_price: float = 25.0
     stress_buffered_price: float = 28.0
+    bootstrap_cohort_liabilities: int = 0
 
     def clone(self) -> "FeedResourceLedger":
         """Produce an independent deep copy of this ledger."""
@@ -449,6 +458,7 @@ class FeedResourceLedger:
             stressed_wheat_inventory=self.stressed_wheat_inventory,
             stress_raw_price=self.stress_raw_price,
             stress_buffered_price=self.stress_buffered_price,
+            bootstrap_cohort_liabilities=self.bootstrap_cohort_liabilities,
         )
 
     def get_feed_hold_diagnostics(self) -> Dict[str, float]:
@@ -495,6 +505,7 @@ class FeedResourceLedger:
             "stressed_wheat_inventory": self.stressed_wheat_inventory,
             "stress_raw_price": self.stress_raw_price,
             "stress_buffered_price": self.stress_buffered_price,
+            "bootstrap_cohort_liabilities": self.bootstrap_cohort_liabilities,
         }
 
     @property
@@ -1326,6 +1337,7 @@ def build_fresh_live_ledger(
     market_inventory: Optional[Dict[str, float]] = None,
     town_shops: Optional[List[str]] = None,
     opponent_farm: Any = None,
+    bootstrap_cohort_liabilities: Optional[int] = None,
 ) -> FeedResourceLedger:
     """Constructs a fresh FeedResourceLedger for live market authorization.
 
@@ -1345,6 +1357,7 @@ def build_fresh_live_ledger(
         market_inventory=market_inventory,
         town_shops=town_shops,
         opponent_farm=opponent_farm,
+        bootstrap_cohort_liabilities=bootstrap_cohort_liabilities,
     )
 
 
@@ -1461,6 +1474,7 @@ def build_feed_resource_ledger(
     market_inventory: Optional[Dict[str, float]] = None,
     town_shops: Optional[List[str]] = None,
     opponent_farm: Any = None,
+    bootstrap_cohort_liabilities: Optional[int] = None,
 ) -> FeedResourceLedger:
     """Constructs the initial FeedResourceLedger from observation state.
 
@@ -1616,6 +1630,10 @@ def build_feed_resource_ledger(
 
     wheat_price = estimate_wheat_buy_price(ctx)
 
+    if bootstrap_cohort_liabilities is None:
+        mem = ctx.get("memory", {}) if isinstance(ctx, dict) else {}
+        bootstrap_cohort_liabilities = int(mem.get("bootstrap_cohort_liabilities", 0))
+
     return FeedResourceLedger(
         day=day,
         hour=hour,
@@ -1648,6 +1666,7 @@ def build_feed_resource_ledger(
         stressed_wheat_inventory=wheat_market_inv,
         stress_raw_price=25.0,
         stress_buffered_price=wheat_price,
+        bootstrap_cohort_liabilities=int(bootstrap_cohort_liabilities),
     )
 
 
@@ -1739,7 +1758,7 @@ def evaluate_existing_herd_feasibility(
             # new_scheduled arriving today gives ZERO credit toward today's feed obligation.
             market_usable_for_needed = new_scheduled if can_help_today else 0
         else:
-            needed_day = n_placed
+            needed_day = n_placed + n_unplaced
             market_usable_for_needed = new_scheduled
 
         cumulative_needed += needed_day
@@ -1823,9 +1842,19 @@ def evaluate_existing_herd_feasibility(
     last_op_day = operational_days[-1] if operational_days else day - 1
     remaining_feeding_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
 
-    placed_lifetime_units = n_placed * remaining_feeding_days_beyond
+    # Existing-herd continuity: bootstrap cohort liabilities use rolling 4-day financial buffer
+    cohort_liabilities = int(getattr(ledger, "bootstrap_cohort_liabilities", 0))
+    n_boot_placed = min(n_placed, max(0, cohort_liabilities))
+    n_boot_unplaced = min(n_unplaced, max(0, cohort_liabilities - n_boot_placed))
+    n_std_placed = max(0, n_placed - n_boot_placed)
+    n_std_unplaced = max(0, n_unplaced - n_boot_unplaced)
+
+    bootstrap_days_beyond = min(4, remaining_feeding_days_beyond)
     total_feeding_days_from_today = max(0, ANIMAL_FEED_CUTOFF_DAY - day)
-    unplaced_lifetime_units = n_unplaced * total_feeding_days_from_today
+    boot_unplaced_days = min(8, total_feeding_days_from_today)
+
+    placed_lifetime_units = (n_boot_placed * bootstrap_days_beyond) + (n_std_placed * remaining_feeding_days_beyond)
+    unplaced_lifetime_units = (n_boot_unplaced * boot_unplaced_days) + (n_std_unplaced * total_feeding_days_from_today)
     total_remaining_lifetime_units = placed_lifetime_units + unplaced_lifetime_units
 
     if ledger.lifetime_price_policy == "engine_stress_bound_v1":
@@ -1921,6 +1950,7 @@ def evaluate_incremental_candidate(
     ledger: FeedResourceLedger,
     candidate_species: str,
     purchase_cost: Optional[float] = None,
+    is_day0_bootstrap: bool = False,
 ) -> FeedFeasibilityResult:
     """Evaluate whether one incremental candidate animal is resource-feasible.
 
@@ -2146,7 +2176,10 @@ def evaluate_incremental_candidate(
 
     # Lifetime feeding beyond operational horizon for candidate
     last_op_day = operational_days[-1] if operational_days else day - 1
-    cand_lifetime_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
+    if is_day0_bootstrap and working.day == 0:
+        cand_lifetime_days_beyond = 4
+    else:
+        cand_lifetime_days_beyond = max(0, ANIMAL_FEED_CUTOFF_DAY - (last_op_day + 1))
     cand_lifetime_units = cand_lifetime_days_beyond * 1
     cand_near_term_market_units = cand_cumulative_market_purchased
     cand_near_term_market_cost = sum(b["cost"] for b in cand_scheduled_buys)
@@ -2221,6 +2254,7 @@ def evaluate_incremental_candidate(
                 "delta_total_feed": delta_total_feed,
                 "new_stress_price": new_stress_price,
                 "stress_diagnostics": stress_diag,
+                "is_day0_bootstrap": bool(is_day0_bootstrap and working.day == 0),
             },
         )
 
@@ -2254,6 +2288,7 @@ def evaluate_incremental_candidate(
             "delta_total_feed": delta_total_feed,
             "new_stress_price": new_stress_price,
             "stress_diagnostics": stress_diag,
+            "is_day0_bootstrap": bool(is_day0_bootstrap and working.day == 0),
         },
     )
 

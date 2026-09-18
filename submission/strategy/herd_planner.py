@@ -145,6 +145,7 @@ def generate_dynamic_herd_plan(
     feed_ledger: Optional[Any] = None,
     late_selective_mode: bool = False,
     physical_housing_capacity: Optional[Dict[str, int]] = None,
+    allow_late_continuation: bool = False,
 ) -> DynamicHerdPlan:
     """Generate forward infrastructure herd targets using transactional shadow-state economics.
 
@@ -247,11 +248,142 @@ def generate_dynamic_herd_plan(
         avail_pastures = max(0, int(physical_housing_capacity.get("PASTURE", 0))) if physical_housing_capacity else 0
         avail_coops = max(0, int(physical_housing_capacity.get("COOP", 0))) if physical_housing_capacity else 0
         target_cap = (c0 + s0 + g0) + avail_pastures + avail_coops
+        if allow_late_continuation and day in (12, 13) and avail_pastures == 0:
+            target_cap += 1  # Exactly 1 forward continuation pasture candidate
         housing_build_hurdle = float(SELECTIVE_LIVESTOCK_GATE_THRESHOLD)
     else:
         avail_pastures = 999
         avail_coops = 999
         housing_build_hurdle = 150.0
+
+    try:
+        from config import BOOTSTRAP_LIVESTOCK_ARM, get_bootstrap_target_sequence
+    except Exception:
+        BOOTSTRAP_LIVESTOCK_ARM = "none"
+        get_bootstrap_target_sequence = lambda arm=None: []
+
+    is_bootstrap_active = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
+    if is_bootstrap_active:
+        bootstrap_target_seq = get_bootstrap_target_sequence(BOOTSTRAP_LIVESTOCK_ARM)
+        for cand_idx, species in enumerate(bootstrap_target_seq):
+            cand_res = None
+            cand_feasible = True
+            if feed_ledger is not None:
+                cand_res = evaluate_incremental_candidate(
+                    feed_ledger, species, is_day0_bootstrap=True
+                )
+                cand_feasible = cand_res.feasible
+
+            if not cand_feasible:
+                f_reason = cand_res.blocking_reason if cand_res else "feed_infeasible"
+                marginal_value_seq.append(
+                    f"Bootstrap {species} #{cand_idx+1}: REJECTED ({f_reason}) -> STOP"
+                )
+                cand_diag = cand_res.to_dict() if cand_res else {}
+                decision_records.append({
+                    "candidate_id": f"cand_rej_bootstrap_{cand_idx}_{species}",
+                    "sequence_index": -1,
+                    "species": species,
+                    "candidate_num": shadow_herd.get(species, 0) + 1,
+                    "net_val": 0.0,
+                    "accepted": False,
+                    "provisional_status": "rejected",
+                    "feed_feasible": False,
+                    "execution_status": "rejected",
+                    "reason": f"bootstrap_feed_infeasible_{f_reason}",
+                    "feed_diagnostics": cand_diag,
+                    "feed_feasibility": cand_diag,
+                })
+                break
+
+            eval_base = estimate_realized_marginal_animal_value(
+                species=species,
+                day=day,
+                current_animals=shadow_herd,
+                market_inventory=market_inventory,
+                empty_pastures=1,
+                crop_opportunity_val=crop_opportunity_val,
+                town_shops=town_shops,
+                opponent_committed_supply=(opponent_committed_supplies.get("MILK" if species == "COW" else ("WOOL" if species == "SHEEP" else "EGG")) if opponent_committed_supplies else None),
+            )
+            val = eval_base.get("net_realized_value", 0.0)
+
+            # Stage 2: Displaced crop economic opportunity cost check for 3rd/4th animal
+            displaced_melons = 0
+            if cand_idx == 2:  # 3rd animal (Sheep #1 in Arm C/D, Cow #3 in Arm E)
+                if species == "SHEEP":
+                    displaced_melons = 8  # Displaces 8 melons ($640 seed cost)
+                elif species == "COW":
+                    displaced_melons = 6  # Displaces 6 melons ($480 seed cost)
+            elif cand_idx >= 3:
+                displaced_melons = 0
+
+            # Displaced crop opportunity: lost Cycle 1 melon net margin ($55/melon)
+            displaced_crop_value = displaced_melons * 55.0
+            net_advantage = val - displaced_crop_value
+
+            if net_advantage < housing_build_hurdle:
+                marginal_value_seq.append(
+                    f"Bootstrap {species} #{cand_idx+1}: net advantage ${net_advantage:.0f} (val ${val:.0f} - crop loss ${displaced_crop_value:.0f}) -> STOP"
+                )
+                cand_diag = cand_res.to_dict() if cand_res else {}
+                decision_records.append({
+                    "candidate_id": f"cand_rej_bootstrap_{cand_idx}_{species}",
+                    "sequence_index": -1,
+                    "species": species,
+                    "candidate_num": shadow_herd.get(species, 0) + 1,
+                    "net_val": round(net_advantage, 2),
+                    "accepted": False,
+                    "provisional_status": "rejected",
+                    "feed_feasible": True,
+                    "execution_status": "rejected",
+                    "reason": "below_crop_tradeoff_hurdle",
+                    "displaced_crop_investment": f"{displaced_melons} MELON",
+                    "displaced_crop_value": displaced_crop_value,
+                    "feed_diagnostics": cand_diag,
+                    "feed_feasibility": cand_diag,
+                })
+                break
+
+            if feed_ledger is not None and cand_res is not None:
+                commit_candidate_reservation(feed_ledger, cand_res)
+
+            shadow_herd[species] = shadow_herd.get(species, 0) + 1
+            seq_idx = len(buy_animal_seq)
+            buy_animal_seq.append(species)
+            marginal_value_seq.append(f"Bootstrap {species} #{shadow_herd[species]}: +${val:.0f} (net advantage +${net_advantage:.0f})")
+            feed_diag = cand_res.to_dict() if cand_res else {}
+            decision_records.append({
+                "candidate_id": f"cand_bootstrap_{seq_idx}_{species}",
+                "sequence_index": seq_idx,
+                "species": species,
+                "candidate_num": shadow_herd[species],
+                "net_val": round(val, 2),
+                "displaced_crop_investment": f"{displaced_melons} MELON",
+                "displaced_crop_value": displaced_crop_value,
+                "net_allocation_advantage": round(net_advantage, 2),
+                "accepted": True,
+                "provisional_status": "admitted",
+                "feed_feasible": True,
+                "reason": "bootstrap_cohort_admitted",
+                "execution_status": "admitted",
+                "feed_diagnostics": feed_diag,
+                "feed_feasibility": feed_diag,
+            })
+
+        req_pastures = shadow_herd["COW"] + shadow_herd["SHEEP"]
+        req_coops = shadow_herd["GOOSE"]
+
+        return DynamicHerdPlan(
+            desired_herd=shadow_herd,
+            required_pastures=req_pastures,
+            required_coops=req_coops,
+            marginal_value_sequence=marginal_value_seq,
+            decision_records=decision_records,
+            horizon_days=horizon_days,
+            rationale=f"bootstrap_{BOOTSTRAP_LIVESTOCK_ARM}_c{shadow_herd['COW']}_s{shadow_herd['SHEEP']}_g{shadow_herd['GOOSE']}",
+            buy_animal_sequence=buy_animal_seq,
+        )
 
     while sum(shadow_herd.values()) < target_cap:
         curr_total = sum(shadow_herd.values())
@@ -263,8 +395,22 @@ def generate_dynamic_herd_plan(
         pastures_used = (shadow_herd["COW"] - c0) + (shadow_herd["SHEEP"] - s0)
         coops_used = shadow_herd["GOOSE"] - g0
 
+        is_continuation_pasture_eval = bool(
+            late_selective_mode
+            and day >= C4_LIVESTOCK_CUTOFF_DAY
+            and allow_late_continuation
+            and day in (12, 13)
+            and pastures_used >= avail_pastures
+        )
+        empty_pastures_eval = 0 if is_continuation_pasture_eval else 1
+
         # 1. Evaluate COW
-        cow_housing_ok = (not late_selective_mode or day < C4_LIVESTOCK_CUTOFF_DAY or pastures_used < avail_pastures)
+        cow_housing_ok = (
+            not late_selective_mode
+            or day < C4_LIVESTOCK_CUTOFF_DAY
+            or pastures_used < avail_pastures
+            or (allow_late_continuation and day in (12, 13) and pastures_used < (avail_pastures + 1))
+        )
         if shadow_herd["COW"] < cow_cap and (curr_total + 1) <= target_cap and cow_housing_ok:
             cand_feasible = True
             cand_res = None
@@ -280,7 +426,7 @@ def generate_dynamic_herd_plan(
                     day=day,
                     current_animals=shadow_herd,
                     market_inventory=market_inventory,
-                    empty_pastures=1,  # Infrastructure query: prospective pasture will be built
+                    empty_pastures=empty_pastures_eval,
                     crop_opportunity_val=crop_opportunity_val,
                     town_shops=town_shops,
                     opponent_committed_supply=(opponent_committed_supplies.get("MILK") if opponent_committed_supplies else None),
@@ -294,7 +440,7 @@ def generate_dynamic_herd_plan(
                         day=day,
                         current_animals=shadow_herd,
                         market_inventory=market_inventory,
-                        empty_pastures=1,
+                        empty_pastures=empty_pastures_eval,
                         crop_opportunity_val=crop_opportunity_val,
                         town_shops=town_shops,
                         opponent_committed_supply=opponent_stress_supplies.get("MILK"),
@@ -302,7 +448,12 @@ def generate_dynamic_herd_plan(
                     stress_evals["COW"] = eval_c_stress
 
         # 2. Evaluate SHEEP
-        sheep_housing_ok = (not late_selective_mode or day < C4_LIVESTOCK_CUTOFF_DAY or pastures_used < avail_pastures)
+        sheep_housing_ok = (
+            not late_selective_mode
+            or day < C4_LIVESTOCK_CUTOFF_DAY
+            or pastures_used < avail_pastures
+            or (allow_late_continuation and day in (12, 13) and pastures_used < (avail_pastures + 1))
+        )
         if shadow_herd["SHEEP"] < sheep_cap and (curr_total + 1) <= target_cap and sheep_housing_ok:
             cand_feasible = True
             cand_res = None
@@ -318,7 +469,7 @@ def generate_dynamic_herd_plan(
                     day=day,
                     current_animals=shadow_herd,
                     market_inventory=market_inventory,
-                    empty_pastures=1,  # Infrastructure query: prospective pasture will be built
+                    empty_pastures=empty_pastures_eval,
                     crop_opportunity_val=crop_opportunity_val,
                     town_shops=town_shops,
                     opponent_committed_supply=(opponent_committed_supplies.get("WOOL") if opponent_committed_supplies else None),
@@ -332,7 +483,7 @@ def generate_dynamic_herd_plan(
                         day=day,
                         current_animals=shadow_herd,
                         market_inventory=market_inventory,
-                        empty_pastures=1,
+                        empty_pastures=empty_pastures_eval,
                         crop_opportunity_val=crop_opportunity_val,
                         town_shops=town_shops,
                         opponent_committed_supply=opponent_stress_supplies.get("WOOL"),
@@ -436,30 +587,76 @@ def generate_dynamic_herd_plan(
             break
 
         # ACCEPT candidate into forward shadow state
-        status = "admitted_late_selective" if late_selective_mode else "admitted"
+        is_forward_only = bool(
+            late_selective_mode
+            and day >= C4_LIVESTOCK_CUTOFF_DAY
+            and allow_late_continuation
+            and day in (12, 13)
+            and pastures_used >= avail_pastures
+        )
+
+        status = "admitted_forward_continuation" if is_forward_only else ("admitted_late_selective" if late_selective_mode else "admitted")
         feed_diag = None
+        feed_hold_before = float(feed_ledger.candidate_feed_cash_hold) if feed_ledger is not None else 0.0
+        shadow_feed_hold_after = feed_hold_before
         if feed_ledger is not None:
             best_cand_res = cand_results[best_sp]
-            commit_candidate_reservation(feed_ledger, best_cand_res)
-            if best_cand_res.execution_confidence in ("guarded", "conditional"):
-                status = "provisional_guarded"
-            feed_diag = best_cand_res.to_dict()
+            if is_forward_only:
+                # Part 1 fix: clone ledger for hypothetical candidate evaluation; authoritative ledger remains 100% unmutated
+                ledger_clone = feed_ledger.clone()
+                commit_candidate_reservation(ledger_clone, best_cand_res)
+                if best_cand_res.execution_confidence in ("guarded", "conditional"):
+                    status = "provisional_guarded"
+                feed_diag = best_cand_res.to_dict()
+                shadow_feed_hold_after = float(ledger_clone.candidate_feed_cash_hold)
+                del ledger_clone
+            else:
+                commit_candidate_reservation(feed_ledger, best_cand_res)
+                if best_cand_res.execution_confidence in ("guarded", "conditional"):
+                    status = "provisional_guarded"
+                feed_diag = best_cand_res.to_dict()
+                shadow_feed_hold_after = float(feed_ledger.candidate_feed_cash_hold)
+        feed_hold_after = float(feed_ledger.candidate_feed_cash_hold) if feed_ledger is not None else 0.0
+
+        if is_forward_only and feed_ledger is not None:
+            try:
+                from state.state_tracker import _STATE
+                _STATE.setdefault("forward_only_feed_holds", []).append({
+                    "day": day,
+                    "hour": hour,
+                    "species": best_sp,
+                    "authoritative_hold_before": feed_hold_before,
+                    "authoritative_hold_after": feed_hold_after,
+                    "authoritative_delta": feed_hold_after - feed_hold_before,
+                    "shadow_hold_after": shadow_feed_hold_after,
+                    "hold_before": feed_hold_before,
+                    "hold_after": feed_hold_after,
+                    "delta": feed_hold_after - feed_hold_before,
+                })
+            except Exception:
+                pass
 
         shadow_herd[best_sp] += 1
         seq_idx = len(buy_animal_seq)
-        buy_animal_seq.append(best_sp)
+        if not is_forward_only:
+            buy_animal_seq.append(best_sp)
         switch_note = f" (SWITCH from {diag.get('baseline_best')} [gap {diag.get('relative_gap', 0):.1%}])" if diag.get("switched") else ""
-        marginal_value_seq.append(f"{best_sp} #{next_count}: +${best_val:.0f}{switch_note}")
+        forward_note = " [FORWARD HOUSING CONTINUATION ONLY]" if is_forward_only else ""
+        marginal_value_seq.append(f"{best_sp} #{next_count}: +${best_val:.0f}{switch_note}{forward_note}")
         rec = {
             "candidate_id": f"cand_{seq_idx}_{best_sp}",
-            "sequence_index": seq_idx,
+            "sequence_index": seq_idx if not is_forward_only else -1,
             "species": best_sp,
             "candidate_num": next_count,
             "net_val": round(best_val, 2),
             "accepted": True,
             "provisional_status": "admitted",
             "feed_feasible": True,
-            "reason": "economically_justified",
+            "reason": "forward_housing_continuation_justified" if is_forward_only else "economically_justified",
+            "forward_only": is_forward_only,
+            "purchase_eligible": not is_forward_only,
+            "feed_hold_before": feed_hold_before,
+            "feed_hold_after": feed_hold_after,
             "guarded_diag": diag,
             "execution_status": status,
             "feed_diagnostics": feed_diag or {},

@@ -342,3 +342,88 @@ def test_disabling_continuation_flag_restores_previous_behavior():
         config.ONE_AT_A_TIME_LATE_HOUSING_ENABLED = old_flag
         config.POINT2_FEED_MODE = old_mode
 
+
+# ---------------------------------------------------------------------------
+# Test 11 & 12: Authority boundary isolation tests
+# ---------------------------------------------------------------------------
+def test_forward_only_feed_ledger_unmutated():
+    """Verify that forward-only late continuation evaluates candidate feasibility without mutating authoritative ledger."""
+    from strategy.feed_feasibility import FeedResourceLedger
+    ledger = FeedResourceLedger(
+        day=12,
+        hour=0,
+        operational_horizon_days=4,
+        observed_cash=5000.0,
+        placed_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
+        wheat_in_shed=50,
+        wheat_price_current=20.0,
+        wheat_market_inventory=10000.0,
+        lifetime_price_policy="engine_stress_bound_v1",
+    )
+    initial_hold = ledger.candidate_feed_cash_hold
+    initial_reservations_len = len(ledger.candidate_reservations)
+    initial_purchases_len = len(ledger.scheduled_market_purchases)
+    initial_spent = ledger.candidate_purchase_cash_spent
+
+    plan = generate_dynamic_herd_plan(
+        day=12,
+        hour=0,
+        current_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
+        town_shops=["BAKERY", "PIZZA_SHOP", "ICE_CREAM_SHOP"],
+        market_inventory={"WHEAT": 10000, "MILK": 100, "WOOL": 100, "FERTILIZER": 100},
+        late_selective_mode=True,
+        physical_housing_capacity={"PASTURE": 0, "COOP": 0},
+        allow_late_continuation=True,
+        feed_ledger=ledger,
+    )
+
+    # Must have admitted a forward-only candidate
+    fwd_recs = [r for r in plan.decision_records if r.get("forward_only")]
+    assert len(fwd_recs) == 1
+    assert fwd_recs[0]["accepted"] is True
+
+    # Authoritative ledger MUST remain 100% unmutated!
+    assert ledger.candidate_feed_cash_hold == initial_hold
+    assert len(ledger.candidate_reservations) == initial_reservations_len
+    assert len(ledger.scheduled_market_purchases) == initial_purchases_len
+    assert ledger.candidate_purchase_cash_spent == initial_spent
+
+
+def test_normal_candidate_commits_reservations_when_housing_available():
+    """Verify that normal animal candidates with physical housing still commit reservations into authoritative ledger."""
+    from strategy.feed_feasibility import FeedResourceLedger
+    ledger = FeedResourceLedger(
+        day=12,
+        hour=0,
+        operational_horizon_days=4,
+        observed_cash=5000.0,
+        placed_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
+        wheat_in_shed=50,
+        wheat_price_current=20.0,
+        wheat_market_inventory=10000.0,
+        lifetime_price_policy="engine_stress_bound_v1",
+    )
+    initial_hold = ledger.candidate_feed_cash_hold
+    initial_reservations_len = len(ledger.candidate_reservations)
+
+    plan = generate_dynamic_herd_plan(
+        day=12,
+        hour=0,
+        current_herd={"COW": 3, "SHEEP": 0, "GOOSE": 0},
+        town_shops=["BAKERY", "PIZZA_SHOP", "ICE_CREAM_SHOP"],
+        market_inventory={"WHEAT": 10000, "MILK": 100, "WOOL": 100, "FERTILIZER": 100},
+        late_selective_mode=True,
+        physical_housing_capacity={"PASTURE": 1, "COOP": 0},  # 1 physical pasture available!
+        allow_late_continuation=False,
+        feed_ledger=ledger,
+    )
+
+    admitted_recs = [r for r in plan.decision_records if r.get("accepted") and not r.get("forward_only")]
+    assert len(admitted_recs) == 1
+    assert len(plan.buy_animal_sequence) == 1
+
+    # Authoritative ledger MUST have reservations committed for live candidate!
+    assert len(ledger.candidate_reservations) == initial_reservations_len + 1
+    assert ledger.candidate_purchase_cash_spent > 0.0
+
+

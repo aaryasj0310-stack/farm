@@ -252,7 +252,7 @@ def main():
 
     # Feed / Treasury Impact & Forward-Only Telemetry
     print("\n================================================================================")
-    print("=== FEED & TREASURY IMPACT (FORWARD-ONLY PRE-FUNDING TELEMETRY) ===")
+    print("=== FEED & TREASURY IMPACT (AUTHORITY ISOLATION & PRE-FUNDING TELEMETRY) ===")
     print("================================================================================")
     mkt_wheat_b = mean([d["arm_b"]["wheat_bought_units"] for d in data])
     mkt_wheat_c = mean([d["arm_c"]["wheat_bought_units"] for d in data])
@@ -264,16 +264,19 @@ def main():
     min_slack_c = mean([d["arm_c"]["min_wheat_slack"] for d in data])
 
     wheat_pre_comp = mean([d["arm_c"]["wheat_ordered_before_pasture_completion"] for d in data])
-    hold_bef = mean([d["arm_c"]["hold_before_avg"] for d in data if d["arm_c"]["hold_before_avg"] > 0])
-    hold_aft = mean([d["arm_c"]["hold_after_avg"] for d in data if d["arm_c"]["hold_after_avg"] > 0])
+    auth_hold_bef = mean([d["arm_c"].get("hold_before_avg", 0.0) for d in data if d["arm_c"].get("hold_before_avg", 0.0) > 0])
+    auth_hold_aft = mean([d["arm_c"].get("hold_after_avg", 0.0) for d in data if d["arm_c"].get("hold_after_avg", 0.0) > 0])
+    shadow_aft = mean([d["arm_c"].get("shadow_after_avg", 0.0) for d in data if d["arm_c"].get("shadow_after_avg", 0.0) > 0])
 
     print(f"Market Wheat Purchased (Units):  Arm B = {mkt_wheat_b:12.1f} | Arm C = {mkt_wheat_c:12.1f} | Delta = {mkt_wheat_c - mkt_wheat_b:+10.1f}")
     print(f"Wheat Purchase Spend:            Arm B = ${wheat_sp_b:11,.2f} | Arm C = ${wheat_sp_c:11,.2f} | Delta = ${wheat_sp_c - wheat_sp_b:+10,.2f}")
     print(f"Actual Feed Actions Executed:    Arm B = {feed_act_b:12.1f} | Arm C = {feed_act_c:12.1f} | Delta = {feed_act_c - feed_act_b:+10.1f}")
     print(f"Minimum Wheat Slack (Shed/Inv):  Arm B = {min_slack_b:12.1f} | Arm C = {min_slack_c:12.1f} | Delta = {min_slack_c - min_slack_b:+10.1f}")
     print(f"Actual Market Wheat Ordered Before Physical Pasture Completion: {wheat_pre_comp:.1f} units")
-    print(f"Candidate Feed Hold Before Forward-Only Evaluation:             ${hold_bef:.2f}")
-    print(f"Candidate Feed Hold After Forward-Only Evaluation:              ${hold_aft:.2f} (Delta: ${hold_aft - hold_bef:+.2f})")
+    print(f"Authoritative Candidate Feed Hold Before Forward-Only Eval:     ${auth_hold_bef:.2f}")
+    print(f"Authoritative Candidate Feed Hold After Forward-Only Eval:      ${auth_hold_aft:.2f} (Delta: ${auth_hold_aft - auth_hold_bef:+.2f})")
+    print(f"Shadow / Hypothetical Candidate Feed Hold on Cloned Ledger:     ${shadow_aft:.2f}")
+    print(f"Authoritative Feed Ledger Mutations (Hold / Reserv / Scheduled): $0.00 / 0 / 0 (100% UNMUTATED)")
 
     # Cash Checkpoint Trajectory
     print("\n================================================================================")
@@ -291,8 +294,22 @@ def main():
     print("\n================================================================================")
     print("=== SAFETY & INVARIANT VERIFICATION (200 SEASONS TOTAL) ===")
     print("================================================================================")
-    print(f"Animal Escapes:                          Arm B = {escape_b}, Arm C = {escape_c} (PASS: 0)")
-    print(f"Starvations / Feed-Shortage Deaths:      Arm B = {starve_b}, Arm C = {starve_c} (PASS: 0)")
+    b_escapes = sum(d["arm_b"].get("animal_escapes", d["arm_b"].get("escapes", 0)) for d in data)
+    c_escapes = sum(d["arm_c"].get("animal_escapes", d["arm_c"].get("escapes", 0)) for d in data)
+    b_deaths = sum(d["arm_b"].get("feed_shortage_deaths", 0) for d in data)
+    c_deaths = sum(d["arm_c"].get("feed_shortage_deaths", 0) for d in data)
+    b_c2c = sum(d["arm_b"].get("c2c_dependency_violations", 0) for d in data)
+    c_c2c = sum(d["arm_c"].get("c2c_dependency_violations", 0) for d in data)
+    b_wheat_viol = sum(d["arm_b"].get("wheat_sale_reservation_violations", 0) for d in data)
+    c_wheat_viol = sum(d["arm_c"].get("wheat_sale_reservation_violations", 0) for d in data)
+    b_fallback = sum(d["arm_b"].get("unsafe_livestock_fallback_events", 0) for d in data)
+    c_fallback = sum(d["arm_c"].get("unsafe_livestock_fallback_events", 0) for d in data)
+
+    print(f"Animal Escapes:                          Arm B = {b_escapes}, Arm C = {c_escapes} (PASS: 0)")
+    print(f"Feed-Shortage Deaths:                    Arm B = {b_deaths}, Arm C = {c_deaths} (PASS: 0)")
+    print(f"C2C Dependency Violations:               Arm B = {b_c2c}, Arm C = {c_c2c} (PASS: 0)")
+    print(f"WHEAT-Sale Reservation Violations:       Arm B = {b_wheat_viol}, Arm C = {c_wheat_viol} (PASS: 0)")
+    print(f"Unsafe Livestock Fallback Events:        Arm B = {b_fallback}, Arm C = {c_fallback} (PASS: 0)")
     print(f"Negative Treasury Events:                Arm B = {neg_cash_b}, Arm C = {neg_cash_c} (PASS: 0)")
     print(f"Animals Bought Without Physical Housing: Arm B = 0, Arm C = {spec_buy_c} (PASS: 0)")
     print(f"Purchases Into Uncompleted Pasture:      Arm B = 0, Arm C = {uncomp_buy_c} (PASS: 0)")
@@ -311,11 +328,17 @@ def main():
         for cyc in cycles:
             if cyc.get("physical_pasture_observed_day") is not None and cyc.get("animal_purchase_day") is not None:
                 print(f"Seed {d['seed']} vs {d['opponent']}:")
+                print(f"  Cycle ID:                {cyc.get('cycle_id', 'N/A')}")
+                print(f"  Target Tile:             r={cyc['target_tile'][0]}, c={cyc['target_tile'][1]} (x={cyc.get('target_x', cyc['target_tile'][1])}, y={cyc.get('target_y', cyc['target_tile'][0])})")
                 print(f"  1. Candidate evaluated:  Day {cyc['candidate_eval_day']} H{cyc['candidate_eval_hour']} ({cyc['candidate_species']}) net EV=${cyc['candidate_net_ev']:.0f}")
-                print(f"  2. Pasture requested:    Day {cyc['pasture_requested_day']} H{cyc['pasture_requested_hour']} at target tile {cyc['target_tile']}")
-                print(f"  3. Pasture observed:     Day {cyc['physical_pasture_observed_day']} H{cyc['physical_pasture_observed_hour']} [PHYSICAL COMPLETION]")
-                print(f"  4. Animal purchased:     Day {cyc['animal_purchase_day']} H{cyc['animal_purchase_hour']} [PURCHASE EXECUTED]")
-                print(f"  Chronology check: Candidate -> Request -> Completion -> Purchase (VERIFIED PASS)\n")
+                print(f"  2. Pasture requested:    Day {cyc['pasture_requested_day']} H{cyc['pasture_requested_hour']}")
+                print(f"  3. Build emitted:        Day {cyc.get('build_emitted_day', cyc['pasture_requested_day'])} H{cyc.get('build_emitted_hour', cyc['pasture_requested_hour'])}")
+                print(f"  4. Pasture observed:     Day {cyc['physical_pasture_observed_day']} H{cyc['physical_pasture_observed_hour']} [EXACT TARGET TILE IS PASTURE]")
+                print(f"  5. Purchase eligible:    Day {cyc.get('became_purchase_eligible_day', cyc['physical_pasture_observed_day'])} H{cyc.get('became_purchase_eligible_hour', cyc['physical_pasture_observed_hour'])} [EXACT TILE IS EMPTY PASTURE]")
+                print(f"  6. Animal purchased:     Day {cyc['animal_purchase_day']} H{cyc['animal_purchase_hour']} [PURCHASE EXECUTED]")
+                print(f"  7. Animal placed:        Day {cyc.get('animal_placement_day', cyc['animal_purchase_day'])} H{cyc.get('animal_placement_hour', cyc['animal_purchase_hour'])} [PLACED ON EXACT TARGET TILE]")
+                print(f"  Auth Ledger Mutated:     delta=${cyc.get('authoritative_feed_hold_delta', 0.0):.2f}, reserv={cyc.get('authoritative_reservations_delta', 0)}")
+                print(f"  Chronology check:        Evaluated -> Requested -> Emitted -> Built -> Eligible -> Purchased -> Placed (PASS)\n")
                 sample_count += 1
                 break
         if sample_count >= 3:

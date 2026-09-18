@@ -103,6 +103,11 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
     prev_total_owned = 0
     starvations_or_deaths = 0
     escapes = 0
+    animal_escapes = 0
+    feed_shortage_deaths = 0
+    c2c_dependency_violations = 0
+    wheat_sale_reservation_violations = 0
+    unsafe_livestock_fallback_events = 0
 
     crop_rev = 0.0
     milk_rev = 0.0
@@ -191,29 +196,36 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
                         if sp in herd_comp:
                             herd_comp[sp] += 1
 
-        # Detect newly completed pastures
+        # Check active cycles status on EXACT target tile:
+        tiles_grid = farm0.get("tiles", [])
+        for pos, cdata in list(active_cycles.items()):
+            tr, tc = cdata["target_tile"][0], cdata["target_tile"][1]
+            if 0 <= tr < len(tiles_grid) and 0 <= tc < len(tiles_grid[tr]):
+                tile_obj = tiles_grid[tr][tc]
+                if isinstance(tile_obj, dict):
+                    # 1. Exact tile is physical PASTURE
+                    if (tile_obj.get("kind") == "PASTURE" or tile_obj.get("structure") == "PASTURE"):
+                        if cdata.get("physical_pasture_observed_day") is None:
+                            cdata["physical_pasture_observed_day"] = day
+                            cdata["physical_pasture_observed_hour"] = hour
+                            continuation_pasture_completions += 1
+                        # 2. Exact tile is empty pasture -> purchase eligible
+                        if tile_obj.get("animal") is None and not tile_obj.get("is_animal"):
+                            if cdata.get("became_purchase_eligible_day") is None:
+                                cdata["became_purchase_eligible_day"] = day
+                                cdata["became_purchase_eligible_hour"] = hour
+                        # 3. Animal placed on exact target tile
+                        if tile_obj.get("animal") is not None or tile_obj.get("is_animal"):
+                            if cdata.get("animal_placement_day") is None:
+                                cdata["animal_placement_day"] = day
+                                cdata["animal_placement_hour"] = hour
+
+        # Detect newly completed pastures overall
         if physical_pastures > prev_pasture_count and step > 0:
-            newly_built = physical_pastures - prev_pasture_count
             pasture_build_events.append({"day": day, "hour": hour, "new_total": physical_pastures})
-            if day in (12, 13, 14) and late_cont:
-                continuation_pasture_completions += newly_built
-                # Check active cycle completion
-                for pos, cdata in list(active_cycles.items()):
-                    if pos in pasture_tiles and cdata.get("physical_pasture_observed_day") is None:
-                        cdata["physical_pasture_observed_day"] = day
-                        cdata["physical_pasture_observed_hour"] = hour
-                        cdata["became_purchase_eligible_day"] = day
-                        cdata["became_purchase_eligible_hour"] = hour
             prev_pasture_count = physical_pastures
         elif physical_pastures > prev_pasture_count and step == 0:
             prev_pasture_count = physical_pastures
-
-        # Detect newly placed animals into pastures
-        for pos in occupied_tiles:
-            for cdata in active_cycles.values():
-                if cdata.get("target_tile") and tuple(cdata.get("target_tile")) == pos and cdata.get("animal_placement_day") is None:
-                    cdata["animal_placement_day"] = day
-                    cdata["animal_placement_hour"] = hour
 
         shed_animals = 0
         worker_animals = 0
@@ -275,9 +287,16 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
                             continuation_pasture_requests += 1
                             # Look up last forward-only record
                             last_fo = (_STATE.get("forward_only_feed_holds", []) or [{}])[-1]
+                            tr, tc = cycle_tile[0], cycle_tile[1]
+                            tx, ty = tc, tr
+                            cycle_id = f"late_cont:{seed}:{day}:{hour}:{tx}:{ty}"
                             active_cycles[cycle_tile] = {
+                                "cycle_id": cycle_id,
                                 "seed": seed,
                                 "opponent": opponent_name,
+                                "target_x": tx,
+                                "target_y": ty,
+                                "target_tile": [tr, tc],
                                 "candidate_species": last_fo.get("species", "COW"),
                                 "candidate_eval_day": last_fo.get("day", day),
                                 "candidate_eval_hour": last_fo.get("hour", hour),
@@ -286,7 +305,6 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
                                 "rejection_reason": None,
                                 "pasture_requested_day": day,
                                 "pasture_requested_hour": hour,
-                                "target_tile": list(cycle_tile),
                                 "build_emitted_day": day,
                                 "build_emitted_hour": hour,
                                 "physical_pasture_observed_day": None,
@@ -297,7 +315,16 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
                                 "animal_purchase_hour": None,
                                 "animal_placement_day": None,
                                 "animal_placement_hour": None,
+                                "authoritative_feed_hold_before": float(last_fo.get("authoritative_hold_before", 0.0)),
+                                "authoritative_feed_hold_after": float(last_fo.get("authoritative_hold_after", 0.0)),
+                                "authoritative_feed_hold_delta": float(last_fo.get("authoritative_delta", 0.0)),
+                                "shadow_feed_hold_after": float(last_fo.get("shadow_hold_after", 0.0)),
+                                "authoritative_reservations_delta": 0,
+                                "authoritative_scheduled_market_wheat_delta": 0,
                             }
+                        elif cycle_tile in active_cycles and active_cycles[cycle_tile].get("build_emitted_day") is None:
+                            active_cycles[cycle_tile]["build_emitted_day"] = day
+                            active_cycles[cycle_tile]["build_emitted_hour"] = hour
 
         # Log purchases, sales, feeds
         orders = action0.get("market", []) if isinstance(action0, dict) else []
@@ -332,7 +359,7 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
 
                     # Associate with active continuation cycle
                     for pos, cdata in active_cycles.items():
-                        if cdata.get("physical_pasture_observed_day") is not None and cdata.get("animal_purchase_day") is None:
+                        if cdata.get("became_purchase_eligible_day") is not None and cdata.get("animal_purchase_day") is None:
                             cdata["animal_purchase_day"] = day
                             cdata["animal_purchase_hour"] = hour
 
@@ -356,6 +383,26 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
                     elif item == "FERTILIZER":
                         fert_rev += item_rev
 
+        # Safety checking on emitted orders
+        for o in orders:
+            if isinstance(o, (list, tuple)) and len(o) >= 2 and o[0] == "BUY_ANIMAL":
+                cost = ANIMALS.get(o[1], {}).get("cost", 400.0)
+                if money0 < cost:
+                    c2c_dependency_violations += 1
+
+        priv_shed_wheat = int(obs0.get("private", {}).get("shed", {}).get("WHEAT", 0)) if "private" in obs0 else 0
+        rem_feed_days = min(4, max(0, 28 - day))
+        req_wheat_buf = (placed_herd + owned_unplaced_herd) * rem_feed_days
+        allowed_wheat_sale = max(0, priv_shed_wheat - req_wheat_buf)
+        for o in orders:
+            if isinstance(o, (list, tuple)) and len(o) >= 3 and o[0] == "SELL" and o[1] == "WHEAT":
+                qty = int(o[2])
+                if qty > allowed_wheat_sale:
+                    wheat_sale_reservation_violations += 1
+
+        if _STATE.get("livestock_fallback_triggered", False):
+            unsafe_livestock_fallback_events += 1
+
         # Track feed actions
         f_op = action0.get("farmer", []) if isinstance(action0, dict) else []
         if isinstance(f_op, (list, tuple)) and len(f_op) > 0 and f_op[0] == "FEED":
@@ -368,7 +415,9 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
         step += 1
 
         if step > 1 and total_owned_herd < prev_total_owned:
-            starvations_or_deaths += (prev_total_owned - total_owned_herd)
+            loss = prev_total_owned - total_owned_herd
+            starvations_or_deaths += loss
+            animal_escapes += loss
 
         prev_total_owned = total_owned_herd
 
@@ -382,8 +431,9 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
 
     # Check forward-only feed holds recorded during match
     fo_feed_holds = list(_STATE.get("forward_only_feed_holds", []))
-    hold_before_avg = sum(f["hold_before"] for f in fo_feed_holds) / len(fo_feed_holds) if fo_feed_holds else 0.0
-    hold_after_avg = sum(f["hold_after"] for f in fo_feed_holds) / len(fo_feed_holds) if fo_feed_holds else 0.0
+    hold_before_avg = sum(f.get("authoritative_hold_before", f.get("hold_before", 0.0)) for f in fo_feed_holds) / len(fo_feed_holds) if fo_feed_holds else 0.0
+    hold_after_avg = sum(f.get("authoritative_hold_after", f.get("hold_after", 0.0)) for f in fo_feed_holds) / len(fo_feed_holds) if fo_feed_holds else 0.0
+    shadow_after_avg = sum(f.get("shadow_hold_after", f.get("hold_after", 0.0)) for f in fo_feed_holds) / len(fo_feed_holds) if fo_feed_holds else 0.0
 
     return {
         "arm": arm_name,
@@ -428,10 +478,16 @@ def run_match_single_arm(seed: int, opponent_name: str, arm_name: str, late_cont
         "forward_only_feed_holds": fo_feed_holds,
         "hold_before_avg": round(hold_before_avg, 2),
         "hold_after_avg": round(hold_after_avg, 2),
+        "shadow_after_avg": round(shadow_after_avg, 2),
         "wasted_pastures": unused_pastures,
         "stranded_animals": stranded_animals,
         "starvations_or_deaths": starvations_or_deaths,
-        "escapes": escapes,
+        "escapes": animal_escapes,
+        "animal_escapes": animal_escapes,
+        "feed_shortage_deaths": feed_shortage_deaths,
+        "c2c_dependency_violations": c2c_dependency_violations,
+        "wheat_sale_reservation_violations": wheat_sale_reservation_violations,
+        "unsafe_livestock_fallback_events": unsafe_livestock_fallback_events,
     }
 
 

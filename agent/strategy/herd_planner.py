@@ -598,12 +598,24 @@ def generate_dynamic_herd_plan(
         status = "admitted_forward_continuation" if is_forward_only else ("admitted_late_selective" if late_selective_mode else "admitted")
         feed_diag = None
         feed_hold_before = float(feed_ledger.candidate_feed_cash_hold) if feed_ledger is not None else 0.0
+        shadow_feed_hold_after = feed_hold_before
         if feed_ledger is not None:
             best_cand_res = cand_results[best_sp]
-            commit_candidate_reservation(feed_ledger, best_cand_res)
-            if best_cand_res.execution_confidence in ("guarded", "conditional"):
-                status = "provisional_guarded"
-            feed_diag = best_cand_res.to_dict()
+            if is_forward_only:
+                # Part 1 fix: clone ledger for hypothetical candidate evaluation; authoritative ledger remains 100% unmutated
+                ledger_clone = feed_ledger.clone()
+                commit_candidate_reservation(ledger_clone, best_cand_res)
+                if best_cand_res.execution_confidence in ("guarded", "conditional"):
+                    status = "provisional_guarded"
+                feed_diag = best_cand_res.to_dict()
+                shadow_feed_hold_after = float(ledger_clone.candidate_feed_cash_hold)
+                del ledger_clone
+            else:
+                commit_candidate_reservation(feed_ledger, best_cand_res)
+                if best_cand_res.execution_confidence in ("guarded", "conditional"):
+                    status = "provisional_guarded"
+                feed_diag = best_cand_res.to_dict()
+                shadow_feed_hold_after = float(feed_ledger.candidate_feed_cash_hold)
         feed_hold_after = float(feed_ledger.candidate_feed_cash_hold) if feed_ledger is not None else 0.0
 
         if is_forward_only and feed_ledger is not None:
@@ -613,6 +625,10 @@ def generate_dynamic_herd_plan(
                     "day": day,
                     "hour": hour,
                     "species": best_sp,
+                    "authoritative_hold_before": feed_hold_before,
+                    "authoritative_hold_after": feed_hold_after,
+                    "authoritative_delta": feed_hold_after - feed_hold_before,
+                    "shadow_hold_after": shadow_feed_hold_after,
                     "hold_before": feed_hold_before,
                     "hold_after": feed_hold_after,
                     "delta": feed_hold_after - feed_hold_before,

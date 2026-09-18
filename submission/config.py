@@ -103,9 +103,45 @@ BUY_WHEAT_TRIGGER_DAYS = 2.0
 POINT2_FEED_MODE = "shadow"
 FEED_OPERATIONAL_HORIZON_DAYS = FEED_WHEAT_BUFFER_DAYS
 
+# Point 2 Day-0 Early Livestock Bootstrap Experiment
+# Supported arms: "none", "ArmB", "ArmC", "ArmD", "ArmE" (or "B", "C", "D", "E")
+BOOTSTRAP_LIVESTOCK_ARM = "none"
+
+BOOTSTRAP_SEQUENCES = {
+    "none": [],
+    "A": [],
+    "ArmA": [],
+    "B": ["COW", "COW"],
+    "ArmB": ["COW", "COW"],
+    "2c": ["COW", "COW"],
+    "C": ["COW", "COW", "SHEEP"],
+    "ArmC": ["COW", "COW", "SHEEP"],
+    "2c_1s": ["COW", "COW", "SHEEP"],
+    "D": ["COW", "COW", "SHEEP", "SHEEP"],
+    "ArmD": ["COW", "COW", "SHEEP", "SHEEP"],
+    "2c_2s": ["COW", "COW", "SHEEP", "SHEEP"],
+    "E": ["COW", "COW", "COW"],
+    "ArmE": ["COW", "COW", "COW"],
+    "3c": ["COW", "COW", "COW"],
+}
+
+def get_bootstrap_target_sequence(arm: str = None) -> list:
+    """Return target candidate sequence for the active Day-0 bootstrap arm."""
+    if arm is None:
+        arm = BOOTSTRAP_LIVESTOCK_ARM
+    return list(BOOTSTRAP_SEQUENCES.get(arm, []))
+
 def get_point2_feed_mode() -> str:
     """Return the active Point-2 feed/herd sustainability rollout mode."""
     return POINT2_FEED_MODE
+
+# Point 2 Late-Housing Continuation Experiment
+# Strictly one candidate -> one pasture -> wait for completion -> then buy (Days 12-13)
+ONE_AT_A_TIME_LATE_HOUSING_ENABLED: bool = False
+
+def get_one_at_a_time_late_housing_enabled() -> bool:
+    """Return whether one-at-a-time late housing continuation is active."""
+    return ONE_AT_A_TIME_LATE_HOUSING_ENABLED
 
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)

@@ -72,6 +72,7 @@ from config import (
     PORT_SW,
     SW_PASTURE_TILES,
     EARLY_PASTURE_TILES,
+    SHED_ACCESS_TILES,
     SW_SOIL_TILES,
     SW_ESCROW_AMOUNT,
     get_target_hands,
@@ -893,9 +894,21 @@ class MacroPlanner:
             if ctx["farm"].money >= 1000:
                 land_reserve = 1000
 
-        day_0_seed_reserve = 1040 if day == 0 else 0
-        ne_fund_reserve = 600 if "NE" not in farm.unlocked and day < 3 else 0
-        cash_for_animals = max(0.0, ctx["farm"].money - future_hire_cost - self.reserve - seed_reserve - land_reserve - day_0_seed_reserve - ne_fund_reserve)
+        try:
+            from config import BOOTSTRAP_LIVESTOCK_ARM
+        except Exception:
+            BOOTSTRAP_LIVESTOCK_ARM = "none"
+
+        if day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None):
+            # Stage 2: Mandatory Day-0 Crop Floor (4 Melon + 4 Wheat = $360) across Arms B, C, D, E
+            day_0_seed_reserve = 360.0
+            ne_fund_reserve = 0
+            day_0_hire_cost = 7.0  # Day 0 mandatory hires (4 hands)
+            cash_for_animals = max(0.0, ctx["farm"].money - day_0_hire_cost - self.reserve - seed_reserve - land_reserve - day_0_seed_reserve - ne_fund_reserve)
+        else:
+            day_0_seed_reserve = 1040 if day == 0 else 0
+            ne_fund_reserve = 600 if "NE" not in farm.unlocked and day < 3 else 0
+            cash_for_animals = max(0.0, ctx["farm"].money - future_hire_cost - self.reserve - seed_reserve - land_reserve - day_0_seed_reserve - ne_fund_reserve)
 
         # Dynamic animal targets via corrected Astra heuristic
         # Stage 8B C4: Cease new livestock investment on or after C4_LIVESTOCK_CUTOFF_DAY (Day 12).
@@ -974,6 +987,7 @@ class MacroPlanner:
                     try:
                         is_late_selective = False
                         phys_housing_cap = None
+                        allow_late_continuation = False
                         if point2_mode == "live" and day >= C4_LIVESTOCK_CUTOFF_DAY and allow_livestock:
                             is_late_selective = True
                             obs_empty_pastures = sum(
@@ -997,10 +1011,63 @@ class MacroPlanner:
                             ) + (
                                 sum(int(inv.get("GOOSE", 0)) for inv in private.inventories) if private and hasattr(private, "inventories") else 0
                             )
+                            effective_empty_pastures = max(0, obs_empty_pastures - unplaced_large)
                             phys_housing_cap = {
-                                "PASTURE": max(0, obs_empty_pastures - unplaced_large),
+                                "PASTURE": effective_empty_pastures,
                                 "COOP": max(0, obs_empty_coops - unplaced_small),
                             }
+
+                            try:
+                                from config import get_one_at_a_time_late_housing_enabled
+                                late_cont_enabled = get_one_at_a_time_late_housing_enabled()
+                            except Exception:
+                                late_cont_enabled = False
+
+                            if late_cont_enabled and day in (12, 13):
+                                # Check if a late continuation pasture is already in flight
+                                mem = ctx.get("memory") if isinstance(ctx, dict) else None
+                                in_flight = False
+                                target_tile = None
+                                if mem:
+                                    in_flight = bool(mem.get("late_continuation_in_flight", False))
+                                    target_tile = mem.get("late_continuation_target_pos")
+                                else:
+                                    try:
+                                        from state.state_tracker import _STATE
+                                        in_flight = bool(_STATE.get("late_continuation_in_flight", False))
+                                        target_tile = _STATE.get("late_continuation_target_pos")
+                                    except Exception:
+                                        in_flight = False
+
+                                # If target tile has become a physical pasture, in-flight is complete!
+                                if target_tile and farm:
+                                    target_t = farm.tile_at(target_tile) if hasattr(farm, "tile_at") else None
+                                    if target_t and getattr(target_t, "kind", None) == "PASTURE":
+                                        in_flight = False
+                                        if mem:
+                                            mem["late_continuation_in_flight"] = False
+                                            mem["late_continuation_target_pos"] = None
+                                        try:
+                                            from state.state_tracker import _STATE
+                                            _STATE["late_continuation_in_flight"] = False
+                                            _STATE["late_continuation_target_pos"] = None
+                                        except Exception:
+                                            pass
+                                elif effective_empty_pastures > 0:
+                                    in_flight = False
+                                    if mem:
+                                        mem["late_continuation_in_flight"] = False
+                                        mem["late_continuation_target_pos"] = None
+                                    try:
+                                        from state.state_tracker import _STATE
+                                        _STATE["late_continuation_in_flight"] = False
+                                        _STATE["late_continuation_target_pos"] = None
+                                    except Exception:
+                                        pass
+
+                                # One-at-a-time continuation is allowed strictly when zero empty pastures exist AND zero in flight
+                                if effective_empty_pastures == 0 and not in_flight:
+                                    allow_late_continuation = True
 
                         herd_plan = generate_dynamic_herd_plan(
                             day=day,
@@ -1018,6 +1085,7 @@ class MacroPlanner:
                             feed_ledger=planning_feed_ledger,
                             late_selective_mode=is_late_selective,
                             physical_housing_capacity=phys_housing_cap,
+                            allow_late_continuation=allow_late_continuation,
                         )
                         target_pastures = max(
                             herd_plan.required_pastures,
@@ -1138,20 +1206,68 @@ class MacroPlanner:
                 sw_cell_allocated_tiles = sw_locs
                 plan.diagnostics["sw_cell_allocation"] = sw_diag
 
+        # Cap pasture queue: 1 in-flight during late continuation on Days 12-13
+        try:
+            from config import BOOTSTRAP_LIVESTOCK_ARM, get_one_at_a_time_late_housing_enabled
+            late_cont_enabled = get_one_at_a_time_late_housing_enabled()
+        except Exception:
+            BOOTSTRAP_LIVESTOCK_ARM = "none"
+            late_cont_enabled = False
+
+        if day in (12, 13) and late_cont_enabled and point2_mode == "live":
+            max_pasture_queue = 1
+        elif day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None):
+            max_pasture_queue = max(2, target_pastures)
+        else:
+            max_pasture_queue = 2
+
         # ONE Authoritative Reservation Budget:
         # 1. Allocate justified SW cell pasture location if approved
         for sw_tile in sw_cell_allocated_tiles:
-            if existing_structs < target_pastures and len(reserved_structure_tiles) < 2:
+            if existing_structs < target_pastures and len(reserved_structure_tiles) < max_pasture_queue:
                 reserved_structure_tiles.append((sw_tile, "BUILD_PASTURE"))
                 existing_structs += 1
                 positive_pasture_cands = [c for c in positive_pasture_cands if c["pos"] != sw_tile]
 
         # 2. Allocate remaining justified slots through existing NW/NE candidate path
-        while existing_structs < target_pastures and len(reserved_structure_tiles) < 2 and positive_pasture_cands:
+        while existing_structs < target_pastures and len(reserved_structure_tiles) < max_pasture_queue and positive_pasture_cands:
             cand_info = positive_pasture_cands.pop(0)
             cand_pos = cand_info["pos"]
             reserved_structure_tiles.append((cand_pos, "BUILD_PASTURE"))
             existing_structs += 1
+
+        # 3. Fallback slot allocation if positive_pasture_cands empty but target_pastures justified
+        if existing_structs < target_pastures and len(reserved_structure_tiles) < max_pasture_queue:
+            reserved_pos_set = {pos for pos, _ in reserved_structure_tiles}
+            valid_empty = [
+                t.pos for t in farm.iter_tiles()
+                if not getattr(t, "is_plant", False) and not getattr(t, "is_animal", False)
+                and getattr(t, "kind", "") not in ("PASTURE", "COOP", "ROCK", "RIVER")
+                and farm.quadrant_of(t.pos) in farm.unlocked
+                and farm.quadrant_of(t.pos) != "SE"
+                and t.pos not in set(SHED_ACCESS_TILES)
+                and t.pos not in reserved_pos_set
+            ]
+            if valid_empty:
+                best_empty = min(valid_empty, key=lambda p: min(abs(p[0] - s[0]) + abs(p[1] - s[1]) for s in SHED_ACCESS_TILES))
+                reserved_structure_tiles.append((best_empty, "BUILD_PASTURE"))
+                existing_structs += 1
+
+        # Record in-flight continuation state if a pasture was enqueued during Days 12-13
+        if reserved_structure_tiles and day in (12, 13) and late_cont_enabled and point2_mode == "live":
+            enqueued_pos = reserved_structure_tiles[0][0]
+            mem = ctx.get("memory") if isinstance(ctx, dict) else None
+            if mem:
+                mem["late_continuation_in_flight"] = True
+                mem["late_continuation_target_pos"] = enqueued_pos
+                mem["late_continuation_max_in_flight"] = max(mem.get("late_continuation_max_in_flight", 0), 1)
+            try:
+                from state.state_tracker import _STATE
+                _STATE["late_continuation_in_flight"] = True
+                _STATE["late_continuation_target_pos"] = enqueued_pos
+                _STATE["late_continuation_max_in_flight"] = max(_STATE.get("late_continuation_max_in_flight", 0), 1)
+            except Exception:
+                pass
 
         total_pastures = existing_pastures + len(reserved_structure_tiles)
 
@@ -1379,7 +1495,12 @@ class MacroPlanner:
             # Maintain feed wheat buffer
             total_animals_planned = sum(counts.values()) + sum(buy_animal.values())
             if total_animals_planned > 0:
-                needed_wheat = total_animals_planned * min(FEED_WHEAT_BUFFER_DAYS, days_left)
+                try:
+                    from config import BOOTSTRAP_LIVESTOCK_ARM
+                except Exception:
+                    BOOTSTRAP_LIVESTOCK_ARM = "none"
+                eff_planned = min(2, total_animals_planned) if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else total_animals_planned
+                needed_wheat = eff_planned * min(FEED_WHEAT_BUFFER_DAYS, days_left)
                 if needed_wheat > wheat_have:
                     buy_wheat = needed_wheat - wheat_have
         else:
@@ -1591,7 +1712,12 @@ class MacroPlanner:
         if plan.feeding_enabled:
             # While NE is pending, maintain a safe 5-day survival buffer rather than 20-day expansion
             wheat_buffer_target = 5 if (day <= 5 or (next_quadrant == 2 and day <= 8)) and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
-            wheat_needed = (n_animals + sum(buy_animal.values())) * wheat_buffer_target
+            try:
+                from config import BOOTSTRAP_LIVESTOCK_ARM
+            except Exception:
+                BOOTSTRAP_LIVESTOCK_ARM = "none"
+            eff_buy_count = min(2, sum(buy_animal.values())) if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else sum(buy_animal.values())
+            wheat_needed = (n_animals + eff_buy_count) * wheat_buffer_target
             if trigger:
                 wheat_needed = max(wheat_needed, deficit)
 
@@ -1636,8 +1762,28 @@ class MacroPlanner:
             planned = {}
             committed_counts = get_committed_crop_counts(farm)
             if day == 0:
-                melon_tiles = 12
-                wheat_tiles = 8
+                try:
+                    from config import BOOTSTRAP_LIVESTOCK_ARM
+                except Exception:
+                    BOOTSTRAP_LIVESTOCK_ARM = "none"
+
+                if BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None):
+                    MIN_CROP_FLOOR_MELON = 4
+                    MIN_CROP_FLOOR_WHEAT = 4
+                    MIN_CROP_FLOOR_COST = 360.0
+                    admitted_cows = buy_animal.get("COW", 0)
+                    admitted_sheep = buy_animal.get("SHEEP", 0)
+                    admitted_animal_cost = admitted_cows * 400.0 + admitted_sheep * 500.0
+                    feed_wheat_cost = (admitted_cows + admitted_sheep) * 4 * 28.0
+                    avail_crop_cash = max(0.0, float(farm.money) - 7.0 - self.reserve - admitted_animal_cost - feed_wheat_cost)
+                    extra_crop_cash = max(0.0, avail_crop_cash - MIN_CROP_FLOOR_COST)
+                    extra_melons = min(8, int(extra_crop_cash // 80.0))
+                    extra_wheat = min(4, int((extra_crop_cash - extra_melons * 80.0) // 10.0))
+                    melon_tiles = MIN_CROP_FLOOR_MELON + extra_melons
+                    wheat_tiles = MIN_CROP_FLOOR_WHEAT + extra_wheat
+                else:
+                    melon_tiles = 12
+                    wheat_tiles = 8
 
                 for _ in range(melon_tiles):
                     if empty_tiles:
@@ -2047,7 +2193,11 @@ class MacroPlanner:
         # Phase C1: ordered provisional animal candidate sequence
         provisional_seq = list(herd_plan.buy_animal_sequence) if herd_plan is not None else []
         plan.buy_animal_sequence = provisional_seq
-        if point2_mode == "live" and day >= C4_LIVESTOCK_CUTOFF_DAY:
+        try:
+            from config import BOOTSTRAP_LIVESTOCK_ARM
+        except Exception:
+            BOOTSTRAP_LIVESTOCK_ARM = "none"
+        if (point2_mode == "live" and day >= C4_LIVESTOCK_CUTOFF_DAY) or (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)):
             buy_animal = {
                 "COW": provisional_seq.count("COW"),
                 "SHEEP": provisional_seq.count("SHEEP"),

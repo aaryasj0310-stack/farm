@@ -30,6 +30,11 @@ _STATE = {
     "noop_attempts": 0,
     "invalid_guard": 0,
     "days_seen": set(),
+    "bootstrap_cohort_liabilities": 0,
+    "late_continuation_in_flight": False,
+    "late_continuation_target_pos": None,
+    "late_continuation_max_in_flight": 0,
+    "forward_only_feed_holds": [],
 }
 
 
@@ -93,6 +98,11 @@ def reset_memory(mem=None):
     mem["noop_attempts"] = 0
     mem["invalid_guard"] = 0
     mem["days_seen"] = set()
+    mem["bootstrap_cohort_liabilities"] = 0
+    mem["late_continuation_in_flight"] = False
+    mem["late_continuation_target_pos"] = None
+    mem["late_continuation_max_in_flight"] = 0
+    mem["forward_only_feed_holds"] = []
     for hook in _RESET_HOOKS:
         try:
             hook()
