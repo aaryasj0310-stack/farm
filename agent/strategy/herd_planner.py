@@ -597,12 +597,28 @@ def generate_dynamic_herd_plan(
 
         status = "admitted_forward_continuation" if is_forward_only else ("admitted_late_selective" if late_selective_mode else "admitted")
         feed_diag = None
+        feed_hold_before = float(feed_ledger.candidate_feed_cash_hold) if feed_ledger is not None else 0.0
         if feed_ledger is not None:
             best_cand_res = cand_results[best_sp]
             commit_candidate_reservation(feed_ledger, best_cand_res)
             if best_cand_res.execution_confidence in ("guarded", "conditional"):
                 status = "provisional_guarded"
             feed_diag = best_cand_res.to_dict()
+        feed_hold_after = float(feed_ledger.candidate_feed_cash_hold) if feed_ledger is not None else 0.0
+
+        if is_forward_only and feed_ledger is not None:
+            try:
+                from state.state_tracker import _STATE
+                _STATE.setdefault("forward_only_feed_holds", []).append({
+                    "day": day,
+                    "hour": hour,
+                    "species": best_sp,
+                    "hold_before": feed_hold_before,
+                    "hold_after": feed_hold_after,
+                    "delta": feed_hold_after - feed_hold_before,
+                })
+            except Exception:
+                pass
 
         shadow_herd[best_sp] += 1
         seq_idx = len(buy_animal_seq)
@@ -623,6 +639,8 @@ def generate_dynamic_herd_plan(
             "reason": "forward_housing_continuation_justified" if is_forward_only else "economically_justified",
             "forward_only": is_forward_only,
             "purchase_eligible": not is_forward_only,
+            "feed_hold_before": feed_hold_before,
+            "feed_hold_after": feed_hold_after,
             "guarded_diag": diag,
             "execution_status": status,
             "feed_diagnostics": feed_diag or {},

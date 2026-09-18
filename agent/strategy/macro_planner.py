@@ -1260,10 +1260,12 @@ class MacroPlanner:
             if mem:
                 mem["late_continuation_in_flight"] = True
                 mem["late_continuation_target_pos"] = enqueued_pos
+                mem["late_continuation_max_in_flight"] = max(mem.get("late_continuation_max_in_flight", 0), 1)
             try:
                 from state.state_tracker import _STATE
                 _STATE["late_continuation_in_flight"] = True
                 _STATE["late_continuation_target_pos"] = enqueued_pos
+                _STATE["late_continuation_max_in_flight"] = max(_STATE.get("late_continuation_max_in_flight", 0), 1)
             except Exception:
                 pass
 

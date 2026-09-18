@@ -33,6 +33,8 @@ _STATE = {
     "bootstrap_cohort_liabilities": 0,
     "late_continuation_in_flight": False,
     "late_continuation_target_pos": None,
+    "late_continuation_max_in_flight": 0,
+    "forward_only_feed_holds": [],
 }
 
 
@@ -99,6 +101,8 @@ def reset_memory(mem=None):
     mem["bootstrap_cohort_liabilities"] = 0
     mem["late_continuation_in_flight"] = False
     mem["late_continuation_target_pos"] = None
+    mem["late_continuation_max_in_flight"] = 0
+    mem["forward_only_feed_holds"] = []
     for hook in _RESET_HOOKS:
         try:
             hook()
