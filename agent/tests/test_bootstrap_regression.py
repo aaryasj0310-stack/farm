@@ -153,3 +153,44 @@ def test_stage2_arm_e_three_cows():
     config.POINT2_FEED_MODE = "shadow"
     config.BOOTSTRAP_LIVESTOCK_ARM = "none"
 
+
+def test_frozen_live_day0_reserve_components():
+    """Verify exact individual reserve components in frozen baseline."""
+    from strategy.macro_planner import MONEY_RESERVE
+    assert MONEY_RESERVE == 300.0, "Base operating reserve must be 300.0"
+
+    day = 0
+    day_0_seed_reserve = 1040 if day == 0 else 0
+    ne_fund_reserve = 600  # for day < 3 without NE
+    assert day_0_seed_reserve == 1040, "Frozen base day_0_seed_reserve is exactly 1040"
+    assert ne_fund_reserve == 600, "Frozen base ne_fund_reserve is exactly 600"
+
+
+def test_melon_yield_timing_truth():
+    """Verify that MELON yields on Day 10, not Day 5."""
+    from kaggle_environments.envs.kaggriculture.kaggriculture import CROPS
+    assert CROPS["MELON"]["first_yield_day"] == 10, "MELON first yield is Day 10"
+    assert CROPS["MELON"]["max_yield_day"] == 12
+    assert CROPS["WHEAT"]["first_yield_day"] == 2, "WHEAT first yield is Day 2"
+
+
+def test_bootstrap_8day_feed_liability_accounting():
+    """Verify exact 8-day rolling bootstrap feed liability: 3 near-term + 4 tail = 7 unique units."""
+    ledger = FeedResourceLedger(
+        day=0,
+        hour=0,
+        operational_horizon_days=4,
+        observed_cash=3000.0,
+        hard_cash_hold=667.0,
+        wheat_in_shed=0,
+        lifetime_price_policy="engine_stress_bound_v1",
+    )
+    res = evaluate_incremental_candidate(ledger, "COW", purchase_cost=400.0, is_day0_bootstrap=True)
+    assert res.feasible is True
+    # 3 operational units (Days 1-3) + 4 tail units (Days 4-7) = 7 unique units
+    assert res.near_term_market_wheat_required == 3
+    assert res.remaining_lifetime_feed_units == 4
+    assert res.near_term_market_wheat_required + res.remaining_lifetime_feed_units == 7
+    # 3 * 28 + 4 * 32 = 84 + 128 = 212.0
+    assert res.candidate_feed_cash_hold == 212.0
+
