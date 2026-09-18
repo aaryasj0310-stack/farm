@@ -30,6 +30,7 @@ _STATE = {
     "noop_attempts": 0,
     "invalid_guard": 0,
     "days_seen": set(),
+    "bootstrap_cohort_liabilities": 0,
 }
 
 
@@ -93,6 +94,7 @@ def reset_memory(mem=None):
     mem["noop_attempts"] = 0
     mem["invalid_guard"] = 0
     mem["days_seen"] = set()
+    mem["bootstrap_cohort_liabilities"] = 0
     for hook in _RESET_HOOKS:
         try:
             hook()

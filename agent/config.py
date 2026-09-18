@@ -103,6 +103,34 @@ BUY_WHEAT_TRIGGER_DAYS = 2.0
 POINT2_FEED_MODE = "shadow"
 FEED_OPERATIONAL_HORIZON_DAYS = FEED_WHEAT_BUFFER_DAYS
 
+# Point 2 Day-0 Early Livestock Bootstrap Experiment
+# Supported arms: "none", "ArmB", "ArmC", "ArmD", "ArmE" (or "B", "C", "D", "E")
+BOOTSTRAP_LIVESTOCK_ARM = "none"
+
+BOOTSTRAP_SEQUENCES = {
+    "none": [],
+    "A": [],
+    "ArmA": [],
+    "B": ["COW", "COW"],
+    "ArmB": ["COW", "COW"],
+    "2c": ["COW", "COW"],
+    "C": ["COW", "COW", "SHEEP"],
+    "ArmC": ["COW", "COW", "SHEEP"],
+    "2c_1s": ["COW", "COW", "SHEEP"],
+    "D": ["COW", "COW", "SHEEP", "SHEEP"],
+    "ArmD": ["COW", "COW", "SHEEP", "SHEEP"],
+    "2c_2s": ["COW", "COW", "SHEEP", "SHEEP"],
+    "E": ["COW", "COW", "COW"],
+    "ArmE": ["COW", "COW", "COW"],
+    "3c": ["COW", "COW", "COW"],
+}
+
+def get_bootstrap_target_sequence(arm: str = None) -> list:
+    """Return target candidate sequence for the active Day-0 bootstrap arm."""
+    if arm is None:
+        arm = BOOTSTRAP_LIVESTOCK_ARM
+    return list(BOOTSTRAP_SEQUENCES.get(arm, []))
+
 def get_point2_feed_mode() -> str:
     """Return the active Point-2 feed/herd sustainability rollout mode."""
     return POINT2_FEED_MODE

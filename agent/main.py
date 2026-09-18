@@ -755,9 +755,27 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     purchase_orders = []
     _ledger = None
     try:
-        if ctx["hour"] == 0:
+        if ctx.get("hour") == 0:
             if plan is not None:
                 purchase_orders, _ledger = builder.build(ctx, plan.intents, max_slots=builder_max_slots)
+                try:
+                    from config import BOOTSTRAP_LIVESTOCK_ARM
+                except Exception:
+                    BOOTSTRAP_LIVESTOCK_ARM = "none"
+                if ctx.get("day") == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None):
+                    n_anim = sum(
+                        int(o[2]) if (len(o) > 2 and isinstance(o[2], int)) else 1
+                        for o in purchase_orders
+                        if isinstance(o, (list, tuple)) and len(o) >= 2 and o[0] == "BUY_ANIMAL"
+                    )
+                    if n_anim > 0:
+                        try:
+                            from state.state_tracker import _STATE
+                            _STATE["bootstrap_cohort_liabilities"] = n_anim
+                            if isinstance(ctx, dict) and "memory" in ctx and isinstance(ctx["memory"], dict):
+                                ctx["memory"]["bootstrap_cohort_liabilities"] = n_anim
+                        except Exception:
+                            pass
         elif ctx["hour"] == 1:
             from config import POINT2_FEED_MODE
             if POINT2_FEED_MODE == "live":

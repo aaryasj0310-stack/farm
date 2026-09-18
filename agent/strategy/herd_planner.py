@@ -253,6 +253,135 @@ def generate_dynamic_herd_plan(
         avail_coops = 999
         housing_build_hurdle = 150.0
 
+    try:
+        from config import BOOTSTRAP_LIVESTOCK_ARM, get_bootstrap_target_sequence
+    except Exception:
+        BOOTSTRAP_LIVESTOCK_ARM = "none"
+        get_bootstrap_target_sequence = lambda arm=None: []
+
+    is_bootstrap_active = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
+    if is_bootstrap_active:
+        bootstrap_target_seq = get_bootstrap_target_sequence(BOOTSTRAP_LIVESTOCK_ARM)
+        for cand_idx, species in enumerate(bootstrap_target_seq):
+            cand_res = None
+            cand_feasible = True
+            if feed_ledger is not None:
+                cand_res = evaluate_incremental_candidate(
+                    feed_ledger, species, is_day0_bootstrap=True
+                )
+                cand_feasible = cand_res.feasible
+
+            if not cand_feasible:
+                f_reason = cand_res.blocking_reason if cand_res else "feed_infeasible"
+                marginal_value_seq.append(
+                    f"Bootstrap {species} #{cand_idx+1}: REJECTED ({f_reason}) -> STOP"
+                )
+                cand_diag = cand_res.to_dict() if cand_res else {}
+                decision_records.append({
+                    "candidate_id": f"cand_rej_bootstrap_{cand_idx}_{species}",
+                    "sequence_index": -1,
+                    "species": species,
+                    "candidate_num": shadow_herd.get(species, 0) + 1,
+                    "net_val": 0.0,
+                    "accepted": False,
+                    "provisional_status": "rejected",
+                    "feed_feasible": False,
+                    "execution_status": "rejected",
+                    "reason": f"bootstrap_feed_infeasible_{f_reason}",
+                    "feed_diagnostics": cand_diag,
+                    "feed_feasibility": cand_diag,
+                })
+                break
+
+            eval_base = estimate_realized_marginal_animal_value(
+                species=species,
+                day=day,
+                current_animals=shadow_herd,
+                market_inventory=market_inventory,
+                empty_pastures=1,
+                crop_opportunity_val=crop_opportunity_val,
+                town_shops=town_shops,
+                opponent_committed_supply=(opponent_committed_supplies.get("MILK" if species == "COW" else ("WOOL" if species == "SHEEP" else "EGG")) if opponent_committed_supplies else None),
+            )
+            val = eval_base.get("net_realized_value", 0.0)
+
+            # Stage 2: Displaced crop economic opportunity cost check for 3rd/4th animal
+            displaced_melons = 0
+            if cand_idx == 2:  # 3rd animal (Sheep #1 in Arm C/D, Cow #3 in Arm E)
+                if species == "SHEEP":
+                    displaced_melons = 8  # Displaces 8 melons ($640 seed cost)
+                elif species == "COW":
+                    displaced_melons = 6  # Displaces 6 melons ($480 seed cost)
+            elif cand_idx >= 3:
+                displaced_melons = 0
+
+            # Displaced crop opportunity: lost Cycle 1 melon net margin ($55/melon)
+            displaced_crop_value = displaced_melons * 55.0
+            net_advantage = val - displaced_crop_value
+
+            if net_advantage < housing_build_hurdle:
+                marginal_value_seq.append(
+                    f"Bootstrap {species} #{cand_idx+1}: net advantage ${net_advantage:.0f} (val ${val:.0f} - crop loss ${displaced_crop_value:.0f}) -> STOP"
+                )
+                cand_diag = cand_res.to_dict() if cand_res else {}
+                decision_records.append({
+                    "candidate_id": f"cand_rej_bootstrap_{cand_idx}_{species}",
+                    "sequence_index": -1,
+                    "species": species,
+                    "candidate_num": shadow_herd.get(species, 0) + 1,
+                    "net_val": round(net_advantage, 2),
+                    "accepted": False,
+                    "provisional_status": "rejected",
+                    "feed_feasible": True,
+                    "execution_status": "rejected",
+                    "reason": "below_crop_tradeoff_hurdle",
+                    "displaced_crop_investment": f"{displaced_melons} MELON",
+                    "displaced_crop_value": displaced_crop_value,
+                    "feed_diagnostics": cand_diag,
+                    "feed_feasibility": cand_diag,
+                })
+                break
+
+            if feed_ledger is not None and cand_res is not None:
+                commit_candidate_reservation(feed_ledger, cand_res)
+
+            shadow_herd[species] = shadow_herd.get(species, 0) + 1
+            seq_idx = len(buy_animal_seq)
+            buy_animal_seq.append(species)
+            marginal_value_seq.append(f"Bootstrap {species} #{shadow_herd[species]}: +${val:.0f} (net advantage +${net_advantage:.0f})")
+            feed_diag = cand_res.to_dict() if cand_res else {}
+            decision_records.append({
+                "candidate_id": f"cand_bootstrap_{seq_idx}_{species}",
+                "sequence_index": seq_idx,
+                "species": species,
+                "candidate_num": shadow_herd[species],
+                "net_val": round(val, 2),
+                "displaced_crop_investment": f"{displaced_melons} MELON",
+                "displaced_crop_value": displaced_crop_value,
+                "net_allocation_advantage": round(net_advantage, 2),
+                "accepted": True,
+                "provisional_status": "admitted",
+                "feed_feasible": True,
+                "reason": "bootstrap_cohort_admitted",
+                "execution_status": "admitted",
+                "feed_diagnostics": feed_diag,
+                "feed_feasibility": feed_diag,
+            })
+
+        req_pastures = shadow_herd["COW"] + shadow_herd["SHEEP"]
+        req_coops = shadow_herd["GOOSE"]
+
+        return DynamicHerdPlan(
+            desired_herd=shadow_herd,
+            required_pastures=req_pastures,
+            required_coops=req_coops,
+            marginal_value_sequence=marginal_value_seq,
+            decision_records=decision_records,
+            horizon_days=horizon_days,
+            rationale=f"bootstrap_{BOOTSTRAP_LIVESTOCK_ARM}_c{shadow_herd['COW']}_s{shadow_herd['SHEEP']}_g{shadow_herd['GOOSE']}",
+            buy_animal_sequence=buy_animal_seq,
+        )
+
     while sum(shadow_herd.values()) < target_cap:
         curr_total = sum(shadow_herd.values())
         base_evals: Dict[str, Dict[str, Any]] = {}

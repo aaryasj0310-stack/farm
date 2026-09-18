@@ -256,6 +256,8 @@ class OrderBuilder:
           - Orders are emitted strictly in priority tier order (hires first, then survival wheat, then land, seeds, animals).
         """
         farm = ctx["farm"]
+        day = int(ctx.get("day", 0))
+        hour = int(ctx.get("hour", 0))
         money = float(farm.money)
         budget = max(0.0, money - self.reserve)
 
@@ -456,24 +458,38 @@ class OrderBuilder:
             kept.append((TIER_OPTIONAL_WHEAT, "wheat_optional", {"n": w_opt_buyable, "is_protected": False}, optional_feed_budget))
 
         # Discretionary Tier: Seeds
-        for crop, n in sorted(intents.get("buy_seed", {}).items()):
-            n = int(n)
-            if n > 0 and crop in CROPS:
+        try:
+            from config import BOOTSTRAP_LIVESTOCK_ARM
+        except Exception:
+            BOOTSTRAP_LIVESTOCK_ARM = "none"
+        is_boot_day0 = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
+
+        if is_boot_day0:
+            # Stage 2: Inviolable Minimum Crop Floor (4 Melons + 4 Wheat = $360) committed before animals
+            min_floor_seeds = {"MELON": 4, "WHEAT": 4}
+            for crop, n in sorted(min_floor_seeds.items()):
                 unit = CROPS[crop]["seed"]
-                n_max = int(remaining_discretionary // unit)
-                if n_max >= n:
-                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
-                    remaining_discretionary -= unit * n
-                elif n_max > 0:
-                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n_max}, float(unit * n_max)))
-                    remaining_discretionary -= unit * n_max
-                    ledger["dropped"].append({
-                        "kind": "seed", "crop": crop,
-                        "trimmed_from": n, "to": n_max,
-                    })
-                else:
-                    reason = "live_failure" if live_failure_reason is not None else "budget"
-                    ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": reason})
+                kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
+                remaining_discretionary -= unit * n
+        else:
+            for crop, n in sorted(intents.get("buy_seed", {}).items()):
+                n = int(n)
+                if n > 0 and crop in CROPS:
+                    unit = CROPS[crop]["seed"]
+                    n_max = int(remaining_discretionary // unit)
+                    if n_max >= n:
+                        kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
+                        remaining_discretionary -= unit * n
+                    elif n_max > 0:
+                        kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n_max}, float(unit * n_max)))
+                        remaining_discretionary -= unit * n_max
+                        ledger["dropped"].append({
+                            "kind": "seed", "crop": crop,
+                            "trimmed_from": n, "to": n_max,
+                        })
+                    else:
+                        reason = "live_failure" if live_failure_reason is not None else "budget"
+                        ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": reason})
 
         # Discretionary Tier: Animals
         # Near-term SW protection: protect SW land capital ($2000) from discretionary animals
@@ -576,6 +592,14 @@ class OrderBuilder:
                     private=ctx.get("private"),
                     day=day,
                 )
+                try:
+                    from config import BOOTSTRAP_LIVESTOCK_ARM
+                except Exception:
+                    BOOTSTRAP_LIVESTOCK_ARM = "none"
+                if day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None):
+                    pending_structures = intents.get("pending_structures", {})
+                    accepted_housing.pending_pastures = int(pending_structures.get("PASTURE", 0))
+                    accepted_housing.pending_coops = int(pending_structures.get("COOP", 0))
             except Exception as exc:
                 can_start_replay = False
                 global_rejection_reason = "live_candidate_exception"
@@ -674,7 +698,8 @@ class OrderBuilder:
 
                         # Gate 2: Physical Housing
                         housing_before = accepted_housing.to_dict()
-                        if not accepted_housing.can_house(species):
+                        allow_pending_housing = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
+                        if not accepted_housing.can_house(species, allow_pending=allow_pending_housing):
                             h_reason = "post_cutoff_physical_housing_required" if day >= 12 else "no_physical_housing"
                             candidate_sequence_rejected.append(species)
                             ledger["dropped"].append({"kind": "animal", "animal": species, "reason": h_reason})
@@ -749,10 +774,16 @@ class OrderBuilder:
 
                         # Gate 6: Feed & Cash Feasibility
                         purchase_cost = float(ANIMALS[species]["cost"])
+                        try:
+                            from config import BOOTSTRAP_LIVESTOCK_ARM
+                        except Exception:
+                            BOOTSTRAP_LIVESTOCK_ARM = "none"
+                        is_boot = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
                         cand_res = evaluate_incremental_candidate(
                             working_ledger,
                             species,
                             purchase_cost=purchase_cost,
+                            is_day0_bootstrap=is_boot,
                         )
 
                         if not cand_res.feasible:
@@ -860,6 +891,29 @@ class OrderBuilder:
                         total_c,
                     ))
                     remaining_discretionary -= total_c
+
+            # Stage 2: For Day 0 bootstrap, allocate remaining discretionary cash to extra crop seeds beyond minimum floor
+            if is_boot_day0:
+                boot_feed_hold = float(getattr(working_ledger, "candidate_feed_cash_hold", 0.0)) if working_ledger else 0.0
+                remaining_discretionary = max(0.0, remaining_discretionary - boot_feed_hold)
+                min_floor_seeds = {"MELON": 4, "WHEAT": 4}
+                for crop, total_n in sorted(intents.get("buy_seed", {}).items()):
+                    extra_n = max(0, int(total_n) - min_floor_seeds.get(crop, 0))
+                    if extra_n > 0 and crop in CROPS:
+                        unit = CROPS[crop]["seed"]
+                        extra_buyable = min(extra_n, int(remaining_discretionary // unit))
+                        if extra_buyable > 0:
+                            found = False
+                            for idx, item in enumerate(kept):
+                                if item[1] == "seed" and item[2].get("crop") == crop:
+                                    cur_n = item[2]["n"]
+                                    new_n = cur_n + extra_buyable
+                                    kept[idx] = (TIER_SEEDS, "seed", {"crop": crop, "n": new_n}, float(unit * new_n))
+                                    found = True
+                                    break
+                            if not found:
+                                kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": extra_buyable}, float(unit * extra_buyable)))
+                            remaining_discretionary -= unit * extra_buyable
 
             # Feed-sale reservation derivation (C2C)
             res_keys = []
