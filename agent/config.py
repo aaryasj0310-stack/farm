@@ -135,6 +135,14 @@ def get_point2_feed_mode() -> str:
     """Return the active Point-2 feed/herd sustainability rollout mode."""
     return POINT2_FEED_MODE
 
+# Point 2 Late-Housing Continuation Experiment
+# Strictly one candidate -> one pasture -> wait for completion -> then buy (Days 12-13)
+ONE_AT_A_TIME_LATE_HOUSING_ENABLED: bool = False
+
+def get_one_at_a_time_late_housing_enabled() -> bool:
+    """Return whether one-at-a-time late housing continuation is active."""
+    return ONE_AT_A_TIME_LATE_HOUSING_ENABLED
+
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
 PHASE1_MELON_TILES_NW = 12        # NW melons for day-10 cash surge (Leader springboard)

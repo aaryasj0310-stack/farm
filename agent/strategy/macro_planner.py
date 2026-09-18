@@ -72,6 +72,7 @@ from config import (
     PORT_SW,
     SW_PASTURE_TILES,
     EARLY_PASTURE_TILES,
+    SHED_ACCESS_TILES,
     SW_SOIL_TILES,
     SW_ESCROW_AMOUNT,
     get_target_hands,
@@ -986,6 +987,7 @@ class MacroPlanner:
                     try:
                         is_late_selective = False
                         phys_housing_cap = None
+                        allow_late_continuation = False
                         if point2_mode == "live" and day >= C4_LIVESTOCK_CUTOFF_DAY and allow_livestock:
                             is_late_selective = True
                             obs_empty_pastures = sum(
@@ -1009,10 +1011,59 @@ class MacroPlanner:
                             ) + (
                                 sum(int(inv.get("GOOSE", 0)) for inv in private.inventories) if private and hasattr(private, "inventories") else 0
                             )
+                            effective_empty_pastures = max(0, obs_empty_pastures - unplaced_large)
                             phys_housing_cap = {
-                                "PASTURE": max(0, obs_empty_pastures - unplaced_large),
+                                "PASTURE": effective_empty_pastures,
                                 "COOP": max(0, obs_empty_coops - unplaced_small),
                             }
+
+                            try:
+                                from config import get_one_at_a_time_late_housing_enabled
+                                late_cont_enabled = get_one_at_a_time_late_housing_enabled()
+                            except Exception:
+                                late_cont_enabled = False
+
+                            if late_cont_enabled and day in (12, 13):
+                                # Check if a late continuation pasture is already in flight
+                                mem = ctx.get("memory") if isinstance(ctx, dict) else None
+                                in_flight = False
+                                target_tile = None
+                                if mem:
+                                    in_flight = bool(mem.get("late_continuation_in_flight", False))
+                                    target_tile = mem.get("late_continuation_target_pos")
+                                else:
+                                    try:
+                                        from state.state_tracker import _STATE
+                                        in_flight = bool(_STATE.get("late_continuation_in_flight", False))
+                                        target_tile = _STATE.get("late_continuation_target_pos")
+                                    except Exception:
+                                        in_flight = False
+
+                                # If target tile has become a physical pasture, in-flight is complete!
+                                if target_tile and farm:
+                                    target_t = farm.tile_at(target_tile) if hasattr(farm, "tile_at") else None
+                                    if target_t and getattr(target_t, "kind", None) == "PASTURE":
+                                        in_flight = False
+                                        if mem:
+                                            mem["late_continuation_in_flight"] = False
+                                        try:
+                                            from state.state_tracker import _STATE
+                                            _STATE["late_continuation_in_flight"] = False
+                                        except Exception:
+                                            pass
+                                elif effective_empty_pastures > 0:
+                                    in_flight = False
+                                    if mem:
+                                        mem["late_continuation_in_flight"] = False
+                                    try:
+                                        from state.state_tracker import _STATE
+                                        _STATE["late_continuation_in_flight"] = False
+                                    except Exception:
+                                        pass
+
+                                # One-at-a-time continuation is allowed strictly when zero empty pastures exist AND zero in flight
+                                if effective_empty_pastures == 0 and not in_flight:
+                                    allow_late_continuation = True
 
                         herd_plan = generate_dynamic_herd_plan(
                             day=day,
@@ -1030,6 +1081,7 @@ class MacroPlanner:
                             feed_ledger=planning_feed_ledger,
                             late_selective_mode=is_late_selective,
                             physical_housing_capacity=phys_housing_cap,
+                            allow_late_continuation=allow_late_continuation,
                         )
                         target_pastures = max(
                             herd_plan.required_pastures,
@@ -1150,12 +1202,20 @@ class MacroPlanner:
                 sw_cell_allocated_tiles = sw_locs
                 plan.diagnostics["sw_cell_allocation"] = sw_diag
 
-        # Cap pasture queue at 2 normally, or target_pastures on Day 0 if bootstrap arm is active
+        # Cap pasture queue: 1 in-flight during late continuation on Days 12-13
         try:
-            from config import BOOTSTRAP_LIVESTOCK_ARM
+            from config import BOOTSTRAP_LIVESTOCK_ARM, get_one_at_a_time_late_housing_enabled
+            late_cont_enabled = get_one_at_a_time_late_housing_enabled()
         except Exception:
             BOOTSTRAP_LIVESTOCK_ARM = "none"
-        max_pasture_queue = max(2, target_pastures) if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else 2
+            late_cont_enabled = False
+
+        if day in (12, 13) and late_cont_enabled and point2_mode == "live":
+            max_pasture_queue = 1
+        elif day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None):
+            max_pasture_queue = max(2, target_pastures)
+        else:
+            max_pasture_queue = 2
 
         # ONE Authoritative Reservation Budget:
         # 1. Allocate justified SW cell pasture location if approved
@@ -1171,6 +1231,37 @@ class MacroPlanner:
             cand_pos = cand_info["pos"]
             reserved_structure_tiles.append((cand_pos, "BUILD_PASTURE"))
             existing_structs += 1
+
+        # 3. Fallback slot allocation if positive_pasture_cands empty but target_pastures justified
+        if existing_structs < target_pastures and len(reserved_structure_tiles) < max_pasture_queue:
+            reserved_pos_set = {pos for pos, _ in reserved_structure_tiles}
+            valid_empty = [
+                t.pos for t in farm.iter_tiles()
+                if not getattr(t, "is_plant", False) and not getattr(t, "is_animal", False)
+                and getattr(t, "kind", "") not in ("PASTURE", "COOP", "ROCK", "RIVER")
+                and farm.quadrant_of(t.pos) in farm.unlocked
+                and farm.quadrant_of(t.pos) != "SE"
+                and t.pos not in set(SHED_ACCESS_TILES)
+                and t.pos not in reserved_pos_set
+            ]
+            if valid_empty:
+                best_empty = min(valid_empty, key=lambda p: min(abs(p[0] - s[0]) + abs(p[1] - s[1]) for s in SHED_ACCESS_TILES))
+                reserved_structure_tiles.append((best_empty, "BUILD_PASTURE"))
+                existing_structs += 1
+
+        # Record in-flight continuation state if a pasture was enqueued during Days 12-13
+        if reserved_structure_tiles and day in (12, 13) and late_cont_enabled and point2_mode == "live":
+            enqueued_pos = reserved_structure_tiles[0][0]
+            mem = ctx.get("memory") if isinstance(ctx, dict) else None
+            if mem:
+                mem["late_continuation_in_flight"] = True
+                mem["late_continuation_target_pos"] = enqueued_pos
+            try:
+                from state.state_tracker import _STATE
+                _STATE["late_continuation_in_flight"] = True
+                _STATE["late_continuation_target_pos"] = enqueued_pos
+            except Exception:
+                pass
 
         total_pastures = existing_pastures + len(reserved_structure_tiles)
 

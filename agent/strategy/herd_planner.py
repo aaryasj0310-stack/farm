@@ -145,6 +145,7 @@ def generate_dynamic_herd_plan(
     feed_ledger: Optional[Any] = None,
     late_selective_mode: bool = False,
     physical_housing_capacity: Optional[Dict[str, int]] = None,
+    allow_late_continuation: bool = False,
 ) -> DynamicHerdPlan:
     """Generate forward infrastructure herd targets using transactional shadow-state economics.
 
@@ -247,6 +248,8 @@ def generate_dynamic_herd_plan(
         avail_pastures = max(0, int(physical_housing_capacity.get("PASTURE", 0))) if physical_housing_capacity else 0
         avail_coops = max(0, int(physical_housing_capacity.get("COOP", 0))) if physical_housing_capacity else 0
         target_cap = (c0 + s0 + g0) + avail_pastures + avail_coops
+        if allow_late_continuation and day in (12, 13) and avail_pastures == 0:
+            target_cap += 1  # Exactly 1 forward continuation pasture candidate
         housing_build_hurdle = float(SELECTIVE_LIVESTOCK_GATE_THRESHOLD)
     else:
         avail_pastures = 999
@@ -392,8 +395,22 @@ def generate_dynamic_herd_plan(
         pastures_used = (shadow_herd["COW"] - c0) + (shadow_herd["SHEEP"] - s0)
         coops_used = shadow_herd["GOOSE"] - g0
 
+        is_continuation_pasture_eval = bool(
+            late_selective_mode
+            and day >= C4_LIVESTOCK_CUTOFF_DAY
+            and allow_late_continuation
+            and day in (12, 13)
+            and pastures_used >= avail_pastures
+        )
+        empty_pastures_eval = 0 if is_continuation_pasture_eval else 1
+
         # 1. Evaluate COW
-        cow_housing_ok = (not late_selective_mode or day < C4_LIVESTOCK_CUTOFF_DAY or pastures_used < avail_pastures)
+        cow_housing_ok = (
+            not late_selective_mode
+            or day < C4_LIVESTOCK_CUTOFF_DAY
+            or pastures_used < avail_pastures
+            or (allow_late_continuation and day in (12, 13) and pastures_used < (avail_pastures + 1))
+        )
         if shadow_herd["COW"] < cow_cap and (curr_total + 1) <= target_cap and cow_housing_ok:
             cand_feasible = True
             cand_res = None
@@ -409,7 +426,7 @@ def generate_dynamic_herd_plan(
                     day=day,
                     current_animals=shadow_herd,
                     market_inventory=market_inventory,
-                    empty_pastures=1,  # Infrastructure query: prospective pasture will be built
+                    empty_pastures=empty_pastures_eval,
                     crop_opportunity_val=crop_opportunity_val,
                     town_shops=town_shops,
                     opponent_committed_supply=(opponent_committed_supplies.get("MILK") if opponent_committed_supplies else None),
@@ -423,7 +440,7 @@ def generate_dynamic_herd_plan(
                         day=day,
                         current_animals=shadow_herd,
                         market_inventory=market_inventory,
-                        empty_pastures=1,
+                        empty_pastures=empty_pastures_eval,
                         crop_opportunity_val=crop_opportunity_val,
                         town_shops=town_shops,
                         opponent_committed_supply=opponent_stress_supplies.get("MILK"),
@@ -431,7 +448,12 @@ def generate_dynamic_herd_plan(
                     stress_evals["COW"] = eval_c_stress
 
         # 2. Evaluate SHEEP
-        sheep_housing_ok = (not late_selective_mode or day < C4_LIVESTOCK_CUTOFF_DAY or pastures_used < avail_pastures)
+        sheep_housing_ok = (
+            not late_selective_mode
+            or day < C4_LIVESTOCK_CUTOFF_DAY
+            or pastures_used < avail_pastures
+            or (allow_late_continuation and day in (12, 13) and pastures_used < (avail_pastures + 1))
+        )
         if shadow_herd["SHEEP"] < sheep_cap and (curr_total + 1) <= target_cap and sheep_housing_ok:
             cand_feasible = True
             cand_res = None
@@ -447,7 +469,7 @@ def generate_dynamic_herd_plan(
                     day=day,
                     current_animals=shadow_herd,
                     market_inventory=market_inventory,
-                    empty_pastures=1,  # Infrastructure query: prospective pasture will be built
+                    empty_pastures=empty_pastures_eval,
                     crop_opportunity_val=crop_opportunity_val,
                     town_shops=town_shops,
                     opponent_committed_supply=(opponent_committed_supplies.get("WOOL") if opponent_committed_supplies else None),
@@ -461,7 +483,7 @@ def generate_dynamic_herd_plan(
                         day=day,
                         current_animals=shadow_herd,
                         market_inventory=market_inventory,
-                        empty_pastures=1,
+                        empty_pastures=empty_pastures_eval,
                         crop_opportunity_val=crop_opportunity_val,
                         town_shops=town_shops,
                         opponent_committed_supply=opponent_stress_supplies.get("WOOL"),
@@ -565,7 +587,15 @@ def generate_dynamic_herd_plan(
             break
 
         # ACCEPT candidate into forward shadow state
-        status = "admitted_late_selective" if late_selective_mode else "admitted"
+        is_forward_only = bool(
+            late_selective_mode
+            and day >= C4_LIVESTOCK_CUTOFF_DAY
+            and allow_late_continuation
+            and day in (12, 13)
+            and pastures_used >= avail_pastures
+        )
+
+        status = "admitted_forward_continuation" if is_forward_only else ("admitted_late_selective" if late_selective_mode else "admitted")
         feed_diag = None
         if feed_ledger is not None:
             best_cand_res = cand_results[best_sp]
@@ -576,19 +606,23 @@ def generate_dynamic_herd_plan(
 
         shadow_herd[best_sp] += 1
         seq_idx = len(buy_animal_seq)
-        buy_animal_seq.append(best_sp)
+        if not is_forward_only:
+            buy_animal_seq.append(best_sp)
         switch_note = f" (SWITCH from {diag.get('baseline_best')} [gap {diag.get('relative_gap', 0):.1%}])" if diag.get("switched") else ""
-        marginal_value_seq.append(f"{best_sp} #{next_count}: +${best_val:.0f}{switch_note}")
+        forward_note = " [FORWARD HOUSING CONTINUATION ONLY]" if is_forward_only else ""
+        marginal_value_seq.append(f"{best_sp} #{next_count}: +${best_val:.0f}{switch_note}{forward_note}")
         rec = {
             "candidate_id": f"cand_{seq_idx}_{best_sp}",
-            "sequence_index": seq_idx,
+            "sequence_index": seq_idx if not is_forward_only else -1,
             "species": best_sp,
             "candidate_num": next_count,
             "net_val": round(best_val, 2),
             "accepted": True,
             "provisional_status": "admitted",
             "feed_feasible": True,
-            "reason": "economically_justified",
+            "reason": "forward_housing_continuation_justified" if is_forward_only else "economically_justified",
+            "forward_only": is_forward_only,
+            "purchase_eligible": not is_forward_only,
             "guarded_diag": diag,
             "execution_status": status,
             "feed_diagnostics": feed_diag or {},

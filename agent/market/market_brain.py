@@ -151,9 +151,13 @@ class MarketBrain:
         private = ctx.get("private")
         held_animals = sum(
             cnt for inv in (getattr(private, "inventories", None) or [])
-            for item, cnt in (inv or {}).items() if item in ("COW", "SHEEP", "CHICKEN")
+            for item, cnt in (inv or {}).items() if item in ("COW", "SHEEP", "GOOSE", "CHICKEN")
         ) if private else 0
-        animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal) + held_animals
+        shed_animals = sum(
+            int(shed.get(item, 0))
+            for item in ("COW", "SHEEP", "GOOSE", "CHICKEN")
+        ) if (shed and hasattr(shed, "get")) else 0
+        animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal) + held_animals + shed_animals
         reserved_wheat = 0 if endgame else animals * FEED_WHEAT_BUFFER_DAYS
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         pressure = shed_total >= SHED_SOFT_CAP

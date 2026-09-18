@@ -1758,7 +1758,7 @@ def evaluate_existing_herd_feasibility(
             # new_scheduled arriving today gives ZERO credit toward today's feed obligation.
             market_usable_for_needed = new_scheduled if can_help_today else 0
         else:
-            needed_day = n_placed
+            needed_day = n_placed + n_unplaced
             market_usable_for_needed = new_scheduled
 
         cumulative_needed += needed_day

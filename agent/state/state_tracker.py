@@ -31,6 +31,8 @@ _STATE = {
     "invalid_guard": 0,
     "days_seen": set(),
     "bootstrap_cohort_liabilities": 0,
+    "late_continuation_in_flight": False,
+    "late_continuation_target_pos": None,
 }
 
 
@@ -95,6 +97,8 @@ def reset_memory(mem=None):
     mem["invalid_guard"] = 0
     mem["days_seen"] = set()
     mem["bootstrap_cohort_liabilities"] = 0
+    mem["late_continuation_in_flight"] = False
+    mem["late_continuation_target_pos"] = None
     for hook in _RESET_HOOKS:
         try:
             hook()
