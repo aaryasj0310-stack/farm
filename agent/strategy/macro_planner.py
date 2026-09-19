@@ -462,13 +462,15 @@ def compute_authoritative_feed_capacity(farm, private, day, season_end=28, curre
     wheat_tiles = [t for t in farm.iter_tiles() if getattr(t, "is_plant", False) and getattr(t, "crop", None) == "WHEAT"]
     planted_yield = 0
     for t in wheat_tiles:
-        placed = getattr(t, "placed_day", None)
-        if placed is None:
-            placed = day
-        harvest_day = placed + 4
+        planted_day = getattr(t, "planted_day", None)
+        # A live crop with an unknown planting timestamp must not manufacture
+        # future feed credit. TileView exposes crop timing via planted_day.
+        if planted_day is None:
+            continue
+        harvest_day = planted_day + CROPS["WHEAT"]["max_yield_day"]
         if harvest_day <= season_end:
             fert_day = getattr(t, "fertilized_until_day", None)
-            is_fert = fert_day is not None and fert_day >= placed
+            is_fert = fert_day is not None and fert_day >= planted_day
             planted_yield += (6 if is_fert else 4)
 
     # 3. Predictable planned wheat yield
@@ -555,12 +557,13 @@ def compute_unavoidable_feed_shortfall(farm, private, day, n_animals, feed_buffe
             is_plant = getattr(t, "is_plant", False) if not isinstance(t, dict) else (t.get("is_plant", False) or t.get("kind") == "PLANT")
             crop = getattr(t, "crop", None) if not isinstance(t, dict) else t.get("crop")
             if is_plant and crop == "WHEAT":
-                placed = getattr(t, "placed_day", None) if not isinstance(t, dict) else t.get("placed_day")
-                if placed is None:
-                    placed = day
-                h_day = placed + 4
+                planted_day = getattr(t, "planted_day", None) if not isinstance(t, dict) else t.get("planted_day")
+                # Missing crop age is unknown supply, not a crop planted today.
+                if planted_day is None:
+                    continue
+                h_day = planted_day + CROPS["WHEAT"]["max_yield_day"]
                 fert_day = getattr(t, "fertilized_until_day", None) if not isinstance(t, dict) else t.get("fertilized_until_day")
-                is_fert = fert_day is not None and fert_day >= placed
+                is_fert = fert_day is not None and fert_day >= planted_day
                 yield_units = 6 if is_fert else 4
                 wheat_harvests.append((h_day, yield_units))
 
@@ -769,7 +772,7 @@ class MacroPlanner:
         # --- Authoritative wheat feed capacity projection ---
         wheat_tiles = [t for t in farm.iter_tiles()
                        if t.is_plant and t.crop == "WHEAT"]
-        wheat_tile_days = [t.placed_day for t in wheat_tiles]
+        wheat_tile_days = [getattr(t, "planted_day", None) for t in wheat_tiles]
         days_left = SEASON_DAYS - day
         wheat_cap = compute_wheat_capacity(wheat_tile_days, day)
         wheat_have = int(private.shed.get("WHEAT", 0))
@@ -1543,9 +1546,9 @@ class MacroPlanner:
         next_wheat_harvest_day = None
         wheat_tiles = [t for t in farm.iter_tiles() if getattr(t, "is_plant", False) and getattr(t, "crop", None) == "WHEAT"]
         for t in wheat_tiles:
-            placed = getattr(t, "placed_day", None)
-            if placed is not None:
-                matures = placed + 2
+            planted_day = getattr(t, "planted_day", None)
+            if planted_day is not None:
+                matures = planted_day + CROPS["WHEAT"]["first_yield_day"]
                 if matures >= day:
                     if next_wheat_harvest_day is None or matures < next_wheat_harvest_day:
                         next_wheat_harvest_day = matures
