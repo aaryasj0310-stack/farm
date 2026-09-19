@@ -211,7 +211,7 @@ def test_mixed_feed_inventory_uses_selective_product_deposit():
 
 def test_delivery_never_reserves_more_than_shed_room():
     ctx = ctx_for(
-        day=28,
+        day=28, hour=22,
         shed={"MELON": 99},
         inventories=[{"CARROT": 5}],
     )
@@ -380,16 +380,37 @@ def test_market_can_sell_scheduler_confirmed_same_turn_deposit():
     assert details["scheduled_product_deposits"] == {"CARROT": 3}
 
 
-def test_carried_inventory_contributes_to_shed_pressure():
+def test_normal_carried_inventory_does_not_create_early_pressure():
     ctx = market_ctx(
         day=10, hour=2,
         shed={"CARROT": 60},
         workers=[{"MELON": 10}],
     )
     orders, details = MarketBrain(FakeFC()).sell_orders(ctx)
-    assert details["pressure"] is True
+    assert details["pressure"] is False
     assert details["pending_occupancy"] == 70
+    assert orders == []
+
+
+def test_carried_inventory_creates_pressure_at_actual_rollover_overflow():
+    ctx = market_ctx(
+        day=10, hour=2,
+        shed={"CARROT": 60},
+        workers=[{"MELON": 45}],
+    )
+    orders, details = MarketBrain(FakeFC()).sell_orders(ctx)
+    assert details["pressure"] is True
+    assert details["pending_occupancy"] == 105
     assert orders
+
+
+def test_normal_day_carried_products_use_free_eod_drop_instead_of_delivery_labor():
+    ctx = ctx_for(
+        day=10, hour=12,
+        inventories=[{"CARROT": 8}],
+    )
+    tasks = build_tasks(ctx, macro())
+    assert not [t for t in tasks if t.get("kind") == "deposit_product"]
 
 
 def test_full_shed_blocks_deposit_until_sales_create_room():
