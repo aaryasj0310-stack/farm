@@ -73,7 +73,7 @@ def make_ctx(day=5, money=3000.0, hands=(), shed=None, seeds=None,
                     "kind": "PLANT", "crop": "WHEAT",
                     "pos": (x, y), "x": x, "y": y,
                     "watered_today": False, "yield_units": 0,
-                    "placed_day": day, "consecutive_unwatered": 0,
+                    "planted_day": day, "consecutive_unwatered": 0,
                 }
                 wheat_placed += 1
         if wheat_placed >= wheat_tiles:

@@ -582,10 +582,11 @@ def collect_secured_wheat_deliveries(
     """Extract only physically secured wheat production from live in-ground tiles.
 
     Rules:
-      - Conservative harvest day: placed_day + 4.
-      - Conservative yield: 6 units if fertilized at or after placement, 4 units otherwise.
+      - Conservative harvest day: planted_day + WHEAT.max_yield_day.
+      - Conservative yield: 6 units if fertilized at or after planting, 4 units otherwise.
       - Bounded by operational horizon: only deliveries arriving on or before
         operational_end_day are included.
+      - A live wheat tile with missing planted_day receives zero future credit.
       - Zero credit for empty soil, planned wheat, future SW, or seed purchases.
     """
     deliveries: List[TimedWheatDelivery] = []
@@ -602,13 +603,16 @@ def collect_secured_wheat_deliveries(
         if not (is_plant and crop == "WHEAT"):
             continue
 
-        placed = getattr(t, "placed_day", None) if not isinstance(t, dict) else t.get("placed_day")
-        if placed is None:
-            placed = current_day
+        planted_day = getattr(t, "planted_day", None) if not isinstance(t, dict) else t.get("planted_day")
+        # Crop timing is authoritative only when planted_day is observed.
+        # Falling back to current_day would make an older crop look newly planted
+        # and can shift secured supply outside the live feed horizon.
+        if planted_day is None:
+            continue
 
-        h_day = placed + 4
+        h_day = planted_day + CROPS["WHEAT"]["max_yield_day"]
         fert_day = getattr(t, "fertilized_until_day", None) if not isinstance(t, dict) else t.get("fertilized_until_day")
-        is_fert = fert_day is not None and fert_day >= placed
+        is_fert = fert_day is not None and fert_day >= planted_day
         yield_units = 6 if is_fert else 4
 
         effective_arrival_day = max(current_day, h_day)

@@ -32,6 +32,11 @@ def test_wheat_harvest_day0():
     assert h == 6  # 6 units × (1 + (4-2)) = 6
 
 
+def test_unknown_wheat_plant_day_gets_zero_capacity():
+    """Unknown crop age must not be treated as a crop planted today."""
+    assert project_wheat_harvests(plant_day=None, current_day=10) == 0
+
+
 def test_wheat_harvest_day5():
     """Tile planted day 5: harvest window days 7-9, still gets 6 units."""
     h = project_wheat_harvests(plant_day=5, current_day=5)
@@ -167,7 +172,7 @@ def make_ctx(day=5, money=3000.0, hands=(), shed=None, seeds=None,
                     "kind": "PLANT", "crop": "WHEAT",
                     "pos": (x, y), "x": x, "y": y,
                     "watered_today": False, "yield_units": 0,
-                    "placed_day": day, "consecutive_unwatered": 0,
+                    "planted_day": day, "consecutive_unwatered": 0,
                 }
                 wheat_placed += 1
         if wheat_placed >= wheat_tiles:

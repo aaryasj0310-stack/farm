@@ -24,6 +24,7 @@ class MockTile:
         self.fed_today = False
         self.fertilizer_available = False
         self.cared_today = False
+        self.planted_day = 0
         self.placed_day = 0
         self.consecutive_unwatered = 0
         self.consecutive_unfed = 0

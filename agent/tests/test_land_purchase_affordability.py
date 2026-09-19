@@ -162,7 +162,7 @@ def test_g_future_wheat_timing():
     ctx = make_ctx(day=10, money=2000, shed={}, unlocked=("NW",))
     ctx["farm"].tiles[1][1] = {
         "kind": "PLANT", "crop": "WHEAT", "is_plant": True,
-        "placed_day": 9, "pos": (1, 1), "x": 1, "y": 1
+        "planted_day": 9, "pos": (1, 1), "x": 1, "y": 1
     }
     w_hand, req, max_def, cost = compute_unavoidable_feed_shortfall(
         ctx["farm"], ctx["private"], day=10, n_animals=2, feed_buffer=4
@@ -170,7 +170,7 @@ def test_g_future_wheat_timing():
     assert max_def == 6
     assert cost == 150.0
 
-    ctx["farm"].tiles[1][1]["placed_day"] = 6
+    ctx["farm"].tiles[1][1]["planted_day"] = 6
     w_hand, req, max_def2, cost2 = compute_unavoidable_feed_shortfall(
         ctx["farm"], ctx["private"], day=10, n_animals=2, feed_buffer=4
     )
