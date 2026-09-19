@@ -912,6 +912,8 @@ def evaluate_sw_serviceability(
         "ne_observed_animals_and_housing": ne_animals,
         "ne_desired_sheep_target": active_target_sheep,
         "ne_reserved_sheep_workload_count": target_sheep,
+        "nw_committed_workload": nw_committed,
+        "ne_committed_workload": ne_committed,
         "reserve_desired_herd": bool(reserve_desired_herd),
         "nw_deficit": round(nw_deficit, 1),
         "ne_deficit": round(ne_deficit, 1),
