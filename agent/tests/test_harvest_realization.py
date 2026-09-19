@@ -8,7 +8,9 @@ _PKG = os.path.dirname(_HERE)
 sys.path.insert(0, _PKG)
 sys.path.insert(0, _HERE)
 
-from execution.task_scheduler import build_tasks, assign_tasks
+from execution.task_scheduler import (
+    build_tasks, assign_tasks, get_active_missions, reset_sticky_missions,
+)
 from main import _predict_same_turn_product_deposits
 from market.market_brain import MarketBrain
 from state.observation_parser import parse_observation
@@ -246,6 +248,49 @@ def test_assign_tasks_keeps_delivery_on_actual_carrier():
     asg = assign_tasks(task, ctx)
     assert 1 in asg["assignment"]
     assert asg["assignment"][1]["kind"] == "deposit_product"
+
+
+def test_product_delivery_mission_cancels_when_shed_becomes_full():
+    reset_sticky_missions()
+    ctx = ctx_for(
+        day=28, farmer=(0, 0),
+        inventories=[{"CARROT": 3}],
+    )
+    task = [{
+        "priority": 88, "op": "PLACE", "target": (4, 4),
+        "args": ["CARROT", 3], "kind": "deposit_product",
+        "meta": {"required_unit": 0},
+    }]
+    assign_tasks(task, ctx)
+    assert get_active_missions()
+
+    # Current-turn task generation would emit no deposit when the shed is full.
+    ctx["private"].shed = {"WHEAT": 100}
+    assign_tasks([], ctx)
+    assert get_active_missions() == {}
+
+
+def test_product_delivery_mission_refreshes_current_safe_quantity():
+    reset_sticky_missions()
+    ctx = ctx_for(
+        day=28, farmer=(0, 0),
+        inventories=[{"CARROT": 5}],
+    )
+    first = [{
+        "priority": 88, "op": "PLACE", "target": (4, 4),
+        "args": ["CARROT", 5], "kind": "deposit_product",
+        "meta": {"required_unit": 0},
+    }]
+    assign_tasks(first, ctx)
+    assert get_active_missions()[0]["args"] == ["CARROT", 5]
+
+    refreshed = [{
+        "priority": 88, "op": "PLACE", "target": (4, 4),
+        "args": ["CARROT", 1], "kind": "deposit_product",
+        "meta": {"required_unit": 0},
+    }]
+    assign_tasks(refreshed, ctx)
+    assert get_active_missions()[0]["args"] == ["CARROT", 1]
 
 
 def test_urgent_feed_preempts_lower_product_delivery_for_same_worker():
