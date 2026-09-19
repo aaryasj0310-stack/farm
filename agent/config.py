@@ -563,6 +563,10 @@ SELECTIVE_LIVESTOCK_MAX_DAY = 14
 SELECTIVE_LIVESTOCK_GATE_MAX_DAY = 14
 
 # SW Land Serviceability and Partial Exploitation
+# Isolated P1 experiment: the PURCHASE gate reserves observed livestock/housing
+# workload instead of hypothetical desired-herd expansion. Defaults OFF, leaving
+# existing production and all activation/feed serviceability callers unchanged.
+SW_P1_PURCHASE_COMMITTED_HERD_ONLY = False
 # None for dynamic model (optimal k* in {5, 10, 15}), or int in (5, 10, 15)
 SW_FORCE_K_TILES = None
 
