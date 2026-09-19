@@ -149,6 +149,13 @@ class MarketBrain:
 
         shed = ctx["private"].shed
         private = ctx.get("private")
+        scheduled_deposits = dict(ctx.get("scheduled_product_deposits", {}) or {})
+        worker_inventories = list(getattr(private, "inventories", None) or []) if private else []
+        carried_worker_inventory = sum(
+            max(0, int(qty))
+            for inv_row in worker_inventories
+            for qty in (inv_row or {}).values()
+        )
         held_animals = sum(
             cnt for inv in (getattr(private, "inventories", None) or [])
             for item, cnt in (inv or {}).items() if item in ("COW", "SHEEP", "GOOSE", "CHICKEN")
@@ -160,11 +167,16 @@ class MarketBrain:
         animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal) + held_animals + shed_animals
         reserved_wheat = 0 if endgame else animals * FEED_WHEAT_BUFFER_DAYS
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
-        pressure = shed_total >= SHED_SOFT_CAP
+        shed_occupancy = sum(max(0, int(v)) for v in shed.values())
+        pending_occupancy = shed_occupancy + carried_worker_inventory
+        # Carried goods auto-drop at EOD and can overflow the 100-slot shed.
+        # Treat them as pending occupancy so the sell layer creates room before
+        # the automatic drop, even though only shed stock is sellable right now.
+        pressure = pending_occupancy >= SHED_SOFT_CAP
 
         # Two-tier urgency:
         # 2 = midnight hard-guard, 1 = emergency relief, 0 = normal post-drain window
-        if hour >= 22 and shed_total > 88:
+        if hour >= 22 and pending_occupancy > 88:
             urgency = 2
         elif pressure:
             urgency = 1
@@ -221,7 +233,9 @@ class MarketBrain:
         for prod in SELLABLE:
             if prod in delay_set and not endgame and urgency < 2:
                 continue
-            stock = int(shed.get(prod, 0))
+            # A scheduler-confirmed deposit executes before market processing,
+            # so that quantity is valid same-turn sellable stock.
+            stock = int(shed.get(prod, 0)) + int(scheduled_deposits.get(prod, 0))
             if stock <= 0:
                 continue
             if prod == "WHEAT":
@@ -255,7 +269,7 @@ class MarketBrain:
             order_budget = max(order_budget, MAX_MARKET_ORDERS)
 
         # Slicing target for emergency relief
-        to_shed = max(0, shed_total - SHED_RESUME_CAP) if urgency == 1 else shed_total
+        to_shed = max(0, pending_occupancy - SHED_RESUME_CAP) if urgency == 1 else shed_total
 
         # Candidate product ordering
         # In emergency mode (when not endgame), follow liquidation priority: WHEAT -> CARROT -> TOMATO -> EGG -> MILK -> WOOL -> STRAWBERRY -> MELON -> FERTILIZER
@@ -372,6 +386,10 @@ class MarketBrain:
                                              delay_set=delay_set)
         return orders, {"candidates": candidates, "days_left": days_left,
                         "endgame": endgame, "pressure": pressure, "urgency": urgency,
+                        "shed_occupancy": shed_occupancy,
+                        "carried_worker_inventory": carried_worker_inventory,
+                        "pending_occupancy": pending_occupancy,
+                        "scheduled_product_deposits": dict(scheduled_deposits),
                         "upstream_truncation": truncated_by_slots,
                         "omitted_by_slots": omitted_by_slots,
                         "max_slots": max_slots,
