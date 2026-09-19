@@ -1054,6 +1054,21 @@ def build_feed_execution_snapshot(
             else:
                 mark_unverified("unverifiable_feed")
 
+        elif (op_act == "PLACE" and isinstance(u_task, dict)
+              and u_task.get("kind") == "deposit_product"):
+            item = act_args[0] if act_args else (task_args[0] if task_args else None)
+            qty = int(act_args[1]) if len(act_args) > 1 else (int(task_args[1]) if len(task_args) > 1 else 1)
+            if item is None or u_inv is None or qty <= 0 or u_inv.get(item, 0) <= 0:
+                mark_unverified("unverifiable_product_deposit")
+            else:
+                room = max(0, SHED_CAPACITY - sum(max(0, int(v)) for v in post_unit_shed.values()))
+                take = min(qty, int(u_inv.get(item, 0)), room)
+                if take > 0:
+                    u_inv[item] -= take
+                    if u_inv[item] == 0:
+                        del u_inv[item]
+                    post_unit_shed[item] = post_unit_shed.get(item, 0) + take
+
         elif op_act == "PLACE":
             animal_to_place = None
             if act_args and act_args[0] in ("COW", "SHEEP", "GOOSE"):
@@ -1166,15 +1181,20 @@ def build_feed_execution_snapshot(
                 mark_unverified("unverifiable_pickup")
 
         elif op_act == "DROP":
-            item = act_args[0] if act_args else (task_args[0] if task_args else None)
-            qty = int(act_args[1]) if len(act_args) > 1 else (int(task_args[1]) if len(task_args) > 1 else 1)
-            if item is not None and u_inv is not None and qty > 0 and u_inv.get(item, 0) >= qty:
-                u_inv[item] -= qty
-                if u_inv[item] == 0:
-                    del u_inv[item]
-                post_unit_shed[item] = post_unit_shed.get(item, 0) + qty
-            else:
+            # Engine DROP dumps the entire worker inventory when shed-adjacent.
+            # Any portion beyond shed capacity is discarded, so mirror that
+            # exactly in the execution snapshot.
+            if u_inv is None:
                 mark_unverified("unverifiable_drop")
+            else:
+                for item, raw_qty in list(u_inv.items()):
+                    qty = max(0, int(raw_qty or 0))
+                    room = max(0, SHED_CAPACITY - sum(max(0, int(v)) for v in post_unit_shed.values()))
+                    take = min(qty, room)
+                    if take > 0:
+                        post_unit_shed[item] = post_unit_shed.get(item, 0) + take
+                    if item in u_inv:
+                        del u_inv[item]
 
         elif op_act == "HARVEST":
             # Scheduler emits ["HARVEST"] with no args.
