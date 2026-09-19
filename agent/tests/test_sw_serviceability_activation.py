@@ -183,10 +183,48 @@ def test_serviceable_k_caps_sw_activation_not_nominal_best_k(monkeypatch):
     assert len(sw) == 5
     assert seen_kwargs["reserve_desired_herd"] is False
     assert seen_kwargs["responsive_scheduler_capacity"] is True
+    assert seen_kwargs["activation_context"] is True
     diag = plan.diagnostics["sw_serviceability_activation"]
     assert diag["nominal_best_k"] == 15
     assert diag["serviceable_k"] == 5
     assert diag["activated_empty_tiles"] == 5
+
+
+def test_activation_context_does_not_recharge_land_cost():
+    ctx = make_ctx(
+        day=12,
+        money=10000,
+        hands=tuple(range(12)),
+        unlocked=("NW", "NE", "SW"),
+        wheat_tiles=10,
+    )
+    farm = ctx["farm"]
+    purchase = evaluate_sw_serviceability(
+        12,
+        farm,
+        10000,
+        make_forecast(BASE_PRICES),
+        target_quadrant=3,
+        hour=10,
+        reserve_desired_herd=False,
+        responsive_scheduler_capacity=True,
+        activation_context=False,
+    )
+    activation = evaluate_sw_serviceability(
+        12,
+        farm,
+        10000,
+        make_forecast(BASE_PRICES),
+        target_quadrant=3,
+        hour=10,
+        reserve_desired_herd=False,
+        responsive_scheduler_capacity=True,
+        activation_context=True,
+    )
+    assert purchase[2]["land_charge_in_evaluation"] == 2000.0
+    assert activation[2]["land_charge_in_evaluation"] == 0.0
+    assert activation[2]["activation_context"] is True
+    assert activation[2]["net_marginal_profit"] >= purchase[2]["net_marginal_profit"]
 
 
 def test_flag_off_preserves_legacy_activation_path(monkeypatch):
