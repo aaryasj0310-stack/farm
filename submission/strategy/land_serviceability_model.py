@@ -541,6 +541,7 @@ def evaluate_sw_serviceability(
     hour: int = 0,
     allow_hypothetical: bool = False,
     reserve_desired_herd: bool = True,
+    responsive_scheduler_capacity: bool = False,
 ) -> Tuple[bool, int, Dict[str, Any]]:
     """Evaluate whether buying and partially exploiting SW generates positive net marginal EV.
 
@@ -558,7 +559,7 @@ def evaluate_sw_serviceability(
     try:
         from config import DYNAMIC_ZONAL_ALLOCATION as _cfg_dyn, STRATEGIC_SW_OWNERSHIP_ENABLED as _cfg_strat
         use_strat_sw = bool(_cfg_strat)
-        use_dynamic = bool(_cfg_dyn) or use_strat_sw
+        use_dynamic = bool(_cfg_dyn) or use_strat_sw or bool(responsive_scheduler_capacity)
     except Exception:
         use_dynamic = DYNAMIC_ZONAL_ALLOCATION
         use_strat_sw = False
@@ -651,14 +652,23 @@ def evaluate_sw_serviceability(
         sw_labor_cost = round(sw_squad * 30.0 * days_remaining, 1)
         surplus_units = 0
     else:
-        # Dynamic units committed to NW and NE
+        # Dynamic units committed to NW and NE.
+        # P1.2 uses the responsive scheduler's surplus-capacity idea while
+        # preserving the serviceability model's 15% safety reserve. This
+        # override is opt-in and therefore does not change existing dynamic
+        # allocation, purchase-gate, activation, or feed callers.
         eff_ap = float(EFFECTIVE_ACTIONS_PER_UNIT)
-        nw_mand_units = math.ceil(nw_committed / eff_ap)
-        ne_mand_units = math.ceil(ne_committed / eff_ap)
-        nw_cap = round(nw_mand_units * eff_ap * 0.85, 1)
-        ne_cap = round(ne_mand_units * eff_ap * 0.85, 1)
-        nw_deficit = 0.0
-        ne_deficit = 0.0
+        usable_per_unit = eff_ap * 0.85
+        if responsive_scheduler_capacity:
+            nw_mand_units = math.ceil(nw_committed / usable_per_unit) if nw_committed > 0 else 0
+            ne_mand_units = math.ceil(ne_committed / usable_per_unit) if ne_committed > 0 else 0
+        else:
+            nw_mand_units = math.ceil(nw_committed / eff_ap)
+            ne_mand_units = math.ceil(ne_committed / eff_ap)
+        nw_cap = round(nw_mand_units * usable_per_unit, 1)
+        ne_cap = round(ne_mand_units * usable_per_unit, 1)
+        nw_deficit = max(0.0, nw_committed - nw_cap)
+        ne_deficit = max(0.0, ne_committed - ne_cap)
         opportunity_cost_nw_ne = 0.0
         tot_mand = nw_mand_units + ne_mand_units
         surplus_units = max(0, worker_count - tot_mand)
@@ -915,6 +925,12 @@ def evaluate_sw_serviceability(
         "nw_committed_workload": nw_committed,
         "ne_committed_workload": ne_committed,
         "reserve_desired_herd": bool(reserve_desired_herd),
+        "responsive_scheduler_capacity": bool(responsive_scheduler_capacity),
+        "core_required_units": int(
+            (math.ceil(nw_committed / (float(EFFECTIVE_ACTIONS_PER_UNIT) * 0.85)) if responsive_scheduler_capacity and nw_committed > 0 else 0)
+            + (math.ceil(ne_committed / (float(EFFECTIVE_ACTIONS_PER_UNIT) * 0.85)) if responsive_scheduler_capacity and ne_committed > 0 else 0)
+        ) if responsive_scheduler_capacity else None,
+        "surplus_units_for_sw": int(surplus_units) if use_dynamic else 0,
         "nw_deficit": round(nw_deficit, 1),
         "ne_deficit": round(ne_deficit, 1),
         "available_marginal_ap": round(max(0.0, sw_cap - best_eval["req_actions"]), 1),
