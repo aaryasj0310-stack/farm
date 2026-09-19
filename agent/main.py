@@ -51,7 +51,7 @@ except ImportError:
 
 try:
     from config import (
-        QUADRANT_HARD_BLOCK, get_target_hands,
+        QUADRANT_HARD_BLOCK, PRODUCTS, SHED_CAPACITY, get_target_hands,
         set_opponent_intelligence_mode, get_opponent_intelligence_mode,
     )
     from strategy.price_forecast import PriceForecast
@@ -77,7 +77,7 @@ try:
     from strategy.feed_feasibility import build_feed_execution_snapshot
 except ImportError:
     from config import (
-        QUADRANT_HARD_BLOCK, get_target_hands,
+        QUADRANT_HARD_BLOCK, PRODUCTS, SHED_CAPACITY, get_target_hands,
         set_opponent_intelligence_mode, get_opponent_intelligence_mode,
     )
     from price_forecast import PriceForecast
@@ -106,6 +106,75 @@ except ImportError:
         build_feed_execution_snapshot = None
 
 PASS_ACTION = {"farmer": ["PASS"], "hands": [], "market": []}
+
+
+def _predict_same_turn_product_deposits(ctx, asg):
+    """Predict deposits that will execute before this turn's market phase.
+
+    The engine applies farmer/hand actions first, then market orders. Only an
+    emitted PLACE/DROP operation (not a movement toward shed) is credited.
+    Shed capacity is consumed in engine unit order so sell orders never rely on
+    product that would fail to deposit.
+    """
+    if not isinstance(asg, dict):
+        return {}
+    assignment = asg.get("assignment", {}) or {}
+    actions = asg.get("actions", {}) or {}
+    private = ctx.get("private") if isinstance(ctx, dict) else None
+    if private is None:
+        return {}
+    inventories = list(getattr(private, "inventories", []) or [])
+    shed = getattr(private, "shed", {}) or {}
+    room = max(0, SHED_CAPACITY - sum(max(0, int(v)) for v in shed.values()))
+    deposits = {}
+
+    def _task_for(u_idx):
+        if not isinstance(assignment, dict):
+            return None
+        return assignment.get(u_idx, assignment.get(str(u_idx)))
+
+    for raw_idx in sorted(actions, key=lambda x: int(x) if str(x).isdigit() else 0):
+        if room <= 0:
+            break
+        u_idx = int(raw_idx) if str(raw_idx).isdigit() else 0
+        act = actions.get(raw_idx)
+        if act is None:
+            act = actions.get(u_idx)
+        task = _task_for(u_idx)
+        if not act or not isinstance(task, dict) or task.get("kind") != "deposit_product":
+            continue
+        if u_idx >= len(inventories):
+            continue
+        inv = inventories[u_idx] or {}
+        op = act[0] if isinstance(act, (list, tuple)) and act else None
+
+        if op == "PLACE" and len(act) >= 2:
+            item = act[1]
+            if item not in PRODUCTS:
+                continue
+            try:
+                requested = int(act[2]) if len(act) >= 3 else 1
+            except (TypeError, ValueError):
+                requested = 0
+            take = min(max(0, requested), max(0, int(inv.get(item, 0))), room)
+            if take > 0:
+                deposits[item] = deposits.get(item, 0) + take
+                room -= take
+
+        elif op == "DROP":
+            for item, raw_qty in inv.items():
+                if room <= 0:
+                    break
+                if item not in PRODUCTS:
+                    continue
+                qty = max(0, int(raw_qty or 0))
+                take = min(qty, room)
+                if take > 0:
+                    deposits[item] = deposits.get(item, 0) + take
+                    room -= take
+
+    return deposits
+
 
 # Singleton / lazy-loaded instances
 _FC = None
@@ -710,6 +779,9 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
                 plan.intents["buy_land"] = False  # force block
         tasks = build_tasks(ctx, plan)
         asg = assign_tasks(tasks, ctx)
+        scheduled_product_deposits = _predict_same_turn_product_deposits(ctx, asg)
+        if isinstance(ctx, dict):
+            ctx["scheduled_product_deposits"] = scheduled_product_deposits
         if build_feed_execution_snapshot is not None:
             try:
                 actions_dict = asg.get("actions", {}) if isinstance(asg, dict) else {}
@@ -1005,6 +1077,12 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         "purchase_ledger": copy.deepcopy(_ledger) if _ledger else None,
         "sell_orders": [list(o) for o in sell_orders],
         "sell_details": copy.deepcopy(_d) if _d else None,
+        "scheduled_product_deposits": dict(ctx.get("scheduled_product_deposits", {}) or {}),
+        "worker_sellable_before": {
+            p: sum(int((inv or {}).get(p, 0)) for inv in (ctx["private"].inventories if ctx.get("private") else []))
+            for p in PRODUCTS
+            if sum(int((inv or {}).get(p, 0)) for inv in (ctx["private"].inventories if ctx.get("private") else [])) > 0
+        },
         "market": [list(o) for o in market],
         "land_proposed": land_proposed,
         "land_selected": land_selected,
