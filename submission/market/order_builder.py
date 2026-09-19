@@ -258,6 +258,7 @@ class OrderBuilder:
         farm = ctx["farm"]
         day = int(ctx.get("day", 0))
         hour = int(ctx.get("hour", 0))
+        private = ctx.get("private")
         money = float(farm.money)
         budget = max(0.0, money - self.reserve)
 
@@ -466,30 +467,58 @@ class OrderBuilder:
 
         if is_boot_day0:
             # Stage 2: Inviolable Minimum Crop Floor (4 Melons + 4 Wheat = $360) committed before animals
-            min_floor_seeds = {"MELON": 4, "WHEAT": 4}
-            for crop, n in sorted(min_floor_seeds.items()):
-                unit = CROPS[crop]["seed"]
-                kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
-                remaining_discretionary -= unit * n
+            # Subtract planted crops and owned seeds, and bound by physical planting capacity
+            from strategy.macro_planner import get_committed_crop_counts
+            committed_counts = get_committed_crop_counts(farm)
+            planted_melon = committed_counts.get("MELON", 0)
+            planted_wheat = committed_counts.get("WHEAT", 0)
+            seeds_owned = private.seeds if (private and hasattr(private, "seeds")) else {}
+            owned_melon = int(seeds_owned.get("MELON", 0))
+            owned_wheat = int(seeds_owned.get("WHEAT", 0))
+
+            empty_tile_count = sum(
+                1 for t in farm.iter_tiles()
+                if getattr(t, "kind", "") == "EMPTY"
+                and farm.quadrant_of(t.pos) in farm.unlocked
+                and t.pos != (4, 4)
+            )
+            rem_floor_melon = max(0, 4 - (planted_melon + owned_melon))
+            cap_floor_melon = min(rem_floor_melon, empty_tile_count)
+            avail_empty_for_wheat = max(0, empty_tile_count - cap_floor_melon)
+            rem_floor_wheat = max(0, 4 - (planted_wheat + owned_wheat))
+            cap_floor_wheat = min(rem_floor_wheat, avail_empty_for_wheat)
+
+            # Suppress late Day-0 purchases (hour >= 17)
+            if hour >= 17:
+                cap_floor_melon = 0
+                cap_floor_wheat = 0
+
+            seed_demands = {}
+            if cap_floor_melon > 0:
+                seed_demands["MELON"] = cap_floor_melon
+            if cap_floor_wheat > 0:
+                seed_demands["WHEAT"] = cap_floor_wheat
         else:
-            for crop, n in sorted(intents.get("buy_seed", {}).items()):
-                n = int(n)
-                if n > 0 and crop in CROPS:
-                    unit = CROPS[crop]["seed"]
-                    n_max = int(remaining_discretionary // unit)
-                    if n_max >= n:
-                        kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
-                        remaining_discretionary -= unit * n
-                    elif n_max > 0:
-                        kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n_max}, float(unit * n_max)))
-                        remaining_discretionary -= unit * n_max
-                        ledger["dropped"].append({
-                            "kind": "seed", "crop": crop,
-                            "trimmed_from": n, "to": n_max,
-                        })
-                    else:
-                        reason = "live_failure" if live_failure_reason is not None else "budget"
-                        ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": reason})
+            seed_demands = dict(intents.get("buy_seed", {}))
+
+        for crop, n in sorted(seed_demands.items()):
+            n = int(n)
+            if n > 0 and crop in CROPS:
+                unit = CROPS[crop]["seed"]
+                n_max = int(remaining_discretionary // unit)
+                if n_max >= n:
+                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
+                    remaining_discretionary -= unit * n
+                elif n_max > 0:
+                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n_max}, float(unit * n_max)))
+                    remaining_discretionary -= unit * n_max
+                    ledger["dropped"].append({
+                        "kind": "seed", "crop": crop,
+                        "trimmed_from": n, "to": n_max,
+                    })
+                else:
+                    reason = "live_failure" if live_failure_reason is not None else "budget"
+                    ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": reason})
 
         # Discretionary Tier: Animals
         # Near-term SW protection: protect SW land capital ($2000) from discretionary animals
