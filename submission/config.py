@@ -595,6 +595,36 @@ def get_sw_workload_responsive_scheduler() -> bool:
     """Return whether the isolated workload-responsive SW scheduler is enabled."""
     return SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED
 
+
+# Isolated P1.2 experiment: gate post-purchase SW crop activation on the
+# serviceability model evaluated with the same surplus-capacity concept as the
+# responsive scheduler. Default OFF preserves all existing production/P1/P1.1
+# behavior exactly.
+SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED = False
+
+
+def set_sw_serviceability_aware_activation(enabled: bool) -> None:
+    """Toggle the isolated P1.2 SW activation serviceability gate."""
+    global SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED
+    SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_sw_serviceability_aware_activation() -> bool:
+    """Return whether post-purchase SW activation is serviceability-gated."""
+    return SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED
+
 # None for dynamic model (optimal k* in {5, 10, 15}), or int in (5, 10, 15)
 SW_FORCE_K_TILES = None
 
