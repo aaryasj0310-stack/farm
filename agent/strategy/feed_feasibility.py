@@ -1182,11 +1182,31 @@ def build_feed_execution_snapshot(
 
         elif op_act == "DROP":
             # Engine DROP dumps the entire worker inventory when shed-adjacent.
-            # Any portion beyond shed capacity is discarded, so mirror that
-            # exactly in the execution snapshot.
+            # Keep the execution snapshot fail-closed for malformed parameterized
+            # DROP requests: legacy callers/tests may attach an item/qty even
+            # though the engine ignores DROP args. A request for inventory the
+            # worker does not hold is therefore not considered verified.
+            malformed_drop = False
+            if act_args:
+                requested_item = act_args[0]
+                try:
+                    requested_qty = int(act_args[1]) if len(act_args) > 1 else 1
+                except (TypeError, ValueError):
+                    requested_qty = 0
+                if (
+                    u_inv is None
+                    or requested_qty <= 0
+                    or int((u_inv or {}).get(requested_item, 0)) < requested_qty
+                ):
+                    mark_unverified("unverifiable_drop")
+                    malformed_drop = True
+
             if u_inv is None:
-                mark_unverified("unverifiable_drop")
+                if not malformed_drop:
+                    mark_unverified("unverifiable_drop")
             else:
+                # Mirror actual engine semantics even when verification failed:
+                # every positive inventory entry is removed, and overflow is lost.
                 for item, raw_qty in list(u_inv.items()):
                     qty = max(0, int(raw_qty or 0))
                     room = max(0, SHED_CAPACITY - sum(max(0, int(v)) for v in post_unit_shed.values()))
