@@ -1,9 +1,7 @@
 name: SW P1.1 Responsive Scheduler Validation
 
 on:
-  push:
-    branches:
-      - diagnostic/sw-p1-post-purchase-regression
+  # Historical P1.1 validation is frozen; P1.2 has its own validation workflow.
   workflow_dispatch:
 
 permissions:
