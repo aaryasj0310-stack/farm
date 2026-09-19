@@ -996,19 +996,23 @@ def build_tasks(ctx, macro):
                 continue
 
             carried_here = sum(deliverable.values())
+            # Normal-day worker inventory is intentionally allowed to ride until
+            # the engine's free end-of-day auto-drop. Explicit shed travel costs
+            # scarce field actions and previously caused watering/feed regressions.
+            # Intervene only when value is at risk of EOD overflow, or on Day 29
+            # when EOD auto-drop occurs after the final market opportunity.
+            overflow_risk = pending_total > SHED_CAPACITY
             should_deliver = (
-                day >= 28 or hour >= 20 or carried_here >= 6
-                or pending_total >= SHED_SOFT_CAP
+                day == 29
+                or (hour >= 22 and overflow_risk)
             )
             if not should_deliver:
                 continue
 
             if day == 29:
                 delivery_prio = PRIORITY_ENDGAME_PRODUCT_DELIVERY
-            elif day >= 28 or hour >= 20 or pending_total >= SHED_SOFT_CAP:
-                delivery_prio = PRIORITY_PRODUCT_DELIVERY_PRESSURE
             else:
-                delivery_prio = PRIORITY_PRODUCT_DELIVERY
+                delivery_prio = PRIORITY_PRODUCT_DELIVERY_PRESSURE
 
             target = _nearest_shed_access(ctx["farm"], unit_positions[u_idx])
             at_shed = unit_positions[u_idx] == tuple(target)
