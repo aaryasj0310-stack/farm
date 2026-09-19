@@ -542,6 +542,7 @@ def evaluate_sw_serviceability(
     allow_hypothetical: bool = False,
     reserve_desired_herd: bool = True,
     responsive_scheduler_capacity: bool = False,
+    activation_context: bool = False,
 ) -> Tuple[bool, int, Dict[str, Any]]:
     """Evaluate whether buying and partially exploiting SW generates positive net marginal EV.
 
@@ -702,8 +703,8 @@ def evaluate_sw_serviceability(
                 "realizable_seed_spend": 0.0,
                 "sw_labor_cost": 0.0,
                 "opportunity_cost_nw_ne": 0.0,
-                "net_marginal_profit": -land_price,
-                "serv_adjusted_roi": -1.0,
+                "net_marginal_profit": 0.0 if activation_context else -land_price,
+                "serv_adjusted_roi": 0.0 if activation_context else -1.0,
                 "payback_surplus": 0.0,
                 "sw_squad": 0,
                 "sw_cap": 0.0,
@@ -835,13 +836,15 @@ def evaluate_sw_serviceability(
             realizable_gross_rev = round(k_serviceable * best_crop_gross, 1)
             realizable_seed_spend = round(k_serviceable * best_crop_spend, 1)
 
-        # Realizable marginal profit after land, dedicated SW labor, and displaced NW/NE opportunity cost
+        # Purchase context charges land capital; post-purchase activation treats
+        # land as sunk and evaluates only incremental crop economics.
+        land_charge = 0.0 if activation_context else land_price
         net_marginal_profit = round(
-            realizable_gross_rev - realizable_seed_spend - land_price - curr_sw_labor_cost - curr_opp_cost, 1
+            realizable_gross_rev - realizable_seed_spend - land_charge - curr_sw_labor_cost - curr_opp_cost, 1
         )
         serv_adjusted_roi = round(net_marginal_profit / max(1.0, land_price), 4)
         payback_surplus = round(
-            realizable_gross_rev - (land_price + realizable_seed_spend + curr_sw_labor_cost + curr_opp_cost), 1
+            realizable_gross_rev - (land_charge + realizable_seed_spend + curr_sw_labor_cost + curr_opp_cost), 1
         )
 
         evaluations.append({
@@ -926,6 +929,8 @@ def evaluate_sw_serviceability(
         "ne_committed_workload": ne_committed,
         "reserve_desired_herd": bool(reserve_desired_herd),
         "responsive_scheduler_capacity": bool(responsive_scheduler_capacity),
+        "activation_context": bool(activation_context),
+        "land_charge_in_evaluation": 0.0 if activation_context else float(land_price),
         "core_required_units": int(
             (math.ceil(nw_committed / (float(EFFECTIVE_ACTIONS_PER_UNIT) * 0.85)) if responsive_scheduler_capacity and nw_committed > 0 else 0)
             + (math.ceil(ne_committed / (float(EFFECTIVE_ACTIONS_PER_UNIT) * 0.85)) if responsive_scheduler_capacity and ne_committed > 0 else 0)
