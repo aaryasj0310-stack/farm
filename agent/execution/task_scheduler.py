@@ -1424,7 +1424,9 @@ def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
             if getattr(tile, "kind", "") != "WEED":
                 return False
         elif op == "PLACE":
-            if getattr(tile, "is_animal", False):
+            # Product deposits use PLACE-at-shed and are valid regardless of
+            # the farm tile occupying that shed-access coordinate.
+            if mission.get("kind") != "deposit_product" and getattr(tile, "is_animal", False):
                 return False
 
     return True
@@ -1724,6 +1726,9 @@ def assign_tasks(tasks, ctx, extra_units=()):
         if op == "PLACE" and args and args[0] in ANIMALS and not holders.get(args[0]):
             reason = "no_carrier"
             turn_blocked_diagnostics["blocked_due_no_carrier"] += 1
+        elif kind == "deposit_product" and args and not holders.get(args[0]):
+            reason = "inventory"
+            turn_blocked_diagnostics["blocked_due_inventory"] += 1
         elif op == "FEED" and not holders.get("WHEAT"):
             reason = "inventory"
             turn_blocked_diagnostics["blocked_due_inventory"] += 1
