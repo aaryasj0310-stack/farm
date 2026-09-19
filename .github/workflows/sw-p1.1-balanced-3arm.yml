@@ -1,17 +1,8 @@
 name: SW P1.1 Balanced Three-Arm Experiment
 
 on:
-  push:
-    branches:
-      - diagnostic/sw-p1-post-purchase-regression
-    paths:
-      - .github/workflows/sw-p1.1-balanced-3arm.yml
-      - simulations/experiments/run_sw_p1_responsive_scheduler_3arm.py
-      - agent/config.py
-      - agent/execution/task_scheduler.py
-      - submission/config.py
-      - submission/execution/task_scheduler.py
-      - agent/tests/test_sw_workload_responsive_scheduler.py
+  # Historical P1.1 experiment is frozen at its validated runtime.
+  # Use the P1.2 four-arm workflow for subsequent SW work.
   workflow_dispatch:
 
 permissions:
