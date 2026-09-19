@@ -695,7 +695,7 @@ def test_arm_c_transactional_shadow_state_and_marginal_sequence():
     for i in range(10):
         tiles[i // 5][i % 5] = {
             "kind": "PLANT", "crop": "WHEAT", "pos": (i % 5, i // 5),
-            "watered_today": True, "yield_units": 0, "placed_day": 6
+            "watered_today": True, "yield_units": 0, "planted_day": 6
         }
     
     farm = {
@@ -759,7 +759,7 @@ def test_arm_b_target_shop_economics():
     for i in range(10):
         tiles[i // 5][i % 5] = {
             "kind": "PLANT", "crop": "WHEAT", "pos": (i % 5, i // 5),
-            "watered_today": True, "yield_units": 0, "placed_day": 4
+            "watered_today": True, "yield_units": 0, "planted_day": 4
         }
         
     farm = {
