@@ -923,13 +923,14 @@ class MacroPlanner:
         if ne_locked and pre_ne_mode in ("ne_first", "ne_escrow"):
             if pre_ne_mode == "ne_first":
                 pre_ne_livestock_envelope = 0.0
+                cash_for_animals = 0.0
             else:
                 mand_hire = day_0_hire_cost if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else future_hire_cost
                 mand_seed = day_0_seed_reserve if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else seed_reserve
                 pre_ne_nonlivestock_holds = mand_hire + self.reserve + mand_seed
                 ne_land_hold = 1000.0
                 pre_ne_livestock_envelope = max(0.0, farm_money_avail - pre_ne_nonlivestock_holds - ne_land_hold)
-            cash_for_animals = min(cash_for_animals, pre_ne_livestock_envelope)
+                cash_for_animals = pre_ne_livestock_envelope
         else:
             pre_ne_livestock_envelope = None
 
@@ -2225,7 +2226,7 @@ class MacroPlanner:
             from config import BOOTSTRAP_LIVESTOCK_ARM
         except Exception:
             BOOTSTRAP_LIVESTOCK_ARM = "none"
-        if point2_mode == "live" or (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)):
+        if (point2_mode == "live" and (day >= C4_LIVESTOCK_CUTOFF_DAY or pre_ne_mode in ("ne_first", "ne_escrow"))) or (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)):
             buy_animal = {
                 "COW": provisional_seq.count("COW"),
                 "SHEEP": provisional_seq.count("SHEEP"),

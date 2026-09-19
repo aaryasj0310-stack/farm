@@ -212,7 +212,7 @@ class OrderBuilder:
                 "protected_feed_wheat": intents.get("protected_feed_wheat", 0),
                 "optional_feed_wheat": intents.get("optional_feed_wheat", 0),
                 "buy_land": bool(intents.get("buy_land", False)),
-                "buy_seed": {} if (int(ctx.get("day", 0)) == 0) else intents.get("buy_seed", {}),
+                "buy_seed": intents.get("buy_seed", {}),
                 "buy_animal": intents.get("buy_animal", {}),
                 "buy_animal_sequence": intents.get("buy_animal_sequence", []),
                 "pending_structures": intents.get("pending_structures", {}),
@@ -237,7 +237,7 @@ class OrderBuilder:
             "protected_feed_wheat": intents.get("protected_feed_wheat", 0),
             "optional_feed_wheat": intents.get("optional_feed_wheat", 0),
             "buy_land": bool(intents.get("buy_land", False)),
-            "buy_seed": {} if (int(ctx.get("day", 0)) == 0) else intents.get("buy_seed", {}),
+            "buy_seed": intents.get("buy_seed", {}),
             "buy_animal": capped_animal,
             "pending_structures": intents.get("pending_structures", {}),
             "execution_snapshot": intents.get("execution_snapshot"),
@@ -462,7 +462,7 @@ class OrderBuilder:
             from config import BOOTSTRAP_LIVESTOCK_ARM
         except Exception:
             BOOTSTRAP_LIVESTOCK_ARM = "none"
-        is_boot_day0 = bool(day == 0 and hour == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
+        is_boot_day0 = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
 
         if is_boot_day0:
             # Stage 2: Inviolable Minimum Crop Floor (4 Melons + 4 Wheat = $360) committed before animals
@@ -678,15 +678,16 @@ class OrderBuilder:
                         farm_cash = float(farm.money) if (farm and hasattr(farm, "money")) else (
                             float(ctx.get("farm", {}).get("money", 0.0)) if isinstance(ctx.get("farm"), dict) else 0.0
                         )
+                        ne_land_committed = sum(float(t[3]) for t in kept if t[1] == "land")
+                        ne_land_escrow = max(0.0, 1000.0 - ne_land_committed)
                         non_livestock_holds = (
                             mandatory_hire_budget
-                            + sum(float(t[3]) for t in kept if t[1] == "land")
+                            + ne_land_committed
                             + sum(float(t[3]) for t in kept if t[1] == "seed")
                             + (float(total_retained_wheat * unit_wheat_px) if total_retained_wheat > 0 else 0.0)
                             + float(self.reserve)
                         )
-                        ne_land_hold = 1000.0
-                        initial_ne_envelope = max(0.0, farm_cash - non_livestock_holds - ne_land_hold)
+                        initial_ne_envelope = max(0.0, farm_cash - non_livestock_holds - ne_land_escrow)
                 else:
                     initial_ne_envelope = float('inf')
 
@@ -833,7 +834,12 @@ class OrderBuilder:
                             continue
 
                         # Gate 7: Pre-NE Capital Gate
-                        candidate_package_cost = purchase_cost + float(cand_res.candidate_feed_cash_hold)
+                        cand_incremental_feed = float(
+                            cand_res.diagnostics.get("delta_total_feed", 0.0)
+                            if (cand_res is not None and getattr(cand_res, "diagnostics", None))
+                            else 0.0
+                        )
+                        candidate_package_cost = purchase_cost + cand_incremental_feed
                         if ne_locked and pre_ne_capital_mode in ("ne_first", "ne_escrow"):
                             if candidate_package_cost > remaining_ne_envelope:
                                 candidate_sequence_rejected.append(species)

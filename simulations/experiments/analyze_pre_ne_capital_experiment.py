@@ -191,10 +191,33 @@ def main():
     mean_ne_c = float(np.mean(ne_unlock_days_c)) if ne_unlock_days_c else 999.0
     mean_ne_d = float(np.mean(ne_unlock_days_d)) if ne_unlock_days_d else 999.0
 
-    print("\n--- 4. NE UNLOCK TIMING & CAPITAL DYNAMICS ---")
+    ne_rate_a = (len(ne_unlock_days_a) / n_seeds) * 100.0
+    ne_rate_b = (len(ne_unlock_days_b) / n_seeds) * 100.0
+    ne_rate_c = (len(ne_unlock_days_c) / n_seeds) * 100.0
+    ne_rate_d = (len(ne_unlock_days_d) / n_seeds) * 100.0
+
+    sw_unlock_days_a = [r["arm_a"]["sw_unlock_day"] for r in results if r["arm_a"]["sw_unlock_day"] is not None]
+    sw_unlock_days_b = [r["arm_b"]["sw_unlock_day"] for r in results if r["arm_b"]["sw_unlock_day"] is not None]
+    sw_unlock_days_c = [r["arm_c"]["sw_unlock_day"] for r in results if r["arm_c"]["sw_unlock_day"] is not None]
+    sw_unlock_days_d = [r["arm_d"]["sw_unlock_day"] for r in results if r["arm_d"]["sw_unlock_day"] is not None]
+
+    sw_rate_a = (len(sw_unlock_days_a) / n_seeds) * 100.0
+    sw_rate_b = (len(sw_unlock_days_b) / n_seeds) * 100.0
+    sw_rate_c = (len(sw_unlock_days_c) / n_seeds) * 100.0
+    sw_rate_d = (len(sw_unlock_days_d) / n_seeds) * 100.0
+
+    mean_sw_a = f"{np.mean(sw_unlock_days_a):.2f}" if sw_unlock_days_a else "N/A"
+    mean_sw_b = f"{np.mean(sw_unlock_days_b):.2f}" if sw_unlock_days_b else "N/A"
+    mean_sw_c = f"{np.mean(sw_unlock_days_c):.2f}" if sw_unlock_days_c else "N/A"
+    mean_sw_d = f"{np.mean(sw_unlock_days_d):.2f}" if sw_unlock_days_d else "N/A"
+
+    print("\n--- 4. NE & SW UNLOCK TIMING & CAPITAL DYNAMICS ---")
     print(f"{'Metric':<35} | {'Arm A (Shadow)':>14} | {'Arm B (Live-off)':>16} | {'Arm C (NE-first)':>16} | {'Arm D (NE-escrow)':>17}")
     print("-" * 105)
-    print(f"{'Mean NE Unlock Day':<35} | {mean_ne_a:>14.2f} | {mean_ne_b:>16.2f} | {mean_ne_c:>16.2f} | {mean_ne_d:>17.2f}")
+    print(f"{'NE Unlock Rate (%)':<35} | {ne_rate_a:>13.1f}% | {ne_rate_b:>15.1f}% | {ne_rate_c:>15.1f}% | {ne_rate_d:>16.1f}%")
+    print(f"{'Mean NE Unlock Day (Conditional)':<35} | {mean_ne_a:>14.2f} | {mean_ne_b:>16.2f} | {mean_ne_c:>16.2f} | {mean_ne_d:>17.2f}")
+    print(f"{'SW Unlock Rate (%)':<35} | {sw_rate_a:>13.1f}% | {sw_rate_b:>15.1f}% | {sw_rate_c:>15.1f}% | {sw_rate_d:>16.1f}%")
+    print(f"{'Mean SW Unlock Day (Conditional)':<35} | {mean_sw_a:>14} | {mean_sw_b:>16} | {mean_sw_c:>16} | {mean_sw_d:>17}")
 
     for day_cp in (0, 1, 3, 5, 10, 12, 15):
         cash_a = np.mean([r["arm_a"]["cash_checkpoints"].get(str(day_cp), r["arm_a"]["cash_checkpoints"].get(day_cp, 0.0)) for r in results])
@@ -326,7 +349,7 @@ def main():
         best_arm = "Arm C (NE-first)" if stats_c["mean"] > stats_d["mean"] else "Arm D (NE-escrow)"
         print(f"\nDECISION: {best_arm} demonstrates significant improvement over baseline.")
 
-    print("\nPOINT 2 NE-PRESERVING CAPITAL EXPERIMENT COMPLETE — READY FOR SOL REVIEW")
+    print("POINT 2 NE EXPERIMENT CORRECTION COMPLETE — READY FOR SOL REVIEW")
 
 
 if __name__ == "__main__":

@@ -303,8 +303,6 @@ def generate_dynamic_herd_plan(
         BOOTSTRAP_LIVESTOCK_ARM = "none"
         get_bootstrap_target_sequence = lambda arm=None: []
 
-    LIVESTOCK_PURCHASE_COST = {"COW": 400.0, "SHEEP": 250.0, "GOOSE": 100.0}
-
     is_bootstrap_active = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
     if is_bootstrap_active:
         bootstrap_target_seq = get_bootstrap_target_sequence(BOOTSTRAP_LIVESTOCK_ARM)
@@ -389,8 +387,13 @@ def generate_dynamic_herd_plan(
                 break
 
             # Pre-NE Capital Admission Policy Check
-            cand_feed_hold = float(cand_res.candidate_feed_cash_hold) if cand_res is not None else 0.0
-            cand_package_cost = LIVESTOCK_PURCHASE_COST.get(species, 0.0) + cand_feed_hold
+            cand_incremental_feed = float(
+                cand_res.diagnostics.get("delta_total_feed", 0.0)
+                if (cand_res is not None and getattr(cand_res, "diagnostics", None))
+                else 0.0
+            )
+            cand_purchase_cost = float(ANIMALS.get(species, {}).get("cost", 400.0))
+            cand_package_cost = cand_purchase_cost + cand_incremental_feed
             cand_deferred = False
             if is_ne_locked and eff_pre_ne_mode in ("ne_first", "ne_escrow"):
                 if eff_pre_ne_mode == "ne_first":
@@ -693,8 +696,14 @@ def generate_dynamic_herd_plan(
             break
 
         # Pre-NE Capital Admission Policy Check
-        cand_feed_hold = float(cand_results[best_sp].candidate_feed_cash_hold) if (feed_ledger is not None and best_sp in cand_results and cand_results[best_sp]) else 0.0
-        cand_package_cost = LIVESTOCK_PURCHASE_COST.get(best_sp, 0.0) + cand_feed_hold
+        best_cand_res = cand_results.get(best_sp) if (feed_ledger is not None and best_sp in cand_results) else None
+        cand_incremental_feed = float(
+            best_cand_res.diagnostics.get("delta_total_feed", 0.0)
+            if (best_cand_res is not None and getattr(best_cand_res, "diagnostics", None))
+            else 0.0
+        )
+        cand_purchase_cost = float(ANIMALS.get(best_sp, {}).get("cost", 400.0))
+        cand_package_cost = cand_purchase_cost + cand_incremental_feed
         cand_deferred = False
         if is_ne_locked and eff_pre_ne_mode in ("ne_first", "ne_escrow"):
             if eff_pre_ne_mode == "ne_first":

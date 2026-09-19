@@ -200,3 +200,62 @@ def test_pre_ne_diagnostics_serialization():
     assert "pre_ne_diagnostics" in d
     assert d["pre_ne_diagnostics"]["mode"] == "ne_escrow"
     assert d["pre_ne_diagnostics"]["envelope_remaining"] == 150.0
+
+
+def test_pre_ne_animal_pricing_authoritative(monkeypatch):
+    """Verify authoritative costs: COW $400, SHEEP $500, GOOSE $300 (not stale hardcoded values)."""
+    _patch_config_attr(monkeypatch, "BOOTSTRAP_LIVESTOCK_ARM", "ArmC")  # ArmC is [COW, COW, SHEEP]
+
+    # Test SHEEP candidate with envelope = $450
+    # COW 1 ($400) admitted -> envelope left = $50.
+    # COW 2 ($400) deferred.
+    # Now test single SHEEP candidate: with envelope = $450, a $500 sheep must be deferred (would pass if $250!)
+    plan = generate_dynamic_herd_plan(
+        day=0,
+        hour=0,
+        current_herd={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+        town_shops={"MILK": {"price": 160.0}, "WOOL": {"price": 200.0}},
+        market_inventory={"MILK": 0, "WOOL": 0, "WHEAT": 50},
+        feed_ledger=None,
+        pre_ne_capital_mode="ne_escrow",
+        ne_locked=True,
+        pre_ne_livestock_envelope=450.0,
+    )
+    # Cow 1 is $400 <= 450 -> admitted. Cow 2 is $400 > 50 -> deferred.
+    assert plan.desired_herd["COW"] == 1
+    # Verify candidate 1 cost was 400
+    assert plan.pre_ne_diagnostics["candidates"][0]["package_cost"] == 400.0
+
+    # Direct test with custom target where first animal is SHEEP
+    _patch_config_attr(monkeypatch, "get_bootstrap_target_sequence", lambda arm: ["SHEEP"])
+    plan_sheep = generate_dynamic_herd_plan(
+        day=0,
+        hour=0,
+        current_herd={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+        town_shops={"MILK": {"price": 160.0}, "WOOL": {"price": 200.0}},
+        market_inventory={"MILK": 0, "WOOL": 0, "WHEAT": 50},
+        feed_ledger=None,
+        pre_ne_capital_mode="ne_escrow",
+        ne_locked=True,
+        pre_ne_livestock_envelope=450.0,
+    )
+    assert plan_sheep.desired_herd["SHEEP"] == 0
+    assert plan_sheep.pre_ne_diagnostics["candidates"][0]["admitted"] is False
+    assert plan_sheep.pre_ne_diagnostics["candidates"][0]["package_cost"] == 500.0
+
+    # If envelope is 550, SHEEP ($500) passes
+    plan_sheep_admit = generate_dynamic_herd_plan(
+        day=0,
+        hour=0,
+        current_herd={"COW": 0, "SHEEP": 0, "GOOSE": 0},
+        town_shops={"MILK": {"price": 160.0}, "WOOL": {"price": 200.0}},
+        market_inventory={"MILK": 0, "WOOL": 0, "WHEAT": 50},
+        feed_ledger=None,
+        pre_ne_capital_mode="ne_escrow",
+        ne_locked=True,
+        pre_ne_livestock_envelope=550.0,
+    )
+    assert plan_sheep_admit.desired_herd["SHEEP"] == 1
+    assert plan_sheep_admit.pre_ne_diagnostics["candidates"][0]["admitted"] is True
+    assert plan_sheep_admit.pre_ne_diagnostics["candidates"][0]["package_cost"] == 500.0
+    assert plan_sheep_admit.pre_ne_diagnostics["envelope_remaining"] == 50.0

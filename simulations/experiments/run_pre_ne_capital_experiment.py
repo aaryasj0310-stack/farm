@@ -387,6 +387,27 @@ def run_match_single_arm(
                     elif item == "FERTILIZER":
                         fert_rev += item_rev
 
+        # Safety checking on emitted orders
+        for o in orders:
+            if isinstance(o, (list, tuple)) and len(o) >= 2 and o[0] == "BUY_ANIMAL":
+                sp = o[1]
+                cost = float(ANIMALS.get(sp, {}).get("cost", 400.0))
+                if money0 < cost:
+                    c2c_dependency_violations += 1
+
+        priv_shed_wheat = int(obs0.get("private", {}).get("shed", {}).get("WHEAT", 0)) if "private" in obs0 else 0
+        rem_feed_days = min(4, max(0, 28 - day))
+        req_wheat_buf = (placed_herd + owned_unplaced_herd) * rem_feed_days
+        allowed_wheat_sale = max(0, priv_shed_wheat - req_wheat_buf)
+        for o in orders:
+            if isinstance(o, (list, tuple)) and len(o) >= 3 and o[0] in ("SELL", "SELL_PRODUCT") and o[1] == "WHEAT":
+                qty = int(o[2])
+                if qty > allowed_wheat_sale:
+                    wheat_sale_reservation_violations += 1
+
+        if _STATE.get("livestock_fallback_triggered", False):
+            unsafe_livestock_fallback_events += 1
+
         # In-flight continuation telemetry
         mem_curr = _STATE
         if mem_curr.get("late_continuation_in_flight", False):
