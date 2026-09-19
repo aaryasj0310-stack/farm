@@ -258,7 +258,6 @@ class OrderBuilder:
         farm = ctx["farm"]
         day = int(ctx.get("day", 0))
         hour = int(ctx.get("hour", 0))
-        private = ctx.get("private")
         money = float(farm.money)
         budget = max(0.0, money - self.reserve)
 
@@ -466,59 +465,72 @@ class OrderBuilder:
         is_boot_day0 = bool(day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None))
 
         if is_boot_day0:
-            # Stage 2: Inviolable Minimum Crop Floor (4 Melons + 4 Wheat = $360) committed before animals
+            # Stage 2: Inviolable Minimum Crop Floor (4 Melons + 4 Wheat) committed before animals
             # Subtract planted crops and owned seeds, and bound by physical planting capacity
             from strategy.macro_planner import get_committed_crop_counts
             committed_counts = get_committed_crop_counts(farm)
             planted_melon = committed_counts.get("MELON", 0)
             planted_wheat = committed_counts.get("WHEAT", 0)
-            seeds_owned = private.seeds if (private and hasattr(private, "seeds")) else {}
-            owned_melon = int(seeds_owned.get("MELON", 0))
-            owned_wheat = int(seeds_owned.get("WHEAT", 0))
-
+            private = ctx.get("private")
+            p_seeds = private.seeds if (private and hasattr(private, "seeds")) else (private.get("seeds", {}) if isinstance(private, dict) else {})
+            owned_melon = p_seeds.get("MELON", 0)
+            owned_wheat = p_seeds.get("WHEAT", 0)
             empty_tile_count = sum(
                 1 for t in farm.iter_tiles()
-                if getattr(t, "kind", "") == "EMPTY"
-                and farm.quadrant_of(t.pos) in farm.unlocked
+                if (getattr(t, "is_empty", False) or t.kind == "EMPTY")
                 and t.pos != (4, 4)
             )
+
             rem_floor_melon = max(0, 4 - (planted_melon + owned_melon))
-            cap_floor_melon = min(rem_floor_melon, empty_tile_count)
-            avail_empty_for_wheat = max(0, empty_tile_count - cap_floor_melon)
             rem_floor_wheat = max(0, 4 - (planted_wheat + owned_wheat))
-            cap_floor_wheat = min(rem_floor_wheat, avail_empty_for_wheat)
+
+            raw_intents = intents.get("buy_seed", {})
+            planner_melon = int(raw_intents.get("MELON", 0))
+            planner_wheat = int(raw_intents.get("WHEAT", 0))
+
+            combined_melon = max(rem_floor_melon, min(4, planner_melon))
+            combined_wheat = max(rem_floor_wheat, min(4, planner_wheat))
 
             # Suppress late Day-0 purchases (hour >= 17)
             if hour >= 17:
-                cap_floor_melon = 0
-                cap_floor_wheat = 0
+                combined_melon = 0
+                combined_wheat = 0
 
-            seed_demands = {}
-            if cap_floor_melon > 0:
-                seed_demands["MELON"] = cap_floor_melon
-            if cap_floor_wheat > 0:
-                seed_demands["WHEAT"] = cap_floor_wheat
+            cap_floor_melon = min(combined_melon, empty_tile_count)
+            avail_empty_for_wheat = max(0, empty_tile_count - cap_floor_melon)
+            cap_floor_wheat = min(combined_wheat, avail_empty_for_wheat)
+
+            unit_m = CROPS["MELON"]["seed"]
+            unit_w = CROPS["WHEAT"]["seed"]
+
+            m_buy = min(cap_floor_melon, int(remaining_discretionary // unit_m))
+            if m_buy > 0:
+                kept.append((TIER_SEEDS, "seed", {"crop": "MELON", "n": m_buy}, float(unit_m * m_buy)))
+                remaining_discretionary -= unit_m * m_buy
+
+            w_buy = min(cap_floor_wheat, int(remaining_discretionary // unit_w))
+            if w_buy > 0:
+                kept.append((TIER_SEEDS, "seed", {"crop": "WHEAT", "n": w_buy}, float(unit_w * w_buy)))
+                remaining_discretionary -= unit_w * w_buy
         else:
-            seed_demands = dict(intents.get("buy_seed", {}))
-
-        for crop, n in sorted(seed_demands.items()):
-            n = int(n)
-            if n > 0 and crop in CROPS:
-                unit = CROPS[crop]["seed"]
-                n_max = int(remaining_discretionary // unit)
-                if n_max >= n:
-                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
-                    remaining_discretionary -= unit * n
-                elif n_max > 0:
-                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n_max}, float(unit * n_max)))
-                    remaining_discretionary -= unit * n_max
-                    ledger["dropped"].append({
-                        "kind": "seed", "crop": crop,
-                        "trimmed_from": n, "to": n_max,
-                    })
-                else:
-                    reason = "live_failure" if live_failure_reason is not None else "budget"
-                    ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": reason})
+            for crop, n in sorted(intents.get("buy_seed", {}).items()):
+                n = int(n)
+                if n > 0 and crop in CROPS:
+                    unit = CROPS[crop]["seed"]
+                    n_max = int(remaining_discretionary // unit)
+                    if n_max >= n:
+                        kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n}, float(unit * n)))
+                        remaining_discretionary -= unit * n
+                    elif n_max > 0:
+                        kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": n_max}, float(unit * n_max)))
+                        remaining_discretionary -= unit * n_max
+                        ledger["dropped"].append({
+                            "kind": "seed", "crop": crop,
+                            "trimmed_from": n, "to": n_max,
+                        })
+                    else:
+                        reason = "live_failure" if live_failure_reason is not None else "budget"
+                        ledger["dropped"].append({"kind": "seed", "crop": crop, "reason": reason})
 
         # Discretionary Tier: Animals
         # Near-term SW protection: protect SW land capital ($2000) from discretionary animals
@@ -983,24 +995,31 @@ class OrderBuilder:
             if is_boot_day0:
                 boot_feed_hold = float(getattr(working_ledger, "candidate_feed_cash_hold", 0.0)) if working_ledger else 0.0
                 remaining_discretionary = max(0.0, remaining_discretionary - boot_feed_hold)
-                min_floor_seeds = {"MELON": 4, "WHEAT": 4}
-                for crop, total_n in sorted(intents.get("buy_seed", {}).items()):
-                    extra_n = max(0, int(total_n) - min_floor_seeds.get(crop, 0))
-                    if extra_n > 0 and crop in CROPS:
-                        unit = CROPS[crop]["seed"]
-                        extra_buyable = min(extra_n, int(remaining_discretionary // unit))
-                        if extra_buyable > 0:
-                            found = False
-                            for idx, item in enumerate(kept):
-                                if item[1] == "seed" and item[2].get("crop") == crop:
-                                    cur_n = item[2]["n"]
-                                    new_n = cur_n + extra_buyable
-                                    kept[idx] = (TIER_SEEDS, "seed", {"crop": crop, "n": new_n}, float(unit * new_n))
-                                    found = True
-                                    break
-                            if not found:
-                                kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": extra_buyable}, float(unit * extra_buyable)))
-                            remaining_discretionary -= unit * extra_buyable
+                floor_m = m_buy if 'm_buy' in locals() else 0
+                floor_w = w_buy if 'w_buy' in locals() else 0
+                rem_empty = max(0, empty_tile_count - floor_m - floor_w) if 'empty_tile_count' in locals() else 999
+
+                if hour < 17 and rem_empty > 0:
+                    min_floor_seeds = {"MELON": 4, "WHEAT": 4}
+                    for crop, total_n in sorted(intents.get("buy_seed", {}).items()):
+                        extra_n = max(0, int(total_n) - min_floor_seeds.get(crop, 0))
+                        extra_n = min(extra_n, rem_empty)
+                        if extra_n > 0 and crop in CROPS:
+                            unit = CROPS[crop]["seed"]
+                            extra_buyable = min(extra_n, int(remaining_discretionary // unit))
+                            if extra_buyable > 0:
+                                found = False
+                                for idx, item in enumerate(kept):
+                                    if item[1] == "seed" and item[2].get("crop") == crop:
+                                        cur_n = item[2]["n"]
+                                        new_n = cur_n + extra_buyable
+                                        kept[idx] = (TIER_SEEDS, "seed", {"crop": crop, "n": new_n}, float(unit * new_n))
+                                        found = True
+                                        break
+                                if not found:
+                                    kept.append((TIER_SEEDS, "seed", {"crop": crop, "n": extra_buyable}, float(unit * extra_buyable)))
+                                remaining_discretionary -= unit * extra_buyable
+                                rem_empty = max(0, rem_empty - extra_buyable)
 
             # Feed-sale reservation derivation (C2C)
             res_keys = []

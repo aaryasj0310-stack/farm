@@ -1796,11 +1796,6 @@ class MacroPlanner:
                 except Exception:
                     BOOTSTRAP_LIVESTOCK_ARM = "none"
 
-                planted_melon = committed_counts.get("MELON", 0)
-                planted_wheat = committed_counts.get("WHEAT", 0)
-                have_melon = private.seeds.get("MELON", 0) if (private and hasattr(private, "seeds")) else 0
-                have_wheat = private.seeds.get("WHEAT", 0) if (private and hasattr(private, "seeds")) else 0
-
                 if BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None):
                     MIN_CROP_FLOOR_MELON = 4
                     MIN_CROP_FLOOR_WHEAT = 4
@@ -1813,20 +1808,21 @@ class MacroPlanner:
                     extra_crop_cash = max(0.0, avail_crop_cash - MIN_CROP_FLOOR_COST)
                     extra_melons = min(8, int(extra_crop_cash // 80.0))
                     extra_wheat = min(4, int((extra_crop_cash - extra_melons * 80.0) // 10.0))
-                    raw_melon = MIN_CROP_FLOOR_MELON + extra_melons
-                    raw_wheat = MIN_CROP_FLOOR_WHEAT + extra_wheat
-                    # Invariant: Experimental targets must not collapse below what is already fulfilled
-                    melon_tiles = min(12, max(raw_melon, planted_melon + have_melon))
-                    wheat_tiles = min(8, max(raw_wheat, planted_wheat + have_wheat))
+                    melon_tiles = MIN_CROP_FLOOR_MELON + extra_melons
+                    wheat_tiles = MIN_CROP_FLOOR_WHEAT + extra_wheat
                 else:
                     melon_tiles = 12
                     wheat_tiles = 8
 
-                # Calculate unmet planting commitments
+                # Idempotent Day-0: subtract crops already planted and owned seeds
+                planted_melon = committed_counts.get("MELON", 0)
+                planted_wheat = committed_counts.get("WHEAT", 0)
+                have_melon = private.seeds.get("MELON", 0) if (private and hasattr(private, "seeds")) else 0
+                have_wheat = private.seeds.get("WHEAT", 0) if (private and hasattr(private, "seeds")) else 0
+
                 remaining_melon = max(0, melon_tiles - planted_melon)
                 remaining_wheat = max(0, wheat_tiles - planted_wheat)
 
-                # Physical capacity bounded by available empty tiles
                 available_empty_tiles = len(empty_tiles)
                 plant_melon_count = min(remaining_melon, available_empty_tiles)
                 avail_for_wheat = max(0, available_empty_tiles - plant_melon_count)
@@ -1848,10 +1844,6 @@ class MacroPlanner:
                         planned["WHEAT"] = planned.get("WHEAT", 0) + 1
                         committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
-                # Seed purchase calculation:
-                # 1. Bounded by physically feasible planting capacity on remaining empty tiles
-                # 2. Subtracts owned seeds
-                # 3. Late Day-0 cutoff (hour >= 17): newly bought seeds cannot be planted before midnight
                 if hour < 17:
                     if plant_melon_count > have_melon:
                         buy_seed["MELON"] = plant_melon_count - have_melon
