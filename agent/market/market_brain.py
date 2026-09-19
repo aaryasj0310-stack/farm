@@ -40,6 +40,7 @@ from config import (
     SELL_SLOT_SHARE,
     SHED_SOFT_CAP,
     SHED_RESUME_CAP,
+    SHED_CAPACITY,
     MELON_SEASON_SALE_CAP,
 )
 
@@ -169,14 +170,17 @@ class MarketBrain:
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         shed_occupancy = sum(max(0, int(v)) for v in shed.values())
         pending_occupancy = shed_occupancy + carried_worker_inventory
-        # Carried goods auto-drop at EOD and can overflow the 100-slot shed.
-        # Treat them as pending occupancy so the sell layer creates room before
-        # the automatic drop, even though only shed stock is sellable right now.
-        pressure = pending_occupancy >= SHED_SOFT_CAP
+        # Preserve the production sell policy unless worker rollover would
+        # actually overflow the shed. Carried goods auto-drop for free at EOD;
+        # treating every carried unit as soft-cap pressure caused premature
+        # liquidation and unnecessary logistics work.
+        shed_pressure = shed_total >= SHED_SOFT_CAP
+        rollover_overflow = pending_occupancy > SHED_CAPACITY
+        pressure = shed_pressure or rollover_overflow
 
         # Two-tier urgency:
         # 2 = midnight hard-guard, 1 = emergency relief, 0 = normal post-drain window
-        if hour >= 22 and pending_occupancy > 88:
+        if hour >= 22 and (shed_total > 88 or rollover_overflow):
             urgency = 2
         elif pressure:
             urgency = 1
@@ -269,7 +273,14 @@ class MarketBrain:
             order_budget = max(order_budget, MAX_MARKET_ORDERS)
 
         # Slicing target for emergency relief
-        to_shed = max(0, pending_occupancy - SHED_RESUME_CAP) if urgency == 1 else shed_total
+        if urgency == 1:
+            if shed_pressure:
+                to_shed = max(0, shed_total - SHED_RESUME_CAP)
+            else:
+                # Only free the space required to make the EOD worker rollover fit.
+                to_shed = max(0, pending_occupancy - SHED_CAPACITY)
+        else:
+            to_shed = shed_total
 
         # Candidate product ordering
         # In emergency mode (when not endgame), follow liquidation priority: WHEAT -> CARROT -> TOMATO -> EGG -> MILK -> WOOL -> STRAWBERRY -> MELON -> FERTILIZER
