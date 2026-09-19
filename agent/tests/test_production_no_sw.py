@@ -85,6 +85,38 @@ def test_production_flags_disabled_by_default():
     assert config.STRATEGIC_SW_OWNERSHIP_ENABLED is False
     assert config.SW_ACTIVATION_MODE == "production"
     assert config.SW_OWNERSHIP_MODE == "production"
+    assert config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY is False
+    assert config.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED is False
+    assert config.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED is False
+
+
+def test_arma_resets_p1_p11_p12_flags_after_treatment_state():
+    """ArmA must clear isolated SW treatment flags in a reused process."""
+    import execution.task_scheduler as scheduler
+    import strategy.macro_planner as macro_planner
+    import strategy.expansion_planner as expansion_planner
+
+    # Simulate a previous P1.2 arm in this Python process.
+    config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY = True
+    config.set_sw_workload_responsive_scheduler(True)
+    config.set_sw_serviceability_aware_activation(True)
+
+    # Keep the loaded purchase module in the same stale state a multi-arm
+    # experiment would otherwise risk carrying into the Control arm.
+    expansion_planner.SW_P1_PURCHASE_COMMITTED_HERD_ONLY = True
+
+    assert config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY is True
+    assert scheduler.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED is True
+    assert macro_planner.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED is True
+
+    config.set_sw_experiment_arm("ArmA")
+
+    assert config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY is False
+    assert config.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED is False
+    assert config.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED is False
+    assert expansion_planner.SW_P1_PURCHASE_COMMITTED_HERD_ONLY is False
+    assert scheduler.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED is False
+    assert macro_planner.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED is False
 
 
 def test_should_buy_land_rejects_sw_under_production_baseline():
