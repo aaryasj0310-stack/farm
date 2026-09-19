@@ -12,6 +12,7 @@ from execution.task_scheduler import build_tasks, assign_tasks
 from main import _predict_same_turn_product_deposits
 from market.market_brain import MarketBrain
 from state.observation_parser import parse_observation
+from strategy.feed_feasibility import build_feed_execution_snapshot
 from engine_bridge import get_engine
 
 
@@ -265,6 +266,40 @@ def test_urgent_feed_preempts_lower_product_delivery_for_same_worker():
     ]
     asg = assign_tasks(tasks, ctx)
     assert asg["assignment"][0]["op"] == "FEED"
+
+
+def test_feed_execution_snapshot_models_selective_product_deposit():
+    ctx = ctx_for(day=28, inventories=[{"CARROT": 3}])
+    task = {
+        "priority": 88, "op": "PLACE", "target": (4, 4),
+        "args": ["CARROT", 3], "kind": "deposit_product",
+        "meta": {"required_unit": 0},
+    }
+    snap = build_feed_execution_snapshot(
+        ctx, tasks=[task], assignment={0: task},
+        actions={0: ["PLACE", "CARROT", 3]},
+    )
+    assert snap.post_unit_shed_occupancy == 3
+    assert snap.post_unit_worker_inventory_total == 0
+
+
+def test_feed_execution_snapshot_models_engine_drop_capacity():
+    ctx = ctx_for(
+        day=29,
+        shed={"WHEAT": 98},
+        inventories=[{"CARROT": 2, "MELON": 2}],
+    )
+    task = {
+        "priority": 98, "op": "DROP", "target": (4, 4),
+        "args": [], "kind": "deposit_product",
+        "meta": {"required_unit": 0},
+    }
+    snap = build_feed_execution_snapshot(
+        ctx, tasks=[task], assignment={0: task}, actions={0: ["DROP"]},
+    )
+    # Engine DROP fills the remaining two shed slots, then discards overflow.
+    assert snap.post_unit_shed_occupancy == 100
+    assert snap.post_unit_worker_inventory_total == 0
 
 
 def test_same_turn_deposit_prediction_requires_actual_deposit_action():
