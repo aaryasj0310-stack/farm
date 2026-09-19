@@ -91,7 +91,7 @@ def test_unoccupied_ne_housing_remains_reserved_in_p1():
     _, _, diag = _evaluate(farm, reserve_desired_herd=False)
     assert diag["ne_observed_animals_and_housing"] == 5
     assert diag["ne_reserved_sheep_workload_count"] == 5
-    assert diag["ne_workload"] >= 25.0
+    assert diag["ne_committed_workload"] >= 25.0
 
 
 def test_purchase_switch_defaults_off_and_applies_only_to_sw_purchase(monkeypatch):
@@ -144,7 +144,7 @@ def test_p1_does_not_override_treasury_roi_or_purchase_timing(monkeypatch):
     )
     early = should_buy_land(**common, current_day=8, money=10000)
     assert early[0] is False and early[1] == "before_day_9"
-    poor = should_buy_land(**common, current_day=12, money=10000, roi=-0.1)
+    poor = should_buy_land(**{**common, "roi": -0.1}, current_day=12, money=10000)
     assert poor[0] is False and poor[1].startswith("adjusted_roi_")
     cash = should_buy_land(**common, current_day=12, money=2200)
     assert cash[0] is False and cash[1].startswith("short_")
