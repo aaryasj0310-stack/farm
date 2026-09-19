@@ -853,6 +853,9 @@ def set_sw_experiment_arm(arm: str) -> None:
     global SW_OWNERSHIP_MODE, SW_TIMING_PRIOR_ENABLED, SW_ACTIVATION_MODE
     global STRATEGIC_SW_OWNERSHIP_ENABLED, DYNAMIC_ZONAL_ALLOCATION, DYNAMIC_SW_CROPS_ENABLED
     global PERSISTENT_WORKER_LOCALITY_ENABLED, SW_CELL_HOUSING_ENABLED
+    global SW_P1_PURCHASE_COMMITTED_HERD_ONLY
+    global SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED
+    global SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED
     arm_clean = str(arm).strip()
     if arm_clean == "ArmA":
         # Arm A — Fresh Production Control: Current strategy with SW expansion disabled/frozen
@@ -865,6 +868,11 @@ def set_sw_experiment_arm(arm: str) -> None:
         DYNAMIC_SW_CROPS_ENABLED = False
         PERSISTENT_WORKER_LOCALITY_ENABLED = False
         SW_CELL_HOUSING_ENABLED = False
+        # Reset isolated P1/P1.1/P1.2 switches so ArmA is a true production
+        # control even after another arm enabled them in the same process.
+        SW_P1_PURCHASE_COMMITTED_HERD_ONLY = False
+        SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED = False
+        SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED = False
     elif arm_clean == "ArmC-Cell":
         # Arm C-Cell — Exactly Arm B-P + Controlled SW Mixed Livestock Housing Cell
         set_quadrant_hard_block({4})
@@ -945,6 +953,9 @@ def set_sw_experiment_arm(arm: str) -> None:
                     ("DYNAMIC_SW_CROPS_ENABLED", DYNAMIC_SW_CROPS_ENABLED),
                     ("PERSISTENT_WORKER_LOCALITY_ENABLED", PERSISTENT_WORKER_LOCALITY_ENABLED),
                     ("SW_CELL_HOUSING_ENABLED", SW_CELL_HOUSING_ENABLED),
+                    ("SW_P1_PURCHASE_COMMITTED_HERD_ONLY", SW_P1_PURCHASE_COMMITTED_HERD_ONLY),
+                    ("SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED", SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED),
+                    ("SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED", SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED),
                 ):
                     setattr(mod, attr, val)
             except Exception:
