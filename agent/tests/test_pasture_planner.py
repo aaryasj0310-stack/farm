@@ -58,7 +58,7 @@ def make_test_farm(day=3, money=5000.0, unlocked=("NW", "SW", "NE"), structures=
             "y": y,
             "watered_today": False,
             "yield_units": 0,
-            "placed_day": day,
+            "planted_day": day,
             "consecutive_unwatered": 0,
         }
 
