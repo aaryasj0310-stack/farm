@@ -1011,9 +1011,13 @@ def build_tasks(ctx, macro):
                 delivery_prio = PRIORITY_PRODUCT_DELIVERY
 
             target = _nearest_shed_access(ctx["farm"], unit_positions[u_idx])
+            at_shed = unit_positions[u_idx] == tuple(target)
             all_positive = {k: int(v) for k, v in inv.items() if int(v or 0) > 0}
+            # DROP discards overflow in the engine. Use it only when it will
+            # execute now and the full inventory fits in the still-reserved room.
             safe_drop = (
                 day >= 28
+                and at_shed
                 and all(k in deliverable for k in all_positive)
                 and sum(all_positive.values()) <= room_budget
             )
@@ -1031,9 +1035,11 @@ def build_tasks(ctx, macro):
                 room_budget -= qty
             else:
                 # Selective PLACE-to-shed preserves unrelated feed/animal/fertilizer
-                # inventory and, unlike DROP, does not discard overflow.
+                # inventory and never discards overflow. Travelling missions do
+                # not reserve future shed room; capacity is re-evaluated each turn.
                 item, qty = max(deliverable.items(), key=lambda kv: (kv[1], kv[0]))
-                take = min(int(qty), room_budget)
+                available_room = room_budget if at_shed else max(0, SHED_CAPACITY - shed_load)
+                take = min(int(qty), available_room)
                 if take > 0:
                     add(
                         delivery_prio, "PLACE", target, args=[item, take],
@@ -1044,7 +1050,8 @@ def build_tasks(ctx, macro):
                             "deposit_units": take,
                         },
                     )
-                    room_budget -= take
+                    if at_shed:
+                        room_budget -= take
 
     # ---------------- planting queue (seed-conflict-safe) ----------------
     seeds = ctx["private"].seeds
@@ -1748,6 +1755,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         is_urgent = (
             prio >= PRIORITY_URGENT_SURVIVAL or
             kind in ("feed_rescue", "feed_prod", "harvest_decay") or
+            (kind == "deposit_product" and prio >= PRIORITY_PRODUCT_DELIVERY_PRESSURE) or
             (op == "WATER" and (prio >= 80 or t.get("meta", {}).get("urgent", False))) or
             (op == "PLACE" and args and args[0] in ANIMALS)
         )
