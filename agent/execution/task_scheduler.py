@@ -426,6 +426,7 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
             "urgent_completions": 0,
             "quad_attempts": {"NW": 0, "NE": 0, "SW": 0, "SE": 0},
             "quad_completions": {"NW": 0, "NE": 0, "SW": 0, "SE": 0},
+            "home_unit_turns": {"NW": 0, "NE": 0, "SW": 0, "SE": 0},
             "sw_tasks_created": 0,
             "sw_tasks_assigned": 0,
             "sw_tasks_completed": 0,
@@ -474,6 +475,11 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
                     _daily_accum[day]["quad_attempts"][q] += 1
                     if is_comp:
                         _daily_accum[day]["quad_completions"][q] += 1
+
+    if home_quads:
+        for q in home_quads.values():
+            if q in _daily_accum[day]["home_unit_turns"]:
+                _daily_accum[day]["home_unit_turns"][q] += 1
 
     # Turn-by-turn locality telemetry tracking
     global _LOCALITY_WORKER_METRICS, _LOCALITY_DAILY_LOG, _LOCALITY_RAW_RECORDS
@@ -687,6 +693,7 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
                 q: (round(q_comp[q] / max(1, q_att[q]), 4) if q_att[q] > 0 else None)
                 for q in ("NW", "NE", "SW", "SE")
             },
+            "home_unit_turns": dict(_daily_accum[day]["home_unit_turns"]),
             "shed_occupancy": shed_cnt,
             "quadrant_ownership": unlocked_cnt,
             "daily_hires": n_hands,
