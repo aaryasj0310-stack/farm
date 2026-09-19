@@ -1958,14 +1958,79 @@ class MacroPlanner:
                             sorted_order = get_sorted_sw_soil_tiles()
                             sw_soil_empty.sort(key=lambda p: sorted_order.index(p) if p in sorted_order else 999)
 
-                            _, best_k, _ = evaluate_sw_serviceability(day, farm, money, self.fc, target_quadrant=3)
-                            active_sw_soil = sw_soil_empty[:best_k]
-
                             try:
-                                from config import DYNAMIC_SW_CROPS_ENABLED
+                                from config import (
+                                    DYNAMIC_SW_CROPS_ENABLED,
+                                    SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED,
+                                    SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED,
+                                )
                                 use_dyn_crops = DYNAMIC_SW_CROPS_ENABLED
+                                use_serviceability_activation = bool(SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED)
+                                responsive_scheduler_enabled = bool(SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED)
                             except Exception:
                                 use_dyn_crops = False
+                                use_serviceability_activation = False
+                                responsive_scheduler_enabled = False
+
+                            if use_serviceability_activation:
+                                # P1.2: activation is allowed only against the same
+                                # surplus-capacity concept used by the responsive
+                                # scheduler.  Fail closed if the scheduler treatment
+                                # is not also active so the evaluator cannot authorize
+                                # work under assumptions the executor will not honor.
+                                if responsive_scheduler_enabled:
+                                    is_serviceable, best_k, activation_diag = evaluate_sw_serviceability(
+                                        day,
+                                        farm,
+                                        money,
+                                        self.fc,
+                                        target_quadrant=3,
+                                        hour=hour,
+                                        reserve_desired_herd=False,
+                                        responsive_scheduler_capacity=True,
+                                    )
+                                    serviceable_k = int(activation_diag.get("best_k_serviceable", 0) or 0)
+                                    existing_sw_plants = sum(
+                                        1
+                                        for t in farm.iter_tiles()
+                                        if farm.quadrant_of(t.pos) == "SW"
+                                        and getattr(t, "is_plant", False)
+                                    )
+                                    activation_slots = max(0, serviceable_k - existing_sw_plants)
+                                    if not is_serviceable or activation_slots <= 0:
+                                        active_sw_soil = []
+                                    else:
+                                        active_sw_soil = sw_soil_empty[:activation_slots]
+                                    plan.diagnostics["sw_serviceability_activation"] = {
+                                        **dict(activation_diag),
+                                        "enabled": True,
+                                        "is_serviceable": bool(is_serviceable),
+                                        "nominal_best_k": int(best_k),
+                                        "serviceable_k": serviceable_k,
+                                        "existing_sw_plants": int(existing_sw_plants),
+                                        "activation_slots": int(activation_slots),
+                                        "activated_empty_tiles": len(active_sw_soil),
+                                    }
+                                else:
+                                    is_serviceable = False
+                                    best_k = 0
+                                    active_sw_soil = []
+                                    plan.diagnostics["sw_serviceability_activation"] = {
+                                        "enabled": True,
+                                        "is_serviceable": False,
+                                        "reason": "responsive_scheduler_required",
+                                        "nominal_best_k": 0,
+                                        "serviceable_k": 0,
+                                        "existing_sw_plants": 0,
+                                        "activation_slots": 0,
+                                        "activated_empty_tiles": 0,
+                                    }
+                            else:
+                                # Preserve exact Control/P1/P1.1 activation behavior.
+                                _, best_k, _ = evaluate_sw_serviceability(
+                                    day, farm, money, self.fc, target_quadrant=3
+                                )
+                                active_sw_soil = sw_soil_empty[:best_k]
 
                             if not use_dyn_crops:
                                 # Baseline exact 588b3f1 behavior
