@@ -1988,6 +1988,7 @@ class MacroPlanner:
                                         hour=hour,
                                         reserve_desired_herd=False,
                                         responsive_scheduler_capacity=True,
+                                        activation_context=True,
                                     )
                                     serviceable_k = int(activation_diag.get("best_k_serviceable", 0) or 0)
                                     existing_sw_plants = sum(
