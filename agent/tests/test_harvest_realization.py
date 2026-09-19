@@ -257,7 +257,7 @@ def test_product_delivery_mission_cancels_when_shed_becomes_full():
         inventories=[{"CARROT": 3}],
     )
     task = [{
-        "priority": 88, "op": "PLACE", "target": (4, 4),
+        "priority": 68, "op": "PLACE", "target": (4, 4),
         "args": ["CARROT", 3], "kind": "deposit_product",
         "meta": {"required_unit": 0},
     }]
@@ -277,7 +277,7 @@ def test_product_delivery_mission_refreshes_current_safe_quantity():
         inventories=[{"CARROT": 5}],
     )
     first = [{
-        "priority": 88, "op": "PLACE", "target": (4, 4),
+        "priority": 68, "op": "PLACE", "target": (4, 4),
         "args": ["CARROT", 5], "kind": "deposit_product",
         "meta": {"required_unit": 0},
     }]
@@ -285,7 +285,7 @@ def test_product_delivery_mission_refreshes_current_safe_quantity():
     assert get_active_missions()[0]["args"] == ["CARROT", 5]
 
     refreshed = [{
-        "priority": 88, "op": "PLACE", "target": (4, 4),
+        "priority": 68, "op": "PLACE", "target": (4, 4),
         "args": ["CARROT", 1], "kind": "deposit_product",
         "meta": {"required_unit": 0},
     }]
