@@ -1,11 +1,18 @@
 """Harvest -> worker -> shed -> sale realization regression tests."""
+import os
+import sys
 from types import SimpleNamespace
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_PKG = os.path.dirname(_HERE)
+sys.path.insert(0, _PKG)
+sys.path.insert(0, _HERE)
 
 from execution.task_scheduler import build_tasks, assign_tasks
 from main import _predict_same_turn_product_deposits
 from market.market_brain import MarketBrain
 from state.observation_parser import parse_observation
-from tests.engine_bridge import get_engine
+from engine_bridge import get_engine
 
 
 class MockTile:
