@@ -27,6 +27,7 @@ from config import (
     ANIMALS,
     CARE_GEESE,
     CROPS,
+    PRODUCTS,
     PRIORITY_BONUS_WATER,
     PRIORITY_BUILD_STRUCTURE,
     PRIORITY_CARE_ANIMAL,
@@ -38,10 +39,15 @@ from config import (
     PRIORITY_PLANT_AND_WATER,
     PRIORITY_PROD_DAY_FEED,
     PRIORITY_STANDARD_HARVEST,
+    PRIORITY_PRODUCT_DELIVERY,
+    PRIORITY_PRODUCT_DELIVERY_PRESSURE,
+    PRIORITY_ENDGAME_PRODUCT_DELIVERY,
     PRIORITY_URGENT_SURVIVAL,
     PRIORITY_WEED_DIG,
     PORT_SW,
     SHED_ACCESS_TILES,
+    SHED_CAPACITY,
+    SHED_SOFT_CAP,
     TURNS_PER_DAY,
     EFFECTIVE_ACTIONS_PER_UNIT,
     DYNAMIC_ZONAL_ALLOCATION,
@@ -381,7 +387,8 @@ def classify_task_action(act, task, farm):
     args = task.get("args", []) if task else []
 
     shed_tiles = {(4, 4), (5, 4), (4, 5), (5, 5)}
-    if op in ("PICKUP", "DROP") or (tgt and tuple(tgt) in shed_tiles and op in ("PICKUP", "DROP")):
+    if (op in ("PICKUP", "DROP") or kind == "deposit_product"
+            or (tgt and tuple(tgt) in shed_tiles and op in ("PICKUP", "DROP"))):
         return "logistics", "CENTRAL"
 
     tgt_quad = farm.quadrant_of(tgt) if (tgt and hasattr(farm, "quadrant_of")) else "NW"
@@ -706,6 +713,43 @@ def farm_pos_of(ctx):
     return ctx["farm"].farmer
 
 
+def _accessible_shed_tiles(farm):
+    """Shed access points usable for logistics under the scheduler's zone model."""
+    unlocked = set(getattr(farm, "unlocked", ()) or ())
+    usable = [tuple(p) for p in SHED_ACCESS_TILES
+              if not hasattr(farm, "quadrant_of") or farm.quadrant_of(tuple(p)) in unlocked]
+    return usable or [tuple(SHED_ACCESS_TILES[0])]
+
+
+def _nearest_shed_access(farm, pos):
+    tiles = _accessible_shed_tiles(farm)
+    return min(tiles, key=lambda p: abs(p[0] - pos[0]) + abs(p[1] - pos[1]))
+
+
+def _endgame_harvest_can_realize(ctx, target):
+    """Conservative Day-29 proof that a harvest can still reach shed and sell.
+
+    Unit actions execute before market. Once a carrier reaches shed access, a
+    PLACE/DROP deposit can therefore be sold on that same turn by the market
+    layer. Earliest realization is: travel-to-target + HARVEST + travel-to-shed
+    + deposit/sell turn. If even the closest current worker cannot make Hour 23,
+    harvesting only strands value on a worker and is suppressed.
+    """
+    if ctx.get("day", 0) < 29:
+        return True
+    hour = int(ctx.get("hour", 0))
+    farm = ctx["farm"]
+    positions = [tuple(farm.farmer)] + [tuple(h) for h in farm.hands]
+    if not positions:
+        return False
+    target = tuple(target)
+    to_target = min(abs(p[0] - target[0]) + abs(p[1] - target[1]) for p in positions)
+    shed_target = _nearest_shed_access(farm, target)
+    to_shed = abs(target[0] - shed_target[0]) + abs(target[1] - shed_target[1])
+    earliest_sale_hour = hour + to_target + to_shed + 1
+    return earliest_sale_hour <= 23
+
+
 def produces_today(tile, day):
     """True if this animal's production fires at END-of-day refresh today."""
     info = ANIMALS.get(tile.animal)
@@ -744,8 +788,10 @@ def build_tasks(ctx, macro):
             
             if t.yield_units > 0:
                 if is_endgame:
-                    # Day 29 endgame liquidation: realize all available yield before season end
-                    add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_endgame")
+                    # Day 29: only create new worker inventory if the fastest current
+                    # worker can still harvest, reach shed, deposit, and sell by Hour 23.
+                    if _endgame_harvest_can_realize(ctx, t.pos):
+                        add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_endgame")
                 elif decay_imminent:
                     # Decay imminent: harvest to prevent crop decay
                     add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_decay")
@@ -766,7 +812,8 @@ def build_tasks(ctx, macro):
             
             if t.yield_units > 0:
                 if is_endgame or decay_imminent:
-                    add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_decay")
+                    if day < 29 or _endgame_harvest_can_realize(ctx, t.pos):
+                        add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_decay")
                 elif t.yield_units >= 2:
                     # Efficient harvest of accumulated produce (2+ units per action)
                     add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_accum")
@@ -885,7 +932,8 @@ def build_tasks(ctx, macro):
                 max_feed_prio = feed_prio
 
         if t.yield_units > 0:
-            add(PRIORITY_STANDARD_HARVEST + 5, "HARVEST", t.pos, kind="harvest_animal")
+            if day < 29 or _endgame_harvest_can_realize(ctx, t.pos):
+                add(PRIORITY_STANDARD_HARVEST + 5, "HARVEST", t.pos, kind="harvest_animal")
         if t.fertilizer_available:
             add(PRIORITY_FERT_COLLECT, "COLLECT_FERTILIZER", t.pos, kind="fert")
         want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
@@ -909,6 +957,105 @@ def build_tasks(ctx, macro):
                 target = SHED_ACCESS_TILES[c_idx % len(SHED_ACCESS_TILES)]
                 add(staging_prio, "PICKUP", tuple(target),
                     args=["WHEAT", int(take)], kind="pickup_wheat")
+
+    # ---------------- harvested-product realization ----------------
+    # HARVEST puts goods on the acting worker, while SELL reads only the shed.
+    # End-of-day auto-drop is useful but can discard overflow and is too late for
+    # final-day liquidation. Create at most one delivery mission per carrier.
+    private = ctx.get("private")
+    if private is not None:
+        inventories = list(getattr(private, "inventories", []) or [])
+        shed = getattr(private, "shed", {}) or {}
+        shed_load = sum(max(0, int(v)) for v in shed.values())
+        room_budget = max(0, SHED_CAPACITY - shed_load)
+        carried_sellable_total = sum(
+            max(0, int((inv or {}).get(p, 0)))
+            for inv in inventories for p in PRODUCTS
+        )
+        pending_total = shed_load + carried_sellable_total
+        unit_positions = [tuple(ctx["farm"].farmer)] + [tuple(h) for h in ctx["farm"].hands]
+
+        for u_idx, inv in enumerate(inventories):
+            if u_idx >= len(unit_positions) or room_budget <= 0 or not inv:
+                continue
+
+            deliverable = {}
+            for item, raw_n in inv.items():
+                n = max(0, int(raw_n or 0))
+                if n <= 0 or item not in PRODUCTS:
+                    continue
+                # Do not pull feed wheat away from live FEED obligations.
+                if item == "WHEAT" and feeds_due > 0:
+                    continue
+                # Fertilizer remains an execution resource until endgame.
+                if item == "FERTILIZER" and day < 28:
+                    continue
+                deliverable[item] = n
+
+            if not deliverable:
+                continue
+
+            carried_here = sum(deliverable.values())
+            # Normal-day worker inventory is intentionally allowed to ride until
+            # the engine's free end-of-day auto-drop. Explicit shed travel costs
+            # scarce field actions and previously caused watering/feed regressions.
+            # Intervene only when value is at risk of EOD overflow, or on Day 29
+            # when EOD auto-drop occurs after the final market opportunity.
+            overflow_risk = pending_total > SHED_CAPACITY
+            should_deliver = (
+                day == 29
+                or (hour >= 22 and overflow_risk)
+            )
+            if not should_deliver:
+                continue
+
+            if day == 29:
+                delivery_prio = PRIORITY_ENDGAME_PRODUCT_DELIVERY
+            else:
+                delivery_prio = PRIORITY_PRODUCT_DELIVERY_PRESSURE
+
+            target = _nearest_shed_access(ctx["farm"], unit_positions[u_idx])
+            at_shed = unit_positions[u_idx] == tuple(target)
+            all_positive = {k: int(v) for k, v in inv.items() if int(v or 0) > 0}
+            # DROP discards overflow in the engine. Use it only when it will
+            # execute now and the full inventory fits in the still-reserved room.
+            safe_drop = (
+                day >= 28
+                and at_shed
+                and all(k in deliverable for k in all_positive)
+                and sum(all_positive.values()) <= room_budget
+            )
+
+            if safe_drop:
+                qty = sum(all_positive.values())
+                add(
+                    delivery_prio, "DROP", target, kind="deposit_product",
+                    meta={
+                        "required_unit": u_idx,
+                        "deposit_items": dict(all_positive),
+                        "deposit_units": qty,
+                    },
+                )
+                room_budget -= qty
+            else:
+                # Selective PLACE-to-shed preserves unrelated feed/animal/fertilizer
+                # inventory and never discards overflow. Travelling missions do
+                # not reserve future shed room; capacity is re-evaluated each turn.
+                item, qty = max(deliverable.items(), key=lambda kv: (kv[1], kv[0]))
+                available_room = room_budget if at_shed else max(0, SHED_CAPACITY - shed_load)
+                take = min(int(qty), available_room)
+                if take > 0:
+                    add(
+                        delivery_prio, "PLACE", target, args=[item, take],
+                        kind="deposit_product",
+                        meta={
+                            "required_unit": u_idx,
+                            "product": item,
+                            "deposit_units": take,
+                        },
+                    )
+                    if at_shed:
+                        room_budget -= take
 
     # ---------------- planting queue (seed-conflict-safe) ----------------
     seeds = ctx["private"].seeds
@@ -1235,12 +1382,22 @@ def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
         return False
 
     if tasks is not None:
-        matching = any(
-            t.get("op") == op and tuple(t.get("target") or (-1, -1)) == target
-            for t in tasks
-        )
-        if not matching:
-            # Keep livestock delivery sticky until PLACE succeeds or is invalidated
+        matching_tasks = [
+            t for t in tasks
+            if t.get("op") == op
+            and tuple(t.get("target") or (-1, -1)) == target
+            and (
+                t.get("kind") != "deposit_product"
+                or int((t.get("meta") or {}).get("required_unit", -1)) == int(u_idx)
+            )
+        ]
+        if not matching_tasks:
+            # Product deposits are capacity-sensitive. If the current turn no
+            # longer emits the delivery (e.g. shed filled), cancel the old
+            # sticky mission instead of walking toward a stale/impossible PLACE.
+            if mission.get("kind") == "deposit_product":
+                return False
+            # Keep livestock delivery sticky until PLACE succeeds or is invalidated.
             if op == "PLACE":
                 item = (mission.get("args") or [None])[0]
                 if item and u_idx in holders.get(item, []):
@@ -1250,6 +1407,14 @@ def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
                     return False
             else:
                 return False
+        elif mission.get("kind") == "deposit_product":
+            # Refresh capacity-sensitive quantity/metadata from this turn's
+            # newly generated delivery task while preserving travel progress.
+            fresh = matching_tasks[0]
+            mission["task"] = dict(fresh)
+            mission["args"] = list(fresh.get("args") or [])
+            mission["priority"] = fresh.get("priority", mission.get("priority", 0))
+            mission["kind"] = fresh.get("kind", "deposit_product")
 
     if op == "FEED":
         if u_idx not in holders.get("WHEAT", []):
@@ -1288,7 +1453,9 @@ def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
             if getattr(tile, "kind", "") != "WEED":
                 return False
         elif op == "PLACE":
-            if getattr(tile, "is_animal", False):
+            # Product deposits use PLACE-at-shed and are valid regardless of
+            # the farm tile occupying that shed-access coordinate.
+            if mission.get("kind") != "deposit_product" and getattr(tile, "is_animal", False):
                 return False
 
     return True
@@ -1326,9 +1493,15 @@ def assign_tasks(tasks, ctx, extra_units=()):
 
     def _eligible(task):
         """Units that could execute this task this turn without a no-op."""
+        required_unit = (task.get("meta") or {}).get("required_unit")
+        if required_unit is not None:
+            try:
+                return {int(required_unit)}
+            except (TypeError, ValueError):
+                return set()
         if task["op"] == "PLACE" and task.get("args"):
             item = task["args"][0]
-            if item in ANIMALS:
+            if item in ANIMALS or task.get("kind") == "deposit_product":
                 return set(holders.get(item, []))   # empty => defer, don't no-op
         elif task["op"] == "FERTILIZE":
             return set(holders.get("FERTILIZER", []))
@@ -1364,9 +1537,13 @@ def assign_tasks(tasks, ctx, extra_units=()):
         # Production-day feeding (feed_prod) is globally dispatchable to prevent
         # stranding animals when the only wheat holder is in another quadrant.
         is_delivery = t["op"] == "PLACE" and (t.get("args") or [None])[0] in ANIMALS
+        is_product_delivery = (
+            t.get("kind") == "deposit_product"
+            and prio >= PRIORITY_PRODUCT_DELIVERY_PRESSURE
+        )
         is_prod_feed = t.get("kind") == "feed_prod"
         is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or is_delivery
-                     or is_prod_feed
+                     or is_product_delivery or is_prod_feed
                      or t.get("kind") in ("feed_rescue", "harvest_decay", "pickup_wheat"))
         if is_urgent:
             urgent_tasks.append(t)
@@ -1578,6 +1755,9 @@ def assign_tasks(tasks, ctx, extra_units=()):
         if op == "PLACE" and args and args[0] in ANIMALS and not holders.get(args[0]):
             reason = "no_carrier"
             turn_blocked_diagnostics["blocked_due_no_carrier"] += 1
+        elif kind == "deposit_product" and args and not holders.get(args[0]):
+            reason = "inventory"
+            turn_blocked_diagnostics["blocked_due_inventory"] += 1
         elif op == "FEED" and not holders.get("WHEAT"):
             reason = "inventory"
             turn_blocked_diagnostics["blocked_due_inventory"] += 1
@@ -1597,6 +1777,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
         is_urgent = (
             prio >= PRIORITY_URGENT_SURVIVAL or
             kind in ("feed_rescue", "feed_prod", "harvest_decay") or
+            (kind == "deposit_product" and prio >= PRIORITY_PRODUCT_DELIVERY_PRESSURE) or
             (op == "WATER" and (prio >= 80 or t.get("meta", {}).get("urgent", False))) or
             (op == "PLACE" and args and args[0] in ANIMALS)
         )

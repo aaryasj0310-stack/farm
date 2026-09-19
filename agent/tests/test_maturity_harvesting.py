@@ -164,9 +164,10 @@ def test_e_cycle_opportunity_cost_max_yield():
 
 
 def test_f_endgame_protection():
-    """Test F: Day 29 must harvest all crops with yield > 0 even if below max_yield_day."""
+    """Test F: Day 29 harvests yield when it can still reach shed and market."""
     wheat_late = MockTile(x=0, y=0, crop="WHEAT", planted_day=27, yield_units=2, watered_today=False)
-    ctx = make_ctx([wheat_late], day=29, hour=10)
+    # Early Day 29 still leaves enough turns for travel, harvest, deposit and sale.
+    ctx = make_ctx([wheat_late], day=29, hour=0)
     tasks = build_tasks(ctx, make_macro())
 
     h = [t for t in tasks if t["op"] == "HARVEST" and t["target"] == (0, 0)]

@@ -1054,6 +1054,21 @@ def build_feed_execution_snapshot(
             else:
                 mark_unverified("unverifiable_feed")
 
+        elif (op_act == "PLACE" and isinstance(u_task, dict)
+              and u_task.get("kind") == "deposit_product"):
+            item = act_args[0] if act_args else (task_args[0] if task_args else None)
+            qty = int(act_args[1]) if len(act_args) > 1 else (int(task_args[1]) if len(task_args) > 1 else 1)
+            if item is None or u_inv is None or qty <= 0 or u_inv.get(item, 0) <= 0:
+                mark_unverified("unverifiable_product_deposit")
+            else:
+                room = max(0, SHED_CAPACITY - sum(max(0, int(v)) for v in post_unit_shed.values()))
+                take = min(qty, int(u_inv.get(item, 0)), room)
+                if take > 0:
+                    u_inv[item] -= take
+                    if u_inv[item] == 0:
+                        del u_inv[item]
+                    post_unit_shed[item] = post_unit_shed.get(item, 0) + take
+
         elif op_act == "PLACE":
             animal_to_place = None
             if act_args and act_args[0] in ("COW", "SHEEP", "GOOSE"):
@@ -1166,15 +1181,40 @@ def build_feed_execution_snapshot(
                 mark_unverified("unverifiable_pickup")
 
         elif op_act == "DROP":
-            item = act_args[0] if act_args else (task_args[0] if task_args else None)
-            qty = int(act_args[1]) if len(act_args) > 1 else (int(task_args[1]) if len(task_args) > 1 else 1)
-            if item is not None and u_inv is not None and qty > 0 and u_inv.get(item, 0) >= qty:
-                u_inv[item] -= qty
-                if u_inv[item] == 0:
-                    del u_inv[item]
-                post_unit_shed[item] = post_unit_shed.get(item, 0) + qty
+            # Engine DROP dumps the entire worker inventory when shed-adjacent.
+            # Keep the execution snapshot fail-closed for malformed parameterized
+            # DROP requests: legacy callers/tests may attach an item/qty even
+            # though the engine ignores DROP args. A request for inventory the
+            # worker does not hold is therefore not considered verified.
+            malformed_drop = False
+            if act_args:
+                requested_item = act_args[0]
+                try:
+                    requested_qty = int(act_args[1]) if len(act_args) > 1 else 1
+                except (TypeError, ValueError):
+                    requested_qty = 0
+                if (
+                    u_inv is None
+                    or requested_qty <= 0
+                    or int((u_inv or {}).get(requested_item, 0)) < requested_qty
+                ):
+                    mark_unverified("unverifiable_drop")
+                    malformed_drop = True
+
+            if u_inv is None:
+                if not malformed_drop:
+                    mark_unverified("unverifiable_drop")
             else:
-                mark_unverified("unverifiable_drop")
+                # Mirror actual engine semantics even when verification failed:
+                # every positive inventory entry is removed, and overflow is lost.
+                for item, raw_qty in list(u_inv.items()):
+                    qty = max(0, int(raw_qty or 0))
+                    room = max(0, SHED_CAPACITY - sum(max(0, int(v)) for v in post_unit_shed.values()))
+                    take = min(qty, room)
+                    if take > 0:
+                        post_unit_shed[item] = post_unit_shed.get(item, 0) + take
+                    if item in u_inv:
+                        del u_inv[item]
 
         elif op_act == "HARVEST":
             # Scheduler emits ["HARVEST"] with no args.

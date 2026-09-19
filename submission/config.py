@@ -71,6 +71,11 @@ PRIORITY_PLANT_AND_WATER = 75    # plant seeds early so crops get full-day growt
 PRIORITY_BONUS_WATER = 70
 PRIORITY_CARE_ANIMAL = 65        # multiplies cow/sheep yield to 6/3 and 6/4; daily care essential
 PRIORITY_STANDARD_HARVEST = 65
+# Harvest-realization logistics. Normal batching sits just above routine harvest;
+# pressure delivery stays below decay harvest; final-day delivery outranks new harvests.
+PRIORITY_PRODUCT_DELIVERY = 68
+PRIORITY_PRODUCT_DELIVERY_PRESSURE = 88
+PRIORITY_ENDGAME_PRODUCT_DELIVERY = 98
 PRIORITY_PLACE_ANIMAL = 84       # immediate pickup and placement of purchased livestock
 PRIORITY_BUILD_STRUCTURE = 78     # build planned pastures so animals can be placed without delay
 PRIORITY_FERTILIZE_CROP = 60
