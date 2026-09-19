@@ -1378,12 +1378,22 @@ def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
         return False
 
     if tasks is not None:
-        matching = any(
-            t.get("op") == op and tuple(t.get("target") or (-1, -1)) == target
-            for t in tasks
-        )
-        if not matching:
-            # Keep livestock delivery sticky until PLACE succeeds or is invalidated
+        matching_tasks = [
+            t for t in tasks
+            if t.get("op") == op
+            and tuple(t.get("target") or (-1, -1)) == target
+            and (
+                t.get("kind") != "deposit_product"
+                or int((t.get("meta") or {}).get("required_unit", -1)) == int(u_idx)
+            )
+        ]
+        if not matching_tasks:
+            # Product deposits are capacity-sensitive. If the current turn no
+            # longer emits the delivery (e.g. shed filled), cancel the old
+            # sticky mission instead of walking toward a stale/impossible PLACE.
+            if mission.get("kind") == "deposit_product":
+                return False
+            # Keep livestock delivery sticky until PLACE succeeds or is invalidated.
             if op == "PLACE":
                 item = (mission.get("args") or [None])[0]
                 if item and u_idx in holders.get(item, []):
@@ -1393,6 +1403,14 @@ def _is_mission_valid(mission, u_idx, ctx, pos_by_idx, holders, tasks=None):
                     return False
             else:
                 return False
+        elif mission.get("kind") == "deposit_product":
+            # Refresh capacity-sensitive quantity/metadata from this turn's
+            # newly generated delivery task while preserving travel progress.
+            fresh = matching_tasks[0]
+            mission["task"] = dict(fresh)
+            mission["args"] = list(fresh.get("args") or [])
+            mission["priority"] = fresh.get("priority", mission.get("priority", 0))
+            mission["kind"] = fresh.get("kind", "deposit_product")
 
     if op == "FEED":
         if u_idx not in holders.get("WHEAT", []):
