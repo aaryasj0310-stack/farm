@@ -1814,7 +1814,21 @@ class MacroPlanner:
                     melon_tiles = 12
                     wheat_tiles = 8
 
-                for _ in range(melon_tiles):
+                # Idempotent Day-0: subtract crops already planted and owned seeds
+                planted_melon = committed_counts.get("MELON", 0)
+                planted_wheat = committed_counts.get("WHEAT", 0)
+                have_melon = private.seeds.get("MELON", 0) if (private and hasattr(private, "seeds")) else 0
+                have_wheat = private.seeds.get("WHEAT", 0) if (private and hasattr(private, "seeds")) else 0
+
+                remaining_melon = max(0, melon_tiles - planted_melon)
+                remaining_wheat = max(0, wheat_tiles - planted_wheat)
+
+                available_empty_tiles = len(empty_tiles)
+                plant_melon_count = min(remaining_melon, available_empty_tiles)
+                avail_for_wheat = max(0, available_empty_tiles - plant_melon_count)
+                plant_wheat_count = min(remaining_wheat, avail_for_wheat)
+
+                for _ in range(plant_melon_count):
                     if empty_tiles:
                         pos = empty_tiles.pop(0)
                         plant_queue.append((pos, "MELON"))
@@ -1822,7 +1836,7 @@ class MacroPlanner:
                         planned["MELON"] = planned.get("MELON", 0) + 1
                         committed_counts["MELON"] = committed_counts.get("MELON", 0) + 1
 
-                for _ in range(wheat_tiles):
+                for _ in range(plant_wheat_count):
                     if empty_tiles:
                         pos = empty_tiles.pop(0)
                         plant_queue.append((pos, "WHEAT"))
@@ -1830,12 +1844,11 @@ class MacroPlanner:
                         planned["WHEAT"] = planned.get("WHEAT", 0) + 1
                         committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
-                have_melon = private.seeds.get("MELON", 0)
-                if melon_tiles > have_melon:
-                    buy_seed["MELON"] = melon_tiles - have_melon
-                have_wheat = private.seeds.get("WHEAT", 0)
-                if wheat_tiles > have_wheat:
-                    buy_seed["WHEAT"] = wheat_tiles - have_wheat
+                if hour < 17:
+                    if plant_melon_count > have_melon:
+                        buy_seed["MELON"] = plant_melon_count - have_melon
+                    if plant_wheat_count > have_wheat:
+                        buy_seed["WHEAT"] = plant_wheat_count - have_wheat
 
                 seed_spend = (buy_seed.get("MELON", 0) * CROPS["MELON"]["seed"] +
                               buy_seed.get("WHEAT", 0) * CROPS["WHEAT"]["seed"])
