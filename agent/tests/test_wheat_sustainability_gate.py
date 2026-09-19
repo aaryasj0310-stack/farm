@@ -49,7 +49,7 @@ def _make_farm_ctx(day=6, money=10000.0, shed_wheat=0, planted_wheat_tiles=0, pa
     for w in range(planted_wheat_tiles):
         tiles[w][1] = {
             "kind": "PLANT", "pos": (1, w), "crop": "WHEAT", "is_plant": True,
-            "placed_day": day, "fertilized_until_day": -1, "max_yield": 4,
+            "planted_day": day, "fertilized_until_day": -1, "max_yield": 4,
         }
 
     farm = {
