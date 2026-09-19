@@ -215,14 +215,28 @@ class MarketBrain:
                                                  is_floor_exception, melon_turn_drip_budget,
                                                  melon_hold_reason_override="hour0_purchases",
                                                  delay_set=delay_set)
-            return [], {"reason": "hour0_purchases", "melon_diagnostics": diag, **diag}
+            return [], {
+                "reason": "hour0_purchases",
+                "pressure": pressure,
+                "pending_occupancy": pending_occupancy,
+                "scheduled_product_deposits": dict(scheduled_deposits),
+                "melon_diagnostics": diag,
+                **diag,
+            }
 
         if urgency < 0:
             diag = self._build_melon_diagnostics(ctx, melon_market_inv_init, shed, season_melons_sold, 0,
                                                  is_floor_exception, melon_turn_drip_budget,
                                                  melon_hold_reason_override="waiting_for_sell_window",
                                                  delay_set=delay_set)
-            return [], {"reason": "waiting_for_sell_window", "melon_diagnostics": diag, **diag}
+            return [], {
+                "reason": "waiting_for_sell_window",
+                "pressure": pressure,
+                "pending_occupancy": pending_occupancy,
+                "scheduled_product_deposits": dict(scheduled_deposits),
+                "melon_diagnostics": diag,
+                **diag,
+            }
 
         # Spec batch sizes per phase
         if day <= 5:
