@@ -428,6 +428,7 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
             "quad_completions": {"NW": 0, "NE": 0, "SW": 0, "SE": 0},
             "home_unit_turns": {"NW": 0, "NE": 0, "SW": 0, "SE": 0},
             "sw_tasks_created": 0,
+            "sw_anchor_assignments": 0,
             "sw_tasks_assigned": 0,
             "sw_tasks_completed": 0,
             "sw_movement_actions": 0,
@@ -556,6 +557,11 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
                     if act_quad != h_q:
                         m["temporary_spillovers"] += 1
                         _LOCALITY_SEASON_SUMMARY["total_temporary_spillovers"] += 1
+
+    if assignment:
+        _daily_accum[day]["sw_anchor_assignments"] += sum(
+            1 for task in assignment.values() if task.get("kind") == "sw_anchor"
+        )
 
     if turn_sw:
         _daily_accum[day]["sw_tasks_created"] += turn_sw.get("created", 0)
@@ -706,6 +712,7 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
                 "empty_tiles": sw_breakdown["empty"],
                 "utilization": sw_breakdown["utilization"],
                 "sw_tasks_created": d_created,
+                "sw_anchor_assignments": _daily_accum[day]["sw_anchor_assignments"],
                 "sw_tasks_assigned": d_assigned,
                 "sw_tasks_completed": d_completed,
                 "sw_movement_actions": d_moves,
