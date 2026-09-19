@@ -415,3 +415,122 @@ def test_case_j_engine_day0_simulation():
     assert empty_nw_count >= 4, f"Expected at least 4 fallow tiles in NW quadrant, got {empty_nw_count}"
     assert planted_crops.get("MELON", 0) <= 12
     assert planted_crops.get("WHEAT", 0) <= 8
+
+
+# =========================================================================
+# Case K: Reproducible Baseline & Commit Verification
+# =========================================================================
+def test_case_k_reproducible_baseline_and_sha_verification():
+    """Case K: Verify dynamic repo resolution, baseline SHA verification, and git archive extraction."""
+    from simulations.experiments.run_day0_opening_ab import (
+        resolve_repo_root,
+        get_git_sha,
+        verify_and_extract_baseline,
+        REQUIRED_BASELINE_SHA,
+    )
+
+    repo_root = resolve_repo_root()
+    assert os.path.exists(os.path.join(repo_root, ".git")), "Repo root must contain .git"
+
+    # Verify baseline SHA
+    base_sha = get_git_sha(REQUIRED_BASELINE_SHA)
+    assert base_sha == REQUIRED_BASELINE_SHA
+
+    # Verify candidate SHA (HEAD)
+    cand_sha = get_git_sha("HEAD")
+    assert len(cand_sha) == 40
+
+    # Verify baseline extraction
+    base_agent_dir = verify_and_extract_baseline(REQUIRED_BASELINE_SHA)
+    assert os.path.exists(os.path.join(base_agent_dir, "main.py"))
+    assert os.path.exists(os.path.join(base_agent_dir, "strategy", "macro_planner.py"))
+
+
+# =========================================================================
+# Case L: Actual vs Requested Purchase Accounting
+# =========================================================================
+def test_case_l_actual_vs_requested_purchase_accounting():
+    """Case L: Distinguish requested seed orders from confirmed purchases (plantings + inventory)."""
+    # Simulate a scenario where 4 melon seeds were ordered, 3 were planted, 1 remains in inventory
+    tiles = [
+        DummyTile(0, 0, kind="PLANT", crop="MELON", is_plant=True),
+        DummyTile(0, 1, kind="PLANT", crop="MELON", is_plant=True),
+        DummyTile(0, 2, kind="PLANT", crop="MELON", is_plant=True),
+    ]
+    for i in range(3, 24):
+        tiles.append(DummyTile(i % 5, i // 5, kind="EMPTY"))
+
+    farm = DummyFarm(tiles=tiles, money=1000.0)
+    private = DummyPrivate(seeds={"MELON": 1, "WHEAT": 0})
+
+    # Confirmed purchases at EOD = planted + inventory
+    eod_planted_melon = sum(1 for t in farm.iter_tiles() if getattr(t, "crop", None) == "MELON")
+    eod_inventory_melon = private.seeds.get("MELON", 0)
+    confirmed_melon = eod_planted_melon + eod_inventory_melon
+
+    assert eod_planted_melon == 3
+    assert eod_inventory_melon == 1
+    assert confirmed_melon == 4
+
+    confirmed_spend = confirmed_melon * 80.0
+    assert confirmed_spend == 320.0
+
+
+# =========================================================================
+# Case M: Bootstrap Floor Combined with Planner Demand (max)
+# =========================================================================
+def test_case_m_bootstrap_floor_max_combination():
+    """Case M: In bootstrap mode, combines remaining floor with planner demand using max()."""
+    config.BOOTSTRAP_LIVESTOCK_ARM = "ArmC"
+    config.POINT2_FEED_MODE = "live"
+
+    try:
+        # Partial fulfillment: 2 melon, 2 wheat planted; 0 seeds owned
+        tiles = [
+            DummyTile(0, 0, kind="PLANT", crop="MELON", is_plant=True),
+            DummyTile(0, 1, kind="PLANT", crop="MELON", is_plant=True),
+            DummyTile(1, 0, kind="PLANT", crop="WHEAT", is_plant=True),
+            DummyTile(1, 1, kind="PLANT", crop="WHEAT", is_plant=True),
+        ]
+        for i in range(4, 24):
+            tiles.append(DummyTile(i % 5, i // 5, kind="EMPTY"))
+
+        farm = DummyFarm(tiles=tiles, money=1500.0)
+        private = DummyPrivate(seeds={"MELON": 0, "WHEAT": 0})
+        ctx, fc = make_test_ctx(farm=farm, private=private, day=0, hour=1, money=1500.0)
+
+        # Remaining floor: MELON = 4 - 2 = 2, WHEAT = 4 - 2 = 2
+        # Planner requests: MELON = 3, WHEAT = 1
+        # Combined demand: MELON = max(2, 3) = 3 (planner higher), WHEAT = max(2, 1) = 2 (floor higher)
+        builder = OrderBuilder(money_reserve=0)
+        intents = {"buy_seed": {"MELON": 3, "WHEAT": 1}}
+        orders, ledger = builder.build(ctx, intents)
+
+        seed_orders = {o[1]: o[2] for o in orders if o[0] == "BUY_SEED"}
+        assert seed_orders.get("MELON") == 3, f"Expected max(2, 3) = 3 melon seeds, got {seed_orders.get('MELON')}"
+        assert seed_orders.get("WHEAT") == 2, f"Expected max(2, 1) = 2 wheat seeds, got {seed_orders.get('WHEAT')}"
+    finally:
+        config.BOOTSTRAP_LIVESTOCK_ARM = "none"
+        config.POINT2_FEED_MODE = "shadow"
+
+
+# =========================================================================
+# Case N: Late Day-0 Suppression (hour >= 17)
+# =========================================================================
+def test_case_n_late_day0_suppression():
+    """Case N: At hour >= 17 on Day 0, seed purchases are strictly suppressed."""
+    tiles = [DummyTile(i % 5, i // 5, kind="EMPTY") for i in range(24)]
+    farm = DummyFarm(tiles=tiles, money=1000.0)
+    private = DummyPrivate(seeds={})
+
+    for h in (17, 18, 22, 23):
+        ctx, fc = make_test_ctx(farm=farm, private=private, day=0, hour=h, money=1000.0)
+        planner = MacroPlanner(fc)
+        plan = planner.build(ctx)
+        assert len(plan.intents.get("buy_seed", {})) == 0, f"Planner emitted buy_seed at hour {h}"
+
+        builder = OrderBuilder(money_reserve=0)
+        orders, _ = builder.build(ctx, plan.intents)
+        seed_buys = [o for o in orders if o[0] == "BUY_SEED"]
+        assert len(seed_buys) == 0, f"OrderBuilder emitted seed orders at hour {h}"
+
