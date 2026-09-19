@@ -1,0 +1,52 @@
+name: SW P1 Purchase Workload Validation
+
+on:
+  push:
+    branches:
+      - experiment/sw-p1-committed-herd-workload
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install validation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest numpy scipy "kaggle-environments==1.32.7"
+      - name: Source/package parity and syntax
+        run: |
+          for f in config.py strategy/land_serviceability_model.py strategy/expansion_planner.py; do
+            cmp "agent/$f" "submission/$f"
+          done
+          python -m py_compile agent/config.py agent/strategy/land_serviceability_model.py agent/strategy/expansion_planner.py agent/tests/test_sw_p1_committed_herd.py
+      - name: Focused SW P1 and land tests
+        run: |
+          set -o pipefail
+          pytest agent/tests/test_sw_p1_committed_herd.py agent/tests/test_land_serviceability_model.py agent/tests/test_land_purchase_affordability.py -q | tee sw-p1-focused.log
+      - name: Full agent regressions
+        run: |
+          set -o pipefail
+          pytest agent/tests/ -q | tee sw-p1-full.log
+      - name: Build canonical submission and validate 720 turns
+        run: |
+          set -o pipefail
+          python scripts/build_submission.py | tee sw-p1-build.log
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sw-p1-validation
+          path: |
+            sw-p1-focused.log
+            sw-p1-full.log
+            sw-p1-build.log
+          if-no-files-found: ignore
