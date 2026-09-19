@@ -1,0 +1,57 @@
+name: Harvest Realization Validation
+
+on:
+  push:
+    branches:
+      - fix/harvest-delivery-sale-completion
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install validation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest numpy scipy "kaggle-environments==1.32.7"
+
+      - name: Syntax check changed runtime
+        run: |
+          python -m py_compile             agent/config.py             agent/execution/task_scheduler.py             agent/main.py             agent/market/market_brain.py             agent/strategy/feed_feasibility.py             agent/tests/test_harvest_realization.py
+
+      - name: Focused harvest realization tests
+        run: |
+          set -o pipefail
+          pytest agent/tests/test_harvest_realization.py                  agent/tests/test_maturity_harvesting.py                  agent/tests/test_engine_executability.py                  agent/tests/test_market_brain.py                  agent/tests/test_endgame_liquidator.py -q | tee harvest-focused.log
+
+      - name: Full agent regression suite
+        run: |
+          set -o pipefail
+          pytest agent/tests/ -q | tee full-agent-tests.log
+
+      - name: Canonical submission build and 720-turn validation
+        run: |
+          set -o pipefail
+          python scripts/build_submission.py | tee build-submission.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harvest-realization-validation-logs
+          path: |
+            harvest-focused.log
+            full-agent-tests.log
+            build-submission.log
+          if-no-files-found: ignore
