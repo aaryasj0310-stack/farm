@@ -78,7 +78,7 @@ class DummyFC:
         return 50.0
 
 
-def make_mock_tile(pos, kind="EMPTY", is_plant=False, is_animal=False, animal=None, crop=None, placed_day=0, fed_today=False):
+def make_mock_tile(pos, kind="EMPTY", is_plant=False, is_animal=False, animal=None, crop=None, placed_day=0, planted_day=None, fed_today=False):
     t = MagicMock()
     t.pos = pos
     t.kind = kind
@@ -87,6 +87,7 @@ def make_mock_tile(pos, kind="EMPTY", is_plant=False, is_animal=False, animal=No
     t.animal = animal
     t.crop = crop
     t.placed_day = placed_day
+    t.planted_day = planted_day
     t.watered_today = True
     t.fed_today = fed_today
     t.cared_today = False
@@ -126,7 +127,7 @@ def make_mock_farm_ctx(
 
     # Add wheat tiles
     for j, (pday, yunits) in enumerate(wheat_tiles):
-        t = make_mock_tile((j, 1), kind="PLANT", is_plant=True, crop="WHEAT", placed_day=pday)
+        t = make_mock_tile((j, 1), kind="PLANT", is_plant=True, crop="WHEAT", planted_day=pday)
         t.yield_units = yunits
         tiles.append(t)
 
