@@ -190,6 +190,85 @@ def test_serviceable_k_caps_sw_activation_not_nominal_best_k(monkeypatch):
     assert diag["activated_empty_tiles"] == 5
 
 
+def _existing_sw_plants(n, day=12):
+    """Build n already-active SW wheat tiles for footprint-cap tests."""
+    positions = [(x, y) for y in (7, 8, 9) for x in range(5)]
+    return [
+        (
+            x,
+            y,
+            {
+                "kind": "PLANT",
+                "crop": "WHEAT",
+                "pos": (x, y),
+                "x": x,
+                "y": y,
+                "watered_today": True,
+                "yield_units": 0,
+                "planted_day": day - 1,
+                "consecutive_unwatered": 0,
+            },
+        )
+        for x, y in positions[:n]
+    ]
+
+
+def test_existing_sw_plants_reduce_new_activation_slots(monkeypatch):
+    ctx = make_ctx(
+        day=12,
+        money=10000,
+        hands=tuple(range(12)),
+        unlocked=("NW", "NE", "SW"),
+        structures=_existing_sw_plants(3),
+    )
+    config.set_sw_workload_responsive_scheduler(True)
+    config.set_sw_serviceability_aware_activation(True)
+
+    monkeypatch.setattr(
+        lsm,
+        "evaluate_sw_serviceability",
+        lambda *a, **k: _serviceability_diag(
+            serviceable=True, best_k=15, serviceable_k=5
+        ),
+    )
+
+    plan = MacroPlanner(make_forecast(BASE_PRICES)).build(ctx)
+    assert len(_sw_plants(plan, ctx["farm"])) == 2
+    diag = plan.diagnostics["sw_serviceability_activation"]
+    assert diag["serviceable_k"] == 5
+    assert diag["existing_sw_plants"] == 3
+    assert diag["activation_slots"] == 2
+    assert diag["activated_empty_tiles"] == 2
+
+
+def test_full_serviceable_sw_footprint_queues_no_additional_plants(monkeypatch):
+    ctx = make_ctx(
+        day=12,
+        money=10000,
+        hands=tuple(range(12)),
+        unlocked=("NW", "NE", "SW"),
+        structures=_existing_sw_plants(5),
+    )
+    config.set_sw_workload_responsive_scheduler(True)
+    config.set_sw_serviceability_aware_activation(True)
+
+    monkeypatch.setattr(
+        lsm,
+        "evaluate_sw_serviceability",
+        lambda *a, **k: _serviceability_diag(
+            serviceable=True, best_k=15, serviceable_k=5
+        ),
+    )
+
+    plan = MacroPlanner(make_forecast(BASE_PRICES)).build(ctx)
+    assert _sw_plants(plan, ctx["farm"]) == []
+    diag = plan.diagnostics["sw_serviceability_activation"]
+    assert diag["serviceable_k"] == 5
+    assert diag["existing_sw_plants"] == 5
+    assert diag["activation_slots"] == 0
+    assert diag["activated_empty_tiles"] == 0
+
+
 def test_activation_context_does_not_recharge_land_cost():
     ctx = make_ctx(
         day=12,
