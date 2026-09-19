@@ -540,6 +540,7 @@ def evaluate_sw_serviceability(
     force_k_tiles: Optional[int] = None,
     hour: int = 0,
     allow_hypothetical: bool = False,
+    reserve_desired_herd: bool = True,
 ) -> Tuple[bool, int, Dict[str, Any]]:
     """Evaluate whether buying and partially exploiting SW generates positive net marginal EV.
 
@@ -620,12 +621,17 @@ def evaluate_sw_serviceability(
     except Exception:
         active_target_sheep = TARGET_SHEEP
 
+    # P1 isolates the SW PURCHASE decision from aspirational livestock targets.
+    # Preserve the observed livestock + built-housing count conservatively:
+    # only the extra desired-but-not-yet-committed herd projection is removable.
+    # Default True reproduces the existing activation/feed caller semantics.
     target_sheep = ne_animals
-    if not use_strat_sw:
-        if nw_animals > 0 and len(getattr(farm, "unlocked", [])) >= 2 and (ne_crops > 0 or ne_animals > 0):
-            target_sheep = max(ne_animals, active_target_sheep)
-    else:
-        target_sheep = min(ne_animals + 1, active_target_sheep)
+    if reserve_desired_herd:
+        if not use_strat_sw:
+            if nw_animals > 0 and len(getattr(farm, "unlocked", [])) >= 2 and (ne_crops > 0 or ne_animals > 0):
+                target_sheep = max(ne_animals, active_target_sheep)
+        else:
+            target_sheep = min(ne_animals + 1, active_target_sheep)
 
     nw_wl_steady = (nw_crops * 1.3) + (nw_animals * 2.0)
     ne_wl_steady = (ne_crops * 1.3) + (target_sheep * 5.0)
@@ -903,6 +909,10 @@ def evaluate_sw_serviceability(
         "existing_workload": existing_wl,
         "nw_workload": nw_wl,
         "ne_workload": ne_wl,
+        "ne_observed_animals_and_housing": ne_animals,
+        "ne_desired_sheep_target": active_target_sheep,
+        "ne_reserved_sheep_workload_count": target_sheep,
+        "reserve_desired_herd": bool(reserve_desired_herd),
         "nw_deficit": round(nw_deficit, 1),
         "ne_deficit": round(ne_deficit, 1),
         "available_marginal_ap": round(max(0.0, sw_cap - best_eval["req_actions"]), 1),
