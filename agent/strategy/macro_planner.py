@@ -415,7 +415,8 @@ def project_wheat_harvests(plant_day, current_day, season_end=29):
     Produces max_yield units once at plant_day + max_yield_day.
     """
     if plant_day is None:
-        plant_day = current_day
+        # Unknown crop age is not secured future supply.
+        return 0
     cd = CROPS["WHEAT"]
     harvest_day = plant_day + cd["max_yield_day"]
     if harvest_day > season_end:
