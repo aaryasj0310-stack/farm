@@ -51,6 +51,7 @@ from config import (
     TURNS_PER_DAY,
     EFFECTIVE_ACTIONS_PER_UNIT,
     DYNAMIC_ZONAL_ALLOCATION,
+    SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED,
     PERSISTENT_WORKER_LOCALITY_ENABLED,
     LOCALITY_ZONE_SWITCH_PENALTY,
     C2_MAX_SPILLOVER_DIST,
@@ -1112,7 +1113,15 @@ def get_home_quadrant(u_idx, n_units, unlocked):
     elif "NE" in unlocked:
         half = max(1, n_units // 2)
         return "NW" if u_idx < half else "NE"
-def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx, ctx=None):
+def compute_workload_aware_home_quadrants(
+    tasks,
+    farm,
+    n_units,
+    pos_by_idx,
+    ctx=None,
+    protect_core_discretionary_before_sw=False,
+    exclude_shed_logistics_from_sw=False,
+):
     """Stage 8B Phase 2B: Workload-aware dynamic zonal allocation.
     
     Dynamically sizes zonal squads based on live task demand and priority classes:
@@ -1120,9 +1129,11 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx, ctx=
     2. Discretionary tasks (prio < 70): animal care, standard harvest, bonus water, dig, fertilize.
     3. Required units per zone: u_mand(Z) = ceil(demand_mand(Z) / EFFECTIVE_ACTIONS_PER_UNIT).
     4. First guarantee required units for NW and NE mandatory tasks: u_NW_mand + u_NE_mand.
-    5. If surplus units remain (n_units - u_mand > 0), allocate up to required units to SW:
-       u_SW = min(surplus, ceil(demand(SW) / EFFECTIVE_ACTIONS_PER_UNIT)).
-    6. Distribute remaining surplus to NW/NE discretionary tasks.
+    5. By default, if surplus units remain, allocate up to required units to SW,
+       then distribute remaining surplus to NW/NE discretionary tasks.
+    6. The isolated P1.1 scheduler mode can instead protect NW/NE discretionary
+       capacity first, then allocate only true surplus to SW. In that mode,
+       shed logistics at SHED_ACCESS_TILES do not create SW agricultural demand.
     7. Map specific worker IDs u_idx to quadrants based on minimum transit distance from current positions.
     When PERSISTENT_WORKER_LOCALITY_ENABLED is active:
     - Layer 1: Zone capacity across days. Asymmetric capacity hysteresis preserves justified
@@ -1178,7 +1189,18 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx, ctx=
     for t in tasks:
         tgt = t.get("target") or tuple(farm.farmer)
         q = farm.quadrant_of(tgt) if hasattr(farm, "quadrant_of") else "NW"
-        if t.get("op") == "PICKUP" and tgt in SHED_ACCESS_TILES:
+        is_shed_logistics = (
+            tgt in SHED_ACCESS_TILES
+            and (
+                t.get("op") in ("PICKUP", "DROP")
+                or t.get("kind") in ("pickup_wheat", "deposit_product")
+            )
+        )
+        if exclude_shed_logistics_from_sw and is_shed_logistics:
+            # Shed access is shared infrastructure, not SW agricultural demand.
+            q = "NW"
+        elif t.get("op") == "PICKUP" and tgt in SHED_ACCESS_TILES:
+            # Preserve legacy dynamic-allocation behavior outside P1.1.
             q = "SW" if tgt == PORT_SW else "NW"
         if q not in unlocked:
             continue
@@ -1219,13 +1241,29 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx, ctx=
         alloc["NE"] = ne_mand
         surplus = n_units - (alloc["NW"] + alloc["NE"])
 
-    # If surplus remains, allocate up to required units to SW
+    def _allocate_core_discretionary():
+        nonlocal surplus
+        if surplus > 0:
+            nw_disc = u_disc["NW"]
+            give_nw = min(surplus, nw_disc)
+            alloc["NW"] += give_nw
+            surplus -= give_nw
+        if surplus > 0 and "NE" in unlocked:
+            ne_disc = u_disc["NE"]
+            give_ne = min(surplus, ne_disc)
+            alloc["NE"] += give_ne
+            surplus -= give_ne
+
+    # P1.1 protects useful NW/NE work before SW. Legacy dynamic allocation
+    # retains its historical SW-before-discretionary order when the flag is off.
+    if protect_core_discretionary_before_sw:
+        _allocate_core_discretionary()
+
+    # Allocate SW only from capacity that remains after the selected core policy.
     if "SW" in unlocked and surplus > 0:
         sw_total_demand = demand_mand["SW"] + demand_disc["SW"]
         sw_req = math.ceil(sw_total_demand / eff_ap)
         if PERSISTENT_WORKER_LOCALITY_ENABLED:
-            # Asymmetric persistence: live demand increases SW capacity quickly;
-            # active recurring assets preserve existing capacity through temporary task lulls!
             if has_sw_assets:
                 sw_target = max(sw_req, _ZONE_HOME_CAPACITY.get("SW", 0))
             else:
@@ -1236,18 +1274,8 @@ def compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx, ctx=
         alloc["SW"] = alloc_sw
         surplus -= alloc_sw
 
-    # Distribute remaining surplus to NW/NE discretionary tasks
-    if surplus > 0:
-        nw_disc = u_disc["NW"]
-        give_nw = min(surplus, nw_disc)
-        alloc["NW"] += give_nw
-        surplus -= give_nw
-
-    if surplus > 0 and "NE" in unlocked:
-        ne_disc = u_disc["NE"]
-        give_ne = min(surplus, ne_disc)
-        alloc["NE"] += give_ne
-        surplus -= give_ne
+    if not protect_core_discretionary_before_sw:
+        _allocate_core_discretionary()
 
     # Leftover surplus: distribute between NW and NE
     while surplus > 0:
@@ -1516,7 +1544,17 @@ def assign_tasks(tasks, ctx, extra_units=()):
     except Exception:
         strategic_sw = False
 
-    if DYNAMIC_ZONAL_ALLOCATION or strategic_sw:
+    if SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED:
+        home_quads = compute_workload_aware_home_quadrants(
+            tasks,
+            farm,
+            n_units,
+            pos_by_idx,
+            ctx=ctx,
+            protect_core_discretionary_before_sw=True,
+            exclude_shed_logistics_from_sw=True,
+        )
+    elif DYNAMIC_ZONAL_ALLOCATION or strategic_sw:
         home_quads = compute_workload_aware_home_quadrants(tasks, farm, n_units, pos_by_idx, ctx=ctx)
     else:
         home_quads = {u_idx: get_home_quadrant(u_idx, n_units, farm.unlocked) for u_idx in range(n_units)}
