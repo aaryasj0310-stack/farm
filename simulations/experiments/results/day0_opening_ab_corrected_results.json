@@ -1,0 +1,2269 @@
+{
+  "metadata": {
+    "experiment_name": "day0_opening_commitment_idempotence_ab",
+    "timestamp": "2026-09-19 11:01:20 UTC",
+    "baseline_sha": "a74d63f7ea7ad4fbed2a714f1376a36d03a0db70",
+    "candidate_sha": "2c0b42d7cf4e9a3c51f673f15364304f8d3edaef",
+    "engine_version": "1.32.7",
+    "engine_file": "C:\\Users\\rohit\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\kaggle_environments\\__init__.py",
+    "production_config": {
+      "POINT2_FEED_MODE": "shadow",
+      "BOOTSTRAP_LIVESTOCK_ARM": "none",
+      "ONE_AT_A_TIME_LATE_HOUSING_ENABLED": false,
+      "POINT2_PRE_NE_CAPITAL_MODE": "off"
+    }
+  },
+  "aggregate": {
+    "suite_name": "10_pair",
+    "total_pairs": 10,
+    "mean_base_score": 94132.4,
+    "mean_cand_score": 97063.1,
+    "mean_score_delta": 2930.7,
+    "wins": 6,
+    "ties": 0,
+    "losses": 4,
+    "total_base_requested_melon": 170,
+    "total_cand_requested_melon": 120,
+    "total_base_requested_wheat": 150,
+    "total_cand_requested_wheat": 80,
+    "total_base_requested_spend": 15100.0,
+    "total_cand_requested_spend": 10400.0,
+    "redundant_requested_melon_orders_eliminated": 50,
+    "redundant_requested_spend_eliminated": 4700.0,
+    "total_base_confirmed_melon": 170,
+    "total_cand_confirmed_melon": 120,
+    "total_base_confirmed_wheat": 140,
+    "total_cand_confirmed_wheat": 80,
+    "total_base_confirmed_spend": 15000,
+    "total_cand_confirmed_spend": 10400,
+    "redundant_confirmed_melon_eliminated": 50,
+    "redundant_confirmed_spend_eliminated": 4600,
+    "baseline_safety_incidents": {
+      "negative_cash_steps": 0,
+      "animal_starvations": 151,
+      "animal_deaths": 0,
+      "unwatered_crops_eod0": 0
+    },
+    "candidate_safety_incidents": {
+      "negative_cash_steps": 0,
+      "animal_starvations": 107,
+      "animal_deaths": 0,
+      "unwatered_crops_eod0": 0
+    },
+    "total_elapsed_sec": 160.1
+  },
+  "pairs_summary": [
+    {
+      "pair_id": 1,
+      "seed": 42,
+      "opponent": "pass",
+      "base_score": 75171.0,
+      "cand_score": 100128.0,
+      "score_delta": 24957.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 355.0,
+      "cand_cash_d6": 307.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 11,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 6,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 2,
+      "seed": 1234,
+      "opponent": "pass",
+      "base_score": 98232.0,
+      "cand_score": 99338.0,
+      "score_delta": 1106.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 355.0,
+      "cand_cash_d6": 308.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 18,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 9,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 3,
+      "seed": 101,
+      "opponent": "pure_wheat_rush",
+      "base_score": 100997.0,
+      "cand_score": 98690.0,
+      "score_delta": -2307.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 358.0,
+      "cand_cash_d6": 359.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 19,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 6,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 4,
+      "seed": 55,
+      "opponent": "pure_wheat_rush",
+      "base_score": 96709.0,
+      "cand_score": 93453.0,
+      "score_delta": -3256.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 358.0,
+      "cand_cash_d6": 369.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 18,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 17,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 5,
+      "seed": 2024,
+      "opponent": "cow_milk_engine",
+      "base_score": 98210.0,
+      "cand_score": 101414.0,
+      "score_delta": 3204.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 355.0,
+      "cand_cash_d6": 351.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 21,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 6,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 6,
+      "seed": 314,
+      "opponent": "cow_milk_engine",
+      "base_score": 81402.0,
+      "cand_score": 94199.0,
+      "score_delta": 12797.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 355.0,
+      "cand_cash_d6": 398.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 18,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 15,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 7,
+      "seed": 7,
+      "opponent": "melon_sniper",
+      "base_score": 105539.0,
+      "cand_score": 95804.0,
+      "score_delta": -9735.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 305.0,
+      "cand_cash_d6": 349.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 9,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 8,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 8,
+      "seed": 8888,
+      "opponent": "melon_sniper",
+      "base_score": 98222.0,
+      "cand_score": 91576.0,
+      "score_delta": -6646.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 305.0,
+      "cand_cash_d6": 351.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 19,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 9,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 9,
+      "seed": 999,
+      "opponent": "full_production_agent",
+      "base_score": 93778.0,
+      "cand_score": 100896.0,
+      "score_delta": 7118.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 301.0,
+      "cand_cash_d6": 312.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 14,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 18,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    },
+    {
+      "pair_id": 10,
+      "seed": 777,
+      "opponent": "full_production_agent",
+      "base_score": 93064.0,
+      "cand_score": 95133.0,
+      "score_delta": 2069.0,
+      "base_requested_melon": 17,
+      "cand_requested_melon": 12,
+      "base_requested_wheat": 15,
+      "cand_requested_wheat": 8,
+      "base_requested_spend": 1510.0,
+      "cand_requested_spend": 1040.0,
+      "base_confirmed_melon": 17,
+      "cand_confirmed_melon": 12,
+      "base_confirmed_wheat": 14,
+      "cand_confirmed_wheat": 8,
+      "base_confirmed_spend": 1500,
+      "cand_confirmed_spend": 1040,
+      "base_eod_planted": 15,
+      "cand_eod_planted": 15,
+      "base_eod_empty": 7,
+      "cand_eod_empty": 7,
+      "empty_delta": 0,
+      "base_cash_d0": 354.0,
+      "cand_cash_d0": 824.0,
+      "base_cash_d1": 318.0,
+      "cand_cash_d1": 759.0,
+      "base_cash_d6": 308.0,
+      "cand_cash_d6": 333.0,
+      "base_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 4,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "cand_safety": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 13,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      }
+    }
+  ],
+  "raw_results": [
+    {
+      "pair_id": 2,
+      "arm": "Candidate",
+      "seed": 1234,
+      "opponent": "pass",
+      "final_score": 99338.0,
+      "opp_score": 3000.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 505.0,
+        "d5": 479.0,
+        "d6": 308.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 9,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 26.75,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 1,
+      "arm": "Candidate",
+      "seed": 42,
+      "opponent": "pass",
+      "final_score": 100128.0,
+      "opp_score": 3000.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 505.0,
+        "d5": 479.0,
+        "d6": 307.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 6,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 29.35,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 1,
+      "arm": "Baseline",
+      "seed": 42,
+      "opponent": "pass",
+      "final_score": 75171.0,
+      "opp_score": 3000.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 516.0,
+        "d5": 440.0,
+        "d6": 355.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 11,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 32.27,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 2,
+      "arm": "Baseline",
+      "seed": 1234,
+      "opponent": "pass",
+      "final_score": 98232.0,
+      "opp_score": 3000.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 516.0,
+        "d5": 440.0,
+        "d6": 355.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 18,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 33.78,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 3,
+      "arm": "Baseline",
+      "seed": 101,
+      "opponent": "pure_wheat_rush",
+      "final_score": 100997.0,
+      "opp_score": 11924.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 516.0,
+        "d5": 1322.0,
+        "d6": 358.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 19,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 28.64,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 3,
+      "arm": "Candidate",
+      "seed": 101,
+      "opponent": "pure_wheat_rush",
+      "final_score": 98690.0,
+      "opp_score": 10129.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 505.0,
+        "d5": 1311.0,
+        "d6": 359.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 6,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 31.37,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 4,
+      "arm": "Baseline",
+      "seed": 55,
+      "opponent": "pure_wheat_rush",
+      "final_score": 96709.0,
+      "opp_score": 12977.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 516.0,
+        "d5": 1322.0,
+        "d6": 358.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 18,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 27.61,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 4,
+      "arm": "Candidate",
+      "seed": 55,
+      "opponent": "pure_wheat_rush",
+      "final_score": 93453.0,
+      "opp_score": 12777.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 505.0,
+        "d5": 1311.0,
+        "d6": 369.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 17,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 28.72,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 5,
+      "arm": "Baseline",
+      "seed": 2024,
+      "opponent": "cow_milk_engine",
+      "final_score": 98210.0,
+      "opp_score": 1846.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 516.0,
+        "d5": 440.0,
+        "d6": 355.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 21,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 28.94,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 5,
+      "arm": "Candidate",
+      "seed": 2024,
+      "opponent": "cow_milk_engine",
+      "final_score": 101414.0,
+      "opp_score": 1728.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 507.0,
+        "d5": 438.0,
+        "d6": 351.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 6,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 29.38,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 6,
+      "arm": "Candidate",
+      "seed": 314,
+      "opponent": "cow_milk_engine",
+      "final_score": 94199.0,
+      "opp_score": 1830.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 505.0,
+        "d5": 479.0,
+        "d6": 398.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 15,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 27.84,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 6,
+      "arm": "Baseline",
+      "seed": 314,
+      "opponent": "cow_milk_engine",
+      "final_score": 81402.0,
+      "opp_score": 1711.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 516.0,
+        "d5": 440.0,
+        "d6": 355.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 18,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 31.76,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 7,
+      "arm": "Baseline",
+      "seed": 7,
+      "opponent": "melon_sniper",
+      "final_score": 105539.0,
+      "opp_score": 1535.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 520.0,
+        "d5": 446.0,
+        "d6": 305.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 9,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 25.61,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 7,
+      "arm": "Candidate",
+      "seed": 7,
+      "opponent": "melon_sniper",
+      "final_score": 95804.0,
+      "opp_score": 1535.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 511.0,
+        "d5": 444.0,
+        "d6": 349.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 8,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 29.38,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 8,
+      "arm": "Baseline",
+      "seed": 8888,
+      "opponent": "melon_sniper",
+      "final_score": 98222.0,
+      "opp_score": 1535.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 520.0,
+        "d5": 446.0,
+        "d6": 305.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 19,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 27.46,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 8,
+      "arm": "Candidate",
+      "seed": 8888,
+      "opponent": "melon_sniper",
+      "final_score": 91576.0,
+      "opp_score": 1535.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 511.0,
+        "d5": 444.0,
+        "d6": 351.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 9,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 27.26,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 9,
+      "arm": "Baseline",
+      "seed": 999,
+      "opponent": "full_production_agent",
+      "final_score": 93778.0,
+      "opp_score": 7183.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 516.0,
+        "d5": 403.0,
+        "d6": 301.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 14,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 35.38,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 10,
+      "arm": "Candidate",
+      "seed": 777,
+      "opponent": "full_production_agent",
+      "final_score": 95133.0,
+      "opp_score": 12360.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 505.0,
+        "d5": 442.0,
+        "d6": 333.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 13,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 34.03,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 10,
+      "arm": "Baseline",
+      "seed": 777,
+      "opponent": "full_production_agent",
+      "final_score": 93064.0,
+      "opp_score": 10452.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 17,
+      "day0_requested_wheat": 15,
+      "day0_requested_total_seeds": 32,
+      "day0_requested_seed_spend": 1510.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        },
+        {
+          "hour": 5,
+          "crop": "WHEAT",
+          "qty": 2,
+          "unit_cost": 10,
+          "cost": 20
+        },
+        {
+          "hour": 7,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 8,
+          "crop": "MELON",
+          "qty": 1,
+          "unit_cost": 80,
+          "cost": 80
+        },
+        {
+          "hour": 8,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 9,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 10,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 13,
+          "crop": "WHEAT",
+          "qty": 1,
+          "unit_cost": 10,
+          "cost": 10
+        },
+        {
+          "hour": 14,
+          "crop": "MELON",
+          "qty": 4,
+          "unit_cost": 80,
+          "cost": 320
+        }
+      ],
+      "day0_confirmed_melon": 17,
+      "day0_confirmed_wheat": 14,
+      "day0_confirmed_total_seeds": 31,
+      "day0_confirmed_seed_spend": 1500,
+      "day0_eod_tiles": {
+        "planted_melon": 9,
+        "planted_wheat": 6,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 8,
+        "eod_inventory_wheat": 8
+      },
+      "cash_by_day": {
+        "d0": 354.0,
+        "d1": 318.0,
+        "d2": 335.0,
+        "d3": 537.0,
+        "d4": 518.0,
+        "d5": 342.0,
+        "d6": 308.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 4,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 36.01,
+      "status": "SUCCESS"
+    },
+    {
+      "pair_id": 9,
+      "arm": "Candidate",
+      "seed": 999,
+      "opponent": "full_production_agent",
+      "final_score": 100896.0,
+      "opp_score": 7880.0,
+      "win": true,
+      "tie": false,
+      "day0_requested_melon": 12,
+      "day0_requested_wheat": 8,
+      "day0_requested_total_seeds": 20,
+      "day0_requested_seed_spend": 1040.0,
+      "day0_seed_orders": [
+        {
+          "hour": 0,
+          "crop": "MELON",
+          "qty": 12,
+          "unit_cost": 80,
+          "cost": 960
+        },
+        {
+          "hour": 0,
+          "crop": "WHEAT",
+          "qty": 8,
+          "unit_cost": 10,
+          "cost": 80
+        }
+      ],
+      "day0_confirmed_melon": 12,
+      "day0_confirmed_wheat": 8,
+      "day0_confirmed_total_seeds": 20,
+      "day0_confirmed_seed_spend": 1040,
+      "day0_eod_tiles": {
+        "planted_melon": 8,
+        "planted_wheat": 7,
+        "total_planted": 15,
+        "empty_nw_tiles": 7,
+        "pasture_tiles": 2,
+        "coop_tiles": 0,
+        "eod_inventory_melon": 4,
+        "eod_inventory_wheat": 1
+      },
+      "cash_by_day": {
+        "d0": 824.0,
+        "d1": 759.0,
+        "d2": 354.0,
+        "d3": 446.0,
+        "d4": 505.0,
+        "d5": 442.0,
+        "d6": 312.0
+      },
+      "safety_incidents": {
+        "negative_cash_steps": 0,
+        "animal_starvations": 18,
+        "animal_deaths": 0,
+        "unwatered_crops_eod0": 0
+      },
+      "elapsed": 36.12,
+      "status": "SUCCESS"
+    }
+  ]
+}
