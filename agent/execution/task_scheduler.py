@@ -387,7 +387,8 @@ def classify_task_action(act, task, farm):
     args = task.get("args", []) if task else []
 
     shed_tiles = {(4, 4), (5, 4), (4, 5), (5, 5)}
-    if op in ("PICKUP", "DROP") or (tgt and tuple(tgt) in shed_tiles and op in ("PICKUP", "DROP")):
+    if (op in ("PICKUP", "DROP") or kind == "deposit_product"
+            or (tgt and tuple(tgt) in shed_tiles and op in ("PICKUP", "DROP"))):
         return "logistics", "CENTRAL"
 
     tgt_quad = farm.quadrant_of(tgt) if (tgt and hasattr(farm, "quadrant_of")) else "NW"
@@ -787,8 +788,10 @@ def build_tasks(ctx, macro):
             
             if t.yield_units > 0:
                 if is_endgame:
-                    # Day 29 endgame liquidation: realize all available yield before season end
-                    add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_endgame")
+                    # Day 29: only create new worker inventory if the fastest current
+                    # worker can still harvest, reach shed, deposit, and sell by Hour 23.
+                    if _endgame_harvest_can_realize(ctx, t.pos):
+                        add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_endgame")
                 elif decay_imminent:
                     # Decay imminent: harvest to prevent crop decay
                     add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_decay")
@@ -809,7 +812,8 @@ def build_tasks(ctx, macro):
             
             if t.yield_units > 0:
                 if is_endgame or decay_imminent:
-                    add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_decay")
+                    if day < 29 or _endgame_harvest_can_realize(ctx, t.pos):
+                        add(PRIORITY_DECAY_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_decay")
                 elif t.yield_units >= 2:
                     # Efficient harvest of accumulated produce (2+ units per action)
                     add(PRIORITY_STANDARD_HARVEST, "HARVEST", t.pos, kind="harvest_ongoing_accum")
@@ -928,7 +932,8 @@ def build_tasks(ctx, macro):
                 max_feed_prio = feed_prio
 
         if t.yield_units > 0:
-            add(PRIORITY_STANDARD_HARVEST + 5, "HARVEST", t.pos, kind="harvest_animal")
+            if day < 29 or _endgame_harvest_can_realize(ctx, t.pos):
+                add(PRIORITY_STANDARD_HARVEST + 5, "HARVEST", t.pos, kind="harvest_animal")
         if t.fertilizer_available:
             add(PRIORITY_FERT_COLLECT, "COLLECT_FERTILIZER", t.pos, kind="fert")
         want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
@@ -952,6 +957,94 @@ def build_tasks(ctx, macro):
                 target = SHED_ACCESS_TILES[c_idx % len(SHED_ACCESS_TILES)]
                 add(staging_prio, "PICKUP", tuple(target),
                     args=["WHEAT", int(take)], kind="pickup_wheat")
+
+    # ---------------- harvested-product realization ----------------
+    # HARVEST puts goods on the acting worker, while SELL reads only the shed.
+    # End-of-day auto-drop is useful but can discard overflow and is too late for
+    # final-day liquidation. Create at most one delivery mission per carrier.
+    private = ctx.get("private")
+    if private is not None:
+        inventories = list(getattr(private, "inventories", []) or [])
+        shed = getattr(private, "shed", {}) or {}
+        shed_load = sum(max(0, int(v)) for v in shed.values())
+        room_budget = max(0, SHED_CAPACITY - shed_load)
+        carried_sellable_total = sum(
+            max(0, int((inv or {}).get(p, 0)))
+            for inv in inventories for p in PRODUCTS
+        )
+        pending_total = shed_load + carried_sellable_total
+        unit_positions = [tuple(ctx["farm"].farmer)] + [tuple(h) for h in ctx["farm"].hands]
+
+        for u_idx, inv in enumerate(inventories):
+            if u_idx >= len(unit_positions) or room_budget <= 0 or not inv:
+                continue
+
+            deliverable = {}
+            for item, raw_n in inv.items():
+                n = max(0, int(raw_n or 0))
+                if n <= 0 or item not in PRODUCTS:
+                    continue
+                # Do not pull feed wheat away from live FEED obligations.
+                if item == "WHEAT" and feeds_due > 0:
+                    continue
+                # Fertilizer remains an execution resource until endgame.
+                if item == "FERTILIZER" and day < 28:
+                    continue
+                deliverable[item] = n
+
+            if not deliverable:
+                continue
+
+            carried_here = sum(deliverable.values())
+            should_deliver = (
+                day >= 28 or hour >= 20 or carried_here >= 6
+                or pending_total >= SHED_SOFT_CAP
+            )
+            if not should_deliver:
+                continue
+
+            if day == 29:
+                delivery_prio = PRIORITY_ENDGAME_PRODUCT_DELIVERY
+            elif day >= 28 or hour >= 20 or pending_total >= SHED_SOFT_CAP:
+                delivery_prio = PRIORITY_PRODUCT_DELIVERY_PRESSURE
+            else:
+                delivery_prio = PRIORITY_PRODUCT_DELIVERY
+
+            target = _nearest_shed_access(ctx["farm"], unit_positions[u_idx])
+            all_positive = {k: int(v) for k, v in inv.items() if int(v or 0) > 0}
+            safe_drop = (
+                day >= 28
+                and all(k in deliverable for k in all_positive)
+                and sum(all_positive.values()) <= room_budget
+            )
+
+            if safe_drop:
+                qty = sum(all_positive.values())
+                add(
+                    delivery_prio, "DROP", target, kind="deposit_product",
+                    meta={
+                        "required_unit": u_idx,
+                        "deposit_items": dict(all_positive),
+                        "deposit_units": qty,
+                    },
+                )
+                room_budget -= qty
+            else:
+                # Selective PLACE-to-shed preserves unrelated feed/animal/fertilizer
+                # inventory and, unlike DROP, does not discard overflow.
+                item, qty = max(deliverable.items(), key=lambda kv: (kv[1], kv[0]))
+                take = min(int(qty), room_budget)
+                if take > 0:
+                    add(
+                        delivery_prio, "PLACE", target, args=[item, take],
+                        kind="deposit_product",
+                        meta={
+                            "required_unit": u_idx,
+                            "product": item,
+                            "deposit_units": take,
+                        },
+                    )
+                    room_budget -= take
 
     # ---------------- planting queue (seed-conflict-safe) ----------------
     seeds = ctx["private"].seeds
@@ -1369,9 +1462,15 @@ def assign_tasks(tasks, ctx, extra_units=()):
 
     def _eligible(task):
         """Units that could execute this task this turn without a no-op."""
+        required_unit = (task.get("meta") or {}).get("required_unit")
+        if required_unit is not None:
+            try:
+                return {int(required_unit)}
+            except (TypeError, ValueError):
+                return set()
         if task["op"] == "PLACE" and task.get("args"):
             item = task["args"][0]
-            if item in ANIMALS:
+            if item in ANIMALS or task.get("kind") == "deposit_product":
                 return set(holders.get(item, []))   # empty => defer, don't no-op
         elif task["op"] == "FERTILIZE":
             return set(holders.get("FERTILIZER", []))
@@ -1407,9 +1506,13 @@ def assign_tasks(tasks, ctx, extra_units=()):
         # Production-day feeding (feed_prod) is globally dispatchable to prevent
         # stranding animals when the only wheat holder is in another quadrant.
         is_delivery = t["op"] == "PLACE" and (t.get("args") or [None])[0] in ANIMALS
+        is_product_delivery = (
+            t.get("kind") == "deposit_product"
+            and prio >= PRIORITY_PRODUCT_DELIVERY_PRESSURE
+        )
         is_prod_feed = t.get("kind") == "feed_prod"
         is_urgent = (prio >= PRIORITY_URGENT_SURVIVAL or is_delivery
-                     or is_prod_feed
+                     or is_product_delivery or is_prod_feed
                      or t.get("kind") in ("feed_rescue", "harvest_decay", "pickup_wheat"))
         if is_urgent:
             urgent_tasks.append(t)
