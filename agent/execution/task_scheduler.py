@@ -27,6 +27,7 @@ from config import (
     ANIMALS,
     CARE_GEESE,
     CROPS,
+    PRODUCTS,
     PRIORITY_BONUS_WATER,
     PRIORITY_BUILD_STRUCTURE,
     PRIORITY_CARE_ANIMAL,
@@ -38,10 +39,15 @@ from config import (
     PRIORITY_PLANT_AND_WATER,
     PRIORITY_PROD_DAY_FEED,
     PRIORITY_STANDARD_HARVEST,
+    PRIORITY_PRODUCT_DELIVERY,
+    PRIORITY_PRODUCT_DELIVERY_PRESSURE,
+    PRIORITY_ENDGAME_PRODUCT_DELIVERY,
     PRIORITY_URGENT_SURVIVAL,
     PRIORITY_WEED_DIG,
     PORT_SW,
     SHED_ACCESS_TILES,
+    SHED_CAPACITY,
+    SHED_SOFT_CAP,
     TURNS_PER_DAY,
     EFFECTIVE_ACTIONS_PER_UNIT,
     DYNAMIC_ZONAL_ALLOCATION,
@@ -704,6 +710,43 @@ def _record_turn_utilization(ctx, n_units, actions_taken, assignment=None, turn_
 
 def farm_pos_of(ctx):
     return ctx["farm"].farmer
+
+
+def _accessible_shed_tiles(farm):
+    """Shed access points usable for logistics under the scheduler's zone model."""
+    unlocked = set(getattr(farm, "unlocked", ()) or ())
+    usable = [tuple(p) for p in SHED_ACCESS_TILES
+              if not hasattr(farm, "quadrant_of") or farm.quadrant_of(tuple(p)) in unlocked]
+    return usable or [tuple(SHED_ACCESS_TILES[0])]
+
+
+def _nearest_shed_access(farm, pos):
+    tiles = _accessible_shed_tiles(farm)
+    return min(tiles, key=lambda p: abs(p[0] - pos[0]) + abs(p[1] - pos[1]))
+
+
+def _endgame_harvest_can_realize(ctx, target):
+    """Conservative Day-29 proof that a harvest can still reach shed and sell.
+
+    Unit actions execute before market. Once a carrier reaches shed access, a
+    PLACE/DROP deposit can therefore be sold on that same turn by the market
+    layer. Earliest realization is: travel-to-target + HARVEST + travel-to-shed
+    + deposit/sell turn. If even the closest current worker cannot make Hour 23,
+    harvesting only strands value on a worker and is suppressed.
+    """
+    if ctx.get("day", 0) < 29:
+        return True
+    hour = int(ctx.get("hour", 0))
+    farm = ctx["farm"]
+    positions = [tuple(farm.farmer)] + [tuple(h) for h in farm.hands]
+    if not positions:
+        return False
+    target = tuple(target)
+    to_target = min(abs(p[0] - target[0]) + abs(p[1] - target[1]) for p in positions)
+    shed_target = _nearest_shed_access(farm, target)
+    to_shed = abs(target[0] - shed_target[0]) + abs(target[1] - shed_target[1])
+    earliest_sale_hour = hour + to_target + to_shed + 1
+    return earliest_sale_hour <= 23
 
 
 def produces_today(tile, day):
