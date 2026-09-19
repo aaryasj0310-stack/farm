@@ -49,7 +49,7 @@ def make_ctx(day=5, money=3000.0, hands=(), shed=None, seeds=None,
                     "kind": "PLANT", "crop": "WHEAT",
                     "pos": (x, y), "x": x, "y": y,
                     "watered_today": False, "yield_units": 0,
-                    "placed_day": day, "consecutive_unwatered": 0,
+                    "planted_day": day, "consecutive_unwatered": 0,
                 }
                 wheat_placed += 1
         if wheat_placed >= wheat_tiles:
@@ -328,7 +328,7 @@ def test_portfolio_aware_prevents_monoculture():
     animals_structs = [(x, 2, {"kind": "PLANT", "crop": "MELON",
                         "pos": (x, 2), "x": x, "y": 2,
                         "watered_today": False, "yield_units": 3,
-                        "placed_day": 3, "consecutive_unwatered": 0})
+                        "planted_day": 3, "consecutive_unwatered": 0})
                        for x in range(4)]
     fc = make_forecast({**BASE_PRICES, "MELON": 300})
     ctx = make_ctx(day=10, money=5000, animals=animals_structs,
