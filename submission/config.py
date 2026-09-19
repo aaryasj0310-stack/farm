@@ -567,6 +567,34 @@ SELECTIVE_LIVESTOCK_GATE_MAX_DAY = 14
 # workload instead of hypothetical desired-herd expansion. Defaults OFF, leaving
 # existing production and all activation/feed serviceability callers unchanged.
 SW_P1_PURCHASE_COMMITTED_HERD_ONLY = False
+
+# Isolated P1.1 experiment: make only the task scheduler's SW home-worker
+# allocation workload-responsive.  Default OFF preserves production Rule W1.
+SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED = False
+
+
+def set_sw_workload_responsive_scheduler(enabled: bool) -> None:
+    """Toggle the isolated scheduler-only SW workload allocation experiment."""
+    global SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED
+    SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_sw_workload_responsive_scheduler() -> bool:
+    """Return whether the isolated workload-responsive SW scheduler is enabled."""
+    return SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED
+
 # None for dynamic model (optimal k* in {5, 10, 15}), or int in (5, 10, 15)
 SW_FORCE_K_TILES = None
 
