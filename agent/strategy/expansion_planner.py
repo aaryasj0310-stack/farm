@@ -625,8 +625,11 @@ def should_buy_land(next_quadrant, current_day, money, farm,
     if next_quadrant == 3:
         try:
             from strategy.land_serviceability_model import evaluate_sw_serviceability
+            from config import SW_P1_PURCHASE_COMMITTED_HERD_ONLY
             labor_adequate, best_k, sw_serv_diag = evaluate_sw_serviceability(
-                current_day, farm, money, forecast, target_quadrant=3, hour=hour, allow_hypothetical=True
+                current_day, farm, money, forecast, target_quadrant=3,
+                hour=hour, allow_hypothetical=True,
+                reserve_desired_herd=not SW_P1_PURCHASE_COMMITTED_HERD_ONLY,
             )
         except Exception:
             labor_adequate = (worker_count >= 2) or (current_active_tiles < 15)
@@ -653,6 +656,14 @@ def should_buy_land(next_quadrant, current_day, money, farm,
         "roi": round(roi, 4),
         "adjusted_roi": round(adjusted_roi, 4),
         "labor_serviceability_result": bool(labor_adequate),
+        "sw_p1_purchase_committed_herd_only": bool(
+            sw_serv_diag.get("reserve_desired_herd") is False
+        ) if next_quadrant == 3 else False,
+        "ne_observed_animals_and_housing": sw_serv_diag.get("ne_observed_animals_and_housing"),
+        "ne_desired_sheep_target": sw_serv_diag.get("ne_desired_sheep_target"),
+        "ne_reserved_sheep_workload_count": sw_serv_diag.get("ne_reserved_sheep_workload_count"),
+        "sw_labor_nw_deficit": sw_serv_diag.get("nw_deficit"),
+        "sw_labor_ne_deficit": sw_serv_diag.get("ne_deficit"),
         "best_k_tiles": best_k,
         "purchase_time_best_k": best_k,
         "best_k_serviceable": sw_serv_diag.get("best_k_serviceable", best_k if next_quadrant == 3 else 25),
