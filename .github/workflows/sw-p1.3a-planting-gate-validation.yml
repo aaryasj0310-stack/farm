@@ -38,6 +38,35 @@ jobs:
           cmp agent/config.py submission/config.py
           cmp agent/strategy/macro_planner.py submission/strategy/macro_planner.py
           python -m py_compile agent/config.py agent/strategy/macro_planner.py agent/tests/test_sw_generic_planting_gate.py simulations/experiments/run_sw_p13_planting_gate_ab.py
+      - name: No-game three-arm runner snapshot and flag smoke check
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import os
+          import tempfile
+          from simulations.experiments import run_sw_p13_planting_gate_ab as exp
+
+          def load_config(path, name):
+              spec = importlib.util.spec_from_file_location(name, path)
+              cfg = importlib.util.module_from_spec(spec)
+              spec.loader.exec_module(cfg)
+              return cfg
+
+          with tempfile.TemporaryDirectory(prefix="sw-p13-smoke-") as tmp:
+              treatment, hashes, fingerprint = exp._snapshot_worktree_agent(tmp)
+              assert hashes and len(fingerprint) == 64
+              control = exp._extract_agent(exp.BASELINE_SHA, "control_smoke")
+              p12 = exp._extract_agent(exp.P12_SHA, "p12_smoke")
+              for label, directory in (("Control", control), ("P1.2", p12), ("P1.3-A", treatment)):
+                  assert os.path.isfile(os.path.join(directory, "main.py"))
+                  cfg = load_config(os.path.join(directory, "config.py"), label.replace(".", "_") + "_smoke_config")
+                  exp._configure_arm(cfg, label)
+                  if label == "P1.3-A":
+                      assert cfg.SW_GENERIC_PLANTING_GATE_ENABLED is True
+                  elif hasattr(cfg, "SW_GENERIC_PLANTING_GATE_ENABLED"):
+                      assert cfg.SW_GENERIC_PLANTING_GATE_ENABLED is False
+                  print(label, "configuration and runtime snapshot verified")
+          PY
       - name: Focused P1.3-A regression tests
         run: |
           set -o pipefail
