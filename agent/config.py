@@ -625,6 +625,35 @@ def get_sw_serviceability_aware_activation() -> bool:
     """Return whether post-purchase SW activation is serviceability-gated."""
     return SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED
 
+
+# Isolated P1.3-A: keep *generic* planting away from SW when the SW-specific
+# activation controller owns the SW agricultural footprint. Default OFF is
+# required to reproduce the exact validated P1.2 runtime.
+SW_GENERIC_PLANTING_GATE_ENABLED = False
+
+
+def set_sw_generic_planting_gate(enabled: bool) -> None:
+    """Toggle the isolated P1.3-A generic SW planting restriction."""
+    global SW_GENERIC_PLANTING_GATE_ENABLED
+    SW_GENERIC_PLANTING_GATE_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "SW_GENERIC_PLANTING_GATE_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_sw_generic_planting_gate() -> bool:
+    """Return whether generic SW planting is restricted to the SW controller."""
+    return SW_GENERIC_PLANTING_GATE_ENABLED
+
 # None for dynamic model (optimal k* in {5, 10, 15}), or int in (5, 10, 15)
 SW_FORCE_K_TILES = None
 
@@ -856,6 +885,7 @@ def set_sw_experiment_arm(arm: str) -> None:
     global SW_P1_PURCHASE_COMMITTED_HERD_ONLY
     global SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED
     global SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED
+    global SW_GENERIC_PLANTING_GATE_ENABLED
     arm_clean = str(arm).strip()
     if arm_clean == "ArmA":
         # Arm A — Fresh Production Control: Current strategy with SW expansion disabled/frozen
@@ -873,6 +903,7 @@ def set_sw_experiment_arm(arm: str) -> None:
         SW_P1_PURCHASE_COMMITTED_HERD_ONLY = False
         SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED = False
         SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED = False
+        SW_GENERIC_PLANTING_GATE_ENABLED = False
     elif arm_clean == "ArmC-Cell":
         # Arm C-Cell — Exactly Arm B-P + Controlled SW Mixed Livestock Housing Cell
         set_quadrant_hard_block({4})
@@ -956,6 +987,7 @@ def set_sw_experiment_arm(arm: str) -> None:
                     ("SW_P1_PURCHASE_COMMITTED_HERD_ONLY", SW_P1_PURCHASE_COMMITTED_HERD_ONLY),
                     ("SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED", SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED),
                     ("SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED", SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED),
+                    ("SW_GENERIC_PLANTING_GATE_ENABLED", SW_GENERIC_PLANTING_GATE_ENABLED),
                 ):
                     setattr(mod, attr, val)
             except Exception:
