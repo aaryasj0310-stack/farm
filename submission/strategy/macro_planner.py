@@ -1949,7 +1949,38 @@ class MacroPlanner:
                     else:
                         # Discrete or Production SW activation
                         sw_soil_empty = [p for p in empty_tiles if p in SW_SOIL_TILES]
-                        empty_tiles = [p for p in empty_tiles if p not in SW_SOIL_TILES]
+                        try:
+                            from config import SW_GENERIC_PLANTING_GATE_ENABLED
+                            generic_sw_gate = bool(SW_GENERIC_PLANTING_GATE_ENABLED)
+                        except ImportError:
+                            generic_sw_gate = False
+
+                        if generic_sw_gate:
+                            # P1.3-A: the dedicated SW controller has exclusive
+                            # authority to authorize NEW planting anywhere in SW.
+                            # Reserve its soil candidates above, then exclude all
+                            # SW positions from every subsequent generic planting
+                            # loop (especially the continuous wheat replant loop).
+                            # Do not change crop care or existing SW assets.
+                            generic_sw_tiles = [
+                                p for p in empty_tiles
+                                if farm.quadrant_of(p) == "SW"
+                            ]
+                            empty_tiles = [
+                                p for p in empty_tiles
+                                if farm.quadrant_of(p) != "SW"
+                            ]
+                            plan.diagnostics["sw_generic_planting_gate"] = {
+                                "enabled": True,
+                                "excluded_sw_empty_tiles": len(generic_sw_tiles),
+                                "excluded_sw_pasture_empty_tiles": sum(
+                                    p in SW_PASTURE_TILES for p in generic_sw_tiles
+                                ),
+                                "authorized_sw_soil_candidates": len(sw_soil_empty),
+                            }
+                        else:
+                            # Exact P1.2 behavior with P1.3-A disabled.
+                            empty_tiles = [p for p in empty_tiles if p not in SW_SOIL_TILES]
                         if sw_soil_empty:
                             from strategy.land_serviceability_model import (
                                 get_sorted_sw_soil_tiles,
