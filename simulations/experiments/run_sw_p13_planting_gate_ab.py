@@ -189,7 +189,7 @@ def _one(task):
                         kind = t.get("kind") if isinstance(t, dict) else t
                         current_sw_tile_kinds[(x, y)] = kind
                         if (previous_sw_tile_kinds is not None
-                                and previous_sw_tile_kinds.get((x, y)) == "EMPTY"
+                                and previous_sw_tile_kinds.get((x, y)) in (None, "EMPTY", "DIRT")
                                 and kind == "PLANT"):
                             region = "pasture" if (x, y) in cfg.SW_PASTURE_TILES else "soil"
                             m[f"sw_{region}_plants_confirmed"] += 1
