@@ -88,6 +88,7 @@ def test_production_flags_disabled_by_default():
     assert config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY is False
     assert config.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED is False
     assert config.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED is False
+    assert config.SW_GENERIC_PLANTING_GATE_ENABLED is False
 
 
 def test_arma_resets_p1_p11_p12_flags_after_treatment_state():
@@ -100,6 +101,7 @@ def test_arma_resets_p1_p11_p12_flags_after_treatment_state():
     config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY = True
     config.set_sw_workload_responsive_scheduler(True)
     config.set_sw_serviceability_aware_activation(True)
+    config.set_sw_generic_planting_gate(True)
 
     # Keep the loaded purchase module in the same stale state a multi-arm
     # experiment would otherwise risk carrying into the Control arm.
@@ -108,15 +110,18 @@ def test_arma_resets_p1_p11_p12_flags_after_treatment_state():
     assert config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY is True
     assert scheduler.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED is True
     assert macro_planner.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED is True
+    assert macro_planner.SW_GENERIC_PLANTING_GATE_ENABLED is True
 
     config.set_sw_experiment_arm("ArmA")
 
     assert config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY is False
     assert config.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED is False
     assert config.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED is False
+    assert config.SW_GENERIC_PLANTING_GATE_ENABLED is False
     assert expansion_planner.SW_P1_PURCHASE_COMMITTED_HERD_ONLY is False
     assert scheduler.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED is False
     assert macro_planner.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED is False
+    assert macro_planner.SW_GENERIC_PLANTING_GATE_ENABLED is False
 
 
 def test_should_buy_land_rejects_sw_under_production_baseline():
