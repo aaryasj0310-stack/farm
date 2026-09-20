@@ -4,6 +4,8 @@ The test farm deliberately has NO free NW/NE tiles but has SW pasture space and
 a positive global wheat requirement. This exposes the previously hidden bypass:
 an ordinary empty farm would satisfy global wheat demand before reaching SW.
 """
+import sys
+
 import pytest
 
 import config
@@ -14,22 +16,50 @@ from test_macro_planner import BASE_PRICES, make_ctx, make_forecast
 
 @pytest.fixture(autouse=True)
 def _restore_isolated_flags():
-    old = (
-        config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY,
-        config.SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED,
-        config.SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED,
-        config.SW_GENERIC_PLANTING_GATE_ENABLED,
-    )
+    # ArmA legitimately resets much more than the four P1 flags. Restore the
+    # entire touched state after every test so a full-suite run cannot leak a
+    # production quadrant hard-block into unrelated SW tests.
+    original = {
+        name: getattr(config, name)
+        for name in (
+            "SW_P1_PURCHASE_COMMITTED_HERD_ONLY",
+            "SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED",
+            "SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED",
+            "SW_GENERIC_PLANTING_GATE_ENABLED",
+            "SW_OWNERSHIP_MODE",
+            "SW_TIMING_PRIOR_ENABLED",
+            "SW_ACTIVATION_MODE",
+            "STRATEGIC_SW_OWNERSHIP_ENABLED",
+            "DYNAMIC_ZONAL_ALLOCATION",
+            "DYNAMIC_SW_CROPS_ENABLED",
+            "PERSISTENT_WORKER_LOCALITY_ENABLED",
+            "SW_CELL_HOUSING_ENABLED",
+        )
+    }
+    original_blocks = config.get_quadrant_hard_block()
     try:
         config.set_sw_workload_responsive_scheduler(True)
         config.set_sw_serviceability_aware_activation(True)
         config.set_sw_generic_planting_gate(True)
         yield
     finally:
-        config.SW_P1_PURCHASE_COMMITTED_HERD_ONLY = old[0]
-        config.set_sw_workload_responsive_scheduler(old[1])
-        config.set_sw_serviceability_aware_activation(old[2])
-        config.set_sw_generic_planting_gate(old[3])
+        config.set_quadrant_hard_block(original_blocks)
+        for name, value in original.items():
+            setattr(config, name, value)
+        # Restore any mirrored globals changed by the ArmA reset test.
+        for mod_name in (
+            "strategy.expansion_planner", "agent.strategy.expansion_planner",
+            "strategy.macro_planner", "agent.strategy.macro_planner",
+            "strategy.land_serviceability_model", "agent.strategy.land_serviceability_model",
+            "execution.task_scheduler", "agent.execution.task_scheduler",
+            "strategy.pasture_planner", "agent.strategy.pasture_planner",
+            "strategy.sw_cell_allocator", "agent.strategy.sw_cell_allocator",
+        ):
+            mod = sys.modules.get(mod_name)
+            if mod is not None:
+                for name, value in original.items():
+                    if hasattr(mod, name):
+                        setattr(mod, name, value)
 
 
 def _eval(serviceable=False, nominal=15, safe=0):
