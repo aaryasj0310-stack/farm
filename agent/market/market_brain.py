@@ -166,7 +166,29 @@ class MarketBrain:
             for item in ("COW", "SHEEP", "GOOSE", "CHICKEN")
         ) if (shed and hasattr(shed, "get")) else 0
         animals = sum(1 for t in ctx["farm"].iter_tiles() if t.is_animal) + held_animals + shed_animals
-        reserved_wheat = 0 if endgame else animals * FEED_WHEAT_BUFFER_DAYS
+        try:
+            from config import get_p22a_day28_feed_harmonization_enabled
+            p22a_enabled = bool(get_p22a_day28_feed_harmonization_enabled())
+        except Exception:
+            p22a_enabled = False
+
+        if p22a_enabled:
+            if day == 28:
+                unfed_animals = sum(
+                    1 for t in ctx["farm"].iter_tiles()
+                    if t.is_animal and not getattr(t, "fed_today", False)
+                )
+                carried_wheat = sum(
+                    int((inv_row or {}).get("WHEAT", 0))
+                    for inv_row in worker_inventories
+                )
+                reserved_wheat = max(0, unfed_animals - carried_wheat)
+            elif day >= 29:
+                reserved_wheat = 0
+            else:
+                reserved_wheat = animals * FEED_WHEAT_BUFFER_DAYS
+        else:
+            reserved_wheat = 0 if endgame else animals * FEED_WHEAT_BUFFER_DAYS
         shed_total = sum(shed.get(p, 0) for p in SELLABLE)
         shed_occupancy = sum(max(0, int(v)) for v in shed.values())
         pending_occupancy = shed_occupancy + carried_worker_inventory

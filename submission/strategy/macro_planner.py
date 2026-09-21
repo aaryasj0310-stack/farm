@@ -1318,6 +1318,31 @@ class MacroPlanner:
                 base_orders = 4  # conservative reserve for hire, land, seeds, wheat
                 consecutive_eval_seq = []
 
+                try:
+                    from config import get_p13_livestock_cap_enabled
+                    use_livestock_cap = bool(get_p13_livestock_cap_enabled())
+                except Exception:
+                    use_livestock_cap = False
+
+                working_feed_ledger = None
+                existing_herd_ok = True
+                if use_livestock_cap and build_feed_resource_ledger is not None:
+                    try:
+                        strategic_hold = float(hire_cost) + (float(land_cost) if buy_land else 0.0)
+                        working_feed_ledger = build_feed_resource_ledger(
+                            ctx,
+                            hard_cash_hold=float(self.reserve),
+                            strategic_cash_hold=strategic_hold,
+                            horizon_days=4,
+                        )
+                        if evaluate_existing_herd_feasibility is not None:
+                            existing_herd_ok, _ = evaluate_existing_herd_feasibility(working_feed_ledger)
+                        else:
+                            existing_herd_ok = True
+                    except Exception:
+                        working_feed_ledger = None
+                        existing_herd_ok = True
+
                 while True:
                     total_herd = sum(shadow_counts.values()) + sum(shadow_buy_animal.values())
                     eff_cap = min(active_caps.get("HERD", 20), int(max_pastures), max(0, int(sustainable)))
@@ -1372,6 +1397,80 @@ class MacroPlanner:
                         )
                         if shadow_cash < (cost + feed_reserve):
                             continue
+
+                        if use_livestock_cap:
+                            def _record_cap_rejection(reason_code):
+                                shed_w = int((getattr(private, "shed", {}) or {}).get("WHEAT", 0)) if private else 0
+                                plan.diagnostics.setdefault("p13_livestock_cap_rejections", []).append({
+                                    "day": int(day),
+                                    "hour": int(hour),
+                                    "species": sp,
+                                    "reason": reason_code,
+                                    "herd_size": dict(current_herd_combined),
+                                    "wheat_reserve": shed_w,
+                                    "cash_reserve": float(getattr(farm, "money", 0.0)),
+                                    "shadow_cash": float(shadow_cash),
+                                    "usable_labor": float(usable_ap) if "usable_ap" in locals() else None,
+                                    "core_workload": float(crop_wl) if "crop_wl" in locals() else None,
+                                })
+
+                            # 1. Existing feed-feasibility ledger evaluation
+                            if working_feed_ledger is not None:
+                                if not working_feed_ledger.baseline_feasible:
+                                    _record_cap_rejection("existing_herd_infeasible")
+                                    continue
+                                cand_feed_res = evaluate_incremental_candidate(working_feed_ledger, sp, purchase_cost=cost)
+                                if not cand_feed_res.feasible:
+                                    _record_cap_rejection(cand_feed_res.blocking_reason)
+                                    continue
+
+                            # 2. Starvation & spatial feeding deadline check
+                            from strategy.land_serviceability_model import (
+                                _t_field,
+                                _t_pos,
+                                get_animal_daily_workload,
+                                compute_herd_daily_workload,
+                                compute_survival_feasibility_reservation,
+                                compute_daily_labor_capacity,
+                                compute_existing_workload,
+                            )
+                            has_starving_animal = any(
+                                int(_t_field(t, "consecutive_unfed", 0)) >= 1
+                                for t in farm.iter_tiles()
+                                if _t_field(t, "is_animal") or _t_field(t, "animal")
+                            )
+                            if has_starving_animal:
+                                _record_cap_rejection("recent_animal_starvation")
+                                continue
+
+                            surv_res = compute_survival_feasibility_reservation(farm, day, hour=hour)
+                            if not surv_res.get("is_deadline_feasible", True):
+                                _record_cap_rejection("feeding_deadline_infeasible")
+                                continue
+
+                            # 3. Continuous labor headroom for herd maintenance
+                            labor_cap = compute_daily_labor_capacity(day, farm=farm, hour=hour)
+                            usable_ap = labor_cap["usable_effective_actions"]
+                            crop_wl = compute_existing_workload(farm, day, include_animal_feeding=False)["total_existing_workload"]
+                            current_herd_wl = compute_herd_daily_workload(current_herd_combined)
+                            inc_wl = get_animal_daily_workload(sp)
+
+                            sw_crops = sum(
+                                1 for t in farm.iter_tiles()
+                                if farm.quadrant_of(_t_pos(t)) == "SW"
+                                and bool(_t_field(t, "is_plant", False) or _t_field(t, "kind") == "PLANT")
+                            )
+                            sw_crop_wl = round(sw_crops * 1.3, 1)
+
+                            if (crop_wl + sw_crop_wl + current_herd_wl + inc_wl) > usable_ap:
+                                _record_cap_rejection("insufficient_labor_for_herd")
+                                continue
+
+                            # 4. Core crop survival health
+                            core_workload = compute_existing_workload(farm, day, include_animal_feeding=False)
+                            if core_workload.get("survival_water_count", 0) > 0:
+                                _record_cap_rejection("core_crop_survival_debt")
+                                continue
 
                         opp_cand_supply = (
                             opp_livestock_supply.get(ANIMALS[sp]["product"])
@@ -1445,6 +1544,14 @@ class MacroPlanner:
                     if guard_diag and guard_diag.get("switched"):
                         accept_reason = f"accepted_guard_switch_{guard_diag['baseline_best']}_to_{best_sp}"
                     _log_livestock_decision(day, hour, town_shops, current_herd_combined, cands_eval, selected=best_sp, reason=accept_reason, guard_diag=guard_diag)
+
+                    if use_livestock_cap and working_feed_ledger is not None:
+                        try:
+                            best_commit_res = evaluate_incremental_candidate(working_feed_ledger, best_sp, purchase_cost=best_cand["cost"])
+                            if best_commit_res.feasible:
+                                commit_candidate_reservation(working_feed_ledger, best_commit_res)
+                        except Exception:
+                            pass
 
                     shadow_buy_animal[best_sp] = shadow_buy_animal.get(best_sp, 0) + 1
                     shadow_cash -= best_cand["cost"]
@@ -1743,26 +1850,55 @@ class MacroPlanner:
         available_before_seeds = max(0.0, post_hire_money - effective_reserve - land_cost)
 
         if plan.feeding_enabled:
-            # While NE is pending, maintain a safe 5-day survival buffer rather than 20-day expansion
-            wheat_buffer_target = 5 if (day <= 5 or (next_quadrant == 2 and day <= 8)) and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
             try:
-                from config import BOOTSTRAP_LIVESTOCK_ARM
+                from config import get_p22a_day28_feed_harmonization_enabled
+                p22a_enabled = bool(get_p22a_day28_feed_harmonization_enabled())
             except Exception:
-                BOOTSTRAP_LIVESTOCK_ARM = "none"
-            eff_buy_count = min(2, sum(buy_animal.values())) if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else sum(buy_animal.values())
-            wheat_needed = (n_animals + eff_buy_count) * wheat_buffer_target
-            if trigger:
-                wheat_needed = max(wheat_needed, deficit)
+                p22a_enabled = False
 
-            if wheat_have < wheat_needed:
-                # Protect $1,000 NE land capital from non-survival feed buffering on Days 5-6
-                ne_protect = 1000.0 if (next_quadrant == 2 and 5 <= day <= 6 and not buy_land) else 0.0
-                max_wheat_budget = max(0.0, available_before_seeds - ne_protect)
-                # Survival floor: always guarantee at least 2 days emergency feed
-                survival_floor = max(0, (n_animals * 2) - wheat_have) * 25.0
-                max_wheat_budget = max(max_wheat_budget, min(available_before_seeds, survival_floor))
+            if p22a_enabled and day == 28:
+                # P2.2-A: Shared remaining feed obligation on Day 28
+                # Calculate remaining feed requirement from animals that still need feeding today
+                unfed_animals_today = sum(
+                    1 for t in animals
+                    if not getattr(t, "fed_today", False)
+                )
+                worker_wheat = sum(
+                    int(inv.get("WHEAT", 0))
+                    for inv in getattr(private, "inventories", [])
+                ) if hasattr(private, "inventories") else 0
+                accessible_wheat = wheat_have + worker_wheat
+                wheat_needed = unfed_animals_today
 
-                buy_wheat = min(wheat_needed - wheat_have, int(max_wheat_budget // 25))
+                if accessible_wheat < wheat_needed:
+                    deficit = wheat_needed - accessible_wheat
+                    max_wheat_budget = max(0.0, available_before_seeds)
+                    buy_wheat = min(deficit, int(max_wheat_budget // 25))
+                else:
+                    buy_wheat = 0
+            elif p22a_enabled and day >= 29:
+                buy_wheat = 0
+            else:
+                # While NE is pending, maintain a safe 5-day survival buffer rather than 20-day expansion
+                wheat_buffer_target = 5 if (day <= 5 or (next_quadrant == 2 and day <= 8)) and (n_animals > 0 or buy_animal) else FEED_WHEAT_BUFFER_DAYS
+                try:
+                    from config import BOOTSTRAP_LIVESTOCK_ARM
+                except Exception:
+                    BOOTSTRAP_LIVESTOCK_ARM = "none"
+                eff_buy_count = min(2, sum(buy_animal.values())) if (day == 0 and BOOTSTRAP_LIVESTOCK_ARM not in ("none", "", None)) else sum(buy_animal.values())
+                wheat_needed = (n_animals + eff_buy_count) * wheat_buffer_target
+                if trigger:
+                    wheat_needed = max(wheat_needed, deficit)
+
+                if wheat_have < wheat_needed:
+                    # Protect $1,000 NE land capital from non-survival feed buffering on Days 5-6
+                    ne_protect = 1000.0 if (next_quadrant == 2 and 5 <= day <= 6 and not buy_land) else 0.0
+                    max_wheat_budget = max(0.0, available_before_seeds - ne_protect)
+                    # Survival floor: always guarantee at least 2 days emergency feed
+                    survival_floor = max(0, (n_animals * 2) - wheat_have) * 25.0
+                    max_wheat_budget = max(max_wheat_budget, min(available_before_seeds, survival_floor))
+
+                    buy_wheat = min(wheat_needed - wheat_have, int(max_wheat_budget // 25))
         wheat_feed_cost = buy_wheat * 25
         protected_feed_wheat = int(feed_shortfall_units)
         optional_feed_wheat = max(0, buy_wheat - protected_feed_wheat)
@@ -2029,6 +2165,37 @@ class MacroPlanner:
                                         and getattr(t, "is_plant", False)
                                     )
                                     activation_slots = max(0, serviceable_k - existing_sw_plants)
+
+                                    try:
+                                        from config import get_p13_tight_soil_enabled
+                                        use_tight_soil = bool(get_p13_tight_soil_enabled())
+                                    except Exception:
+                                        use_tight_soil = False
+
+                                    if use_tight_soil:
+                                        from strategy.land_serviceability_model import evaluate_tight_sw_soil_capacity
+                                        tight_ok, tight_slots, tight_diag = evaluate_tight_sw_soil_capacity(
+                                            farm=farm,
+                                            day=day,
+                                            money=remaining_money,
+                                            hour=hour,
+                                            private=private,
+                                        )
+                                        if not tight_ok:
+                                            is_serviceable = False
+                                            activation_slots = 0
+                                        else:
+                                            activation_slots = min(activation_slots, tight_slots)
+                                        plan.diagnostics["p13_tight_soil_gate"] = {
+                                            "enabled": True,
+                                            "tight_serviceable": bool(tight_ok),
+                                            "tight_slots": int(tight_slots),
+                                            "activation_slots": int(activation_slots),
+                                            "reason": tight_diag.get("reason"),
+                                            "surplus_capacity": tight_diag.get("surplus_capacity"),
+                                            "rejection_counts": dict(tight_diag.get("rejection_counts", {})),
+                                        }
+
                                     if not is_serviceable or activation_slots <= 0:
                                         active_sw_soil = []
                                     else:
@@ -2122,6 +2289,55 @@ class MacroPlanner:
                                     committed_counts[chosen_crop] = committed_counts.get(chosen_crop, 0) + 1
                                     if chosen_crop == "WHEAT":
                                         wheat_have += 4
+                # ---- P2.0: Dynamic Second Melon Tranche (Days 10-12) ----
+                try:
+                    from config import get_p20_second_melon_tranche_enabled
+                    p20_enabled = bool(get_p20_second_melon_tranche_enabled())
+                except Exception:
+                    p20_enabled = False
+
+                if p20_enabled:
+                    try:
+                        from strategy.second_melon_evaluator import evaluate_second_melon_tranche
+                    except ImportError:
+                        from second_melon_evaluator import evaluate_second_melon_tranche
+
+                    market_obs = ctx.get("market") if isinstance(ctx, dict) else getattr(ctx, "market", None)
+                    best_melon_k, melon_diag = evaluate_second_melon_tranche(
+                        day=day,
+                        hour=hour,
+                        farm=farm,
+                        private=private,
+                        market=market_obs,
+                        forecast=self.fc,
+                        committed_counts=committed_counts,
+                        empty_tiles=list(empty_tiles),
+                        available_money=remaining_money,
+                        hires_today=hires,
+                        opp_advice=opp_advice,
+                    )
+                    plan.diagnostics["p20_second_melon"] = melon_diag
+
+                    if best_melon_k > 0:
+                        usable_empty_core = [
+                            p for p in empty_tiles
+                            if farm.quadrant_of(p) in ("NW", "NE")
+                            and p not in ((4, 4), (4, 5))
+                        ]
+                        melon_positions = usable_empty_core[:best_melon_k]
+                        for pos in melon_positions:
+                            seed_cost = CROPS["MELON"]["seed"]
+                            if seeds.get("MELON", 0) > 0:
+                                seeds["MELON"] -= 1
+                            elif remaining_money >= seed_cost:
+                                buy_seed["MELON"] = buy_seed.get("MELON", 0) + 1
+                                remaining_money = max(0.0, remaining_money - seed_cost)
+                            else:
+                                break
+                            empty_tiles.remove(pos)
+                            plant_queue.append((pos, "MELON"))
+                            planned["MELON"] = planned.get("MELON", 0) + 1
+                            committed_counts["MELON"] = committed_counts.get("MELON", 0) + 1
 
                 existing_wheat = committed_counts.get("WHEAT", 0)
                 # Continuous wheat replanting engine (Leader-Calibrated: 8/20/30 active wheat tiles)
@@ -2141,9 +2357,38 @@ class MacroPlanner:
                         8 if (n_quads == 1 or day <= 9)
                         else (20 if (n_quads == 2 or day <= 13) else 30)
                     )
-                wheat_cap = min(len(empty_tiles) + existing_wheat, quadrant_wheat_target)
-                wheat_needed = max(0, wheat_cap - existing_wheat)
-                wheat_to_plant = min(wheat_needed, len(empty_tiles))
+                try:
+                    from config import get_p23_marginal_wheat_allocation_enabled
+                    p23_enabled = bool(get_p23_marginal_wheat_allocation_enabled())
+                except Exception:
+                    p23_enabled = False
+
+                if p23_enabled:
+                    # P2.3: Strict Terminal Maturation Guard
+                    # Wheat requires 4 full days to reach maturity (plant_day + 4).
+                    # Plantings on Day 26+ mature on Day 30+ (post-season) and produce 0 harvestable yield.
+                    if day > 25:
+                        wheat_cap = 0
+                        wheat_needed = 0
+                        wheat_to_plant = 0
+                        plan.diagnostics["p23_marginal_wheat"] = {
+                            "day": day,
+                            "reason": "terminal_deadline_past",
+                            "wheat_to_plant": 0,
+                        }
+                    else:
+                        wheat_cap = min(len(empty_tiles) + existing_wheat, quadrant_wheat_target)
+                        wheat_needed = max(0, wheat_cap - existing_wheat)
+                        wheat_to_plant = min(wheat_needed, len(empty_tiles))
+                        plan.diagnostics["p23_marginal_wheat"] = {
+                            "day": day,
+                            "reason": "normal_replant_maintained",
+                            "wheat_to_plant": wheat_to_plant,
+                        }
+                else:
+                    wheat_cap = min(len(empty_tiles) + existing_wheat, quadrant_wheat_target)
+                    wheat_needed = max(0, wheat_cap - existing_wheat)
+                    wheat_to_plant = min(wheat_needed, len(empty_tiles))
                 wheat_available = seeds.get("WHEAT", 0)
                 if wheat_to_plant > wheat_available:
                     needed_seeds = wheat_to_plant - wheat_available
@@ -2169,10 +2414,36 @@ class MacroPlanner:
                         committed_counts["WHEAT"] = committed_counts.get("WHEAT", 0) + 1
 
             # Dedicated Strawberry Wave (Fable Leader Heuristic):
-            # Cap progression: 16 (Days 3-5) -> 18 (Days 6-8) -> 20 (Days 9-13) -> 0 (Day 14+)
+            # Cap progression: 16 (Days 0-8) -> 18 (Days 9-12) -> 20 (Day 13) -> 0 (Day 14+)
             # Placement: NE first, then NW fallow tiles. NEVER in SW!
-            if 3 <= day <= STRAWBERRY_PLANT_DEADLINE and "NE" in farm.unlocked:
+            try:
+                from config import get_p21_dynamic_strawberry_allocation_enabled
+                p21_straw_enabled = bool(get_p21_dynamic_strawberry_allocation_enabled())
+            except Exception:
+                p21_straw_enabled = False
+
+            if p21_straw_enabled:
+                try:
+                    from strategy.strawberry_portfolio_evaluator import compute_dynamic_strawberry_cap
+                except ImportError:
+                    from strawberry_portfolio_evaluator import compute_dynamic_strawberry_cap
+
+                shed_straw = private.shed.get("STRAWBERRY", 0) if hasattr(private, "shed") else 0
+                shed_w = private.shed.get("WHEAT", 0) if hasattr(private, "shed") else 0
+                s_cap, p21_straw_diag = compute_dynamic_strawberry_cap(
+                    day=day,
+                    farm_unlocked=farm.unlocked,
+                    cur_market_inv=market_inv,
+                    committed_strawberries=committed_counts.get("STRAWBERRY", 0),
+                    shed_strawberry=shed_straw,
+                    shed_wheat=shed_w,
+                    remaining_money=remaining_money,
+                )
+                plan.diagnostics["p21_strawberry"] = p21_straw_diag
+            else:
                 s_cap = get_strawberry_cap(day, True)
+
+            if 3 <= day <= STRAWBERRY_PLANT_DEADLINE and "NE" in farm.unlocked:
                 current_strawberries = committed_counts.get("STRAWBERRY", 0)
                 want_s = max(0, s_cap - current_strawberries)
                 if want_s > 0:
@@ -2217,7 +2488,7 @@ class MacroPlanner:
                             continue
                         # v5.11: Use dynamic strawberry cap
                         if forced_crop == "STRAWBERRY":
-                            cap = get_strawberry_cap(day, "NE" in farm.unlocked)
+                            cap = s_cap if p21_straw_enabled else get_strawberry_cap(day, "NE" in farm.unlocked)
                         else:
                             cap = CROP_TILE_CAPS.get(forced_crop, 99)
                         if committed_counts.get(forced_crop, 0) >= cap:
@@ -2240,7 +2511,7 @@ class MacroPlanner:
                             continue
                         # v5.11: Use dynamic strawberry cap
                         if crop == "STRAWBERRY":
-                            cap = get_strawberry_cap(day, "NE" in farm.unlocked)
+                            cap = s_cap if p21_straw_enabled else get_strawberry_cap(day, "NE" in farm.unlocked)
                         else:
                             cap = CROP_TILE_CAPS.get(crop, 99)
                         if committed_counts.get(crop, 0) >= cap:

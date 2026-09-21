@@ -280,6 +280,89 @@ def get_last_turn_telemetry() -> Optional[Dict[str, Any]]:
     return copy.deepcopy(_LAST_TURN_TELEMETRY)
 
 
+def reconcile_day28_wheat_market_orders(market_orders: List[List[Any]], ctx: Any) -> List[List[Any]]:
+    """Reconcile Day 28 wheat buy and sell orders against remaining unfed obligation.
+
+    Eliminates circular wash trades (simultaneous buy and sell of wheat) and ensures
+    executed sell quantity never encroaches on remaining_unfed feed requirement.
+    """
+    if not market_orders:
+        return market_orders
+
+    day = ctx.get("day", 0) if isinstance(ctx, dict) else getattr(ctx, "day", 0)
+    if day != 28:
+        return market_orders
+
+    farm = ctx.get("farm") if isinstance(ctx, dict) else getattr(ctx, "farm", None)
+    private = ctx.get("private") if isinstance(ctx, dict) else getattr(ctx, "private", None)
+    if farm is None or private is None:
+        return market_orders
+
+    unfed_animals = sum(
+        1 for t in farm.iter_tiles()
+        if t.is_animal and not getattr(t, "fed_today", False)
+    )
+    worker_wheat = sum(
+        int((inv_row or {}).get("WHEAT", 0))
+        for inv_row in getattr(private, "inventories", [])
+    ) if hasattr(private, "inventories") else 0
+    shed_wheat = int(private.shed.get("WHEAT", 0)) if hasattr(private, "shed") else 0
+
+    needed_from_shed = max(0, unfed_animals - worker_wheat)
+    max_safe_sellable = max(0, shed_wheat - needed_from_shed)
+
+    # Separate wheat orders and non-wheat orders
+    wheat_buy_qty = 0
+    wheat_sell_qty = 0
+    non_wheat_orders = []
+
+    for order in market_orders:
+        if isinstance(order, (list, tuple)) and len(order) >= 3:
+            action = order[0]
+            prod = order[1]
+            try:
+                qty = int(order[2])
+            except (ValueError, TypeError):
+                qty = 0
+            if prod == "WHEAT":
+                if action == "BUY_PRODUCT":
+                    wheat_buy_qty += qty
+                    continue
+                elif action == "SELL":
+                    wheat_sell_qty += qty
+                    continue
+        non_wheat_orders.append(list(order))
+
+    # Net buy and sell if both are present
+    if wheat_buy_qty > 0 and wheat_sell_qty > 0:
+        if wheat_buy_qty >= wheat_sell_qty:
+            wheat_buy_qty -= wheat_sell_qty
+            wheat_sell_qty = 0
+        else:
+            wheat_sell_qty -= wheat_buy_qty
+            wheat_buy_qty = 0
+
+    # Ensure sell quantity never encroaches on needed_from_shed
+    if wheat_sell_qty > 0:
+        wheat_sell_qty = min(wheat_sell_qty, max_safe_sellable)
+
+    # If buy wheat is present, ensure we don't buy more than actual deficit
+    if wheat_buy_qty > 0:
+        accessible_wheat = shed_wheat + worker_wheat
+        actual_deficit = max(0, unfed_animals - accessible_wheat)
+        wheat_buy_qty = min(wheat_buy_qty, actual_deficit)
+
+    # Reassemble reconciled orders, preserving order capacity
+    reconciled_orders = list(non_wheat_orders)
+    if wheat_buy_qty > 0:
+        reconciled_orders.append(["BUY_PRODUCT", "WHEAT", wheat_buy_qty])
+    if wheat_sell_qty > 0:
+        reconciled_orders.append(["SELL", "WHEAT", wheat_sell_qty])
+
+    return reconciled_orders[:10]
+
+
+
 def reset_agent_state() -> None:
     """Hard-reset all module singletons and persistent state across episodes."""
     global _FC, _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR, _CENTRAL_PLANNER
@@ -995,6 +1078,15 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             except Exception:
                 purchases_first = (ctx["hour"] in (0, 1))
                 market = [list(o) for o in ((purchase_orders + sell_orders) if purchases_first else (sell_orders + purchase_orders))[:10]]
+
+    try:
+        from config import get_p22a_day28_feed_harmonization_enabled
+        p22a_main_enabled = bool(get_p22a_day28_feed_harmonization_enabled())
+    except Exception:
+        p22a_main_enabled = False
+
+    if p22a_main_enabled and ctx.get("day") == 28:
+        market = reconcile_day28_wheat_market_orders(market, ctx)
 
     for order in market:
         if order[0] == "SELL":

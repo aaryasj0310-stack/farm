@@ -1250,3 +1250,57 @@ def compute_progressive_sw_activation(
     }
     return accepted_tiles, diag
 
+
+# ---------------------------------------------------------------------------
+# 6. Centralized Livestock Workload & Arm B Tight Soil Activation Evaluator
+# ---------------------------------------------------------------------------
+
+ANIMAL_STEADY_STATE_WORKLOAD: Dict[str, float] = {
+    "COW": 2.0,    # Feed + adjacent shed transit + milk
+    "SHEEP": 5.0,  # Feed + cross-quadrant NW shed transit + shear
+    "GOOSE": 2.0,  # Feed + egg collection
+}
+
+
+def get_animal_daily_workload(species: str) -> float:
+    """Return authoritative daily effective actions to maintain an animal."""
+    return float(ANIMAL_STEADY_STATE_WORKLOAD.get(species, 2.0))
+
+
+def compute_herd_daily_workload(herd_counts: Dict[str, int]) -> float:
+    """Compute total daily effective workload required to maintain the given herd."""
+    if not herd_counts:
+        return 0.0
+    return round(sum(int(cnt) * get_animal_daily_workload(sp) for sp, cnt in herd_counts.items()), 1)
+
+
+def evaluate_tight_sw_soil_capacity(
+    farm,
+    day: int,
+    money: float,
+    hour: int = 0,
+    worker_positions: Optional[Dict[int, Tuple[int, int]]] = None,
+    private: Any = None,
+    horizon_turns: int = 48,
+) -> Tuple[bool, int, Dict[str, Any]]:
+    """Arm B: evaluate continuous capacity for dedicated SW soil activation.
+
+    Reuses compute_progressive_sw_activation to evaluate whether genuine spare labor
+    remains over the horizon after protecting mandatory NW/NE workload, spatial animal
+    survival reservation, and existing SW maintenance.
+    """
+    accepted_tiles, prog_diag = compute_progressive_sw_activation(
+        farm=farm,
+        day=day,
+        money=money,
+        worker_positions=worker_positions,
+        horizon_turns=horizon_turns,
+        hour=hour,
+        allow_hypothetical=False,
+        private=private,
+    )
+    tight_slots = len(accepted_tiles)
+    is_serviceable = (tight_slots > 0)
+    return is_serviceable, tight_slots, prog_diag
+
+

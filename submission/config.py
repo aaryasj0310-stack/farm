@@ -568,6 +568,27 @@ SELECTIVE_LIVESTOCK_GATE_MAX_DAY = 14
 # existing production and all activation/feed serviceability callers unchanged.
 SW_P1_PURCHASE_COMMITTED_HERD_ONLY = False
 
+
+def set_sw_p1_purchase_committed_herd_only(enabled: bool) -> None:
+    """Toggle the isolated P1 purchase-gate committed-herd restriction."""
+    global SW_P1_PURCHASE_COMMITTED_HERD_ONLY
+    SW_P1_PURCHASE_COMMITTED_HERD_ONLY = bool(enabled)
+    for mod_name in (
+        "agent.strategy.expansion_planner", "strategy.expansion_planner", "expansion_planner",
+        "agent.strategy.land_serviceability_model", "strategy.land_serviceability_model", "land_serviceability_model",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_P1_PURCHASE_COMMITTED_HERD_ONLY", bool(enabled))
+            except Exception:
+                pass
+
+
+def get_sw_p1_purchase_committed_herd_only() -> bool:
+    """Return whether the isolated P1 purchase committed-herd gate is enabled."""
+    return SW_P1_PURCHASE_COMMITTED_HERD_ONLY
+
 # Isolated P1.1 experiment: make only the task scheduler's SW home-worker
 # allocation workload-responsive.  Default OFF preserves production Rule W1.
 SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED = False
@@ -653,6 +674,241 @@ def set_sw_generic_planting_gate(enabled: bool) -> None:
 def get_sw_generic_planting_gate() -> bool:
     """Return whether generic SW planting is restricted to the SW controller."""
     return SW_GENERIC_PLANTING_GATE_ENABLED
+
+
+# ---------------------------------------------------------------------------
+# Isolated P1.3 Factorial Experiment Switches (Arms A, B, C, D)
+# ---------------------------------------------------------------------------
+P13_TIGHT_SOIL_ENABLED: bool = False
+P13_LIVESTOCK_CAP_ENABLED: bool = False
+
+
+def set_p13_tight_soil_enabled(enabled: bool) -> None:
+    """Toggle the Arm B tighter SW soil activation gate."""
+    global P13_TIGHT_SOIL_ENABLED
+    P13_TIGHT_SOIL_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.land_serviceability_model", "strategy.land_serviceability_model", "land_serviceability_model",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "P13_TIGHT_SOIL_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_p13_tight_soil_enabled() -> bool:
+    """Return whether the Arm B tighter SW soil activation gate is enabled."""
+    return P13_TIGHT_SOIL_ENABLED
+
+
+def set_p13_livestock_cap_enabled(enabled: bool) -> None:
+    """Toggle the Arm C dynamic livestock serviceability cap."""
+    global P13_LIVESTOCK_CAP_ENABLED
+    P13_LIVESTOCK_CAP_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.feed_feasibility", "strategy.feed_feasibility", "feed_feasibility",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "P13_LIVESTOCK_CAP_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_p13_livestock_cap_enabled() -> bool:
+    """Return whether the Arm C dynamic livestock serviceability cap is enabled."""
+    return P13_LIVESTOCK_CAP_ENABLED
+
+
+# ---------------------------------------------------------------------------
+# Point 2.0 Dynamic Second Melon Tranche Switch
+# ---------------------------------------------------------------------------
+P20_SECOND_MELON_TRANCHE_ENABLED: bool = False
+
+
+def set_p20_second_melon_tranche_enabled(enabled: bool) -> None:
+    """Toggle the P2.0 dynamic second melon tranche."""
+    global P20_SECOND_MELON_TRANCHE_ENABLED
+    P20_SECOND_MELON_TRANCHE_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.second_melon_evaluator", "strategy.second_melon_evaluator", "second_melon_evaluator",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "P20_SECOND_MELON_TRANCHE_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_p20_second_melon_tranche_enabled() -> bool:
+    """Return whether the P2.0 dynamic second melon tranche is enabled."""
+    return P20_SECOND_MELON_TRANCHE_ENABLED
+
+
+# ---------------------------------------------------------------------------
+# Point 2.1 Dynamic Strawberry Portfolio Optimization Switch
+# ---------------------------------------------------------------------------
+P21_DYNAMIC_STRAWBERRY_ALLOCATION_ENABLED: bool = False
+
+
+def set_p21_dynamic_strawberry_allocation_enabled(enabled: bool) -> None:
+    """Toggle the P2.1 dynamic strawberry portfolio allocation."""
+    global P21_DYNAMIC_STRAWBERRY_ALLOCATION_ENABLED
+    P21_DYNAMIC_STRAWBERRY_ALLOCATION_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.strawberry_portfolio_evaluator", "strategy.strawberry_portfolio_evaluator", "strawberry_portfolio_evaluator",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "P21_DYNAMIC_STRAWBERRY_ALLOCATION_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_p21_dynamic_strawberry_allocation_enabled() -> bool:
+    """Return whether the P2.1 dynamic strawberry portfolio allocation is enabled."""
+    return P21_DYNAMIC_STRAWBERRY_ALLOCATION_ENABLED
+
+
+# ---------------------------------------------------------------------------
+# Point 2.2-A Day 28 Feed / Liquidation Harmonization Switch
+# ---------------------------------------------------------------------------
+P22A_DAY28_FEED_HARMONIZATION_ENABLED: bool = False
+
+
+def set_p22a_day28_feed_harmonization_enabled(enabled: bool) -> None:
+    """Toggle the P2.2-A Day 28 feed/liquidation harmonization treatment."""
+    global P22A_DAY28_FEED_HARMONIZATION_ENABLED
+    P22A_DAY28_FEED_HARMONIZATION_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.market.market_brain", "market.market_brain", "market_brain",
+        "agent.strategy.central_planner", "strategy.central_planner", "central_planner",
+        "agent.main", "main",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "P22A_DAY28_FEED_HARMONIZATION_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_p22a_day28_feed_harmonization_enabled() -> bool:
+    """Return whether the P2.2-A Day 28 feed/liquidation harmonization is enabled."""
+    return P22A_DAY28_FEED_HARMONIZATION_ENABLED
+
+
+# ---------------------------------------------------------------------------
+# Point 2.3 Marginal Wheat Replanting / Crop Substitution Switch
+# ---------------------------------------------------------------------------
+P23_MARGINAL_WHEAT_ALLOCATION_ENABLED: bool = True
+
+
+def set_p23_marginal_wheat_allocation_enabled(enabled: bool) -> None:
+    """Toggle the P2.3 marginal wheat replanting/crop substitution treatment."""
+    global P23_MARGINAL_WHEAT_ALLOCATION_ENABLED
+    P23_MARGINAL_WHEAT_ALLOCATION_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.main", "main",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "P23_MARGINAL_WHEAT_ALLOCATION_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_p23_marginal_wheat_allocation_enabled() -> bool:
+    """Return whether the P2.3 marginal wheat replanting treatment is enabled."""
+    return P23_MARGINAL_WHEAT_ALLOCATION_ENABLED
+
+
+
+
+def set_p13_factorial_arm(arm: str) -> None:
+    """Configure authoritative flags for the 2x2 factorial experiment.
+
+    Does not modify or repurpose legacy set_sw_experiment_arm().
+    Arms:
+      - 'Control': Fresh production baseline (all P1/P1.1/P1.2/P1.3 switches False)
+      - 'ArmA' / 'P1.3-A': P1.3-A baseline (SW gate True, tight soil False, livestock cap False)
+      - 'ArmB': P1.3-A + tight soil activation (tight soil True, livestock cap False)
+      - 'ArmC': P1.3-A + livestock serviceability cap (tight soil False, livestock cap True)
+      - 'ArmD': P1.3-A + combined (tight soil True, livestock cap True)
+    """
+    arm_clean = str(arm).strip()
+    if arm_clean == "Control":
+        set_quadrant_hard_block({3, 4})
+        set_sw_p1_purchase_committed_herd_only(False)
+        set_sw_workload_responsive_scheduler(False)
+        set_sw_serviceability_aware_activation(False)
+        set_sw_generic_planting_gate(False)
+        set_p13_tight_soil_enabled(False)
+        set_p13_livestock_cap_enabled(False)
+    elif arm_clean in ("ArmA", "P1.3-A", "A"):
+        set_quadrant_hard_block({4})
+        set_sw_p1_purchase_committed_herd_only(True)
+        set_sw_workload_responsive_scheduler(True)
+        set_sw_serviceability_aware_activation(True)
+        set_sw_generic_planting_gate(True)
+        set_p13_tight_soil_enabled(False)
+        set_p13_livestock_cap_enabled(False)
+    elif arm_clean in ("ArmB", "B"):
+        set_quadrant_hard_block({4})
+        set_sw_p1_purchase_committed_herd_only(True)
+        set_sw_workload_responsive_scheduler(True)
+        set_sw_serviceability_aware_activation(True)
+        set_sw_generic_planting_gate(True)
+        set_p13_tight_soil_enabled(True)
+        set_p13_livestock_cap_enabled(False)
+    elif arm_clean in ("ArmC", "C"):
+        set_quadrant_hard_block({4})
+        set_sw_p1_purchase_committed_herd_only(True)
+        set_sw_workload_responsive_scheduler(True)
+        set_sw_serviceability_aware_activation(True)
+        set_sw_generic_planting_gate(True)
+        set_p13_tight_soil_enabled(False)
+        set_p13_livestock_cap_enabled(True)
+    elif arm_clean in ("ArmD", "D"):
+        set_quadrant_hard_block({4})
+        set_sw_p1_purchase_committed_herd_only(True)
+        set_sw_workload_responsive_scheduler(True)
+        set_sw_serviceability_aware_activation(True)
+        set_sw_generic_planting_gate(True)
+        set_p13_tight_soil_enabled(True)
+        set_p13_livestock_cap_enabled(True)
+    else:
+        raise ValueError(f"Unknown factorial arm: {arm}")
 
 # None for dynamic model (optimal k* in {5, 10, 15}), or int in (5, 10, 15)
 SW_FORCE_K_TILES = None
@@ -886,6 +1142,8 @@ def set_sw_experiment_arm(arm: str) -> None:
     global SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED
     global SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED
     global SW_GENERIC_PLANTING_GATE_ENABLED
+    global P13_TIGHT_SOIL_ENABLED
+    global P13_LIVESTOCK_CAP_ENABLED
     arm_clean = str(arm).strip()
     if arm_clean == "ArmA":
         # Arm A — Fresh Production Control: Current strategy with SW expansion disabled/frozen
@@ -904,6 +1162,8 @@ def set_sw_experiment_arm(arm: str) -> None:
         SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED = False
         SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED = False
         SW_GENERIC_PLANTING_GATE_ENABLED = False
+        P13_TIGHT_SOIL_ENABLED = False
+        P13_LIVESTOCK_CAP_ENABLED = False
     elif arm_clean == "ArmC-Cell":
         # Arm C-Cell — Exactly Arm B-P + Controlled SW Mixed Livestock Housing Cell
         set_quadrant_hard_block({4})
@@ -988,6 +1248,8 @@ def set_sw_experiment_arm(arm: str) -> None:
                     ("SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED", SW_WORKLOAD_RESPONSIVE_SCHEDULER_ENABLED),
                     ("SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED", SW_SERVICEABILITY_AWARE_ACTIVATION_ENABLED),
                     ("SW_GENERIC_PLANTING_GATE_ENABLED", SW_GENERIC_PLANTING_GATE_ENABLED),
+                    ("P13_TIGHT_SOIL_ENABLED", P13_TIGHT_SOIL_ENABLED),
+                    ("P13_LIVESTOCK_CAP_ENABLED", P13_LIVESTOCK_CAP_ENABLED),
                 ):
                     setattr(mod, attr, val)
             except Exception:

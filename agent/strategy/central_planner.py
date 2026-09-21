@@ -1380,6 +1380,12 @@ class CentralPlanner:
         authoritative_sellable_shed_wheat = self._get_wheat_in_shed(ctx)
         remaining_sellable_shed_wheat = self._get_wheat_in_shed(ctx)
 
+        try:
+            from config import get_p22a_day28_feed_harmonization_enabled
+            p22a_cp_enabled = bool(get_p22a_day28_feed_harmonization_enabled())
+        except Exception:
+            p22a_cp_enabled = False
+
         if is_live_feed_mode:
             feed_sale_res = purchase_ledger.get("feed_sale_reservation", {}) if isinstance(purchase_ledger, dict) else {}
             res_version_ok = isinstance(feed_sale_res, dict) and feed_sale_res.get("version") == "point2_c2c_v1"
@@ -1463,6 +1469,38 @@ class CentralPlanner:
                             "species": c.order[1] if len(c.order) > 1 else "",
                             "missing_resource_keys": sorted(list(missing)),
                         })
+        elif p22a_cp_enabled and day == 28:
+            unfed_animals = sum(
+                1 for t in ctx["farm"].iter_tiles()
+                if t.is_animal and not getattr(t, "fed_today", False)
+            ) if ctx.get("farm") else 0
+            worker_wheat = sum(
+                int((inv_row or {}).get("WHEAT", 0))
+                for inv_row in getattr(ctx.get("private"), "inventories", [])
+            ) if ctx.get("private") and hasattr(ctx["private"], "inventories") else 0
+            needed_from_shed = max(0, unfed_animals - worker_wheat)
+            effective_sellable_shed_wheat = max(0, self._get_wheat_in_shed(ctx) - needed_from_shed)
+            remaining_sellable_shed_wheat = effective_sellable_shed_wheat
+
+            # Clamp WHEAT sell candidates against remaining_sellable_shed_wheat
+            for c in list(selected_candidates):
+                if c.source == "sell":
+                    prod = c.order[1] if len(c.order) > 1 else ""
+                    if prod == "WHEAT":
+                        requested = int(c.order[2]) if len(c.order) > 2 else 0
+                        allowed = min(requested, max(0, remaining_sellable_shed_wheat))
+                        if allowed <= 0:
+                            c.rejection_reason = "p22a_day28_feed_reservation"
+                            c.metadata["clamped_against"] = "effective_sellable_shed_wheat"
+                            selected_candidates.remove(c)
+                            all_rejected.append(c)
+                        elif allowed < requested:
+                            c.metadata["trimmed_from"] = requested
+                            c.metadata["trimmed_to"] = allowed
+                            c.order[2] = allowed
+                            remaining_sellable_shed_wheat -= allowed
+                        else:
+                            remaining_sellable_shed_wheat -= allowed
 
         # Step 6: Explicitly Freeze Selected Set
         frozen_selected: List[ProposalCandidate] = list(selected_candidates)

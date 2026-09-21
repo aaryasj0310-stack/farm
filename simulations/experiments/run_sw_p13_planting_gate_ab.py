@@ -163,6 +163,7 @@ def _one(task):
         previous_sw_tile_kinds = None
 
         def tracking(obs, configuration=None):
+            nonlocal previous_sw_tile_kinds
             day, hour = int(obs.get("day", 0)), int(obs.get("hour", 0))
             player = int(obs.get("player", task["seat"]))
             farm = obs["farms"][player]

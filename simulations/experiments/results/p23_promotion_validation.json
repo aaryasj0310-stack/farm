@@ -1,0 +1,1046 @@
+{
+  "summary": {
+    "baseline_sha": "237cf5ee54498ed1ad2fa04d00ad9a0ebd27352e",
+    "n_matched_pairs": 100,
+    "seed_range": [
+      89001,
+      89050
+    ],
+    "old_production_mean": 101467.43,
+    "promoted_production_mean": 101918.93,
+    "mean_paired_delta": 451.5,
+    "median_paired_delta": 106.5,
+    "ci_95": [
+      213.63378263567373,
+      689.3662173643263
+    ],
+    "t_stat": 3.765881552772121,
+    "p_val": 0.00028179083057820867,
+    "record": {
+      "wins": 60,
+      "losses": 38,
+      "ties": 2
+    },
+    "telemetry": {
+      "wheat_planted_old": 108.07,
+      "wheat_planted_promoted": 102.15,
+      "carrot_planted_old": 25.47,
+      "carrot_planted_promoted": 27.39,
+      "wheat_fed_old": 211.75,
+      "wheat_fed_promoted": 211.75,
+      "wheat_bought_spend_old": 0.0,
+      "wheat_bought_spend_promoted": 0.0,
+      "carrot_revenue_old": 0.0,
+      "carrot_revenue_promoted": 0.0,
+      "crop_revenue_old": 0.0,
+      "crop_revenue_promoted": 0.0,
+      "animal_revenue_old": 0.0,
+      "animal_revenue_promoted": 0.0,
+      "starvation_days_eod_old": 1556,
+      "starvation_days_eod_promoted": 1555
+    },
+    "errors": 0
+  },
+  "pairs": [
+    {
+      "pair_key": [
+        1,
+        89001,
+        0
+      ],
+      "old_score": 101911.0,
+      "promoted_score": 101267.0,
+      "delta": -644.0
+    },
+    {
+      "pair_key": [
+        1,
+        89001,
+        1
+      ],
+      "old_score": 101911.0,
+      "promoted_score": 101267.0,
+      "delta": -644.0
+    },
+    {
+      "pair_key": [
+        2,
+        89002,
+        0
+      ],
+      "old_score": 77901.0,
+      "promoted_score": 77700.0,
+      "delta": -201.0
+    },
+    {
+      "pair_key": [
+        2,
+        89002,
+        1
+      ],
+      "old_score": 77901.0,
+      "promoted_score": 77700.0,
+      "delta": -201.0
+    },
+    {
+      "pair_key": [
+        3,
+        89003,
+        0
+      ],
+      "old_score": 100588.0,
+      "promoted_score": 101837.0,
+      "delta": 1249.0
+    },
+    {
+      "pair_key": [
+        3,
+        89003,
+        1
+      ],
+      "old_score": 101431.0,
+      "promoted_score": 101034.0,
+      "delta": -397.0
+    },
+    {
+      "pair_key": [
+        4,
+        89004,
+        0
+      ],
+      "old_score": 84473.0,
+      "promoted_score": 84801.0,
+      "delta": 328.0
+    },
+    {
+      "pair_key": [
+        4,
+        89004,
+        1
+      ],
+      "old_score": 91004.0,
+      "promoted_score": 91179.0,
+      "delta": 175.0
+    },
+    {
+      "pair_key": [
+        5,
+        89005,
+        0
+      ],
+      "old_score": 104232.0,
+      "promoted_score": 105929.0,
+      "delta": 1697.0
+    },
+    {
+      "pair_key": [
+        5,
+        89005,
+        1
+      ],
+      "old_score": 104232.0,
+      "promoted_score": 105929.0,
+      "delta": 1697.0
+    },
+    {
+      "pair_key": [
+        6,
+        89006,
+        0
+      ],
+      "old_score": 101590.0,
+      "promoted_score": 100699.0,
+      "delta": -891.0
+    },
+    {
+      "pair_key": [
+        6,
+        89006,
+        1
+      ],
+      "old_score": 104899.0,
+      "promoted_score": 105001.0,
+      "delta": 102.0
+    },
+    {
+      "pair_key": [
+        7,
+        89007,
+        0
+      ],
+      "old_score": 97433.0,
+      "promoted_score": 98958.0,
+      "delta": 1525.0
+    },
+    {
+      "pair_key": [
+        7,
+        89007,
+        1
+      ],
+      "old_score": 97433.0,
+      "promoted_score": 98958.0,
+      "delta": 1525.0
+    },
+    {
+      "pair_key": [
+        8,
+        89008,
+        0
+      ],
+      "old_score": 114849.0,
+      "promoted_score": 114334.0,
+      "delta": -515.0
+    },
+    {
+      "pair_key": [
+        8,
+        89008,
+        1
+      ],
+      "old_score": 114254.0,
+      "promoted_score": 113751.0,
+      "delta": -503.0
+    },
+    {
+      "pair_key": [
+        9,
+        89009,
+        0
+      ],
+      "old_score": 103008.0,
+      "promoted_score": 105040.0,
+      "delta": 2032.0
+    },
+    {
+      "pair_key": [
+        9,
+        89009,
+        1
+      ],
+      "old_score": 107828.0,
+      "promoted_score": 109704.0,
+      "delta": 1876.0
+    },
+    {
+      "pair_key": [
+        10,
+        89010,
+        0
+      ],
+      "old_score": 98868.0,
+      "promoted_score": 102937.0,
+      "delta": 4069.0
+    },
+    {
+      "pair_key": [
+        10,
+        89010,
+        1
+      ],
+      "old_score": 98868.0,
+      "promoted_score": 102937.0,
+      "delta": 4069.0
+    },
+    {
+      "pair_key": [
+        11,
+        89011,
+        0
+      ],
+      "old_score": 91659.0,
+      "promoted_score": 93513.0,
+      "delta": 1854.0
+    },
+    {
+      "pair_key": [
+        11,
+        89011,
+        1
+      ],
+      "old_score": 97348.0,
+      "promoted_score": 98217.0,
+      "delta": 869.0
+    },
+    {
+      "pair_key": [
+        12,
+        89012,
+        0
+      ],
+      "old_score": 108697.0,
+      "promoted_score": 107360.0,
+      "delta": -1337.0
+    },
+    {
+      "pair_key": [
+        12,
+        89012,
+        1
+      ],
+      "old_score": 109298.0,
+      "promoted_score": 109463.0,
+      "delta": 165.0
+    },
+    {
+      "pair_key": [
+        13,
+        89013,
+        0
+      ],
+      "old_score": 108597.0,
+      "promoted_score": 109058.0,
+      "delta": 461.0
+    },
+    {
+      "pair_key": [
+        13,
+        89013,
+        1
+      ],
+      "old_score": 108597.0,
+      "promoted_score": 109058.0,
+      "delta": 461.0
+    },
+    {
+      "pair_key": [
+        14,
+        89014,
+        0
+      ],
+      "old_score": 106523.0,
+      "promoted_score": 106087.0,
+      "delta": -436.0
+    },
+    {
+      "pair_key": [
+        14,
+        89014,
+        1
+      ],
+      "old_score": 105022.0,
+      "promoted_score": 105064.0,
+      "delta": 42.0
+    },
+    {
+      "pair_key": [
+        15,
+        89015,
+        0
+      ],
+      "old_score": 101018.0,
+      "promoted_score": 103881.0,
+      "delta": 2863.0
+    },
+    {
+      "pair_key": [
+        15,
+        89015,
+        1
+      ],
+      "old_score": 101592.0,
+      "promoted_score": 104431.0,
+      "delta": 2839.0
+    },
+    {
+      "pair_key": [
+        16,
+        89016,
+        0
+      ],
+      "old_score": 103700.0,
+      "promoted_score": 103660.0,
+      "delta": -40.0
+    },
+    {
+      "pair_key": [
+        16,
+        89016,
+        1
+      ],
+      "old_score": 95827.0,
+      "promoted_score": 96311.0,
+      "delta": 484.0
+    },
+    {
+      "pair_key": [
+        17,
+        89017,
+        0
+      ],
+      "old_score": 103049.0,
+      "promoted_score": 104292.0,
+      "delta": 1243.0
+    },
+    {
+      "pair_key": [
+        17,
+        89017,
+        1
+      ],
+      "old_score": 103049.0,
+      "promoted_score": 104292.0,
+      "delta": 1243.0
+    },
+    {
+      "pair_key": [
+        18,
+        89018,
+        0
+      ],
+      "old_score": 107788.0,
+      "promoted_score": 108085.0,
+      "delta": 297.0
+    },
+    {
+      "pair_key": [
+        18,
+        89018,
+        1
+      ],
+      "old_score": 107973.0,
+      "promoted_score": 108150.0,
+      "delta": 177.0
+    },
+    {
+      "pair_key": [
+        19,
+        89019,
+        0
+      ],
+      "old_score": 111871.0,
+      "promoted_score": 111877.0,
+      "delta": 6.0
+    },
+    {
+      "pair_key": [
+        19,
+        89019,
+        1
+      ],
+      "old_score": 99722.0,
+      "promoted_score": 99722.0,
+      "delta": 0.0
+    },
+    {
+      "pair_key": [
+        20,
+        89020,
+        0
+      ],
+      "old_score": 100230.0,
+      "promoted_score": 100416.0,
+      "delta": 186.0
+    },
+    {
+      "pair_key": [
+        20,
+        89020,
+        1
+      ],
+      "old_score": 100230.0,
+      "promoted_score": 100495.0,
+      "delta": 265.0
+    },
+    {
+      "pair_key": [
+        21,
+        89021,
+        0
+      ],
+      "old_score": 112251.0,
+      "promoted_score": 112281.0,
+      "delta": 30.0
+    },
+    {
+      "pair_key": [
+        21,
+        89021,
+        1
+      ],
+      "old_score": 112251.0,
+      "promoted_score": 112281.0,
+      "delta": 30.0
+    },
+    {
+      "pair_key": [
+        22,
+        89022,
+        0
+      ],
+      "old_score": 108925.0,
+      "promoted_score": 108623.0,
+      "delta": -302.0
+    },
+    {
+      "pair_key": [
+        22,
+        89022,
+        1
+      ],
+      "old_score": 108925.0,
+      "promoted_score": 108623.0,
+      "delta": -302.0
+    },
+    {
+      "pair_key": [
+        23,
+        89023,
+        0
+      ],
+      "old_score": 104446.0,
+      "promoted_score": 106200.0,
+      "delta": 1754.0
+    },
+    {
+      "pair_key": [
+        23,
+        89023,
+        1
+      ],
+      "old_score": 115052.0,
+      "promoted_score": 114955.0,
+      "delta": -97.0
+    },
+    {
+      "pair_key": [
+        24,
+        89024,
+        0
+      ],
+      "old_score": 114528.0,
+      "promoted_score": 114510.0,
+      "delta": -18.0
+    },
+    {
+      "pair_key": [
+        24,
+        89024,
+        1
+      ],
+      "old_score": 116035.0,
+      "promoted_score": 116936.0,
+      "delta": 901.0
+    },
+    {
+      "pair_key": [
+        25,
+        89025,
+        0
+      ],
+      "old_score": 102794.0,
+      "promoted_score": 102291.0,
+      "delta": -503.0
+    },
+    {
+      "pair_key": [
+        25,
+        89025,
+        1
+      ],
+      "old_score": 103585.0,
+      "promoted_score": 103419.0,
+      "delta": -166.0
+    },
+    {
+      "pair_key": [
+        26,
+        89026,
+        0
+      ],
+      "old_score": 100143.0,
+      "promoted_score": 99860.0,
+      "delta": -283.0
+    },
+    {
+      "pair_key": [
+        26,
+        89026,
+        1
+      ],
+      "old_score": 100366.0,
+      "promoted_score": 99831.0,
+      "delta": -535.0
+    },
+    {
+      "pair_key": [
+        27,
+        89027,
+        0
+      ],
+      "old_score": 104866.0,
+      "promoted_score": 104977.0,
+      "delta": 111.0
+    },
+    {
+      "pair_key": [
+        27,
+        89027,
+        1
+      ],
+      "old_score": 107911.0,
+      "promoted_score": 107814.0,
+      "delta": -97.0
+    },
+    {
+      "pair_key": [
+        28,
+        89028,
+        0
+      ],
+      "old_score": 99383.0,
+      "promoted_score": 98780.0,
+      "delta": -603.0
+    },
+    {
+      "pair_key": [
+        28,
+        89028,
+        1
+      ],
+      "old_score": 98676.0,
+      "promoted_score": 98088.0,
+      "delta": -588.0
+    },
+    {
+      "pair_key": [
+        29,
+        89029,
+        0
+      ],
+      "old_score": 100379.0,
+      "promoted_score": 100244.0,
+      "delta": -135.0
+    },
+    {
+      "pair_key": [
+        29,
+        89029,
+        1
+      ],
+      "old_score": 100379.0,
+      "promoted_score": 100244.0,
+      "delta": -135.0
+    },
+    {
+      "pair_key": [
+        30,
+        89030,
+        0
+      ],
+      "old_score": 112117.0,
+      "promoted_score": 111825.0,
+      "delta": -292.0
+    },
+    {
+      "pair_key": [
+        30,
+        89030,
+        1
+      ],
+      "old_score": 91798.0,
+      "promoted_score": 91818.0,
+      "delta": 20.0
+    },
+    {
+      "pair_key": [
+        31,
+        89031,
+        0
+      ],
+      "old_score": 103418.0,
+      "promoted_score": 103469.0,
+      "delta": 51.0
+    },
+    {
+      "pair_key": [
+        31,
+        89031,
+        1
+      ],
+      "old_score": 103418.0,
+      "promoted_score": 103469.0,
+      "delta": 51.0
+    },
+    {
+      "pair_key": [
+        32,
+        89032,
+        0
+      ],
+      "old_score": 82090.0,
+      "promoted_score": 82336.0,
+      "delta": 246.0
+    },
+    {
+      "pair_key": [
+        32,
+        89032,
+        1
+      ],
+      "old_score": 86549.0,
+      "promoted_score": 88239.0,
+      "delta": 1690.0
+    },
+    {
+      "pair_key": [
+        33,
+        89033,
+        0
+      ],
+      "old_score": 93345.0,
+      "promoted_score": 93713.0,
+      "delta": 368.0
+    },
+    {
+      "pair_key": [
+        33,
+        89033,
+        1
+      ],
+      "old_score": 90558.0,
+      "promoted_score": 87453.0,
+      "delta": -3105.0
+    },
+    {
+      "pair_key": [
+        34,
+        89034,
+        0
+      ],
+      "old_score": 97427.0,
+      "promoted_score": 96697.0,
+      "delta": -730.0
+    },
+    {
+      "pair_key": [
+        34,
+        89034,
+        1
+      ],
+      "old_score": 96827.0,
+      "promoted_score": 96743.0,
+      "delta": -84.0
+    },
+    {
+      "pair_key": [
+        35,
+        89035,
+        0
+      ],
+      "old_score": 89211.0,
+      "promoted_score": 89537.0,
+      "delta": 326.0
+    },
+    {
+      "pair_key": [
+        35,
+        89035,
+        1
+      ],
+      "old_score": 94601.0,
+      "promoted_score": 94030.0,
+      "delta": -571.0
+    },
+    {
+      "pair_key": [
+        36,
+        89036,
+        0
+      ],
+      "old_score": 101424.0,
+      "promoted_score": 102602.0,
+      "delta": 1178.0
+    },
+    {
+      "pair_key": [
+        36,
+        89036,
+        1
+      ],
+      "old_score": 101424.0,
+      "promoted_score": 102602.0,
+      "delta": 1178.0
+    },
+    {
+      "pair_key": [
+        37,
+        89037,
+        0
+      ],
+      "old_score": 96585.0,
+      "promoted_score": 95598.0,
+      "delta": -987.0
+    },
+    {
+      "pair_key": [
+        37,
+        89037,
+        1
+      ],
+      "old_score": 95968.0,
+      "promoted_score": 98996.0,
+      "delta": 3028.0
+    },
+    {
+      "pair_key": [
+        38,
+        89038,
+        0
+      ],
+      "old_score": 102333.0,
+      "promoted_score": 102242.0,
+      "delta": -91.0
+    },
+    {
+      "pair_key": [
+        38,
+        89038,
+        1
+      ],
+      "old_score": 102333.0,
+      "promoted_score": 102242.0,
+      "delta": -91.0
+    },
+    {
+      "pair_key": [
+        39,
+        89039,
+        0
+      ],
+      "old_score": 95862.0,
+      "promoted_score": 95862.0,
+      "delta": 0.0
+    },
+    {
+      "pair_key": [
+        39,
+        89039,
+        1
+      ],
+      "old_score": 102577.0,
+      "promoted_score": 104294.0,
+      "delta": 1717.0
+    },
+    {
+      "pair_key": [
+        40,
+        89040,
+        0
+      ],
+      "old_score": 100323.0,
+      "promoted_score": 100953.0,
+      "delta": 630.0
+    },
+    {
+      "pair_key": [
+        40,
+        89040,
+        1
+      ],
+      "old_score": 100323.0,
+      "promoted_score": 100953.0,
+      "delta": 630.0
+    },
+    {
+      "pair_key": [
+        41,
+        89041,
+        0
+      ],
+      "old_score": 82596.0,
+      "promoted_score": 82679.0,
+      "delta": 83.0
+    },
+    {
+      "pair_key": [
+        41,
+        89041,
+        1
+      ],
+      "old_score": 83097.0,
+      "promoted_score": 80543.0,
+      "delta": -2554.0
+    },
+    {
+      "pair_key": [
+        42,
+        89042,
+        0
+      ],
+      "old_score": 106782.0,
+      "promoted_score": 106634.0,
+      "delta": -148.0
+    },
+    {
+      "pair_key": [
+        42,
+        89042,
+        1
+      ],
+      "old_score": 106782.0,
+      "promoted_score": 106758.0,
+      "delta": -24.0
+    },
+    {
+      "pair_key": [
+        43,
+        89043,
+        0
+      ],
+      "old_score": 101631.0,
+      "promoted_score": 101036.0,
+      "delta": -595.0
+    },
+    {
+      "pair_key": [
+        43,
+        89043,
+        1
+      ],
+      "old_score": 101631.0,
+      "promoted_score": 101036.0,
+      "delta": -595.0
+    },
+    {
+      "pair_key": [
+        44,
+        89044,
+        0
+      ],
+      "old_score": 99474.0,
+      "promoted_score": 100357.0,
+      "delta": 883.0
+    },
+    {
+      "pair_key": [
+        44,
+        89044,
+        1
+      ],
+      "old_score": 99139.0,
+      "promoted_score": 100431.0,
+      "delta": 1292.0
+    },
+    {
+      "pair_key": [
+        45,
+        89045,
+        0
+      ],
+      "old_score": 105379.0,
+      "promoted_score": 105561.0,
+      "delta": 182.0
+    },
+    {
+      "pair_key": [
+        45,
+        89045,
+        1
+      ],
+      "old_score": 105379.0,
+      "promoted_score": 105561.0,
+      "delta": 182.0
+    },
+    {
+      "pair_key": [
+        46,
+        89046,
+        0
+      ],
+      "old_score": 105913.0,
+      "promoted_score": 106927.0,
+      "delta": 1014.0
+    },
+    {
+      "pair_key": [
+        46,
+        89046,
+        1
+      ],
+      "old_score": 103308.0,
+      "promoted_score": 103330.0,
+      "delta": 22.0
+    },
+    {
+      "pair_key": [
+        47,
+        89047,
+        0
+      ],
+      "old_score": 95192.0,
+      "promoted_score": 96992.0,
+      "delta": 1800.0
+    },
+    {
+      "pair_key": [
+        47,
+        89047,
+        1
+      ],
+      "old_score": 95192.0,
+      "promoted_score": 96992.0,
+      "delta": 1800.0
+    },
+    {
+      "pair_key": [
+        48,
+        89048,
+        0
+      ],
+      "old_score": 107602.0,
+      "promoted_score": 109470.0,
+      "delta": 1868.0
+    },
+    {
+      "pair_key": [
+        48,
+        89048,
+        1
+      ],
+      "old_score": 113860.0,
+      "promoted_score": 116050.0,
+      "delta": 2190.0
+    },
+    {
+      "pair_key": [
+        49,
+        89049,
+        0
+      ],
+      "old_score": 112954.0,
+      "promoted_score": 116999.0,
+      "delta": 4045.0
+    },
+    {
+      "pair_key": [
+        49,
+        89049,
+        1
+      ],
+      "old_score": 111081.0,
+      "promoted_score": 112739.0,
+      "delta": 1658.0
+    },
+    {
+      "pair_key": [
+        50,
+        89050,
+        0
+      ],
+      "old_score": 100923.0,
+      "promoted_score": 101271.0,
+      "delta": 348.0
+    },
+    {
+      "pair_key": [
+        50,
+        89050,
+        1
+      ],
+      "old_score": 101018.0,
+      "promoted_score": 100503.0,
+      "delta": -515.0
+    }
+  ]
+}
