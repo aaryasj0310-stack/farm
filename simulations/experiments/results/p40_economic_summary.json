@@ -1,0 +1,610 @@
+{
+  "score": {
+    "mean": 101836.36,
+    "median": 103048.0,
+    "stdev": 9224.611546960838,
+    "ci95": [
+      100006.19706908298,
+      103666.52293091702
+    ],
+    "min": 74180.0,
+    "max": 126894.0
+  },
+  "per_opponent": {
+    "pass": {
+      "mean": 102578.85,
+      "ci95": [
+        99770.88512116282,
+        105386.81487883719
+      ]
+    },
+    "pure_wheat_rush": {
+      "mean": 100365.65,
+      "ci95": [
+        95871.78226610199,
+        104859.517733898
+      ]
+    },
+    "melon_sniper": {
+      "mean": 100622.0,
+      "ci95": [
+        95436.5143544514,
+        105807.4856455486
+      ]
+    },
+    "cow_milk_engine": {
+      "mean": 105654.6,
+      "ci95": [
+        101754.82343780721,
+        109554.3765621928
+      ]
+    },
+    "full_production_agent": {
+      "mean": 99960.7,
+      "ci95": [
+        95357.93171380521,
+        104563.46828619478
+      ]
+    }
+  },
+  "cash_flows": {
+    "starting": 3000.0,
+    "inflows": 147890.11,
+    "outflows": 49053.75,
+    "final": 101836.35999999999
+  },
+  "product_revenue": [
+    {
+      "item": "WHEAT",
+      "mean_rev": 36708.63,
+      "pct_rev": 24.821558385479598,
+      "mean_units": 1002.95,
+      "avg_price": 36.60065805872675,
+      "rev_ci": [
+        35348.64367413261,
+        38068.616325867384
+      ]
+    },
+    {
+      "item": "MILK",
+      "mean_rev": 34304.92,
+      "pct_rev": 23.196223195722826,
+      "mean_units": 141.57,
+      "avg_price": 242.31772268135904,
+      "rev_ci": [
+        31061.428180113136,
+        37548.41181988686
+      ]
+    },
+    {
+      "item": "MELON",
+      "mean_rev": 21469.81,
+      "pct_rev": 14.517407553486844,
+      "mean_units": 89.94,
+      "avg_price": 238.71258616855684,
+      "rev_ci": [
+        21060.87965699362,
+        21878.740343006382
+      ]
+    },
+    {
+      "item": "STRAWBERRY",
+      "mean_rev": 19538.28,
+      "pct_rev": 13.2113499678917,
+      "mean_units": 79.56,
+      "avg_price": 245.57918552036196,
+      "rev_ci": [
+        18786.51909415945,
+        20290.04090584055
+      ]
+    },
+    {
+      "item": "WOOL",
+      "mean_rev": 16395.77,
+      "pct_rev": 11.086454665562155,
+      "mean_units": 72.65,
+      "avg_price": 225.68162422573982,
+      "rev_ci": [
+        13980.646464261108,
+        18810.89353573889
+      ]
+    },
+    {
+      "item": "FERTILIZER",
+      "mean_rev": 15198.97,
+      "pct_rev": 10.277205149147568,
+      "mean_units": 186.47,
+      "avg_price": 81.50892905024936,
+      "rev_ci": [
+        15010.973364754242,
+        15386.966635245757
+      ]
+    },
+    {
+      "item": "CARROT",
+      "mean_rev": 2599.76,
+      "pct_rev": 1.7578998352222475,
+      "mean_units": 67.23,
+      "avg_price": 38.66964152907928,
+      "rev_ci": [
+        2426.2792283945687,
+        2773.2407716054317
+      ]
+    },
+    {
+      "item": "TOMATO",
+      "mean_rev": 1673.97,
+      "pct_rev": 1.1319012474870702,
+      "mean_units": 24.2,
+      "avg_price": 69.17231404958677,
+      "rev_ci": [
+        1574.6690138775155,
+        1773.2709861224846
+      ]
+    }
+  ],
+  "expenses": [
+    {
+      "item": "BUY_PRODUCT_WHEAT",
+      "mean_cost": 30932.05,
+      "pct_cost": 63.0574624773845,
+      "mean_units": 849.76,
+      "cost_ci": [
+        29729.662288797477,
+        32134.43771120252
+      ]
+    },
+    {
+      "item": "HIRE",
+      "mean_cost": 7537.8,
+      "pct_cost": 15.366409295925386,
+      "mean_units": 293.95,
+      "cost_ci": [
+        7531.542031576825,
+        7544.057968423175
+      ]
+    },
+    {
+      "item": "BUY_ANIMAL_COW",
+      "mean_cost": 2676.0,
+      "pct_cost": 5.455240425043957,
+      "mean_units": 6.69,
+      "cost_ci": [
+        2445.745458800768,
+        2906.254541199232
+      ]
+    },
+    {
+      "item": "BUY_ANIMAL_SHEEP",
+      "mean_cost": 2225.0,
+      "pct_cost": 4.53584078689193,
+      "mean_units": 4.45,
+      "cost_ci": [
+        1929.116736095828,
+        2520.883263904172
+      ]
+    },
+    {
+      "item": "BUY_SEED_STRAWBERRY",
+      "mean_cost": 1502.0,
+      "pct_cost": 3.06194735366817,
+      "mean_units": 15.02,
+      "cost_ci": [
+        1481.2816336356343,
+        1522.7183663643657
+      ]
+    },
+    {
+      "item": "BUY_SEED_MELON",
+      "mean_cost": 1278.4,
+      "pct_cost": 2.606120836837143,
+      "mean_units": 15.98,
+      "cost_ci": [
+        1254.7415704337373,
+        1302.058429566263
+      ]
+    },
+    {
+      "item": "BUY_SEED_WHEAT",
+      "mean_cost": 1032.4,
+      "pct_cost": 2.104630125117856,
+      "mean_units": 103.24,
+      "cost_ci": [
+        1023.0681032807805,
+        1041.7318967192198
+      ]
+    },
+    {
+      "item": "BUY_LAND",
+      "mean_cost": 1000.0,
+      "pct_cost": 2.0385801289401932,
+      "mean_units": 1,
+      "cost_ci": [
+        1000.0,
+        1000.0
+      ]
+    },
+    {
+      "item": "BUY_SEED_CARROT",
+      "mean_cost": 605.6,
+      "pct_cost": 1.234564126086181,
+      "mean_units": 30.28,
+      "cost_ci": [
+        591.9231126806624,
+        619.2768873193377
+      ]
+    },
+    {
+      "item": "BUY_SEED_TOMATO",
+      "mean_cost": 264.5,
+      "pct_cost": 0.539204444104681,
+      "mean_units": 5.29,
+      "cost_ci": [
+        256.6123696277723,
+        272.3876303722277
+      ]
+    }
+  ],
+  "daily_timeline": [
+    {
+      "day": 0,
+      "b_cash": 3000.0,
+      "e_cash": 824.0,
+      "inflow": 612.0,
+      "outflow": 2788.0,
+      "hands": 4,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 8
+    },
+    {
+      "day": 1,
+      "b_cash": 824.0,
+      "e_cash": 759.0,
+      "inflow": 290.0,
+      "outflow": 355.0,
+      "hands": 4,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 3
+    },
+    {
+      "day": 2,
+      "b_cash": 759.0,
+      "e_cash": 354.0,
+      "inflow": 490.58,
+      "outflow": 935.58,
+      "hands": 4,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 3
+    },
+    {
+      "day": 3,
+      "b_cash": 314.0,
+      "e_cash": 446.0,
+      "inflow": 199.0,
+      "outflow": 67.0,
+      "hands": 4,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 0
+    },
+    {
+      "day": 4,
+      "b_cash": 446.0,
+      "e_cash": 506.42,
+      "inflow": 505.7,
+      "outflow": 445.28,
+      "hands": 4,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 0
+    },
+    {
+      "day": 5,
+      "b_cash": 506.42,
+      "e_cash": 630.29,
+      "inflow": 1026.27,
+      "outflow": 1000.5,
+      "hands": 4,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 20
+    },
+    {
+      "day": 6,
+      "b_cash": 532.19,
+      "e_cash": 339.21,
+      "inflow": 292.92,
+      "outflow": 485.9,
+      "hands": 8,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 5.72
+    },
+    {
+      "day": 7,
+      "b_cash": 339.21,
+      "e_cash": 376.74,
+      "inflow": 196.6,
+      "outflow": 166.47,
+      "hands": 8,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 1.45
+    },
+    {
+      "day": 8,
+      "b_cash": 369.34,
+      "e_cash": 314.35,
+      "inflow": 195.4,
+      "outflow": 260.19,
+      "hands": 8,
+      "crops": 0,
+      "anims": 2,
+      "fed": 0,
+      "empty": 5.41
+    },
+    {
+      "day": 9,
+      "b_cash": 304.55,
+      "e_cash": 2096.5,
+      "inflow": 3109.81,
+      "outflow": 1336.34,
+      "hands": 8,
+      "crops": 0,
+      "anims": 2.58,
+      "fed": 0,
+      "empty": 7.79
+    },
+    {
+      "day": 10,
+      "b_cash": 2078.02,
+      "e_cash": 1853.38,
+      "inflow": 1767.03,
+      "outflow": 1996.1,
+      "hands": 10,
+      "crops": 0,
+      "anims": 4.61,
+      "fed": 0,
+      "empty": 12.19
+    },
+    {
+      "day": 11,
+      "b_cash": 1848.95,
+      "e_cash": 8956.3,
+      "inflow": 10869.04,
+      "outflow": 3776.3,
+      "hands": 12,
+      "crops": 0,
+      "anims": 7.2,
+      "fed": 0,
+      "empty": 3.04
+    },
+    {
+      "day": 12,
+      "b_cash": 8941.69,
+      "e_cash": 13910.19,
+      "inflow": 6666.02,
+      "outflow": 1633.6,
+      "hands": 12,
+      "crops": 0,
+      "anims": 9.68,
+      "fed": 0,
+      "empty": 3.29
+    },
+    {
+      "day": 13,
+      "b_cash": 13974.11,
+      "e_cash": 17721.02,
+      "inflow": 5414.01,
+      "outflow": 1685.06,
+      "hands": 12,
+      "crops": 0,
+      "anims": 10.46,
+      "fed": 0,
+      "empty": 4.09
+    },
+    {
+      "day": 14,
+      "b_cash": 17703.06,
+      "e_cash": 19289.51,
+      "inflow": 3287.68,
+      "outflow": 1690.3,
+      "hands": 12,
+      "crops": 0,
+      "anims": 10.91,
+      "fed": 0,
+      "empty": 1.81
+    },
+    {
+      "day": 15,
+      "b_cash": 19300.44,
+      "e_cash": 21138.36,
+      "inflow": 3211.84,
+      "outflow": 1378.57,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.06,
+      "fed": 0,
+      "empty": 4.65
+    },
+    {
+      "day": 16,
+      "b_cash": 21133.71,
+      "e_cash": 22381.01,
+      "inflow": 2620.72,
+      "outflow": 1389.72,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.06,
+      "fed": 0,
+      "empty": 3.34
+    },
+    {
+      "day": 17,
+      "b_cash": 22364.71,
+      "e_cash": 25397.93,
+      "inflow": 3998.45,
+      "outflow": 920.73,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 2.32
+    },
+    {
+      "day": 18,
+      "b_cash": 25442.43,
+      "e_cash": 28010.75,
+      "inflow": 3500.22,
+      "outflow": 840.2,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 2.45
+    },
+    {
+      "day": 19,
+      "b_cash": 28102.45,
+      "e_cash": 33642.08,
+      "inflow": 6448.75,
+      "outflow": 793.22,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 2.83
+    },
+    {
+      "day": 20,
+      "b_cash": 33757.98,
+      "e_cash": 38887.73,
+      "inflow": 6140.19,
+      "outflow": 804.37,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 3.09
+    },
+    {
+      "day": 21,
+      "b_cash": 39093.8,
+      "e_cash": 45248.75,
+      "inflow": 7098.1,
+      "outflow": 805.12,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 2.18
+    },
+    {
+      "day": 22,
+      "b_cash": 45386.78,
+      "e_cash": 50848.51,
+      "inflow": 6469.41,
+      "outflow": 782.49,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 1.84
+    },
+    {
+      "day": 23,
+      "b_cash": 51073.7,
+      "e_cash": 57365.1,
+      "inflow": 7213.53,
+      "outflow": 828.51,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 3.23
+    },
+    {
+      "day": 24,
+      "b_cash": 57458.72,
+      "e_cash": 63082.09,
+      "inflow": 6712.69,
+      "outflow": 861.7,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 4.13
+    },
+    {
+      "day": 25,
+      "b_cash": 63309.71,
+      "e_cash": 69609.04,
+      "inflow": 7202.37,
+      "outflow": 838.93,
+      "hands": 11.97,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 3.31
+    },
+    {
+      "day": 26,
+      "b_cash": 69673.15,
+      "e_cash": 75674.86,
+      "inflow": 7368.99,
+      "outflow": 990.62,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 4.64
+    },
+    {
+      "day": 27,
+      "b_cash": 76051.52,
+      "e_cash": 82968.57,
+      "inflow": 7939.58,
+      "outflow": 802.47,
+      "hands": 12,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 13.21
+    },
+    {
+      "day": 28,
+      "b_cash": 83188.63,
+      "e_cash": 89617.66,
+      "inflow": 24755.42,
+      "outflow": 18020.92,
+      "hands": 11.99,
+      "crops": 0,
+      "anims": 11.08,
+      "fed": 0,
+      "empty": 22.47
+    },
+    {
+      "day": 29,
+      "b_cash": 89923.13,
+      "e_cash": 0.0,
+      "inflow": 12287.79,
+      "outflow": 374.56,
+      "hands": 0,
+      "crops": 0,
+      "anims": 0,
+      "fed": 0,
+      "empty": 0
+    }
+  ]
+}
