@@ -264,24 +264,70 @@
   - Livestock Feed Failures / Starvations / Escapes: **0 / 0 / 0 (100% Clean Invariant)**
   - CentralPlanner P0 Emergency Rejections: **0 (Zero Displacement)**
   - CentralPlanner `slot_cap` Rejections: **100.61 (Control) vs 101.67 (Treatment)**
-- **Verdict**: **NO-GO**
+- **Verdict**: **MECHANISM NO-GO / TREATMENT ITERATE**
   - Failed the $\ge 70\%$ discard reduction GO threshold (achieved only 2.80%).
-  - Failed the $\ge 50\%$ discard reduction ITERATE threshold.
-  - Cash delta (+\$1,439.86) fell short of the +\$2,000 GO gate.
+  - Failed the $\ge 50\%$ discard reduction ITERATE threshold for storage overflow prevention.
+  - Cash delta (+$1,439.86) fell short of the +$2,000 GO gate and was 89.6% driven by 10 outlier pairs.
 - **Key Forensic Findings**:
   1. *[MEASURED FACT] Inventory Spatial Decoupling*:
      - Late-evening (Hours 20–22) inventory is held predominantly in **worker personal backpacks** (mean 34.5 u, peak 60–85 u), not in the shed (mean 30.9 u).
      - Workers in baseline do not execute mid-day shed deposits.
   2. *[MEASURED FACT] Shed Feed Wheat Impasse*:
-     - Shed occupancy at Hours 20–22 is composed almost entirely of **protected animal feed wheat** (40–48 units, the 4-day reserve for 10–12 herd animals).
-     - Storage hygiene strictly protected Tier 3 wheat above `safe_wheat_floor = max(15, animals * 2.0)`, leaving 0 sellable wheat.
+     - Shed occupancy at Hours 20–22 is composed almost entirely of **protected animal feed wheat** (40–48 units, the reserve for herd animals).
+     - Storage hygiene strictly protected Tier 3 wheat above `feed_safety_buffer = ceil(daily_feed_demand * 1.5) = 48 units`, leaving 0 sellable wheat.
      - Tier 2 high-value goods (Strawberries, Wool, Milk) had 0 stock in the shed because they were in worker backpacks.
      - Storage hygiene correctly refused to sell protected feed wheat, leaving the shed half-full of grain.
   3. *[MEASURED FACT] Midnight Inflow Collision*:
      - At midnight (Turn 23 -> Turn 0), workers dumped 60–85 units of backpack inventory into the shed that already contained 48 units of feed wheat ($48 + 82 = 130$ units load).
-     - 30 units of Strawberry, Milk, and Wool were discarded despite storage hygiene being active.
-  4. *[MEASURED FACT] Pricing Stability Confirmed*:
-     - Late-evening drip sales did NOT depress town shop prices (Strawberry, Melon, Milk, Wool prices remained within $\pm 1\%$ of baseline).
+     - High-value produce was discarded despite storage hygiene being active.
+  4. *[MEASURED FACT] Pricing Stability Confirmed in Isolation*:
+     - Late-evening drip sales did NOT depress town shop prices in isolation, but caused severe pricing degradation (-$19.95/u on wool) when competing against `full_production_agent`.
 - **Architectural Lesson for P6.2**:
   - Pure market liquidation cannot solve discards when goods are physically trapped in worker backpacks.
-  - P6.2 must target **intraday worker shed drop-off** (e.g. Hour 18–19 pre-midnight deposit) and/or **feed wheat structural storage decoupling**, bringing produce into the shed before market windows rather than relying on late-night market selling alone.
+  - P6.1-C proved that manual intraday worker shed drop-off is economically unviable (walking round-trip takes 16–30 hours, destroying far more value in lost watering/care than the saved discards).
+  - P6.2 must abandon manual shed overflow prevention and pivot toward dynamic feed buffer management and market-aware sales timing.
+
+### Forensic Investigation: P6.1-C Causal Reconciliation
+- **Type**: CAUSAL RECONCILIATION & FORENSIC ACCOUNTING AUDIT
+- **Date**: 2026-09-22
+- **Baseline Commit**: `536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e` (Production Baseline)
+- **Active Branch**: `experiment/sw-p13-planting-gate`
+- **Scope**: Complete transaction interception and hourly trajectory mapping across all 100 scenario pairs (200 live games on seeds `96,411`–`96,420`).
+- **Accounting Closure**: Max single-game cash reconciliation error: **0.000000** ($\epsilon = 0.000000$).
+- **Final Cash Delta**: **+$1,439.86 / game** (Mean) | **+$642.50 / game** (Median) | **+$1,194.20 / game** (10% Trimmed Mean)
+- **Causal Waterfall Breakdown**:
+  * **Gross Sales Revenue Delta**: **+$661.70 / game**
+    - Milk: +$799.35 (+1.97 u)
+    - Melon: +$535.48 (+2.45 u)
+    - Strawberry: +$115.62 (+0.68 u)
+    - Carrot: +$49.40 (+0.54 u)
+    - Tomato: +$39.15 (+0.45 u)
+    - Fertilizer: -$8.41 (-0.22 u)
+    - Wool: -$137.40 (-0.06 u)
+    - Wheat: -$731.49 (-24.24 u)
+  * **Gross Expenditure Delta**: **-$778.16 / game (Expenditure Savings)**
+    - Feed Wheat Purchases: **-$749.18** (-23.16 u) [96.3% of all savings]
+    - Seed Purchases: -$4.90
+    - Animal Purchases: -$14.00
+    - Worker Wages: -$10.08
+    - Land Expansion: $0.00
+  * **Reconciled Cash Delta**: $\Delta \text{Revenue} - \Delta \text{Expenditures} = +\$661.70 - (-\$778.16) = \mathbf{+\$1,439.86 / game}$ (Residual: **0.000000**).
+- **Core Forensic Revelations**:
+  1. *[REFUTATION] "Early Liquidity Compounding" Disproved*:
+     - The unexplained +$778.16 in P6.1 was **NOT** compounding investment returns.
+     - It was **$749.18 in lower feed wheat expenditures**. Treatment kept 24.24 units of wheat on-farm (losing -$731.49 in wholesale sales revenue), which directly displaced 23.16 units of town retail feed purchases (saving +$749.18). Net internal transfer arbitrage was **+$17.69**.
+  2. *[MEASURED FACT] Zero Divergence for Days 0–9*:
+     - Trajectories are 100% bit-for-bit identical for the first 260 hours ($t=0 \dots 260$, $\text{Delta} = \$0.00$). First divergence occurred at $t=261$ (Day 10, Hour 21).
+  3. *[MEASURED FACT] Outlier Concentration*:
+     - Top 1 pair = 12.1% of total gain; top 5 pairs = 53.2%; top 10 pairs = **89.6%** ($129k / $144k).
+     - Win rate was only **57.0%** (57 wins, 43 losses).
+  4. *[MEASURED FACT] Severe Deficit Against `full_production_agent`*:
+     - Treatment lost by **-$1,543.55 / game** with a **35.0% win rate** against FPA.
+     - Uncoordinated pre-midnight sales degraded town wool market price from $237.50/u to $217.55/u (-$19.95/u), losing -$2,153.95 in wool revenue.
+  5. *[MEASURED FACT] Intraday Worker Deposit Infeasible*:
+     - Transit round-trip between field plots and shed requires 16–30 hours (exceeding a full working day).
+     - Opportunity cost of lost watering/milking actions is 5x–10x higher than the value of discarded produce. The engine's midnight teleportation dump is already mathematically superior.
+- **Classification & Final Taxonomy**:
+  - Mechanism Verdict: **MECHANISM NO-GO**
+  - Final Taxonomy: **Option B (Storage Mechanism Failed, Cash Signal Mostly Incidental / Feed Buffer Arbitrage)**.
+  - Action: Keep `P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = False`. Do not promote to production. Pivot to P6.2.
