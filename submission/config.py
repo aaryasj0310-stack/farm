@@ -156,6 +156,32 @@ def get_point2_pre_ne_capital_mode() -> str:
     """Return the active Point-2 Pre-NE capital admission policy mode."""
     return POINT2_PRE_NE_CAPITAL_MODE
 
+# Kaggriculture P5.1: Two-Cycle Carrot Rotation Experiment
+# Default False (bit-for-bit identical to baseline 536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e)
+P51_T1_TWO_CYCLE_CARROT_ENABLED: bool = False
+
+def get_p51_t1_two_cycle_carrot_enabled() -> bool:
+    """Return whether P5.1 two-cycle carrot rotation is enabled."""
+    return P51_T1_TWO_CYCLE_CARROT_ENABLED
+
+def set_p51_t1_two_cycle_carrot_enabled(enabled: bool) -> None:
+    """Configure P5.1 two-cycle carrot rotation experiment flag."""
+    global P51_T1_TWO_CYCLE_CARROT_ENABLED
+    P51_T1_TWO_CYCLE_CARROT_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.two_cycle_rotation_manager", "strategy.two_cycle_rotation_manager", "two_cycle_rotation_manager",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "P51_T1_TWO_CYCLE_CARROT_ENABLED", P51_T1_TWO_CYCLE_CARROT_ENABLED)
+            except Exception:
+                pass
+
+
 
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
@@ -851,6 +877,66 @@ def set_p23_marginal_wheat_allocation_enabled(enabled: bool) -> None:
 def get_p23_marginal_wheat_allocation_enabled() -> bool:
     """Return whether the P2.3 marginal wheat replanting treatment is enabled."""
     return P23_MARGINAL_WHEAT_ALLOCATION_ENABLED
+
+
+# ---------------------------------------------------------------------------
+# Point 4.1 Late-Season Isolated SW Zonal Acreage Expansion Switch
+# ---------------------------------------------------------------------------
+P41_SW_ZONAL_EXPANSION_ENABLED: bool = False
+P41_SW_MIN_DAY: int = 14
+P41_SW_MIN_CASH: float = 15000.0
+P41_SW_MIN_CORE_OCCUPANCY: float = 0.90
+P41_SW_MAX_TILES: int = 8
+P41_SW_ZONE_COORDS = [(3, 5), (3, 6), (3, 7), (3, 8), (4, 6), (4, 7), (4, 8), (4, 9)]
+P41_SW_CROP_MODE: str = "hybrid"  # "wheat", "strawberry", or "hybrid"
+P41_SW_DEDICATED_WORKER_INDICES = (11, 12)
+
+
+def set_p41_sw_zonal_expansion_enabled(enabled: bool) -> None:
+    """Toggle the P4.1 Late-Season Isolated SW Zonal Acreage Expansion treatment."""
+    global P41_SW_ZONAL_EXPANSION_ENABLED
+    P41_SW_ZONAL_EXPANSION_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.expansion_planner", "strategy.expansion_planner", "expansion_planner",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.main", "main", "agent.config", "config",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "P41_SW_ZONAL_EXPANSION_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_p41_sw_zonal_expansion_enabled() -> bool:
+    """Return whether the P4.1 Late-Season Isolated SW Zonal Acreage Expansion is enabled."""
+    return P41_SW_ZONAL_EXPANSION_ENABLED
+
+
+def set_p41_sw_crop_mode(mode: str) -> None:
+    """Set the P4.1 SW crop mode: 'wheat', 'strawberry', or 'hybrid'."""
+    global P41_SW_CROP_MODE
+    P41_SW_CROP_MODE = str(mode).strip().lower()
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.config", "config",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "P41_SW_CROP_MODE", P41_SW_CROP_MODE)
+            except Exception:
+                pass
+
+
+def get_p41_sw_crop_mode() -> str:
+    """Return the active P4.1 SW crop mode."""
+    return P41_SW_CROP_MODE
+
 
 
 

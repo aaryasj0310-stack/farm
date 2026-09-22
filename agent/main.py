@@ -390,6 +390,11 @@ def reset_agent_state() -> None:
         reset_daily_log()
     except Exception:
         pass
+    try:
+        from strategy.two_cycle_rotation_manager import reset_rotation_manager
+        reset_rotation_manager()
+    except Exception:
+        pass
 
 
 try:
@@ -833,6 +838,8 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
         try:
             reset_daily_log()
             reset_opponent_model_state()
+            from strategy.two_cycle_rotation_manager import reset_rotation_manager
+            reset_rotation_manager()
         except Exception:
             pass
 

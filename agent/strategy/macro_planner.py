@@ -229,6 +229,7 @@ class MacroPlan:
     notes: list = field(default_factory=list)
     diagnostics: dict = field(default_factory=dict)      # v5.10: expansion observability
     buy_animal_sequence: list = field(default_factory=list)  # Phase C1: ordered provisional sequence
+    p51_carrot_replant_today: int = 0                        # P5.1 two-cycle carrot replant count
 
 
 def _crop_allowed_today(crop, day):
@@ -1727,6 +1728,21 @@ class MacroPlanner:
         queued_build_positions = {pos for pos, _ in reserved_structure_tiles}
         empty_tiles = [pos for pos in empty_tiles if pos not in queued_build_positions]
 
+        # P5.1 Two-Cycle Carrot Rotation Protection
+        p51_active = False
+        p51_mgr = None
+        try:
+            from config import get_p51_t1_two_cycle_carrot_enabled
+            if get_p51_t1_two_cycle_carrot_enabled():
+                from strategy.two_cycle_rotation_manager import get_rotation_manager
+                p51_mgr = get_rotation_manager()
+                p51_mgr.update_from_observation(ctx)
+                p51_reserved_tiles = p51_mgr.get_active_rotation_tiles()
+                empty_tiles = [pos for pos in empty_tiles if pos not in p51_reserved_tiles]
+                p51_active = True
+        except Exception:
+            p51_active = False
+
         # endgame: no new planting — just harvest and sell
         plant_queue = []
         buy_seed = {}
@@ -2419,7 +2435,40 @@ class MacroPlanner:
                             empty_tiles.remove(pos)
                             plant_queue.append((pos, "MELON"))
                             planned["MELON"] = planned.get("MELON", 0) + 1
-                            committed_counts["MELON"] = committed_counts.get("MELON", 0) + 1
+                # P5.1 Cycle 1 & Cycle 2 Pending CARROT Plantings & Pre-ordering
+                if p51_active and p51_mgr is not None:
+                    try:
+                        if hour == 0 and 24 <= day <= 26:
+                            c2_maturing = p51_mgr.get_c2_maturing_today_count(day)
+                            if c2_maturing > 0:
+                                buy_seed["CARROT"] = buy_seed.get("CARROT", 0) + c2_maturing
+                                plan.p51_carrot_replant_today = getattr(plan, "p51_carrot_replant_today", 0) + c2_maturing
+                                remaining_money = max(0.0, remaining_money - c2_maturing * CROPS["CARROT"]["seed"])
+
+                        if hour <= 17 and 21 <= day <= 28:
+                            pending_candidates = p51_mgr.get_pending_plant_tiles(day, hour)
+                            already_queued = {p for p, _ in plant_queue}
+                            for r_pos in pending_candidates:
+                                if r_pos in already_queued:
+                                    continue
+                                rx, ry = r_pos
+                                r_tile = farm.tiles[ry][rx]
+                                r_empty = (r_tile is None or getattr(r_tile, "kind", "") == "EMPTY" or
+                                           (not getattr(r_tile, "is_plant", False) and not getattr(r_tile, "is_animal", False)))
+                                if r_empty:
+                                    if seeds.get("CARROT", 0) > 0:
+                                        plant_queue.append((r_pos, "CARROT"))
+                                        seeds["CARROT"] -= 1
+                                        planned["CARROT"] = planned.get("CARROT", 0) + 1
+                                        committed_counts["CARROT"] = committed_counts.get("CARROT", 0) + 1
+                                    elif remaining_money >= CROPS["CARROT"]["seed"]:
+                                        buy_seed["CARROT"] = buy_seed.get("CARROT", 0) + 1
+                                        remaining_money = max(0.0, remaining_money - CROPS["CARROT"]["seed"])
+                                        plant_queue.append((r_pos, "CARROT"))
+                                        planned["CARROT"] = planned.get("CARROT", 0) + 1
+                                        committed_counts["CARROT"] = committed_counts.get("CARROT", 0) + 1
+                    except Exception:
+                        pass
 
                 existing_wheat = committed_counts.get("WHEAT", 0)
                 # Continuous wheat replanting engine (Leader-Calibrated: 8/20/30 active wheat tiles)
@@ -2486,6 +2535,37 @@ class MacroPlanner:
                             remaining_money = max(0.0, remaining_money - needed_seeds * CROPS["WHEAT"]["seed"])
                             wheat_available += needed_seeds
                 wheat_to_plant = min(wheat_available, wheat_to_plant, len(empty_tiles))
+
+                # P5.1 Cycle 1 Wheat Conversion with Sequential Collective Feed Safety
+                if p51_active and p51_mgr is not None and 21 <= day <= 23 and wheat_to_plant > 0:
+                    try:
+                        cand_core = [
+                            p for p in empty_tiles
+                            if farm.quadrant_of(p) in ("NW", "NE")
+                            and p not in ((4, 4), (5, 4), (4, 5), (5, 5))
+                        ][:wheat_to_plant]
+                        admitted_c1 = p51_mgr.evaluate_sequential_feed_safety(ctx, cand_core)
+                        if admitted_c1:
+                            p51_mgr.commit_c1_candidates(day, admitted_c1)
+                            plan.p51_carrot_replant_today = getattr(plan, "p51_carrot_replant_today", 0) + len(admitted_c1)
+                            if buy_seed.get("WHEAT", 0) > 0:
+                                w_red = min(buy_seed["WHEAT"], len(admitted_c1))
+                                buy_seed["WHEAT"] -= w_red
+                                remaining_money += w_red * CROPS["WHEAT"]["seed"]
+                            for c_pos in admitted_c1:
+                                if c_pos in empty_tiles:
+                                    empty_tiles.remove(c_pos)
+                                plant_queue.append((c_pos, "CARROT"))
+                                wheat_to_plant -= 1
+                                if seeds.get("CARROT", 0) > 0:
+                                    seeds["CARROT"] -= 1
+                                else:
+                                    buy_seed["CARROT"] = buy_seed.get("CARROT", 0) + 1
+                                    remaining_money = max(0.0, remaining_money - CROPS["CARROT"]["seed"])
+                                planned["CARROT"] = planned.get("CARROT", 0) + 1
+                                committed_counts["CARROT"] = committed_counts.get("CARROT", 0) + 1
+                    except Exception:
+                        pass
 
                 for _ in range(wheat_to_plant):
                     if empty_tiles:

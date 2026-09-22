@@ -1116,6 +1116,26 @@ def get_home_quadrant(u_idx, n_units, unlocked):
     - If only NW unlocked:
       All units belong to NW squad.
     """
+    try:
+        from config import get_p41_sw_zonal_expansion_enabled, P41_SW_DEDICATED_WORKER_INDICES
+        p41_enabled = bool(get_p41_sw_zonal_expansion_enabled())
+    except Exception:
+        p41_enabled = False
+        P41_SW_DEDICATED_WORKER_INDICES = (11, 12)
+
+    if p41_enabled and "SW" in unlocked:
+        # P4.1 Strict 2-Worker Zonal Allocation:
+        # Only dedicated workers (11, 12) belong to the SW squad.
+        if u_idx in P41_SW_DEDICATED_WORKER_INDICES:
+            return "SW"
+        # Units not in dedicated SW squad remain strictly partitioned between NW and NE
+        non_sw_units = [u for u in range(n_units) if u not in P41_SW_DEDICATED_WORKER_INDICES]
+        if u_idx in non_sw_units:
+            idx_in_non_sw = non_sw_units.index(u_idx)
+            half = max(1, len(non_sw_units) // 2)
+            return "NW" if idx_in_non_sw < half else "NE"
+        return "NW"
+
     if "SW" in unlocked and n_units >= 5:
         sw_squad_size = 5 if n_units >= 13 else 4
         sw_start = n_units - sw_squad_size
@@ -1541,15 +1561,48 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 return {int(required_unit)}
             except (TypeError, ValueError):
                 return set()
+        base_set = None
         if task["op"] == "PLACE" and task.get("args"):
             item = task["args"][0]
             if item in ANIMALS or task.get("kind") == "deposit_product":
-                return set(holders.get(item, []))   # empty => defer, don't no-op
+                base_set = set(holders.get(item, []))   # empty => defer, don't no-op
         elif task["op"] == "FERTILIZE":
-            return set(holders.get("FERTILIZER", []))
+            base_set = set(holders.get("FERTILIZER", []))
         elif task["op"] == "FEED":
-            return set(holders.get("WHEAT", []))
-        return None                                  # no restriction
+            base_set = set(holders.get("WHEAT", []))
+
+        try:
+            from config import get_p41_sw_zonal_expansion_enabled, P41_SW_DEDICATED_WORKER_INDICES
+            p41_enabled = bool(get_p41_sw_zonal_expansion_enabled())
+        except Exception:
+            p41_enabled = False
+            P41_SW_DEDICATED_WORKER_INDICES = (11, 12)
+
+        if p41_enabled and "SW" in farm.unlocked:
+            target = task.get("target")
+            if target is not None:
+                t_tuple = tuple(target)
+                t_quad = farm.quadrant_of(t_tuple)
+                prio = task.get("priority", 0)
+                is_urgent = prio >= PRIORITY_URGENT_SURVIVAL or task.get("kind") in ("feed_rescue", "harvest_decay")
+
+                # Discretionary SW agricultural tasks: strictly restricted to dedicated workers (11, 12)
+                if t_quad == "SW" and t_tuple not in SHED_ACCESS_TILES:
+                    if task.get("op") in ("WATER", "PLANT", "TILL", "DIG", "FERTILIZE", "HARVEST"):
+                        sw_allowed = {u for u in P41_SW_DEDICATED_WORKER_INDICES if u < n_units}
+                        if base_set is not None:
+                            return base_set.intersection(sw_allowed)
+                        return sw_allowed
+
+                # Discretionary Core agricultural tasks: non-SW workers only (prevent 11, 12 from being pulled into NW/NE)
+                elif t_quad in ("NW", "NE") and t_tuple not in SHED_ACCESS_TILES and not is_urgent:
+                    if task.get("op") in ("WATER", "PLANT", "TILL", "DIG", "FERTILIZE", "HARVEST"):
+                        core_allowed = {u for u in range(n_units) if u not in P41_SW_DEDICATED_WORKER_INDICES}
+                        if base_set is not None:
+                            return base_set.intersection(core_allowed)
+                        return core_allowed
+
+        return base_set
 
     # Stage 8B Phase 1E / 2B: Adaptive Zonal Dispatch (Dynamic or Rule W1 static fallback)
     try:

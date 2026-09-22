@@ -701,6 +701,70 @@ def should_buy_land(next_quadrant, current_day, money, farm,
             return True, reason, diag
 
     # =========================================================================
+    # Point 4.1 Late-Season Isolated SW Zonal Acreage Expansion Gate
+    # =========================================================================
+    try:
+        from config import (
+            get_p41_sw_zonal_expansion_enabled,
+            P41_SW_MIN_DAY,
+            P41_SW_MIN_CASH,
+            P41_SW_MIN_CORE_OCCUPANCY,
+            SHED_ACCESS_TILES,
+        )
+        p41_sw_enabled = bool(get_p41_sw_zonal_expansion_enabled())
+    except Exception:
+        p41_sw_enabled = False
+        P41_SW_MIN_DAY = 14
+        P41_SW_MIN_CASH = 15000.0
+        P41_SW_MIN_CORE_OCCUPANCY = 0.90
+        SHED_ACCESS_TILES = [(4, 4), (5, 4), (4, 5), (5, 5)]
+
+    if p41_sw_enabled and next_quadrant == 3:
+        core_tiles = []
+        occupied_core = 0
+        if hasattr(farm, "iter_tiles") and hasattr(farm, "quadrant_of"):
+            for t in farm.iter_tiles():
+                q = farm.quadrant_of(t.pos)
+                if q in ("NW", "NE") and t.pos not in SHED_ACCESS_TILES:
+                    core_tiles.append(t)
+                    if (
+                        getattr(t, "is_plant", False)
+                        or getattr(t, "is_animal", False)
+                        or getattr(t, "kind", "") in ("PASTURE", "COOP")
+                    ):
+                        occupied_core += 1
+        core_occupancy = (occupied_core / len(core_tiles)) if core_tiles else 0.0
+
+        diag = dict(diag_base)
+        diag["p41_core_occupancy"] = round(core_occupancy, 4)
+        diag["p41_worker_count"] = worker_count
+        diag["p41_current_money"] = round(float(money), 2)
+
+        if current_day < P41_SW_MIN_DAY:
+            reason = f"before_day_{P41_SW_MIN_DAY}"
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return False, reason, diag
+
+        if money < P41_SW_MIN_CASH:
+            reason = f"p41_insufficient_cash_{money:.0f}_lt_{P41_SW_MIN_CASH:.0f}"
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return False, reason, diag
+
+        if worker_count < 13:
+            reason = f"p41_insufficient_workers_{worker_count}_lt_13"
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return False, reason, diag
+
+        if core_occupancy < P41_SW_MIN_CORE_OCCUPANCY:
+            reason = f"p41_core_occupancy_low_{core_occupancy:.2f}_lt_{P41_SW_MIN_CORE_OCCUPANCY:.2f}"
+            diag["final_rejection_or_acceptance_reason"] = reason
+            return False, reason, diag
+
+        reason = "p41_sw_zonal_authorized"
+        diag["final_rejection_or_acceptance_reason"] = reason
+        return True, reason, diag
+
+    # =========================================================================
     # Authoritative Liquidity Gate for SW Ownership (Arms B, C, D)
     # =========================================================================
     is_experiment_sw = (next_quadrant == 3 and SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic"))

@@ -714,6 +714,12 @@ class CentralPlanner:
             planned_today = 0
             if macro_plan and hasattr(macro_plan, "plant_queue") and macro_plan.plant_queue:
                 planned_today = sum(1 for pos, c in macro_plan.plant_queue if c == crop)
+            try:
+                from config import get_p51_t1_two_cycle_carrot_enabled
+                if get_p51_t1_two_cycle_carrot_enabled() and crop == "CARROT":
+                    planned_today += getattr(macro_plan, "p51_carrot_replant_today", 0)
+            except Exception:
+                pass
 
             seeds_on_hand = self._get_seeds_on_hand(ctx, crop)
             needed_today = max(0, planned_today - seeds_on_hand)

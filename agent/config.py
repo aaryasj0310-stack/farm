@@ -156,6 +156,32 @@ def get_point2_pre_ne_capital_mode() -> str:
     """Return the active Point-2 Pre-NE capital admission policy mode."""
     return POINT2_PRE_NE_CAPITAL_MODE
 
+# Kaggriculture P5.1: Two-Cycle Carrot Rotation Experiment
+# Default False (bit-for-bit identical to baseline 536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e)
+P51_T1_TWO_CYCLE_CARROT_ENABLED: bool = False
+
+def get_p51_t1_two_cycle_carrot_enabled() -> bool:
+    """Return whether P5.1 two-cycle carrot rotation is enabled."""
+    return P51_T1_TWO_CYCLE_CARROT_ENABLED
+
+def set_p51_t1_two_cycle_carrot_enabled(enabled: bool) -> None:
+    """Configure P5.1 two-cycle carrot rotation experiment flag."""
+    global P51_T1_TWO_CYCLE_CARROT_ENABLED
+    P51_T1_TWO_CYCLE_CARROT_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.strategy.two_cycle_rotation_manager", "strategy.two_cycle_rotation_manager", "two_cycle_rotation_manager",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "P51_T1_TWO_CYCLE_CARROT_ENABLED", P51_T1_TWO_CYCLE_CARROT_ENABLED)
+            except Exception:
+                pass
+
+
 
 # Phase knobs
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)

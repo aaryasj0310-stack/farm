@@ -50,3 +50,28 @@
      - Labor Stressed Delta: **+$642.37 / game** (Median: +$459.00)
      - Zero negative games ($Min = \$0.00$), active in 67% of games (mean gain when active: **+$977.99 / game**).
   5. *Power & Tournament Protocol*: Empirical paired $\sigma_\Delta = \$801.01$ implies MDE of $100.35 on the untouched 500-game tournament block (seeds 98,001–98,050), providing $>99.99\%$ power for P5.1.
+
+### Experiment: P5.1 Two-Cycle Carrot Rotation Implementation & Live Feasibility Gate
+- **Type**: EXPERIMENT / LIVE FEASIBILITY GATE
+- **Date**: 2026-09-22
+- **Control**: `536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e` (Production Baseline)
+- **Treatment**: `P51_T1_TWO_CYCLE_CARROT_ENABLED = True` (Two-cycle carrot rotation on Days 21–23 NW+NE tiles, state-based sequential feed ledger, Hour 0 priority seed pre-ordering, MacroPlan coordinate reservation)
+- **Sample Size**: 100 matched pairs (200 live games on discovery panel seeds 96,201–96,210 x 5 opponents x 2 balanced seats)
+- **Results**:
+  - Mean Paired Cash Delta: **−$1,020.68 / game** (Median: **−$939.00 / game**, $\sigma = \$2,847.55$, SE = $284.76)
+  - 95% Confidence Interval: **[−$1,578.80, −$462.56]** ($p < 0.001$, statistically significantly negative)
+  - Full Two-Cycle Rotations Completed: **626** (6.26 / game, 96.60% conversion of planted C2)
+  - Day 23 Rotations Completed: **211** (2.11 / game)
+  - Animal Starvation Rate: **0.0%** (0 / 100 treatment games)
+  - Win Rate: Control 100.0%, Treatment 100.0%
+- **Verdict**: STOP (Rejected at Live Feasibility Gate; Production Default Remains False)
+- **Key Findings**:
+  1. *Execution Success*: Completely resolved Cycle 2 seed starvation and tile hijacking through Hour 0 priority elevation (`P1_URGENT`) and `MacroPlan` tile reservation. Achieved 626 live two-cycle completions and 211 Day 23 completions.
+  2. *Feed Safety Guaranteed*: The state-based sequential day-by-day feed ledger operated flawlessly with 0 starved animals.
+  3. *Why the Shadow Opportunity Failed*:
+     - Offline models assumed zero marginal labor cost. In live simulation, two carrot cycles require 10 worker actions per tile vs 3 for wheat, adding ~43.8 worker actions during Days 21–28.
+     - This severe labor congestion displaced high-value livestock care (cow milking at $200–$400/action, sheep shearing at $150–$300/action) and delayed melon/cauliflower harvests.
+     - Dumping ~38 extra carrots per game into finite town shop demand saturated local prices, while carrot buy/sell orders congested the 10-order daily market cap.
+     - Against competitive baselines (`full_production_agent`), delta plunged to **−$2,171.45 / game**.
+  4. *Held-Out Panel Preserved*: Untouched block 98,001–98,050 was NOT run and remains pristine for future iterations.
+
