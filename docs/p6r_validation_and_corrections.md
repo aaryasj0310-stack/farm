@@ -4,7 +4,7 @@
 
 - **Repository**: `https://github.com/aaryasj0310-stack/farm`
 - **Branch**: `experiment/sw-p13-planting-gate`
-- **Current HEAD**: `9983f7bc06c3354f42a90cdfeaa2ff6d2015f0ab` (Confirmed)
+- **Committed HEAD**: `bc9034dd657e4803d33d3bab23ad984ecfbcd0e9` (Confirmed P6-R baseline audit commit)
 - **Baseline SHA**: `536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e` (Production Baseline)
 - **Policy Confirmation**: `P51_T1_TWO_CYCLE_CARROT_ENABLED = False` (Permanently locked; zero P5.1 logic active)
 - **Diagnostic Panel**: 10 fresh discovery seeds (`96,401`–`96,410`) $\times$ 5 benchmark opponents $\times$ 2 seats = **100 baseline games**
@@ -51,7 +51,7 @@ The P6 audit identified real systemic bottlenecks, but contained five critical e
 ### Discrepancy 1: Livestock Mechanical Maximum Yield
 
 - **Original Claim**: P6 reported that the baseline produced 157.57 milk against a calculated mechanical max of 97.3 units. Actual yield inexplicably exceeded the theoretical upper bound, creating an impossible >100% efficiency paradox.
-- **Problem**: In `run_p6_baseline_bottleneck_audit.py` (lines 521–522), the theoretical care limit was hardcoded as `max_care = interval - 1`. This undercounted the interval yield potential (undercounting cow yield from 3 units to 2 units per interval, and sheep from 4 to 3), and completely ignored pre-yield care accumulation during maturation (which can reach `max_held = 6` on first yield).
+- **Problem**: In `run_p6_baseline_bottleneck_audit.py` (lines 521–522), the theoretical care limit was hardcoded as `max_care = interval - 1`. This undercounted the interval care potential (capping cows at 2 units/interval instead of 3, and sheep at 3 instead of 4), while completely ignoring pre-yield care accumulation during maturation (which can reach `max_held = 6` on first yield).
 - **Corrected Measurement**:
   Under engine ground truth (`_daily_refresh_animals` in `kaggriculture.py`):
   - **First Yield Tick** (`days_since_first == 0`): Animal banks up to `first_yield_day` cares. Theoretical maximum is $\min(\text{max\_held}, 1 + \text{first\_yield\_day})$ ($= \min(6, 1 + 8) = 6$ for Cow; $\min(6, 1 + 6) = 6$ for Sheep).
@@ -76,7 +76,7 @@ The P6 audit identified real systemic bottlenecks, but contained five critical e
   - `SELL FERTILIZER` was rejected due to `slot_cap` only **3.89 times per game** over 720 hours ($<0.006$ rejections/hour).
   - Total `slot_cap` rejections across all goods were 99.10/game (mostly Hour 0 HIRE clusters or slice orders), not continuous market saturation.
   - Shed inventory of fertilizer at Turn 720 is **0.00 units**.
-- **Revised Conclusion**: The claimed $\$800$–$\$1,400$ fertilizer backlog was completely fictitious. Fertilizer is actively utilized on crops or sold; zero surplus remains in storage. The only physical loss is the 4.73 units discarded in shed overflows, which is already accounted for in Shed Capacity Discards. The backlog recovery item is **withdrawn to $0.00**.
+- **Revised Conclusion**: The claimed $\$800$–$\$1,400$ fertilizer backlog was completely fictitious. Fertilizer is actively utilized on crops or sold; zero surplus remains in storage. The only physical loss is the 4.73 units discarded in shed overflows, which is already accounted for in Shed Capacity Discards. The backlog recovery item is **withdrawn to $0.00$.
 
 ---
 
@@ -98,7 +98,7 @@ The P6 audit identified real systemic bottlenecks, but contained five critical e
   - **Operational & Herd Impact**:
     * Shed wheat at Day 28 Hour 23 was **0.00 units**. The churn did not clog the shed at midnight.
     * Animal feeding failures on Day 28 and Day 29: **0.00 (Zero)**.
-- **Revised Conclusion**: The Day 28 churn is an operational desynchronization between `MarketBrain` (which sets reserved wheat to 0 on Day 28 and liquidates) and `OrderBuilder` (which requests a 20-day feed buffer). However, the engine executes `SELL` then `BUY` in lockstep, resulting in a net sale of ~25.6 units/game at favorable prices, yielding **+$1,040.97 net cash**. It did NOT cause animal starvation, did NOT saturate market slots, and was not the primary driver of midnight shed discards.
+- **Revised Conclusion**: The Day 28 churn is an operational desynchronization between `MarketBrain` (which sets reserved wheat to 0 on Day 28 and liquidates) and `OrderBuilder` (which requests a 20-day feed buffer). However, the engine executes `SELL` then `BUY` in lockstep, resulting in Day-28 wheat sales revenue exceeding wheat purchase costs by **+$1,040.97 net cash** (the measured fact is strictly that sales revenue minus purchase costs on Day 28 was positive; this does not prove counterfactual profitability versus a no-churn policy). It did NOT cause animal starvation, did NOT saturate market slots, and was not the primary driver of midnight shed discards.
 
 ---
 
@@ -124,7 +124,7 @@ The P6 audit identified real systemic bottlenecks, but contained five critical e
     * Catalog Base Prices: **$4,300.60 / game**
     * Baseline Realized Prices: **$6,026.53 / game**
   - Market Realization Friction:
-    * Strawberries (9.11 u), Wool (4.80 u), and Milk (4.19 u) account for 78% of discard value.
+    * Strawberries (9.11 u), Wool (4.80 u), and Milk (4.19 u) account for approximately **71.8%** of total discard reference value ($4,327.71 of $6,026.53).
     * Liquidating 46 additional units into the market will depress town shop inventory and shift prices downward along the pricing curves.
     * Preventing discards requires either pre-midnight market liquidation (spending market slots) or worker storage coordination.
 - **Revised Conclusion**: Physical discard volume is confirmed at 46.31 units. The reference value of $4,300–$6,026 represents the gross unconstrained pool. Feasible incremental cash is an `UNTESTED HYPOTHESIS` bounded at **+$2,500.00 to +$4,000.00 / game**.
@@ -137,7 +137,7 @@ With all empirical errors corrected, the recoverable-value ledger is reconstruct
 
 | Ledger Item | Physical Observation | Reference Cash Value | Feasible Recoverable Cash | Epistemic Classification | Status & Verification |
 | :--- | :--- | :---: | :---: | :---: | :---: |
-| **1. Shed Overflow Discards** | 46.31 units/game destroyed across 16.76 events | \$4,300.60 (base) / \$6,026.53 (realized) | **+\$2,500.00 – \$4,000.00** | `MEASURED FACT` / `UNTESTED HYPOTHESIS` | **VALIDATED PRIMARY TARGET**. Top loss: Strawberry (9.11 u), Wool (4.80 u), Milk (4.19 u). |
+| **1. Shed Overflow Discards** | 46.31 units/game destroyed across 16.76 events | \$4,300.60 (base) / \$6,026.53 (realized) | **+\$2,500.00 – \$4,000.00** | `MEASURED FACT` / `UNTESTED HYPOTHESIS` | **VALIDATED PRIMARY TARGET**. ~71.8% in Strawberry (9.11 u), Wool (4.80 u), Milk (4.19 u). |
 | **2. Livestock Care Adherence** | 15.81 Cow / 11.39 Sheep missed production cares | \$4,809.52 (27.20 u @ realized) | **+\$800.00 – \$1,500.00** | `MEASURED FACT` / `UNTESTED HYPOTHESIS` | Secondary target. Requires tighter routing to prevent late-day care skips. |
 | **3. Worker Transit Labor** | 4,783 moves/game (64.85% of worker actions) | \$6,000.00 (labor equiv) | **+\$500.00 – \$1,200.00** | `INFERRED ESTIMATE` | Requires route bundling; high risk of secondary regressions if poorly scheduled. |
 | **4. Day 28 Wheat Churn** | 440.4 b / 466.0 s (Net +$1,040.97 cash) | \$0.00 (Already net positive) | **\$0.00 (Friction only)** | `MEASURED FACT` | Churn yields net cash. Eliminating it saves 40 slots/day but direct cash lift is ~\$0. |
