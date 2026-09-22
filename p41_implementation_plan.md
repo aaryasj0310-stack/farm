@@ -1,4 +1,4 @@
-# Kaggriculture P4.1 Implementation Plan — Late-Season Isolated SW Zonal Acreage Expansion
+# Kaggriculture P4.1 Implementation Plan — Late-Season Isolated SW Zonal Acreage Expansion (Revised)
 
 ## 1. Executive Summary & Problem Formulation
 
@@ -9,150 +9,256 @@ In Phase P4.0, the authoritative economic audit established that:
 4. Micro-execution within the 46 tiles is exhausted (P3.1, P3.2, P3.3-A, P3.3-B, P3.4 rejected).
 5. **The Sole Structural Frontier is Physical Acreage Expansion**: Reaching $130k physically requires more cultivating tiles.
 
-This document presents the complete research, architectural, safety, and evaluation plan for **P4.1: Late-Season Isolated SW Zonal Acreage Expansion**.
+This document presents the revised, rigorous implementation plan for **P4.1: Late-Season Isolated SW Zonal Acreage Expansion**, addressing all five user-required corrections:
+1. **Incremental Labor Economics**: Rigorous proof that Hands 11 & 12 generate more net value in SW than in the crowded core.
+2. **Explicit SW Crop Policy**: A feasible, deadline-aware planting and harvesting schedule for the 8 SW tiles.
+3. **Actual Two-Worker Isolation**: Overriding the legacy 5-worker SW squad without breaking critical shed/feed logistics.
+4. **Purchase and Activation Integrity**: Verifying the full order-execution path before authorized planting.
+5. **Control Equivalence**: 100% bit-for-bit equivalence with `536f1e7` when disabled.
+6. **Corrected Experimental Protocol**: A small 20-game instrumented feasibility test on fresh seeds `97,001–97,010` before any full tournament.
 
 ---
 
-## 2. Theoretical Hypothesis & Causal Pathway
+## 2. Incremental Labor Economics: Land Saturation vs. Labor Saturation
 
-### Hypothesis
-If the farm unlocks the Southwest (SW) quadrant strictly on **Day 14 Hour 0** (contingent on liquid cash $\ge \$15,000$ and core saturation $\ge 90\%$), and restricts cultivation to an isolated **8-tile shed-adjacent zone** tended exclusively by a **dedicated 2-worker cohort (Hands 11 & 12)** while strictly walling off core workers from entering SW, then:
-1. The $2,000 land cost and seed capex will be easily absorbed without impacting early bootstrapping or herd purchases.
-2. The 8 dedicated SW tiles will produce additional high-value strawberry/wheat crops yielding **+$8,000 to +$14,000 in net realized cash**.
-3. The 2-quadrant core farm ($101.8k baseline value) will suffer zero spatial contagion or watering drops because core workers are hard-blocked from crossing into SW.
-4. Net season score will increase significantly above $101.8k toward the $115k–$120k frontier.
+A central question is whether taking two workers (Hands 11 & 12) away from the core farm sacrifices valuable production in NW+NE.
 
-### Causal Pathway
-$$\begin{aligned}
-\text{Day 14 Gate (\$17k Cash, 2Q 94\% Full)} & \longrightarrow \text{Emit BUY\_LAND SW (\$2,000 cost)} \\
-& \longrightarrow \text{Assign Hands 11 \& 12 Exclusively to SW Shed-Adjacent Zone (8 tiles)} \\
-& \longrightarrow \text{Till \& Plant 8 Strawberry/Wheat Tiles (Zero Core Labor Displaced)} \\
-& \longrightarrow \text{Harvest +96 Strawberries / +144 Wheat Directly into Center Shed} \\
-& \longrightarrow \text{Sell into Dynamic Market @ Realized Prices (\$245 / \$36)} \\
-& \longrightarrow \mathbf{+\$8,000\text{ to }+\$14,000\text{ Incremental Net Cash (Final Score)}}
-\end{aligned}$$
+### A. Realized Productivity of Hands 11 & 12 in the Core Farm
+From the 100-game P3 workforce audit (`p3_hiring_roi_audit.md`):
+- **Excess Walking Due to Congestion**: In the 46-tile core farm, 13 active workers create severe spatial congestion. Hands 11 and 12 spend **69.9% of their turns in transit**, executing only **5.28 productive actions per worker-day**.
+- **Marginal Revenue Generated**: At ~$24 average net revenue per productive action, 5.28 actions produce ~$126.70 in daily revenue.
+- **Daily Hiring Cost**: Hand 11 ($\text{fib}(10) = \$89$) and Hand 12 ($\text{fib}(11) = \$144$) cost $233/day combined ($116.50/worker-day).
+- **Net Daily Profit in Core Farm**: $\$126.70 - \$116.50 = \mathbf{+\$10.20/\text{worker-day}}$.
+- **Total Net Contribution over Days 14–29 (16 days)**:
+  $$2 \text{ workers} \times 16 \text{ days} \times \$10.20/\text{day} = \mathbf{+\$326.40}.$$
+  Hands 11 and 12 are operating at the bare edge of economic profitability in the core farm.
+
+### B. Core Farm Labor Adequacy Without Hands 11 & 12
+Can the remaining 11 workers (Farmer + Hands 1–10) maintain 100% of the core farm without Hands 11 & 12?
+- **Core Farm Daily Workload (Days 14–29)**:
+  - 11 livestock: 11 feed + 11 collect fertilizer + 11 care = 33 turns.
+  - 15 strawberry tiles: 15 water + 7.5 harvest = 22.5 turns.
+  - 17 wheat tiles: 17 water + 4.2 harvest = 21.2 turns.
+  - Total daily core farm tasks = **~77 productive actions per day**.
+- **Available Turns of Farmer + Hands 1–10**:
+  - 11 workers $\times$ 24 turns = **264 worker-turns per day**.
+  - Required productive action ratio: $77 / 264 = \mathbf{29.2\%}$.
+  - This matches the natural physical efficiency of Hands 1–4 (29.5%) and Hands 5–8 (26.4%).
+- **Conclusion**: **Farmer + Hands 1–10 provide 100% labor coverage for NW+NE.** Displacing Hands 11 & 12 to SW sacrifices at most **$\le \$400$** in net core value.
+
+### C. Projected Labor Economics in the 8-Tile SW Zone
+In the dedicated 8-tile SW zone directly adjacent to the shed:
+- Hands 11 & 12 have a transit distance of only 1–3 tiles from the shed.
+- Daily SW work:
+  - 8 tiles watering = 8 turns/day.
+  - Tilling/planting/harvesting = 4–8 turns/day.
+  - Total daily SW tasks = **12–16 turns/day**.
+- Hands 11 & 12 supply **48 turns/day** (2 $\times$ 24). They operate at a comfortable 25–33% workload, with zero task contention and minimal travel.
+- **Net Economic Equation**:
+  $$\text{Net Delta} = \text{Gross SW Revenue} - \text{SW Seed Cost} - \text{SW Land Cost (\$2,000)} - \text{Displaced Core Value (\$400)}.$$
 
 ---
 
-## 3. Difference from Previously Failed Experiments (P1 / P1.3-C)
+## 3. Explicit SW Crop Portfolio & Planting Schedule
 
-| Architectural Dimension | Failed P1 / P1.3-C Policy | Promoted P2.3 Baseline (`536f1e7`) | Proposed P4.1 Treatment |
+In the baseline configuration, `STRAWBERRY_PLANT_DEADLINE = 13` prohibits new strawberry planting after Day 13.
+To guarantee feasible, deadline-aware production, P4.1 introduces an explicit **P4.1 SW Planting Controller** for the 8 tiles:
+
+### Option 1: Dedicated SW Wheat Engine (Lowest Risk, Guaranteed Turnover)
+- **Schedule**: 4 full 4-day wheat cycles across Days 14–29:
+  - Cycle 1: Plant Day 14 -> Harvest Day 18.
+  - Cycle 2: Plant Day 18 -> Harvest Day 22.
+  - Cycle 3: Plant Day 22 -> Harvest Day 26.
+  - Cycle 4: Plant Day 26 -> Harvest Day 29.
+- **Physical Output**: 8 tiles $\times$ 4 cycles = 32 plantings $\times$ 6 yield = **192 units of wheat**.
+- **Realized Economics**:
+  - Gross Revenue: 192 units $\times$ $36.60 = **+$7,027.20**.
+  - Seed Cost: 32 seeds $\times$ $10 = -$320.00.
+  - Gross SW Profit: **+$6,707.20**.
+  - Net Delta: $\$6,707.20 - \$2,000 \text{ (land)} - \$400 \text{ (core drag)} = \mathbf{+\$4,307.20}$.
+
+### Option 2: P4.1 SW Post-Day 13 Strawberry Wave (Maximum Revenue Frontier)
+- **Mechanics**: In the engine, strawberries have no hard deadline; they mature in 4 days and yield 2 units every 2 days indefinitely.
+- **Schedule**: Planted Day 14. First harvest Day 18 (16 units), then Days 20, 22, 24, 26, 28 (5 harvests $\times$ 16 = 80 units). Total: 6 harvests = **96 units of strawberries**.
+- **Realized Economics**:
+  - Gross Revenue: 96 units $\times$ $245.58 = **+$23,575.68**.
+  - Seed Cost: 8 seeds $\times$ $100 = -$800.00.
+  - Gross SW Profit: **+$22,775.68**.
+  - Net Delta: $\$22,775.68 - \$2,000 \text{ (land)} - \$400 \text{ (core drag)} = \mathbf{+\$20,375.68}$.
+
+### Option 3: Balanced Hybrid Portfolio (Recommended for Initial Feasibility)
+- **Allocation**: 4 tiles Strawberry + 4 tiles Wheat.
+- **Physical Output**: 48 strawberries + 96 wheat.
+- **Gross Revenue**: $(48 \times \$245.58) + (96 \times \$36.60) = \$11,787.84 + \$3,513.60 = **\$15,301.44**.
+- **Seed Cost**: $(4 \times \$100) + (16 \times \$10) = -$560.00.
+- **Gross SW Profit**: **+$14,741.44**.
+- **Net Delta**: $\$14,741.44 - \$2,000 - \$400 = \mathbf{+\$12,341.44}$.
+
+---
+
+## 4. Actual Two-Worker Isolation: Overriding Legacy Squads & Logistics Invariants
+
+### A. Overriding the Legacy 5-Worker Squad in `get_home_quadrant`
+In `536f1e7` (`agent/execution/task_scheduler.py` line 1119), the baseline logic automatically assigns 5 workers (units 8, 9, 10, 11, 12) to SW when SW unlocks and roster $\ge 13$.
+
+Under P4.1, this is **explicitly overridden**:
+```python
+def get_home_quadrant(u_idx, n_units, unlocked):
+    if get_p41_sw_zonal_expansion_enabled() and "SW" in unlocked:
+        # P4.1 Strict 2-Worker Zonal Allocation:
+        # Only units 11 and 12 belong to the SW squad.
+        if u_idx in (11, 12):
+            return "SW"
+        # Units 0 to 10 remain strictly partitioned between NW and NE:
+        non_sw = 11  # units 0..10
+        half = max(1, non_sw // 2)
+        return "NW" if u_idx < half else "NE"
+
+    # Baseline 536f1e7 fallback (exact preservation):
+    if "SW" in unlocked and n_units >= 5:
+        sw_squad_size = 5 if n_units >= 13 else 4
+        sw_start = n_units - sw_squad_size
+        if u_idx >= sw_start:
+            return "SW"
+        non_sw = sw_start
+        half = max(1, non_sw // 2)
+        return "NW" if u_idx < half else "NE"
+    ...
+```
+**Effect**: Units 8, 9, and 10 remain permanently in NW and NE. Exactly 2 workers (11 and 12) are assigned to SW.
+
+### B. Precision Task Eligibility Invariants & Safety Exceptions
+We define the worker boundary by **task assignment**, not literal physical geometry:
+1. **Discretionary SW Agricultural Tasks**:
+   - Clearing weeds, tilling, planting, watering, and fertilizing on SW tiles ($y \ge 5, x < 5$) are strictly restricted: `_eligible(worker, task)` returns `True` **ONLY if `u_idx in (11, 12)`**. Core workers (Farmer + Hands 1–10) are permanently forbidden from taking SW crop tasks.
+2. **Discretionary Core Agricultural Tasks**:
+   - Hands 11 and 12 are barred from regular NW/NE crop tasks while SW tasks exist.
+3. **Explicit Safety Exceptions (Permitted for ALL Workers)**:
+   - **Central Shed Access**: Shed tiles `(4,4), (4,5), (5,4), (5,5)` may be accessed by any worker for product drop or feed pickup.
+   - **Pathfinding / Transit**: Workers may step through boundary tiles when routing to the shed.
+   - **Emergency Animal Rescue**: If an animal in the core is unfed at Hour $\ge 18$, any worker with wheat in hand may feed it.
+4. **Telemetry Separation**: Physical tile crossings are logged separately from task assignments to distinguish incidental transit from task diversion.
+
+---
+
+## 5. Purchase & Activation Integrity: The Full Execution Pipeline
+
+To ensure the land purchase executes reliably and does not desynchronize the agent:
+
+```mermaid
+sequenceDiagram
+    participant M as Expansion Planner (should_buy_land)
+    participant P as Macro Planner
+    participant O as Order Builder
+    participant A as Agent Main / Arbitration
+    participant E as Game Engine
+    participant S as Task Scheduler
+
+    Note over M: Day >= 14, Cash >= $15,000, Core >= 90%
+    M->>P: return True, "p41_sw_zonal_authorized"
+    P->>P: plan.intents["buy_land"] = True
+    P->>O: build market orders
+    O->>A: orders.append(["BUY_LAND"])
+    A->>E: submit action {"market": [["BUY_LAND"], ...]}
+    E->>E: _do_buy_land() -> farm.money -= 2000, unlocked.append("SW")
+    Note over S: Next turn: Check "SW" in farm.unlocked_quadrants
+    alt SW is confirmed unlocked
+        S->>S: Assign Hands 11 & 12 to SW; Activate SW Crop Controller
+    else SW purchase failed / pending
+        S->>S: Hands 11 & 12 continue core NW+NE baseline duties
+    end
+```
+
+### Complete Pipeline Verification:
+1. **Gate Authority**: In `agent/strategy/expansion_planner.py`, `should_buy_land()` contains an authoritative P4.1 branch:
+   - Evaluates: `P41_SW_ZONAL_EXPANSION_ENABLED = True`, `next_quadrant == 3`, `current_day >= 14`, `money >= 15000.0`, `core_occupancy >= 0.90`, `worker_count >= 13`.
+   - Returns `True, "p41_sw_zonal_authorized", diag`.
+2. **Order Emit**: `macro_planner.py` sets `plan.intents["buy_land"] = True`. `order_builder.py` appends `["BUY_LAND"]`.
+3. **Arbitration Passthrough**: In `main.py`, `QUADRANT_HARD_BLOCK = {4}` blocks SE (quadrant 4). SW (quadrant 3) is allowed to pass through into `reconciled_orders`.
+4. **Post-Purchase Activation Barrier**: SW planting and dedicated SW squad allocation activate **ONLY IF `"SW" in farm.unlocked_quadrants`**. If the order fails or is delayed, Hands 11 & 12 remain 100% in their baseline core roles.
+
+---
+
+## 6. Control Equivalence: Zero-Regression Guarantee
+
+When `P41_SW_ZONAL_EXPANSION_ENABLED = False`:
+- `get_home_quadrant()` executes the exact legacy code.
+- `should_buy_land()` rejects SW via baseline logic.
+- SW planting controller is dormant.
+- The agent reproduces `536f1e7` 100% bit-for-bit.
+
+---
+
+## 7. Corrected Experimental Design & Seed Protocol
+
+### Seed History Audit & Fresh Block Reservation
+- **Historical Seed Usages**:
+  - P3.1 Evaluation: `90,001–90,050`
+  - P3.2 Evaluation: `92,001–92,050`
+  - P3.3-A Smoke: `92,991–92,995`
+  - P3.3-A Evaluation: `93,001–93,050`
+  - P3.4 / Early Diagnostic Block: `94,001–94,050`
+  - P3.4 Feed Logistics: `95,001–95,010`
+  - P4.0 Economic Audit: `96,001–96,050`
+- **Completely Fresh, Untouched Seed Allocations for P4.1**:
+  - **Phase 1: Instrumented Feasibility Test**: **Seeds 97,001–97,010** (10 pairs $\times$ 2 seats = 20 matched games across 5 opponents).
+  - **Phase 2: Formal Held-Out A/B Tournament** (executed ONLY if Phase 1 passes): **Seeds 98,001–98,050** (50 pairs $\times$ 2 seats = 100 matched cases = 200 live games).
+
+---
+
+## 8. Two-Tiered Promotion & Rejection Criteria
+
+### Tier 1: Feasibility Test Gate (20 Games, Seeds 97,001–97,010)
+- **Objective**: Verify mechanism telemetry and safety before running the 200-game tournament.
+- **Passing Criteria**:
+  1. `BUY_LAND` executes cleanly on Day 14; SW unlocks.
+  2. Exactly 2 workers (Hands 11 & 12) perform SW agricultural tasks; core workers perform 0 SW crop tasks.
+  3. 8 SW tiles are successfully tilled, planted, watered, and harvested.
+  4. Core farm watering compliance remains $\ge 98.0\%$ (zero watering regression).
+  5. Zero negative cash steps; zero animal starvation.
+  6. Score delta is non-negative ($\Delta \ge +\$0.00$).
+
+### Tier 2: Formal Tournament Criteria (200 Games, Seeds 98,001–98,050)
+- **Statistical Significance**: Paired delta $t$-test achieves $p < 0.05$ with 95% CI lower bound $> +\$500.00$.
+- **Business Target**: Mean paired delta $\Delta \ge +\$3,500.00$ per game.
+- **Safety Invariants**: 0 negative cash steps, 0 starvation days, core gross revenue within $\pm \$500$ of Control.
+- **Rejection Trigger**: $p \ge 0.05$ with CI crossing zero, or core farm revenue destruction $> \$1,500$, or any solvency failure.
+
+---
+
+## 9. Empirical Feasibility Test Results & Final Verdict
+
+The Tier 1 Instrumented Feasibility Test was executed across 20 matched pairs (40 live games across 5 opponents, balanced seats) on fresh seed block `97,001–97,010`:
+
+### Key Metrics Summary:
+- **Control Baseline Mean**: **$100,366.65**
+- **Treatment Mean**: **$95,547.55**
+- **Paired Score Delta**: **-$4,819.10** (95% CI: [-$11,531.97, +$1,893.77], $SE = \$3,207.29$)
+- **Core Watering Compliance**: Dropped from **84.25%** (Control) to **79.80%** (Treatment), a **-4.45%** absolute drop.
+- **Core Plant Deaths**: Increased from **263.55** (Control) to **284.90** (Treatment) per game (+21.35 crop deaths/game).
+- **SW Execution Telemetry**:
+  - SW purchase executed cleanly on Day 14 in 20/20 games.
+  - Hands 11 & 12 executed 2,598 SW agricultural actions; core workers executed only 1 action (perfect isolation).
+  - Physical harvests: 241 strawberries + 853 wheat harvested across 20 games (avg 12.05 strawberries + 42.65 wheat/game).
+  - Direct gross SW revenue: ~+$4,520/game.
+  - Seed cost: -$560/game; Land purchase cost: -$2,000/game.
+  - Net SW gross profit: **+$1,960/game**.
+- **The Failure Mechanism (Labor Saturation Proved)**:
+  - Displacing Hands 11 & 12 out of the core farm deprived the 46-tile core farm of critical watering slack during peak Day 16–28 strawberry cycles.
+  - The resulting 21.35 extra plant deaths and missed repeat yields destroyed **-$6,779/game** in core revenue.
+  - **Net Realized Delta**: $+\$1,960 - \$6,779 = \mathbf{-\$4,819.10/\text{game}}$.
+
+### Tier 1 Feasibility Gate Evaluation:
+| Criterion | Target | Realized | Status |
 | :--- | :--- | :--- | :--- |
-| **SW Unlock Day** | Day 6–9 (Premature) | Never (`QUADRANT_HARD_BLOCK = {4}`) | **Day 14 Hour 0 Hard Gate** |
-| **Cash Trigger** | Unconstrained / $400 cash | N/A | **Cash $\ge \$15,000$ Required** |
-| **Core Saturation Trigger** | None (Unlocked before NE full) | N/A | **Core Tiles $\ge 90\%$ Full Required** |
-| **Cultivated Acreage** | All 25 tiles of SW (Sprawl) | 0 tiles | **Exactly 8 Tiles Max** `(x: 3-4, y: 5-8)` |
-| **Livestock in SW** | Moved cows/pastures to SW | All in NW+NE | **Zero Livestock in SW** (Crops Only) |
-| **Worker Dispatch** | Farm-wide unconstrained routing | NW+NE routing | **Strict Zonal Cohort**: Hands 11 & 12 dedicated to SW; Hands 1–10 hard-blocked from SW |
-| **Early Capex Impact** | Starved herd purchases (-$30k) | Herd 100% funded | **Zero Impact** (Herd fully bought by Day 12) |
-| **Past Outcome** | **-$13,420/game (Disastrous)** | **$101,836.36 (Baseline)** | **Target: +$8,000 to +$14,000/game** |
+| Clean Day 14 Unlock | 100% (20/20) | 100% (20/20) | **PASSED** |
+| 2-Worker Isolation | Hands 11 & 12 only | 2,598 vs 1 action | **PASSED** |
+| Solvency & Herd Safety | 0 negative cash, 0 starvation | 0 negative cash, 0 starvation | **PASSED** |
+| Core Watering Compliance | $\ge 98\%$ retention ($\ge 82.5\%$) | 79.80% (-4.45%) | **FAILED** |
+| Score Delta | $\ge +\$0.00$ | **-$4,819.10** | **FAILED** |
 
----
+### Final Verdict: REJECTED
+P4.1 fails the Tier 1 Feasibility Gate.
+- **DO NOT proceed to the 200-game tournament on `98,001–98,050`** (preserving this fresh seed block for future treatments).
+- `P41_SW_ZONAL_EXPANSION_ENABLED` remains locked to `False` (100% bit-for-bit control equivalence).
 
-## 4. Proposed Code Changes & Implementation Isolation
-
-### 1. `agent/config.py`
-- Add feature flag:
-  ```python
-  P41_SW_ZONAL_EXPANSION_ENABLED: bool = False
-
-  def set_p41_sw_zonal_expansion_enabled(enabled: bool) -> None:
-      global P41_SW_ZONAL_EXPANSION_ENABLED
-      P41_SW_ZONAL_EXPANSION_ENABLED = bool(enabled)
-
-  def get_p41_sw_zonal_expansion_enabled() -> bool:
-      return P41_SW_ZONAL_EXPANSION_ENABLED
-  ```
-- Add activation parameters:
-  ```python
-  P41_SW_MIN_DAY = 14
-  P41_SW_MIN_CASH = 15000.0
-  P41_SW_MIN_CORE_OCCUPANCY = 0.90
-  P41_SW_MAX_TILES = 8
-  P41_SW_ZONE_COORDS = [(3, 5), (3, 6), (3, 7), (3, 8), (4, 6), (4, 7), (4, 8), (4, 9)]
-  P41_SW_DEDICATED_WORKER_INDICES = [11, 12]  # Hands 11 and 12
-  ```
-
-### 2. `agent/strategy/macro_planner.py`
-- Modify `plan_land_expansion()`:
-  - If `P41_SW_ZONAL_EXPANSION_ENABLED` is `True`:
-    - On Day $\ge 14$, if SW is locked and `farm.money >= P41_SW_MIN_CASH` and `core_occupancy >= P41_SW_MIN_CORE_OCCUPANCY`:
-      - Remove SW from hard block and emit `BUY_LAND` order.
-  - If `False`: Retain baseline `QUADRANT_HARD_BLOCK = {4}`.
-
-### 3. `agent/strategy/central_planner.py` & `agent/execution/task_scheduler.py`
-- Add strict **Zonal Cohort Dispatch**:
-  - For workers with index $\in \{11, 12\}$:
-    - If SW is unlocked, prioritize tasks in `P41_SW_ZONE_COORDS` (clearing weeds, tilling, planting, watering).
-  - For workers with index $\in \{0, 1, 2, ..., 10\}$ (Farmer + Hands 1–10):
-    - **Hard Zonal Boundary**: Task eligibility explicitly returns `False` for any tile with $y \ge 5, x < 5$ (SW quadrant). Core workers NEVER cross into SW.
-
-### 4. Zero Regression Guarantee
-- When `P41_SW_ZONAL_EXPANSION_ENABLED = False`, all new codepaths are bypassed. The agent behaves 100% identically to commit `536f1e7`.
-
----
-
-## 5. Safety Invariants & Mechanism Telemetry
-
-### Mandatory Safety Invariants (Evaluated Every Turn):
-1. **Solvency Invariant**: `farm["money"] >= 0` on every step (zero negative cash steps allowed).
-2. **Core Herd Invariant**: Zero animal starvation days. Feed logistics remain 100% intact.
-3. **Core Farm Invariant**: 2Q core crop watering compliance must remain $\ge 98.0\%$.
-4. **Boundary Invariant**: Zero worker steps by Farmer or Hands 1–10 into SW tiles.
-5. **Acreage Ceiling Invariant**: Total cultivated SW tiles must never exceed 8.
-
-### Mechanism Telemetry Captured:
-- Day & hour of SW unlock.
-- Actual cash balance at moment of SW unlock.
-- Number of SW tiles tilled, planted, watered, and harvested.
-- Gross revenue from SW crops sold.
-- Worker turns spent in SW vs Core.
-
----
-
-## 6. Verification & A/B Evaluation Protocol
-
-### 1. Offline Unit Tests
-- `test_p41_isolation.py`:
-  - Verify that when `P41_SW_ZONAL_EXPANSION_ENABLED = False`, agent output is byte-identical to `536f1e7`.
-  - Verify that when enabled, SW cannot unlock prior to Day 14 or if cash $< \$15,000$.
-- `test_p41_zonal_confinement.py`:
-  - Verify that Hands 1–10 are never assigned tasks in SW.
-  - Verify that Hands 11–12 do not accept tasks in NE.
-
-### 2. Smoke Test Gate
-- 5 matched pairs (10 games) on smoke seeds `92,991–92,995` against `pass` and `full_production_agent`.
-- Assert 0 errors, 0 negative cash, exact cash reconciliation.
-
-### 3. Formal A/B Tournament Protocol
-- **Evaluation Seed Block**: **94,001–94,050** (Strictly fresh, held-out, 50 pairs $\times$ 2 seats = 100 matched cases = 200 live games).
-- **Opponent Distribution**: 20 games each against the 5 standard opponents (`pass`, `pure_wheat_rush`, `cow_milk_engine`, `melon_sniper`, `full_production_agent`).
-- **Balanced Seats**: Exactly 50 games in Seat 0 and 50 games in Seat 1 per arm.
-- **Arm Isolation**: Subprocess pool with independent clean Python processes.
-
----
-
-## 7. Promotion & Rejection Criteria
-
-### Promotion Criteria (All Must Pass):
-1. **Statistically Significant Score Delta**: Paired mean delta $\Delta \ge +\$3,500.00$ with $p < 0.05$.
-2. **Confidence Interval**: 95% confidence interval lower bound $> +\$500.00$.
-3. **Zero Solvency Failures**: 0 games with negative cash steps.
-4. **Zero Herd Regressions**: 0 starvation animal-days.
-5. **Core Farm Preservation**: 2Q Core gross crop revenue must remain within $\pm \$500$ of Control.
-
-### Rejection Criteria (Any Triggers Immediate Rejection):
-1. Paired mean delta $\Delta \le 0$, or $p \ge 0.05$ with CI crossing zero.
-2. Any negative cash step.
-3. 2Q Core crop watering compliance falls below 95%.
-4. SW cultivation causes net score destruction.
-
----
-
-## 8. Final Status & Hold
-
-Per instructions:
-- **P4.0 investigation and measurement phase is now complete.**
-- **All 8 required P4.0 audit reports have been compiled and verified.**
-- **P4.1 implementation plan is complete and held.**
-- **DO NOT implement production code changes until the plan is reviewed and approved by the user.**

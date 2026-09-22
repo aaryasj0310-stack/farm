@@ -853,6 +853,66 @@ def get_p23_marginal_wheat_allocation_enabled() -> bool:
     return P23_MARGINAL_WHEAT_ALLOCATION_ENABLED
 
 
+# ---------------------------------------------------------------------------
+# Point 4.1 Late-Season Isolated SW Zonal Acreage Expansion Switch
+# ---------------------------------------------------------------------------
+P41_SW_ZONAL_EXPANSION_ENABLED: bool = False
+P41_SW_MIN_DAY: int = 14
+P41_SW_MIN_CASH: float = 15000.0
+P41_SW_MIN_CORE_OCCUPANCY: float = 0.90
+P41_SW_MAX_TILES: int = 8
+P41_SW_ZONE_COORDS = [(3, 5), (3, 6), (3, 7), (3, 8), (4, 6), (4, 7), (4, 8), (4, 9)]
+P41_SW_CROP_MODE: str = "hybrid"  # "wheat", "strawberry", or "hybrid"
+P41_SW_DEDICATED_WORKER_INDICES = (11, 12)
+
+
+def set_p41_sw_zonal_expansion_enabled(enabled: bool) -> None:
+    """Toggle the P4.1 Late-Season Isolated SW Zonal Acreage Expansion treatment."""
+    global P41_SW_ZONAL_EXPANSION_ENABLED
+    P41_SW_ZONAL_EXPANSION_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.strategy.expansion_planner", "strategy.expansion_planner", "expansion_planner",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.main", "main", "agent.config", "config",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(
+                    sys.modules[mod_name],
+                    "P41_SW_ZONAL_EXPANSION_ENABLED",
+                    bool(enabled),
+                )
+            except Exception:
+                pass
+
+
+def get_p41_sw_zonal_expansion_enabled() -> bool:
+    """Return whether the P4.1 Late-Season Isolated SW Zonal Acreage Expansion is enabled."""
+    return P41_SW_ZONAL_EXPANSION_ENABLED
+
+
+def set_p41_sw_crop_mode(mode: str) -> None:
+    """Set the P4.1 SW crop mode: 'wheat', 'strawberry', or 'hybrid'."""
+    global P41_SW_CROP_MODE
+    P41_SW_CROP_MODE = str(mode).strip().lower()
+    for mod_name in (
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+        "agent.config", "config",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "P41_SW_CROP_MODE", P41_SW_CROP_MODE)
+            except Exception:
+                pass
+
+
+def get_p41_sw_crop_mode() -> str:
+    """Return the active P4.1 SW crop mode."""
+    return P41_SW_CROP_MODE
+
+
+
 
 
 def set_p13_factorial_arm(arm: str) -> None:

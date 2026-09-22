@@ -2009,8 +2009,90 @@ class MacroPlanner:
                 empty_tiles.clear()
             else:
                 # ---- SW Quadrant Dedicated Soil Planting Engine ----
-                # Whitelist: strictly WHEAT (D9-24) or CARROT (D25-27), 0 strawberries/melons/tomatoes
+                p41_sw_handled = False
                 if "SW" in farm.unlocked:
+                    try:
+                        from config import (
+                            get_p41_sw_zonal_expansion_enabled,
+                            P41_SW_ZONE_COORDS,
+                            get_p41_sw_crop_mode,
+                        )
+                        p41_sw_active = bool(get_p41_sw_zonal_expansion_enabled())
+                    except Exception:
+                        p41_sw_active = False
+
+                    if p41_sw_active:
+                        p41_sw_handled = True
+                        empty_tiles = [p for p in empty_tiles if farm.quadrant_of(p) != "SW"]
+                        sw_crop_mode = get_p41_sw_crop_mode() if "get_p41_sw_crop_mode" in locals() else "hybrid"
+
+                        p41_planted_this_turn = []
+                        p41_bought_this_turn = {}
+
+                        for pos in P41_SW_ZONE_COORDS:
+                            t = farm.tile_at(pos) if hasattr(farm, "tile_at") else None
+                            is_empty = False
+                            if t is not None:
+                                is_empty = (
+                                    not getattr(t, "is_plant", False)
+                                    and not getattr(t, "is_animal", False)
+                                    and getattr(t, "kind", "EMPTY") == "EMPTY"
+                                )
+                            elif hasattr(farm, "iter_tiles"):
+                                is_empty = any(
+                                    tile.pos == pos and tile.kind == "EMPTY"
+                                    for tile in farm.iter_tiles()
+                                )
+
+                            if not is_empty:
+                                continue
+
+                            chosen_crop = None
+                            if sw_crop_mode == "wheat":
+                                if day <= 26:
+                                    chosen_crop = "WHEAT"
+                            elif sw_crop_mode == "strawberry":
+                                if day <= 16:
+                                    chosen_crop = "STRAWBERRY"
+                                elif day <= 26:
+                                    chosen_crop = "WHEAT"
+                            else:  # hybrid
+                                if pos in P41_SW_ZONE_COORDS[:4]:
+                                    if day <= 16:
+                                        chosen_crop = "STRAWBERRY"
+                                    elif day <= 26:
+                                        chosen_crop = "WHEAT"
+                                else:
+                                    if day <= 26:
+                                        chosen_crop = "WHEAT"
+                                    elif day <= 27:
+                                        chosen_crop = "CARROT"
+
+                            if chosen_crop is not None:
+                                seed_cost = CROPS[chosen_crop]["seed"]
+                                if seeds.get(chosen_crop, 0) > 0:
+                                    seeds[chosen_crop] -= 1
+                                    plant_queue.append((pos, chosen_crop))
+                                    planned[chosen_crop] = planned.get(chosen_crop, 0) + 1
+                                    committed_counts[chosen_crop] = committed_counts.get(chosen_crop, 0) + 1
+                                    p41_planted_this_turn.append((pos, chosen_crop))
+                                    if chosen_crop == "WHEAT":
+                                        wheat_have += 4
+                                elif remaining_money >= seed_cost:
+                                    buy_seed[chosen_crop] = buy_seed.get(chosen_crop, 0) + 1
+                                    p41_bought_this_turn[chosen_crop] = p41_bought_this_turn.get(chosen_crop, 0) + 1
+                                    remaining_money -= seed_cost
+
+                        plan.diagnostics["p41_sw_crop_controller"] = {
+                            "active": True,
+                            "mode": sw_crop_mode,
+                            "planted": p41_planted_this_turn,
+                            "bought_seeds": p41_bought_this_turn,
+                            "zone_coords": list(P41_SW_ZONE_COORDS),
+                        }
+
+                # Whitelist: strictly WHEAT (D9-24) or CARROT (D25-27), 0 strawberries/melons/tomatoes
+                if "SW" in farm.unlocked and not p41_sw_handled:
                     try:
                         from config import SW_ACTIVATION_MODE
                     except Exception:
