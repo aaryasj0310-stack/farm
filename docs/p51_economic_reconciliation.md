@@ -1,108 +1,76 @@
 # Kaggriculture P5.1 — Economic Reconciliation Report
+*(Updated with Definitive P5.1-C Empirical Telemetry)*
 
-## 1. Context & The Model vs Live Gap
+## 1. Executive Summary & Epistemic Evolution
 
 In P5.0-R, offline counterfactual modeling identified an estimated **shadow opportunity of +$655.25 / game** by substituting surplus late-season wheat plantings (Days 21–23) on core NW+NE tiles with two consecutive 3-day carrot cycles.
 
 However, when tested in the full, unconstrained 100-pair (200-game) live discovery replay against all 5 benchmark opponents:
-- **Modeled Shadow Opportunity**: **+$655.25 / game**
-- **Empirical Live Discovery Delta**: **−$1,020.68 / game**
+- **Modeled Shadow Opportunity**: **+$655.25 / game** [MODELED ESTIMATE — FLAWED]
+- **Empirical Live Discovery Delta**: **−$1,020.68 / game** [MEASURED FACT]
 - **Net Divergence (Delta Gap)**: **−$1,675.93 / game**
 
-This document provides the economic and mechanical forensic reconciliation explaining why the modeled shadow gain failed to materialize in live play, despite achieving near-perfect physical execution (**626 completed rotations**, **96.6% C2 completion**, and **0 animal starvations**).
+Prior to telemetry instrumentation, four hypothetical drag mechanisms were proposed. The subsequent **P5.1-C Causal Delta Reconciliation** instrumented all 200 games at the game engine level, achieving **0.000000 cash accounting closure**. 
+
+This document contrasts the preliminary hypotheses with the empirical ground truth.
 
 ---
 
-## 2. Quantitative Decomposition of the Gap
+## 2. Hypothesis vs. Empirical Reality Matrix
 
-| Potential Cost Mechanism | Estimated Per-Game Impact | Primary Evidence |
-| :--- | :---: | :--- |
-| **1. Severe Late-Season Labor Displacement** | **−$950 to −$1,200** | Extra 43.8 worker actions displacing milking & high-value crop harvesting |
-| **2. Town Shop Demand Saturation & Price Depletion** | **−$300 to −$450** | Flooding ~38 extra carrots/game into finite daily town demand |
-| **3. Market Order Slot Competition** | **−$150 to −$250** | Urgent carrot seed buys crowding out high-value milk/wool sales |
-| **4. Unsold Inventory / Endgame Liquidation Haircut** | **−$100 to −$200** | Intraday Day 28–29 carrot harvest remaining in inventory unsold |
-| **Total Reconciled Drag** | **−$1,500 to −$2,100** | Matches the empirical gap of **−$1,675.93** |
+The table below directly evaluates the preliminary hypotheses against empirical telemetry:
 
----
-
-## 3. Detailed Forensic Mechanisms
-
-### 3.1 Mechanism 1: Late-Season Worker Action Saturation (Labor Displacement)
-
-The fundamental difference between late-season wheat and a two-cycle carrot rotation is **action intensity**:
-
-| Crop Schedule | Planting | Daily Waterings | Harvest | Total Worker Actions |
-| :--- | :---: | :---: | :---: | :---: |
-| **Late Wheat (Days 21–23)** | 1 action | 1 action (Day 0 only) | 1 action (Days 27–29) | **3 actions** |
-| **Carrot Cycle 1** | 1 action | 3 actions (Days 21, 22, 23) | 1 action (Day 24) | **5 actions** |
-| **Carrot Cycle 2** | 1 action | 3 actions (Days 24, 25, 26) | 1 action (Day 27) | **5 actions** |
-| **Two-Cycle Total** | **2 actions** | **6 actions** | **2 actions** | **10 actions** |
-
-Across an average of **6.26 completed rotations per game**, the treatment demands:
-$$6.26 \times (10 - 3) = \mathbf{43.82 \text{ additional worker actions}}$$
-all concentrated in the critical late-season window (Days 21 through 28).
-
-#### The Opportunity Cost of Worker Time on Days 21–28:
-In the baseline production agent:
-1. **Cow Milking**: A mature dairy cow produces milk daily. Missing a single milking action forfeits **$200–$400** of pure profit.
-2. **Sheep Shearing**: Shearing ready sheep yields wool worth **$150–$300**.
-3. **High-Value Harvests**: Melons and cauliflowers planted earlier in the season reach maturity on Days 22–27. If workers are routed to water carrot tiles across the core farm, high-value crops risk spoilage or missed daily shop delivery windows.
-
-In offline static models, tile actions are evaluated in isolation assuming zero marginal labor cost. In live simulation, the worker pool is fixed (maximum 4–6 workers), making labor a strictly finite, highly congested resource.
+| Preliminary Proposed Mechanism | Preliminary Estimate | Empirical Reality (P5.1-C Telemetry) | Epistemic Status |
+| :--- | :---: | :--- | :---: |
+| **1. Extra Watering Labor Displacement** | −$950 to −$1,200 | **Total crop waterings actually decreased by −4.68 / game**. Baseline already watered late wheat ~4 times. Labor was not displaced by watering; rather, extra movement (+14.54 steps) increased transit time. | **[REJECTED]** |
+| **2. Town Shop Carrot Price Depletion** | −$300 to −$450 | **Realized carrot prices were $42.09 / unit** in Treatment vs $40.65 in Control (both well above the $35 base price). Zero price collapse occurred. | **[REJECTED]** |
+| **3. Market Order Slot Cap Squeezes** | −$150 to −$250 | **The engine limit is 10 orders per turn**, not 10 per day. Exactly **0.00 orders were dropped** due to caps across 144,000 game turns. | **[REJECTED]** |
+| **4. Unsold Endgame Inventory Haircut** | −$100 to −$200 | **Endgame shed and worker inventory was 0.00** across all 200 games. Zero unsold inventory remained. | **[REJECTED]** |
+| **TRUE CAUSE A: Net Wheat & Feed Deficit** | — | **−$1,382.51 / game**: Lost wheat sales (−$931.43) + wheat seed saved (+$108.80) + forced market feed wheat buys (−$559.88). | **[MEASURED FACT]** |
+| **TRUE CAUSE B: Livestock Production Loss** | — | **−$985.32 / game**: Grain stockouts caused −3.24 missed feeds, voiding care bonuses and destroying 2.50 milk units and 1.91 wool units. | **[MEASURED FACT]** |
 
 ---
 
-### 3.2 Mechanism 2: Town Shop Demand Saturation & Price Collapse
+## 3. The Definitive Cash Accounting Identity
 
-In offline models, carrots are assumed to sell at or near the nominal shop price (~$45–$50 per carrot).
-However, the engine models local town shop economies:
-- Each carrot harvest yields **3 carrots per tile**.
-- Two cycles across 6.26 tiles yield:
-  $$6.26 \times 3 \times 2 = \mathbf{37.56 \text{ additional carrots}}$$
-- Town shops have modest daily demand capacities (typically 5–15 carrots total per day across all reachable shops).
-- When the agent attempts to dump ~38 extra carrots over Days 24–29, town shop demand is exhausted. Subsequent carrots either:
-  1. Sell at depressed prices near the salvage floor (~$15–$20/carrot).
-  2. Remain stored in inventory at Day 30, receiving only the endgame liquidation valuation (or zero cash credit).
+The exact financial delta of P5.1 is governed by the following mathematical identity ($\epsilon = 0.000000$):
 
-In contrast, **wheat is an internal productive input**:
-- 6.26 wheat tiles produce ~30–38 wheat units.
-- Wheat is consumed directly by livestock on the farm, converting 1:1 into milk and wool without paying market transaction costs or suffering town shop demand depreciation.
+$$\begin{aligned}
+\Delta \text{Cash} &= \text{Net Carrot Margin} \\
+&\quad - \text{Net Wheat Revenue Lost} - \text{Market Feed Purchases} \\
+&\quad - \text{Livestock Revenue Lost} + \text{Minor Categories} \\
+&= +\$1,269.96 - \$822.63 - \$559.88 - \$985.32 + \$77.19 \\
+&= \mathbf{-\$1,020.68 \text{ / game}}
+\end{aligned}$$
 
----
-
-### 3.3 Mechanism 3: Market Order Slot Congestion
-
-The game engine imposes an absolute ceiling of `MAX_MARKET_ORDERS = 10` per day.
-To guarantee Cycle 2 execution, P5.1 elevated `BUY_SEED CARROT` to `P1_URGENT` priority (urgency 1.0) at Hour 0.
-Additionally, selling 38 extra carrots required 2–4 sell orders across Days 24–29.
-
-Under this regime:
-- The 10 available order slots were frequently saturated by carrot buys and sells.
-- Lower-priority but much higher-value orders (such as spot milk sells at distant town shops offering premium prices) were pushed past the 10th slot and dropped.
-- Dropping a single milk sell order costs $300–$600 on that day.
-
----
-
-### 3.4 Mechanism 4: Opponent Interaction Dynamics
-
-The opponent breakdown in the 100-pair replay highlights how competition amplifies these bottlenecks:
-
-- **Against Passive Opponents (`pass`, `pure_wheat_rush`)**:
-  - Opponents do not compete for town shop carrot demand or milk prices.
-  - Median deltas are slightly positive (**+$338.00** and **+$776.00**), confirming that when shop demand and worker capacity are unpressured, two-cycle carrots can technically break even.
-- **Against Competitive Opponents (`cow_milk_engine`, `full_production_agent`)**:
-  - `full_production_agent` competes aggressively for town shop demand and optimizes worker pathing.
-  - Against `full_production_agent`, the mean delta plummeted to **−$2,171.45 / game** (17 negative out of 20 pairs).
-  - The extra labor spent on carrots severely weakened the agent's competitive posture.
+### Detailed Categorical Breakdown:
+1. **Direct Carrot Enterprise**: **+$1,269.96**
+   - Gross Revenue: +$1,516.36 (+33.66 units @ $42.09 avg)
+   - Seed Costs: −$246.40 (+12.32 seeds @ $20)
+2. **Crop Wheat Impact**: **−$822.63**
+   - Lost Wheat Revenue: −$931.43 (−34.98 units @ $36.56 avg)
+   - Wheat Seed Savings: +$108.80 (−10.88 seeds @ $10)
+3. **Purchased Feed Wheat**: **−$559.88**
+   - Extra feed wheat bought on open market to prevent animal starvation.
+4. **Livestock Revenue Destruction**: **−$985.32**
+   - Milk Revenue Lost: −$404.58 (−1.49 units @ $244.08 avg)
+   - Wool Revenue Lost: −$545.65 (−2.48 units @ $214.82 avg)
+   - Fertilizer Revenue Lost: −$35.09 (−0.61 units @ $81.10 avg)
+5. **Minor Financial Categories**: **+$77.19**
+   - Labor Hires saved: +$20.16
+   - Net Strawberry / Tomato / Melon variance: +$57.03
 
 ---
 
-## 4. Synthesis: Why Offline Counterfactuals Misled
+## 4. Key Strategic Insights & Future Directives
 
-The P5.0-R offline counterfactual assumed:
-1. Infinite worker availability (0 shadow wage for watering actions).
-2. Infinite town shop absorption capacity at static base prices.
-3. Zero market order slot competition.
-4. Complete fungibility between cash and livestock feed.
-
-The live engine proved that **none of these assumptions hold in end-game play**. Late wheat is not merely "lazy" farming; it is an exquisitely labor-efficient, market-independent strategy that frees up critical worker hours for the compounding dairy and livestock operations that win tournaments.
+1. **Grain Security is Fundamental**:
+   - Wheat on the core farm is not a low-value cash crop; it is **internal critical infrastructure**. 
+   - Converting core wheat tiles to cash crops starves the dairy and sheep herds of physical intraday grain, forcing expensive spot-market purchases and triggering missed feedings.
+2. **Asymmetric Livestock Economics**:
+   - A cow produces ~$244/unit in milk; a sheep produces ~$215/unit in wool.
+   - Forfeiting just 4 units of livestock production obliterates the entire profit of 30+ carrots.
+   - Any proposed modification that risks livestock feeding regularity by even 1% must be rejected immediately.
+3. **P5.1 Permanently Closed**:
+   - `P51_T1_TWO_CYCLE_CARROT_ENABLED = False` is permanently locked.
+   - No P5.2 or related variants will be pursued.

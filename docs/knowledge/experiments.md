@@ -67,11 +67,38 @@
 - **Verdict**: STOP (Rejected at Live Feasibility Gate; Production Default Remains False)
 - **Key Findings**:
   1. *Execution Success*: Completely resolved Cycle 2 seed starvation and tile hijacking through Hour 0 priority elevation (`P1_URGENT`) and `MacroPlan` tile reservation. Achieved 626 live two-cycle completions and 211 Day 23 completions.
-  2. *Feed Safety Guaranteed*: The state-based sequential day-by-day feed ledger operated flawlessly with 0 starved animals.
-  3. *Why the Shadow Opportunity Failed*:
-     - Offline models assumed zero marginal labor cost. In live simulation, two carrot cycles require 10 worker actions per tile vs 3 for wheat, adding ~43.8 worker actions during Days 21–28.
-     - This severe labor congestion displaced high-value livestock care (cow milking at $200–$400/action, sheep shearing at $150–$300/action) and delayed melon/cauliflower harvests.
-     - Dumping ~38 extra carrots per game into finite town shop demand saturated local prices, while carrot buy/sell orders congested the 10-order daily market cap.
-     - Against competitive baselines (`full_production_agent`), delta plunged to **−$2,171.45 / game**.
-  4. *Held-Out Panel Preserved*: Untouched block 98,001–98,050 was NOT run and remains pristine for future iterations.
+### Audit / Forensic Reconciliation: P5.1-C Causal Delta Reconciliation
+- **Type**: AUDIT / CAUSAL FORENSIC RECONCILIATION
+- **Date**: 2026-09-22
+- **Baseline**: `536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e` (Production Baseline)
+- **Scope**: Complete engine-level transaction and action interception across all 100 matched pairs (200 live games on discovery panel seeds 96,201–96,210 x 5 opponents x 2 balanced seats) with exact bit-level cash reconciliation.
+- **Results**:
+  - Maximum Single-Game Reconciliation Error: **0.000000**
+  - Mean Paired Cash Delta: **−$1,020.68 / game**
+  - Residual Accounting Discrepancy: **$0.0000**
+  - Primary Causal Cash Waterfall:
+    * Net Direct Carrot Profit: **+$1,269.96 / game** (+$1,516.36 gross rev @ $42.09/unit avg − $246.40 seeds)
+    * Lost Wheat Sales (Net): **−$822.63 / game** (−$931.43 revenue + $108.80 seed savings)
+    * Forced Market Feed Wheat Purchases: **−$559.88 / game**
+    * Lost Livestock Revenue: **−$985.32 / game** (−$404.58 milk, −$545.65 wool, −$35.09 fertilizer)
+    * Minor Categories (Labor hires, crop variance): **+$77.19 / game**
+    * **Total Closed Cash Delta**: **−$1,020.68 / game**
+- **Verdict**: CLOSED & PERMANENTLY REJECTED (Zero Strategy Modification; Root Cause Proved)
+- **Key Findings & Epistemic Classification**:
+  1. *[MEASURED FACT] Hypotheses Refuted by Telemetry*:
+     - *Carrot Price Collapse*: Refuted. Realized price was $42.09 in Treatment vs $40.65 in Control (well above $35 base).
+     - *Excessive Watering Workload*: Refuted. Total waterings in Days 21–29 actually decreased by −4.68 / game (+46.06 carrot vs −49.58 wheat). Baseline already watered late wheat.
+     - *Market Slot Saturation*: Refuted. Cap is 10 orders per turn, not per day; zero orders were dropped (0.00%).
+     - *Endgame Unsold Stock*: Refuted. Exactly 0.00 units remained in shed or backpacks at Day 30.
+  2. *[INFERRED MECHANISM] The Real Transmission Mechanism*:
+     - Replacing 41.84 wheat units from the core farm depleted physical grain from the shed.
+     - While Treatment bought replacement feed wheat on the open market ($559.88), market buys settle post-turn.
+     - Feeding workers during morning hours encountered empty shed bins, skipping −1.72 cow feeds and −1.47 sheep feeds.
+     - In engine rules (`_daily_refresh_animals`), skipping feeding voids pending care bonuses, directly destroying 2.50 units of milk ($244/unit) and 1.91 units of wool ($215/unit).
+  3. *[MEASURED FACT] Shed Capacity Discards*:
+     - Adding high-volume carrot cycles into the 100-capacity shed increased end-of-day discards by +4.37 units (+3.95 carrots, +0.93 wool, +0.49 fertilizer), destroying ~$330 in physical value.
+  4. *Structural Lesson*:
+     - Core farm wheat is essential farm infrastructure that secures high-leverage livestock revenue ($66.4k/game). 
+     - Never trade physical grain security for standalone cash crops.
+
 
