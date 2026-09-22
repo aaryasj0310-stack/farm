@@ -1,0 +1,372 @@
+{
+  "n_games": 100,
+  "total_wheat_events_d21_d25": 2493,
+  "per_game_events": 24.93,
+  "classifications": {
+    "RW3_GENUINE_SURPLUS": 2489,
+    "RW2_FEED_BUFFER_SUPPORT": 4
+  },
+  "classifications_by_day": {
+    "21": {
+      "RW3_GENUINE_SURPLUS": 414,
+      "RW2_FEED_BUFFER_SUPPORT": 4
+    },
+    "22": {
+      "RW3_GENUINE_SURPLUS": 388
+    },
+    "23": {
+      "RW3_GENUINE_SURPLUS": 460
+    },
+    "24": {
+      "RW3_GENUINE_SURPLUS": 656
+    },
+    "25": {
+      "RW3_GENUINE_SURPLUS": 571
+    }
+  },
+  "classifications_by_opponent": {
+    "melon_sniper": {
+      "RW3_GENUINE_SURPLUS": 503
+    },
+    "cow_milk_engine": {
+      "RW3_GENUINE_SURPLUS": 526
+    },
+    "pass": {
+      "RW3_GENUINE_SURPLUS": 500
+    },
+    "pure_wheat_rush": {
+      "RW3_GENUINE_SURPLUS": 456,
+      "RW2_FEED_BUFFER_SUPPORT": 3
+    },
+    "full_production_agent": {
+      "RW3_GENUINE_SURPLUS": 504,
+      "RW2_FEED_BUFFER_SUPPORT": 1
+    }
+  },
+  "classifications_by_seat": {
+    "0": {
+      "RW3_GENUINE_SURPLUS": 1252,
+      "RW2_FEED_BUFFER_SUPPORT": 3
+    },
+    "1": {
+      "RW3_GENUINE_SURPLUS": 1237,
+      "RW2_FEED_BUFFER_SUPPORT": 1
+    }
+  },
+  "per_event_rw3_stats": {
+    "raw_crop_economic": {
+      "n": 2489,
+      "mean": 30.93,
+      "median": 12.0,
+      "std": 89.07,
+      "min": -110.0,
+      "max": 387.0,
+      "p10": -72.0,
+      "p25": -32.0,
+      "p75": 92.0,
+      "p90": 149.0
+    },
+    "task_displaced": {
+      "n": 2489,
+      "mean": 6.6,
+      "median": -12.0,
+      "std": 76.71,
+      "min": -110.0,
+      "max": 339.0,
+      "p10": -78.0,
+      "p25": -49.0,
+      "p75": 48.0,
+      "p90": 107.0
+    },
+    "labor_stressed": {
+      "n": 2489,
+      "mean": 5.64,
+      "median": -12.0,
+      "std": 78.25,
+      "min": -135.0,
+      "max": 355.0,
+      "p10": -78.0,
+      "p25": -50.0,
+      "p75": 49.0,
+      "p90": 104.0
+    }
+  },
+  "per_game_shadow_stats": {
+    "raw_crop_economic": {
+      "n": 100,
+      "mean": 1167.3,
+      "median": 1063.0,
+      "std": 1272.76,
+      "min": 0,
+      "max": 6114.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 1470.0,
+      "p90": 2813.0
+    },
+    "task_displaced": {
+      "n": 100,
+      "mean": 774.66,
+      "median": 500.0,
+      "std": 1101.37,
+      "min": 0,
+      "max": 5538.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 864.0,
+      "p90": 2136.0
+    },
+    "labor_stressed": {
+      "n": 100,
+      "mean": 762.86,
+      "median": 459.0,
+      "std": 1089.79,
+      "min": 0,
+      "max": 5478.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 828.0,
+      "p90": 2221.0
+    }
+  },
+  "per_game_by_opponent": {
+    "melon_sniper": {
+      "n": 20,
+      "mean": 972.45,
+      "median": 660.0,
+      "std": 1310.65,
+      "min": 0,
+      "max": 4856.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 2125.0,
+      "p90": 2562.0
+    },
+    "cow_milk_engine": {
+      "n": 20,
+      "mean": 536.35,
+      "median": 506.0,
+      "std": 650.44,
+      "min": 0,
+      "max": 2136.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 864.0,
+      "p90": 1842.0
+    },
+    "pass": {
+      "n": 20,
+      "mean": 454.9,
+      "median": 323.0,
+      "std": 680.12,
+      "min": 0,
+      "max": 1997.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 671.0,
+      "p90": 1997.0
+    },
+    "pure_wheat_rush": {
+      "n": 20,
+      "mean": 1541.7,
+      "median": 1202.0,
+      "std": 1617.83,
+      "min": 65.0,
+      "max": 5538.0,
+      "p10": 110.0,
+      "p25": 655.0,
+      "p75": 2343.0,
+      "p90": 5538.0
+    },
+    "full_production_agent": {
+      "n": 20,
+      "mean": 367.9,
+      "median": 487.0,
+      "std": 312.28,
+      "min": 0,
+      "max": 980.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 577.0,
+      "p90": 905.0
+    }
+  },
+  "per_game_by_seat": {
+    "0": {
+      "n": 50,
+      "mean": 676.78,
+      "median": 487.0,
+      "std": 1002.74,
+      "min": 0,
+      "max": 5538.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 759.0,
+      "p90": 1997.0
+    },
+    "1": {
+      "n": 50,
+      "mean": 872.54,
+      "median": 577.0,
+      "std": 1194.04,
+      "min": 0,
+      "max": 5538.0,
+      "p10": 0,
+      "p25": 0,
+      "p75": 1395.0,
+      "p90": 2343.0
+    }
+  },
+  "boundary_search_grid": [
+    {
+      "day_cutoff": 21,
+      "buffer_threshold": 0.0,
+      "mean_delta_per_game": 212.47,
+      "median_delta_per_game": 214.0,
+      "std_delta_per_game": 1571.21,
+      "min_delta": -2223.0,
+      "max_delta": 5538.0,
+      "positive_games_pct": 58.0
+    },
+    {
+      "day_cutoff": 21,
+      "buffer_threshold": 5.0,
+      "mean_delta_per_game": 212.47,
+      "median_delta_per_game": 214.0,
+      "std_delta_per_game": 1571.21,
+      "min_delta": -2223.0,
+      "max_delta": 5538.0,
+      "positive_games_pct": 58.0
+    },
+    {
+      "day_cutoff": 21,
+      "buffer_threshold": 10.0,
+      "mean_delta_per_game": 212.47,
+      "median_delta_per_game": 214.0,
+      "std_delta_per_game": 1571.21,
+      "min_delta": -2223.0,
+      "max_delta": 5538.0,
+      "positive_games_pct": 58.0
+    },
+    {
+      "day_cutoff": 22,
+      "buffer_threshold": 0.0,
+      "mean_delta_per_game": 9.3,
+      "median_delta_per_game": -14.0,
+      "std_delta_per_game": 1412.59,
+      "min_delta": -2294.0,
+      "max_delta": 5014.0,
+      "positive_games_pct": 49.0
+    },
+    {
+      "day_cutoff": 22,
+      "buffer_threshold": 5.0,
+      "mean_delta_per_game": 9.3,
+      "median_delta_per_game": -14.0,
+      "std_delta_per_game": 1412.59,
+      "min_delta": -2294.0,
+      "max_delta": 5014.0,
+      "positive_games_pct": 49.0
+    },
+    {
+      "day_cutoff": 22,
+      "buffer_threshold": 10.0,
+      "mean_delta_per_game": 9.3,
+      "median_delta_per_game": -14.0,
+      "std_delta_per_game": 1412.59,
+      "min_delta": -2294.0,
+      "max_delta": 5014.0,
+      "positive_games_pct": 49.0
+    },
+    {
+      "day_cutoff": 23,
+      "buffer_threshold": 0.0,
+      "mean_delta_per_game": -128.97,
+      "median_delta_per_game": -87.0,
+      "std_delta_per_game": 1091.23,
+      "min_delta": -1909.0,
+      "max_delta": 3932.0,
+      "positive_games_pct": 44.0
+    },
+    {
+      "day_cutoff": 23,
+      "buffer_threshold": 5.0,
+      "mean_delta_per_game": -128.97,
+      "median_delta_per_game": -87.0,
+      "std_delta_per_game": 1091.23,
+      "min_delta": -1909.0,
+      "max_delta": 3932.0,
+      "positive_games_pct": 44.0
+    },
+    {
+      "day_cutoff": 23,
+      "buffer_threshold": 10.0,
+      "mean_delta_per_game": -128.97,
+      "median_delta_per_game": -87.0,
+      "std_delta_per_game": 1091.23,
+      "min_delta": -1909.0,
+      "max_delta": 3932.0,
+      "positive_games_pct": 44.0
+    },
+    {
+      "day_cutoff": 24,
+      "buffer_threshold": 0.0,
+      "mean_delta_per_game": -300.91,
+      "median_delta_per_game": -315.0,
+      "std_delta_per_game": 724.59,
+      "min_delta": -1470.0,
+      "max_delta": 2312.0,
+      "positive_games_pct": 25.0
+    },
+    {
+      "day_cutoff": 24,
+      "buffer_threshold": 5.0,
+      "mean_delta_per_game": -300.91,
+      "median_delta_per_game": -315.0,
+      "std_delta_per_game": 724.59,
+      "min_delta": -1470.0,
+      "max_delta": 2312.0,
+      "positive_games_pct": 25.0
+    },
+    {
+      "day_cutoff": 24,
+      "buffer_threshold": 10.0,
+      "mean_delta_per_game": -300.91,
+      "median_delta_per_game": -315.0,
+      "std_delta_per_game": 724.59,
+      "min_delta": -1470.0,
+      "max_delta": 2312.0,
+      "positive_games_pct": 25.0
+    },
+    {
+      "day_cutoff": 25,
+      "buffer_threshold": 0.0,
+      "mean_delta_per_game": -133.84,
+      "median_delta_per_game": -133.0,
+      "std_delta_per_game": 395.17,
+      "min_delta": -990.0,
+      "max_delta": 1789.0,
+      "positive_games_pct": 24.0
+    },
+    {
+      "day_cutoff": 25,
+      "buffer_threshold": 5.0,
+      "mean_delta_per_game": -133.84,
+      "median_delta_per_game": -133.0,
+      "std_delta_per_game": 395.17,
+      "min_delta": -990.0,
+      "max_delta": 1789.0,
+      "positive_games_pct": 24.0
+    },
+    {
+      "day_cutoff": 25,
+      "buffer_threshold": 10.0,
+      "mean_delta_per_game": -133.84,
+      "median_delta_per_game": -133.0,
+      "std_delta_per_game": 395.17,
+      "min_delta": -990.0,
+      "max_delta": 1789.0,
+      "positive_games_pct": 24.0
+    }
+  ]
+}
