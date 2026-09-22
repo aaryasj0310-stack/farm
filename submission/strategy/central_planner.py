@@ -889,6 +889,29 @@ class CentralPlanner:
                 metadata=meta,
             )
 
+        # 3b. P6.1 Pre-Midnight Storage Hygiene (P1_URGENT)
+        is_p61_hygiene = isinstance(sell_details, dict) and sell_details.get("is_p61_hygiene") is True
+        if is_p61_hygiene:
+            meta = {
+                "sell_pressure_class": "pre_midnight_hygiene",
+                "shed_total": shed_total,
+                "shed_capacity": SHED_CAPACITY,
+                "soft_cap": SHED_SOFT_CAP,
+                "hard_threshold": HARD_CAPACITY_THRESHOLD,
+                "priority_class": P1_URGENT,
+                "priority_reason": "pre_midnight_storage_hygiene",
+            }
+            return ProposalCandidate(
+                proposal_id=proposal_id,
+                order=order_copy,
+                source="sell",
+                kind="sell",
+                priority_class=P1_URGENT,
+                urgency=1.5,
+                original_index=idx,
+                metadata=meta,
+            )
+
         # 4. Endgame liquidation before final day (e.g. Day 28)
         is_endgame = (day >= ENDGAME_START_DAY) or (
             isinstance(sell_details, dict) and (

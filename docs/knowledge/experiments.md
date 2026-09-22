@@ -242,3 +242,46 @@
 - **Epistemic Verdict on the $130,000 Target**:
   - Reaching $130k cannot be achieved by baseline bug fixes alone. It requires Macro-Architectural Expansion (SW quadrant development and secondary livestock scaling) after storage hygiene is established.
 - **Next Experiment**: Execute **P6.1: Shed-Overflow Prevention via Pre-Midnight Storage Hygiene** as a strictly single-variable isolated experiment.
+
+### Experiment: P6.1 Shed-Overflow Prevention via Pre-Midnight Storage Hygiene
+- **Type**: SINGLE-VARIABLE STRATEGY EXPERIMENT (Pre-Midnight Storage Hygiene)
+- **Date**: 2026-09-22
+- **Baseline Commit**: `536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e` (Production Baseline)
+- **Active Branch**: `experiment/sw-p13-planting-gate`
+- **Control**: Production baseline (`P51_T1_TWO_CYCLE_CARROT_ENABLED = False`, `P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = False`)
+- **Treatment**: `P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = True` (Proactive late-evening shed headroom liquidation)
+- **Panel**: 100 matched pairs (200 live games) on fresh untouched evaluation seeds `96,411`–`96,420` $\times$ 5 opponents $\times$ 2 seats. Protected seeds `98,001`–`98,050` remained 100% untouched.
+- **Hypothesis**: By monitoring shed inventory in the late evening (Hours 20, 21, 22) and proactively selling surplus inventory to guarantee $\ge 25$ units of shed headroom before workers execute their midnight inventory drops, physical shed overflow discards will decrease by $\ge 70\%$ without harming feed security, market prices, crop production, livestock production, or worker execution.
+- **Results**:
+  - Control Final Cash: **\$99,890.78**
+  - Treatment Final Cash: **\$101,330.64**
+  - Mean Paired Cash Delta: **+\$1,439.86** (Median: **+\$642.50**)
+  - 95% Confidence Interval: **[+\$297.91, +\$2,581.81]** (Std Error: \$582.63)
+  - Win Rate: **Control 100.0% vs Treatment 100.0%**
+  - Control Discards: **42.08 u/game** (\$5,900.91 realized value)
+  - Treatment Discards: **40.90 u/game** (\$5,488.48 realized value)
+  - Discard Reduction: **-1.18 u/game (-2.80% reduction)**
+  - Livestock Feed Failures / Starvations / Escapes: **0 / 0 / 0 (100% Clean Invariant)**
+  - CentralPlanner P0 Emergency Rejections: **0 (Zero Displacement)**
+  - CentralPlanner `slot_cap` Rejections: **100.61 (Control) vs 101.67 (Treatment)**
+- **Verdict**: **NO-GO**
+  - Failed the $\ge 70\%$ discard reduction GO threshold (achieved only 2.80%).
+  - Failed the $\ge 50\%$ discard reduction ITERATE threshold.
+  - Cash delta (+\$1,439.86) fell short of the +\$2,000 GO gate.
+- **Key Forensic Findings**:
+  1. *[MEASURED FACT] Inventory Spatial Decoupling*:
+     - Late-evening (Hours 20–22) inventory is held predominantly in **worker personal backpacks** (mean 34.5 u, peak 60–85 u), not in the shed (mean 30.9 u).
+     - Workers in baseline do not execute mid-day shed deposits.
+  2. *[MEASURED FACT] Shed Feed Wheat Impasse*:
+     - Shed occupancy at Hours 20–22 is composed almost entirely of **protected animal feed wheat** (40–48 units, the 4-day reserve for 10–12 herd animals).
+     - Storage hygiene strictly protected Tier 3 wheat above `safe_wheat_floor = max(15, animals * 2.0)`, leaving 0 sellable wheat.
+     - Tier 2 high-value goods (Strawberries, Wool, Milk) had 0 stock in the shed because they were in worker backpacks.
+     - Storage hygiene correctly refused to sell protected feed wheat, leaving the shed half-full of grain.
+  3. *[MEASURED FACT] Midnight Inflow Collision*:
+     - At midnight (Turn 23 -> Turn 0), workers dumped 60–85 units of backpack inventory into the shed that already contained 48 units of feed wheat ($48 + 82 = 130$ units load).
+     - 30 units of Strawberry, Milk, and Wool were discarded despite storage hygiene being active.
+  4. *[MEASURED FACT] Pricing Stability Confirmed*:
+     - Late-evening drip sales did NOT depress town shop prices (Strawberry, Melon, Milk, Wool prices remained within $\pm 1\%$ of baseline).
+- **Architectural Lesson for P6.2**:
+  - Pure market liquidation cannot solve discards when goods are physically trapped in worker backpacks.
+  - P6.2 must target **intraday worker shed drop-off** (e.g. Hour 18–19 pre-midnight deposit) and/or **feed wheat structural storage decoupling**, bringing produce into the shed before market windows rather than relying on late-night market selling alone.

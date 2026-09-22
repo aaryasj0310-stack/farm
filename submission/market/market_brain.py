@@ -24,6 +24,7 @@ inventory, which already includes this farm's earlier same-day sales, so
 slices automatically shrink as we move our own curve. The reference E[P|day]
 is used only for carry/hold comparisons, never as an average sell price.
 """
+import math
 from config import (
     CARRY_HORIZON_DAYS,
     DRIP_PRICE_KEEP_FRAC,
@@ -200,11 +201,25 @@ class MarketBrain:
         rollover_overflow = pending_occupancy > SHED_CAPACITY
         pressure = shed_pressure or rollover_overflow
 
+        try:
+            from config import get_p61_pre_midnight_storage_hygiene_enabled
+            p61_enabled = bool(get_p61_pre_midnight_storage_hygiene_enabled())
+        except Exception:
+            p61_enabled = False
+
+        p61_hygiene_active = False
+        p61_needed_relief = 0
+        if p61_enabled and (hour in (20, 21, 22)):
+            projected_midnight_load = pending_occupancy
+            if projected_midnight_load > 75:
+                p61_hygiene_active = True
+                p61_needed_relief = max(0, projected_midnight_load - 75)
+
         # Two-tier urgency:
         # 2 = midnight hard-guard, 1 = emergency relief, 0 = normal post-drain window
         if hour >= 22 and (shed_total > 88 or rollover_overflow):
             urgency = 2
-        elif pressure:
+        elif pressure or p61_hygiene_active:
             urgency = 1
         elif (hour in SELL_HOUR_SET) or endgame:
             urgency = 0
@@ -279,9 +294,19 @@ class MarketBrain:
             if stock <= 0:
                 continue
             if prod == "WHEAT":
-                stock = max(0, stock - reserved_wheat)
+                if p61_hygiene_active:
+                    safe_wheat_floor = max(15, int(math.ceil(animals * 2.0)))
+                    wheat_reserve = max(reserved_wheat, safe_wheat_floor)
+                    stock = max(0, stock - wheat_reserve)
+                else:
+                    stock = max(0, stock - reserved_wheat)
             elif prod == "FERTILIZER" and not endgame and urgency < 2:
-                if hour <= 18:
+                if p61_hygiene_active:
+                    fert_needed = sum(1 for t in ctx["farm"].iter_tiles()
+                                      if getattr(t, "is_plant", False) and getattr(t, "crop", None) in ("STRAWBERRY", "TOMATO", "MELON")
+                                      and getattr(t, "fertilized_until_day", -1) <= day)
+                    fert_reserve = min(2, fert_needed)
+                elif hour <= 18:
                     fert_needed = sum(1 for t in ctx["farm"].iter_tiles()
                                       if t.is_plant and t.crop in ("STRAWBERRY", "TOMATO", "MELON")
                                       and t.fertilized_until_day < day)
@@ -302,6 +327,8 @@ class MarketBrain:
                                                  is_floor_exception, melon_turn_drip_budget,
                                                  delay_set=delay_set)
             return [], {"reason": "no_available_stock", "pressure": pressure,
+                        "is_p61_hygiene": p61_hygiene_active,
+                        "p61_needed_relief": p61_needed_relief,
                         "melon_diagnostics": diag, **diag}
 
         # Order budget in order slots (engine cap is 10 orders per turn; None = unlimited)
@@ -315,12 +342,25 @@ class MarketBrain:
             else:
                 # Only free the space required to make the EOD worker rollover fit.
                 to_shed = max(0, pending_occupancy - SHED_CAPACITY)
+            if p61_hygiene_active:
+                to_shed = max(to_shed, min(shed_total, p61_needed_relief))
         else:
             to_shed = shed_total
 
         # Candidate product ordering
         # In emergency mode (when not endgame), follow liquidation priority: WHEAT -> CARROT -> TOMATO -> EGG -> MILK -> WOOL -> STRAWBERRY -> MELON -> FERTILIZER
         LIQUIDATION_PRIORITY = ("WHEAT", "CARROT", "TOMATO", "EGG", "MILK", "WOOL", "STRAWBERRY", "MELON", "FERTILIZER")
+        P61_LIQUIDATION_PRIORITY = (
+            "FERTILIZER",
+            "STRAWBERRY",
+            "WOOL",
+            "MILK",
+            "MELON",
+            "CARROT",
+            "TOMATO",
+            "EGG",
+            "WHEAT",
+        )
 
         candidates = []
         for prod in SELLABLE:
@@ -338,7 +378,10 @@ class MarketBrain:
                 urgency_score = 0.99
             candidates.append({"product": prod, "spot": spot, "urgency": urgency_score, "stock": st})
 
-        if urgency >= 1 and not endgame:
+        if p61_hygiene_active:
+            prio_map = {p: i for i, p in enumerate(P61_LIQUIDATION_PRIORITY)}
+            candidates.sort(key=lambda c: (0 if c["product"] in preempt_set else 1, prio_map.get(c["product"], 99)))
+        elif urgency >= 1 and not endgame:
             prio_map = {p: i for i, p in enumerate(LIQUIDATION_PRIORITY)}
             candidates.sort(key=lambda c: (0 if c["product"] in preempt_set else 1, prio_map.get(c["product"], 99)))
         else:
@@ -440,6 +483,8 @@ class MarketBrain:
                         "upstream_truncation": truncated_by_slots,
                         "omitted_by_slots": omitted_by_slots,
                         "max_slots": max_slots,
+                        "is_p61_hygiene": p61_hygiene_active,
+                        "p61_needed_relief": p61_needed_relief,
                         "melon_diagnostics": diag, **diag}
 
     # ------------------------------------------------------------------

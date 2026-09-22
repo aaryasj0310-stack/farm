@@ -181,6 +181,31 @@ def set_p51_t1_two_cycle_carrot_enabled(enabled: bool) -> None:
             except Exception:
                 pass
 
+# Kaggriculture P6.1: Pre-Midnight Storage Hygiene Experiment
+# Default False (bit-for-bit identical to baseline 536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e)
+P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED: bool = False
+
+def get_p61_pre_midnight_storage_hygiene_enabled() -> bool:
+    """Return whether P6.1 pre-midnight storage hygiene is enabled."""
+    return P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED
+
+def set_p61_pre_midnight_storage_hygiene_enabled(enabled: bool) -> None:
+    """Configure P6.1 pre-midnight storage hygiene experiment flag."""
+    global P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED
+    P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.market.market_brain", "market.market_brain", "market_brain",
+        "agent.strategy.central_planner", "strategy.central_planner", "central_planner",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED", P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED)
+            except Exception:
+                pass
+
 
 
 # Phase knobs
