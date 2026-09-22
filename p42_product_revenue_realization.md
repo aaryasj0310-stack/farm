@@ -67,7 +67,8 @@ $$\text{Planted/Bred} \longrightarrow \text{Harvested} \longrightarrow \text{She
 
 | Component | Assessment | Evidence |
 | :--- | :--- | :--- |
-| **Monetization Efficiency** | **Near-Optimal (98.5%+)** | 100% of products liquidated; 0 units discarded; mean realized prices exceed base by +12% to +102% on all consumable goods; slippage per order is <2%. |
-| **Production Constraints** | **The True Limiting Factor** | NW+NE 46 tiles are saturated at 90–96% occupancy; worker labor is fully saturated at 13 hands; output is bounded by crop biology and plot count. |
+| **Monetization Realization** | **Near-Complete Inventory Realization** | 100% of products liquidated (0 units unsold at season end); 0 units discarded to capacity overflow; mean realized prices exceed base by +12% to +102% on consumable goods; order slippage is $<2\%$; very small identified non-hindsight timing opportunity ($\le \$65$/game). |
+| **Production Constraints** | **The True Limiting Factor** | NW+NE 46 tiles are saturated at 90–96% occupancy; worker labor is fully saturated at 13 hands; output is bounded by physical plot turnover and crop biology. |
 
-**Conclusion**: The farm does not suffer from a monetization defect. The products that exist are monetized at near-peak efficiency.
+**Conclusion**: The farm does not suffer from a material monetization defect. Products produced are converted into final cash with near-complete inventory realization and negligible timing leakage.
+

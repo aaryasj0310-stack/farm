@@ -19,9 +19,9 @@ Per the P4.2 audit specification, a treatment (Phases 13–18) may only be devel
 
 ### Verdict: **STOP**
 
-1. **The Market Layer is Already Near-Optimal**:
+1. **Near-Complete Inventory Realization with Very Small Identified Timing Opportunity**:
    - **$102,986.19** mean final cash across 100 live games on fresh seeds `96,101–96,110`.
-   - **0.00 units** unsold at season end across all 100 games (100% liquidation efficiency).
+   - **0.00 units** unsold at season end across all 100 games (100% liquidation compliance).
    - **0.00 units** lost to shed capacity overflows.
    - **Post-drain windowing (`hour % 4 == 1`)** captures local price peaks immediately after town shops consume 1.0 to 3.5 units of product.
    - **Drip protection (`DRIP_PRICE_KEEP_FRAC = 0.90`)** keeps realized slippage under 1.5% for Melon, Strawberry, Milk, and Wool.
@@ -29,8 +29,10 @@ Per the P4.2 audit specification, a treatment (Phases 13–18) may only be devel
 
 2. **No Statistically Detectable Opportunity Exists**:
    - The entire theoretical non-hindsight opportunity across all products combined is **+$45.00 to +$65.00/game**.
-   - With a game-to-game standard deviation of **$8,724.54**, the minimum detectable effect in a 100-pair tournament is **$1,710.00**.
-   - Attempting to test a ~$50 timing tweak would be an unscientific exercise in chasing pure random noise.
+   - With a raw across-game standard deviation of $8,724.54, an un-matched sample size calculation yields a conservative $1,710 MDE:
+     $$1.96 \times \frac{8724.54}{\sqrt{100}} \approx \$1,710$$
+   - In a matched A/B tournament sharing seeds and opponents, the standard deviation of paired deltas ($\sigma_\Delta$) is lower, typically placing the paired MDE closer to ~$1,000.
+   - However, even against a ~$1,000 paired MDE, the identified **+$45 to +$65/game** opportunity is far too small to be detectable or economically viable.
 
 3. **Tournament Seed Block Integrity Preserved**:
    - In accordance with the protocol, the reserved, untouched seed block **`98,001–98,050`** will **NOT** be consumed by an ungrounded market experiment.
@@ -47,7 +49,9 @@ Having audited:
 - Market revenue realization and sell-timing (P4.2)
 
 The fundamental diagnosis of the agent is now clear:
-1. **Monetization is solved**: Products that exist are monetized at near-peak efficiency (~$103k final cash from 46 plots).
+1. **Monetization is solved**: Products that exist are converted into final cash with near-complete realization and minimal timing losses (~$103k final cash from 46 plots).
 2. **Execution is solved**: Workers operate at near-maximum feasible labor density with 0 animal starvation and 0 discarded crops.
 3. **The Remaining Frontier**:
-   To cross from ~$103k to the $130k goal, the farm must produce more high-margin physical volume within the 46 usable NW+NE core tiles. The sole unexplored structural lever is **Crop Lifecycle & Crop Replacement Scheduling** (e.g. optimizing the exact transition days between early carrots/wheat and perpetual strawberries/melons, or targeted fertilizer micro-application to maximize strawberry double-yield intervals).
+   To cross from ~$103k to the $130k goal, the farm must produce more high-margin physical volume within the 46 usable NW+NE core tiles.
+   - The primary unexplored structural lever is **Crop Lifecycle & Plot Turnover Optimization**: refining the exact planting cutoffs and transition days between early single-harvest crops (wheat/carrot) and ongoing perennials (strawberries/melons).
+   - *Note on Fertilizer*: Per engine mechanics (`kaggriculture.py` L798–801), fertilizer does **not** accelerate harvest intervals; it grants a watering-dependent +1 yield bonus (+2 total) on scheduled production days. Because the baseline already applies precision fertilizer timing, P5 should first audit whether existing fertilizer applications are economically optimal before considering any changes.

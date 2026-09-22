@@ -32,12 +32,13 @@ $$\text{Upper Bound Non-Hindsight Opportunity Ceiling} \le \mathbf{+\$45.00 \tex
 
 ### Comparison to Tournament Noise:
 - Baseline Mean Final Cash: **$102,986.19**
-- Baseline Standard Deviation: **$8,724.54**
-- 100-Pair Tournament Standard Error ($N=100$):
-  $$SE = \frac{8724.54}{\sqrt{100}} = \mathbf{\$872.45}$$
-- Minimum Detectable Effect at $p < 0.05$ ($1.96 \times SE$):
-  $$\text{MDE} = 1.96 \times 872.45 = \mathbf{\$1,710.00}$$
+- Raw Baseline Standard Deviation: **$8,724.54**
+- Unmatched Sample Size MDE (Conservative):
+  $$\text{MDE}_{\text{raw}} = 1.96 \times \frac{8724.54}{\sqrt{100}} \approx \mathbf{\$1,710.00}$$
+- Matched A/B Tournament MDE:
+  In a matched tournament where Control and Treatment play identical seeds and opponents, the standard deviation of paired deltas ($\sigma_\Delta$) is substantially lower, typically yielding an MDE closer to **~$1,000.00**.
 
-### Statistical Impossibility of Detection:
-The entire theoretical market opportunity (**+$45.00 to +$65.00/game**) is **25 to 35 times smaller than the minimum detectable effect** of a 100-pair tournament!
-Any treatment attempting to extract this ~$50 would be completely drowned out by the $8,724 standard deviation of crop yields, weather, and opponent interactions.
+### Economic & Statistical Assessment:
+Even measured against the tighter matched-tournament MDE of ~$1,000.00, the identified theoretical market opportunity (**+$45.00 to +$65.00/game**) is **15 to 22 times smaller than the minimum detectable effect**.
+Attempting to pursue an intervention of this magnitude would be attempting to optimize within background noise without statistical power.
+

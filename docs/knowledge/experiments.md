@@ -26,10 +26,10 @@
 - **Results**: Mean Final Cash = $102,986.19 (Std Dev = $8,724.54). 25,463 market transactions recorded with exact per-unit lockstep pricing.
 - **Verdict**: STOP (Closed Without Implementation)
 - **Key Findings**: 
-  1. The production selling layer is near-optimal: 100% of harvested products are monetized with 0 unsold units at season end and 0 overflow discards.
+  1. Near-complete inventory realization with very small identified timing opportunity: 100% of harvested products are monetized with 0 unsold units at season end and 0 overflow discards.
   2. Post-town-drain sell window (`hour % 4 == 1`) reliably captures peak local prices as town shops consume 1.0 to 3.5 units per 4h cycle.
   3. Drip-selling slippage is <1.5% across all fragile goods (0.7% strawberry, 1.4% milk, 1.0% wool, 1.9% melon).
   4. Max market orders in any turn was 9 (cap is 10); 10-order cap displacement is exactly 0.0/game.
-  5. Non-hindsight, live-actionable market opportunity ceiling is bounded at <= +$45 to +$65/game, which is <0.75% of the $8,724.54 standard deviation. No treatment justified; untouched seed block 98,001–98,050 preserved.
+  5. Non-hindsight, live-actionable market opportunity ceiling is bounded at <= +$45 to +$65/game, far too small to justify an intervention against matched tournament variance (~$1,000 MDE). No treatment justified; untouched seed block 98,001–98,050 preserved.
 
 
