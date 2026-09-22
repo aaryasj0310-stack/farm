@@ -43,40 +43,49 @@ To ensure scientific integrity and eliminate speculative modeling from the proje
 4. **REJECTED: Animal Escapes / Deaths**: Zero animals escaped or died.
 5. **REJECTED: Unsold Inventory / Liquidation Haircut**: Zero inventory remained unsold on Day 30.
 
+### 2.5 [UNVERIFIED / WORKING HYPOTHESIS] (Plausible Candidates, Not Proven Fact)
+1. **Global Ceiling Bottlenecks ($102k vs $130k)**: Multiple competing structural hypotheses exist to explain why production scores plateau around ~$102k–$105k instead of reaching the theoretical $130k+ ceiling:
+   - *Hypothesis A (Shed Capacity Limitation)*: The 100-unit shed ceiling throttles high-volume accumulation, forcing frequent discards or sub-optimal selling schedules. (Measured locally in P5.1 at +4.37 units discarded, but unproven as the primary global bound).
+   - *Hypothesis B (Worker Action & Transit Budget)*: With only 4 workers providing 96 actions/day and 64% spent walking, pure physical labor starvation caps productive output.
+   - *Hypothesis C (Town Shop Absorption Rate)*: Town shops consume goods at finite rates, capping how fast inventory can be liquidated at premium prices regardless of production.
+   None of these have been established as the single "true systemic throttle"; they remain working hypotheses for future experimental isolation.
+
 ---
 
 ## 3. The Core Dilemma: What Binds the Agent Between $102k and $130k?
 
 Theoretical offline models suggest a perfect Kaggriculture farm could achieve **$130,000+** in 30 days. Yet the production baseline plateaus around **$102,000–$105,000**. 
 
-The P5.1-C post-mortem reveals exactly what hard structural bottlenecks enforce this ceiling:
+The P5.1-C post-mortem highlights several candidate structural constraints that form the working hypotheses for this ceiling:
 
 ```
-                              THE $102K CEILING
+                         WORKING HYPOTHESIS MATRIX
  ┌────────────────────────────────────────────────────────────────────────┐
- │ 1. Shed Storage Cap (100 units)                                        │
+ │ Candidate 1: Shed Storage Cap (100 units) [HYPOTHESIS]                 │
  │    • Limits bulk inventory accumulation before market liquidation.     │
  │    • Forces high-frequency intraday selling or discards at Day end.   │
  ├────────────────────────────────────────────────────────────────────────┤
- │ 2. Worker Action Budget (4 units × 24 hours = 96 actions / day)        │
- │    • ~60% of all actions (58/96) are consumed by movement / transit.   │
- │    • Only ~38 actions/day remain for direct physical productive work.  │
+ │ Candidate 2: Worker Action Budget & Transit [HYPOTHESIS]               │
+ │    • ~64% of all actions (4,772/7,422) are consumed by transit walking.│
+ │    • Only ~36% of worker time remains for physical production.         │
  ├────────────────────────────────────────────────────────────────────────┤
- │ 3. The Grain Security Link (Livestock vs Cash Crops)                   │
+ │ Candidate 3: The Grain Security Constraint [MEASURED FACT IN P5.1]     │
  │    • Cows & sheep generate ~$244/milk and ~$215/wool.                  │
  │    • They require guaranteed daily feeding with homegrown grain.       │
  │    • Diverting core tiles to cash crops starves the livestock engine.  │
  ├────────────────────────────────────────────────────────────────────────┤
- │ 4. Intraday Market Settlement Asymmetry                                │
+ │ Candidate 4: Intraday Market Settlement Asymmetry [MEASURED FACT]      │
  │    • Workers act during hours 0-23; market orders settle post-action.  │
  │    • The farm cannot substitute market liquidity for physical grain.   │
  └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.1 Shed Capacity is the True Systemic Throttle
-A 100-unit shed capacity means that high-yield production systems cannot store both feed grains and perishable cash crops simultaneously. The moment a feature attempts to add volume (like 37 extra carrots), it pushes other commodities out, causing discarded overflow or forced market fire-sales.
+### 3.1 Hypothesis: Shed Capacity as a Potential Systemic Throttle
+A 100-unit shed capacity means that high-yield production systems cannot store both large grain buffers and perishable cash crops simultaneously. In P5.1, adding volume (37 extra carrots) directly increased end-of-day discards by +4.37 units (~$330 lost). 
 
-### 3.2 Transit Distance Consumes More Labor Than Field Work
+However, **this must remain classified as a working hypothesis, not a proven global theorem**. While shed congestion was directly observed in P5.1, whether expanding or optimizing shed buffer usage alone could unlock $120k–$130k without being immediately bottlenecked by worker transit or town shop consumption limits remains unproven.
+
+### 3.2 Transit Distance Consumes More Labor Than Field Work (Measured Fact)
 Of the ~7,420 worker actions in a 30-day season, **4,772 actions (64.3%) are movement steps**. Workers spend nearly two-thirds of their lives walking between tiles, sheds, and pastures. Any strategy that adds multi-trip transitions (such as two-cycle replanting) disproportionately expands movement overhead, eating into the slim margin of discretionary worker actions.
 
 ### 3.3 Livestock Dominates Farm Economics

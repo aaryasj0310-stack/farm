@@ -17,7 +17,7 @@ The discovery panel was tested across **100 matched pairs (200 live games)** on 
    - Win rate remained **100.0%** in both Control and Treatment.
 3. **Economic Live Delta is Strongly Negative**:
    - **Mean Paired Cash Delta**: **−$1,020.68 / game**
-   - **Median Paired Cash Delta**: **−$939.00 / game**
+   - **Median Paired Cash Delta**: **−$959.00 / game**
    - **95% Confidence Interval**: **[−$1,578.80, −$462.56]** (statistically significantly negative, $p < 0.001$)
    - 36 pairs finished positive, 63 pairs finished negative, and 1 pair tied.
 
@@ -32,7 +32,7 @@ $$\Delta \text{Money} = \text{Money}_{\text{treatment}} - \text{Money}_{\text{co
 | **Matched Pairs ($N$)** | 100 (200 full simulation games) |
 | **Elapsed Runtime** | 1,258.7 s (20.98 minutes, 8 parallel workers) |
 | **Mean $\Delta \text{Money}$** | **−$1,020.68 / game** |
-| **Median $\Delta \text{Money}$** | **−$939.00 / game** |
+| **Median $\Delta \text{Money}$** | **−$959.00 / game** |
 | **Standard Deviation ($\sigma$)** | $2,847.55 |
 | **Standard Error ($SE$)** | $284.76 |
 | **95% Confidence Interval** | **[−$1,578.80, −$462.56]** |
@@ -67,8 +67,8 @@ The 100 matched pairs are evenly partitioned into 20 pairs per opponent (10 seed
 
 | Seat | n | Mean $\Delta \text{Money}$ | Median $\Delta \text{Money}$ |
 | :--- | :---: | :---: | :---: |
-| **Seat 0 (P0)** | 50 | −$1,224.30 | −$939.00 |
-| **Seat 1 (P1)** | 50 | −$817.06 | −$756.00 |
+| **Seat 0 (P0)** | 50 | −$1,224.30 | −$959.00 |
+| **Seat 1 (P1)** | 50 | −$817.06 | −$873.00 |
 
 Both seats exhibit substantial, statistically significant underperformance, demonstrating that the negative delta is not an artifact of turn-order priority.
 

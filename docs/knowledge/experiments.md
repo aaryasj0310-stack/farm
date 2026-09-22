@@ -58,7 +58,7 @@
 - **Treatment**: `P51_T1_TWO_CYCLE_CARROT_ENABLED = True` (Two-cycle carrot rotation on Days 21–23 NW+NE tiles, state-based sequential feed ledger, Hour 0 priority seed pre-ordering, MacroPlan coordinate reservation)
 - **Sample Size**: 100 matched pairs (200 live games on discovery panel seeds 96,201–96,210 x 5 opponents x 2 balanced seats)
 - **Results**:
-  - Mean Paired Cash Delta: **−$1,020.68 / game** (Median: **−$939.00 / game**, $\sigma = \$2,847.55$, SE = $284.76)
+  - Mean Paired Cash Delta: **−$1,020.68 / game** (Median: **−$959.00 / game**, $\sigma = \$2,847.55$, SE = $284.76)
   - 95% Confidence Interval: **[−$1,578.80, −$462.56]** ($p < 0.001$, statistically significantly negative)
   - Full Two-Cycle Rotations Completed: **626** (6.26 / game, 96.60% conversion of planted C2)
   - Day 23 Rotations Completed: **211** (2.11 / game)
