@@ -97,8 +97,51 @@
      - In engine rules (`_daily_refresh_animals`), skipping feeding voids pending care bonuses, directly destroying 2.50 units of milk ($244/unit) and 1.91 units of wool ($215/unit).
   3. *[MEASURED FACT] Shed Capacity Discards*:
      - Adding high-volume carrot cycles into the 100-capacity shed increased end-of-day discards by +4.37 units (+3.95 carrots, +0.93 wool, +0.49 fertilizer), destroying ~$330 in physical value.
-  4. *Structural Lesson*:
-     - Core farm wheat is essential farm infrastructure that secures high-leverage livestock revenue ($66.4k/game). 
-     - Never trade physical grain security for standalone cash crops.
+   4. *Structural Lesson*:
+      - Core farm wheat is essential farm infrastructure that secures high-leverage livestock revenue ($66.4k/game). 
+      - Never trade physical grain security for standalone cash crops.
 
-
+### Audit / System Forensic: P6 Baseline System Bottleneck Audit
+- **Type**: AUDIT / PRODUCTION BASELINE BOTTLENECK AUDIT
+- **Date**: 2026-09-22
+- **Baseline Commit**: `536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e` (Production Baseline)
+- **Flag State**: `P51_T1_TWO_CYCLE_CARROT_ENABLED = False` (Permanently locked)
+- **Panel**: 100 baseline games across 10 untouched discovery seeds (`96,401`–`96,410`) $\times$ 5 benchmark opponents $\times$ 2 balanced seats.
+- **Evaluation Status**: Diagnostic only; 100% behavior-invariant shadow telemetry. Protected evaluation seeds `98,001`–`98,050` remained untouched.
+- **Accounting Closure**: Max single-game cash reconciliation error: **$0.000000** ($\epsilon = 0$).
+- **Results**:
+  - Baseline Mean Final Cash: **$101,035.79** (Median: **$99,584.00**, Min: $78,028.00, Max: $122,839.00)
+  - Gross Product Revenue: **$147,457.41 / game**
+  - Gross Operating Expenditures: **$49,421.62 / game**
+    * Feed Wheat Purchases: **$31,249.44 / game** (863.02 units @ $36.21) [63.2% of all expenses]
+    * Worker Wages (Hires): **$7,540.68 / game** (294.0 hires)
+    * Livestock Purchases: **$4,933.00 / game** (6.77 cows, 4.45 sheep)
+    * Seed Purchases: **$4,698.50 / game**
+    * Land Expansion (NE): **$1,000.00 / game** (1.0 quadrant)
+- **Key Empirical Findings Across 6 Constraint Families**:
+  1. *[MEASURED FACT] Worker Transit Tax*:
+     - Workers execute 4,783.10 moves/game (**64.85%** of all actions), while direct work is only 2,183.80 actions (29.61%) and idle passes are 408.83 actions (5.54%).
+     - Shuttling between field rows and the center shed access tiles $(4,4)-(5,5)$ consumes over 60% of all movement.
+  2. *[MEASURED FACT] Shed Overflow Destruction*:
+     - **46.31 completed physical units ($6,026.53/game)** destroyed at midnight shed drop-offs across 16.76 events/game.
+     - Losses dominated by high-value cash goods: Strawberries ($2,266.63), Wool ($1,047.17), Milk ($1,013.91), Melons ($515.01).
+  3. *[MEASURED FACT] Physical Wheat Churn & Day 28 Bug*:
+     - Herd consumes only 213.90 units of wheat/game, yet baseline buys 863.02 units and sells 1,010.72 units.
+     - On Day 28 alone, baseline bought 453 units and sold 468 units (20 units bought and sold simultaneously every hour) due to unharmonized feed vs liquidator logic, generating all 136 stockout events in the audit.
+  4. *[MEASURED FACT] Livestock Care & Harvest Gap*:
+     - Cows suffered 17.10 missed cares/game; Sheep suffered 7.59 missed cares/game (forfeiting ~$1,500 in care bonuses).
+     - 3.51 units of milk and 1.68 units of wool left unharvested in pastures at season end ($1,216.00 uncollected value).
+  5. *[MEASURED FACT] "Living Storage" Land Bottleneck*:
+     - 51.47% of unlocked land (679.46 tile-days) occupied by mature crops held in the ground as outdoor storage.
+     - Actively growing crops occupy only 18.55% of land; 11.71% sits fallow in outer NE.
+- **Mutually Exclusive Recoverable Value**:
+  - Direct Shed Discard Prevention: **+$3,800.00 to +$4,600.00 / game**
+  - Unharvested Day-29 Assets: **+$900.00 to +$1,250.00 / game**
+  - Livestock Care Adherence: **+$1,200.00 to +$1,800.00 / game**
+  - Fertilizer Backlog Liquidation: **+$800.00 to +$1,400.00 / game**
+  - Incremental Crop Cycles from Freed Labor: **+$800.00 to +$1,500.00 / game**
+  - Day 28 Churn Spread: **+$150.00 to +$300.00 / game**
+  - **Total Inferred Recoverable Baseline Potential**: **+$7,650.00 to +$10,850.00 / game** (Lifting baseline to ~$109k–$112k).
+- **Epistemic Verdict on the $130,000 Target**:
+  - The gap to $130k cannot be closed by baseline optimizations alone. Reaching $130k requires a subsequent Macro-Architectural Expansion (profitable SW quadrant activation and secondary livestock scaling) after storage hygiene is established.
+- **Next Recommended Action**: Execute **P7 Storage Hygiene & Endgame Harmonization** as the high-priority, zero-risk recovery experiment.
