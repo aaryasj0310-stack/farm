@@ -1,0 +1,700 @@
+{
+  "n_games": 100,
+  "baseline_rewards": {
+    "mean": 102300.11,
+    "median": 102708.0,
+    "std": 9493.2,
+    "min": 75878.0,
+    "max": 121238.0
+  },
+  "by_opponent": {
+    "melon_sniper": {
+      "n": 20,
+      "mean": 103280.75,
+      "std": 10391.06,
+      "min": 75878.0,
+      "max": 119472.0
+    },
+    "cow_milk_engine": {
+      "n": 20,
+      "mean": 99161.85,
+      "std": 9384.15,
+      "min": 77935.0,
+      "max": 115368.0
+    },
+    "pass": {
+      "n": 20,
+      "mean": 102156.55,
+      "std": 8256.75,
+      "min": 81622.0,
+      "max": 112214.0
+    },
+    "pure_wheat_rush": {
+      "n": 20,
+      "mean": 101313.35,
+      "std": 9213.08,
+      "min": 77272.0,
+      "max": 111822.0
+    },
+    "full_production_agent": {
+      "n": 20,
+      "mean": 105588.05,
+      "std": 9832.64,
+      "min": 88325.0,
+      "max": 121238.0
+    }
+  },
+  "by_seat": {
+    "0": {
+      "n": 50,
+      "mean": 101657.86,
+      "std": 10272.87
+    },
+    "1": {
+      "n": 50,
+      "mean": 102942.36,
+      "std": 8701.0
+    }
+  },
+  "max_cash_delta": 0.0,
+  "tile_occupancy_total": {
+    "0,0": {
+      "PLANT_WHEAT": 526,
+      "ANIMAL_COW": 973,
+      "EMPTY": 591,
+      "ANIMAL_SHEEP": 626,
+      "PLANT_TOMATO": 276,
+      "PLANT_CARROT": 8
+    },
+    "1,0": {
+      "PLANT_WHEAT": 1239,
+      "EMPTY": 596,
+      "PLANT_MELON": 1093,
+      "PLANT_CARROT": 55,
+      "PLANT_STRAWBERRY": 17
+    },
+    "2,0": {
+      "PLANT_WHEAT": 1113,
+      "EMPTY": 376,
+      "PLANT_MELON": 1070,
+      "PLANT_CARROT": 105,
+      "ANIMAL_COW": 195,
+      "ANIMAL_SHEEP": 56,
+      "PLANT_STRAWBERRY": 85
+    },
+    "3,0": {
+      "PLANT_STRAWBERRY": 153,
+      "EMPTY": 416,
+      "PLANT_MELON": 1042,
+      "PLANT_WHEAT": 977,
+      "ANIMAL_SHEEP": 108,
+      "PLANT_CARROT": 70,
+      "ANIMAL_COW": 234
+    },
+    "4,0": {
+      "PLANT_WHEAT": 793,
+      "EMPTY": 281,
+      "PLANT_MELON": 1030,
+      "ANIMAL_SHEEP": 289,
+      "ANIMAL_COW": 478,
+      "PLANT_CARROT": 61,
+      "PLANT_STRAWBERRY": 68
+    },
+    "0,1": {
+      "PLANT_WHEAT": 1087,
+      "EMPTY": 577,
+      "PLANT_MELON": 1031,
+      "PLANT_CARROT": 47,
+      "PLANT_STRAWBERRY": 204,
+      "ANIMAL_COW": 18,
+      "PLANT_TOMATO": 36
+    },
+    "1,1": {
+      "PLANT_WHEAT": 1103,
+      "EMPTY": 389,
+      "PLANT_MELON": 1016,
+      "PLANT_CARROT": 77,
+      "ANIMAL_COW": 278,
+      "PLANT_STRAWBERRY": 119,
+      "ANIMAL_SHEEP": 18
+    },
+    "2,1": {
+      "ANIMAL_COW": 495,
+      "EMPTY": 290,
+      "PLANT_MELON": 1034,
+      "PLANT_WHEAT": 693,
+      "PLANT_STRAWBERRY": 221,
+      "PLANT_CARROT": 50,
+      "ANIMAL_SHEEP": 205,
+      "PLANT_TOMATO": 12
+    },
+    "3,1": {
+      "PLANT_WHEAT": 805,
+      "EMPTY": 274,
+      "PLANT_MELON": 1026,
+      "PLANT_CARROT": 57,
+      "PLANT_STRAWBERRY": 170,
+      "ANIMAL_SHEEP": 315,
+      "ANIMAL_COW": 353
+    },
+    "4,1": {
+      "EMPTY": 230,
+      "PLANT_MELON": 1021,
+      "ANIMAL_SHEEP": 482,
+      "PLANT_WHEAT": 572,
+      "ANIMAL_COW": 495,
+      "PLANT_STRAWBERRY": 170,
+      "PLANT_CARROT": 30
+    },
+    "0,2": {
+      "PLANT_WHEAT": 1326,
+      "EMPTY": 466,
+      "PLANT_MELON": 1006,
+      "PLANT_CARROT": 65,
+      "ANIMAL_COW": 19,
+      "PLANT_STRAWBERRY": 68,
+      "ANIMAL_SHEEP": 38,
+      "PLANT_TOMATO": 12
+    },
+    "1,2": {
+      "PLANT_WHEAT": 957,
+      "EMPTY": 380,
+      "PLANT_MELON": 1023,
+      "PLANT_STRAWBERRY": 170,
+      "ANIMAL_COW": 383,
+      "PLANT_CARROT": 87
+    },
+    "2,2": {
+      "PLANT_WHEAT": 1585,
+      "EMPTY": 432,
+      "PLANT_CARROT": 102,
+      "PLANT_STRAWBERRY": 425,
+      "PLANT_MELON": 65,
+      "ANIMAL_COW": 234,
+      "ANIMAL_SHEEP": 157
+    },
+    "3,2": {
+      "PLANT_WHEAT": 1650,
+      "PLANT_STRAWBERRY": 459,
+      "EMPTY": 347,
+      "PLANT_CARROT": 117,
+      "ANIMAL_COW": 259,
+      "ANIMAL_SHEEP": 138,
+      "PLANT_MELON": 30
+    },
+    "4,2": {
+      "PLANT_WHEAT": 1476,
+      "PLANT_STRAWBERRY": 306,
+      "EMPTY": 249,
+      "PLANT_CARROT": 66,
+      "ANIMAL_SHEEP": 510,
+      "ANIMAL_COW": 373,
+      "PLANT_MELON": 20
+    },
+    "0,3": {
+      "PLANT_WHEAT": 1549,
+      "ANIMAL_COW": 152,
+      "EMPTY": 555,
+      "PLANT_CARROT": 90,
+      "PLANT_STRAWBERRY": 561,
+      "ANIMAL_SHEEP": 40,
+      "PLANT_MELON": 53
+    },
+    "1,3": {
+      "PLANT_WHEAT": 1811,
+      "EMPTY": 526,
+      "PLANT_CARROT": 129,
+      "ANIMAL_SHEEP": 56,
+      "PLANT_STRAWBERRY": 357,
+      "PLANT_MELON": 53,
+      "PLANT_TOMATO": 12,
+      "ANIMAL_COW": 56
+    },
+    "2,3": {
+      "PLANT_WHEAT": 1464,
+      "EMPTY": 432,
+      "PLANT_CARROT": 117,
+      "ANIMAL_COW": 322,
+      "ANIMAL_SHEEP": 150,
+      "PLANT_TOMATO": 24,
+      "PLANT_STRAWBERRY": 425,
+      "PLANT_MELON": 66
+    },
+    "3,3": {
+      "PLANT_WHEAT": 1372,
+      "EMPTY": 245,
+      "ANIMAL_SHEEP": 363,
+      "PLANT_STRAWBERRY": 374,
+      "PLANT_TOMATO": 24,
+      "PLANT_CARROT": 36,
+      "PLANT_MELON": 42,
+      "ANIMAL_COW": 544
+    },
+    "4,3": {
+      "ANIMAL_COW": 3000
+    },
+    "0,4": {
+      "EMPTY": 608,
+      "PLANT_MELON": 1694,
+      "PLANT_CARROT": 106,
+      "ANIMAL_COW": 72,
+      "PLANT_WHEAT": 333,
+      "PLANT_STRAWBERRY": 187
+    },
+    "1,4": {
+      "PLANT_TOMATO": 1392,
+      "EMPTY": 774,
+      "PLANT_MELON": 633,
+      "PLANT_CARROT": 61,
+      "PLANT_WHEAT": 140
+    },
+    "2,4": {
+      "PLANT_TOMATO": 1320,
+      "EMPTY": 762,
+      "PLANT_MELON": 738,
+      "PLANT_CARROT": 36,
+      "PLANT_WHEAT": 144
+    },
+    "3,4": {
+      "ANIMAL_COW": 3000
+    },
+    "4,4": {
+      "PLANT_TOMATO": 1308,
+      "EMPTY": 738,
+      "PLANT_MELON": 805,
+      "PLANT_WHEAT": 104,
+      "PLANT_CARROT": 45
+    },
+    "5,0": {
+      "PLANT_WHEAT": 618,
+      "EMPTY": 438,
+      "LOCKED": 520,
+      "PLANT_STRAWBERRY": 1360,
+      "PLANT_CARROT": 48,
+      "ANIMAL_SHEEP": 16
+    },
+    "6,0": {
+      "PLANT_WHEAT": 388,
+      "PLANT_STRAWBERRY": 1547,
+      "EMPTY": 431,
+      "LOCKED": 520,
+      "PLANT_CARROT": 60,
+      "ANIMAL_SHEEP": 18,
+      "ANIMAL_COW": 36
+    },
+    "7,0": {
+      "PLANT_WHEAT": 544,
+      "PLANT_STRAWBERRY": 1326,
+      "EMPTY": 439,
+      "LOCKED": 520,
+      "PLANT_CARROT": 93,
+      "ANIMAL_COW": 66,
+      "PLANT_TOMATO": 12
+    },
+    "8,0": {
+      "PLANT_WHEAT": 1050,
+      "PLANT_STRAWBERRY": 544,
+      "EMPTY": 476,
+      "LOCKED": 520,
+      "PLANT_CARROT": 123,
+      "ANIMAL_SHEEP": 49,
+      "PLANT_TOMATO": 204,
+      "ANIMAL_COW": 34
+    },
+    "9,0": {
+      "PLANT_WHEAT": 1095,
+      "PLANT_STRAWBERRY": 442,
+      "EMPTY": 596,
+      "LOCKED": 520,
+      "PLANT_CARROT": 131,
+      "PLANT_TOMATO": 216
+    },
+    "5,1": {
+      "PLANT_WHEAT": 1008,
+      "PLANT_TOMATO": 360,
+      "EMPTY": 339,
+      "LOCKED": 520,
+      "PLANT_CARROT": 204,
+      "PLANT_STRAWBERRY": 136,
+      "ANIMAL_COW": 265,
+      "ANIMAL_SHEEP": 148,
+      "PLANT_MELON": 20
+    },
+    "6,1": {
+      "PLANT_WHEAT": 1268,
+      "EMPTY": 375,
+      "LOCKED": 520,
+      "PLANT_CARROT": 303,
+      "PLANT_STRAWBERRY": 476,
+      "PLANT_MELON": 10,
+      "PLANT_TOMATO": 48
+    },
+    "7,1": {
+      "PLANT_WHEAT": 1116,
+      "EMPTY": 456,
+      "LOCKED": 520,
+      "PLANT_CARROT": 312,
+      "PLANT_STRAWBERRY": 527,
+      "ANIMAL_SHEEP": 51,
+      "ANIMAL_COW": 18
+    },
+    "8,1": {
+      "PLANT_WHEAT": 1313,
+      "EMPTY": 479,
+      "LOCKED": 520,
+      "PLANT_CARROT": 331,
+      "PLANT_STRAWBERRY": 357
+    },
+    "9,1": {
+      "PLANT_WHEAT": 1222,
+      "EMPTY": 540,
+      "LOCKED": 520,
+      "PLANT_CARROT": 310,
+      "PLANT_STRAWBERRY": 340,
+      "ANIMAL_COW": 17,
+      "ANIMAL_SHEEP": 51
+    },
+    "5,2": {
+      "PLANT_WHEAT": 612,
+      "EMPTY": 214,
+      "LOCKED": 520,
+      "PLANT_CARROT": 351,
+      "PLANT_STRAWBERRY": 425,
+      "ANIMAL_COW": 523,
+      "ANIMAL_SHEEP": 355
+    },
+    "6,2": {
+      "PLANT_WHEAT": 936,
+      "EMPTY": 334,
+      "LOCKED": 520,
+      "PLANT_CARROT": 405,
+      "ANIMAL_COW": 57,
+      "PLANT_STRAWBERRY": 544,
+      "ANIMAL_SHEEP": 204
+    },
+    "7,2": {
+      "LOCKED": 520,
+      "PLANT_CARROT": 408,
+      "PLANT_WHEAT": 880,
+      "EMPTY": 429,
+      "PLANT_MELON": 20,
+      "PLANT_STRAWBERRY": 731,
+      "PLANT_TOMATO": 12
+    },
+    "8,2": {
+      "PLANT_WHEAT": 925,
+      "EMPTY": 454,
+      "LOCKED": 520,
+      "PLANT_CARROT": 387,
+      "PLANT_STRAWBERRY": 680,
+      "ANIMAL_SHEEP": 34
+    },
+    "9,2": {
+      "PLANT_WHEAT": 1152,
+      "EMPTY": 554,
+      "LOCKED": 520,
+      "PLANT_CARROT": 335,
+      "PLANT_STRAWBERRY": 391,
+      "ANIMAL_COW": 18,
+      "ANIMAL_SHEEP": 30
+    },
+    "5,3": {
+      "ANIMAL_SHEEP": 1101,
+      "EMPTY": 244,
+      "LOCKED": 520,
+      "PLANT_CARROT": 303,
+      "ANIMAL_COW": 815,
+      "PLANT_STRAWBERRY": 17
+    },
+    "6,3": {
+      "ANIMAL_SHEEP": 518,
+      "EMPTY": 325,
+      "LOCKED": 520,
+      "PLANT_CARROT": 330,
+      "PLANT_STRAWBERRY": 612,
+      "ANIMAL_COW": 415,
+      "PLANT_WHEAT": 236,
+      "PLANT_MELON": 20,
+      "PLANT_TOMATO": 24
+    },
+    "7,3": {
+      "ANIMAL_COW": 142,
+      "EMPTY": 380,
+      "LOCKED": 520,
+      "PLANT_CARROT": 333,
+      "PLANT_STRAWBERRY": 1190,
+      "PLANT_WHEAT": 252,
+      "PLANT_MELON": 40,
+      "ANIMAL_SHEEP": 143
+    },
+    "8,3": {
+      "PLANT_STRAWBERRY": 1360,
+      "EMPTY": 425,
+      "LOCKED": 520,
+      "PLANT_CARROT": 361,
+      "PLANT_WHEAT": 220,
+      "PLANT_MELON": 30,
+      "ANIMAL_SHEEP": 72,
+      "PLANT_TOMATO": 12
+    },
+    "9,3": {
+      "PLANT_STRAWBERRY": 833,
+      "EMPTY": 522,
+      "LOCKED": 520,
+      "PLANT_CARROT": 307,
+      "PLANT_WHEAT": 664,
+      "PLANT_TOMATO": 60,
+      "ANIMAL_COW": 50,
+      "ANIMAL_SHEEP": 34,
+      "PLANT_MELON": 10
+    },
+    "5,4": {
+      "PLANT_STRAWBERRY": 1394,
+      "EMPTY": 421,
+      "LOCKED": 520,
+      "PLANT_CARROT": 225,
+      "PLANT_MELON": 140,
+      "PLANT_WHEAT": 300
+    },
+    "6,4": {
+      "ANIMAL_COW": 492,
+      "EMPTY": 282,
+      "LOCKED": 520,
+      "PLANT_CARROT": 216,
+      "PLANT_WHEAT": 300,
+      "PLANT_STRAWBERRY": 374,
+      "ANIMAL_SHEEP": 766,
+      "PLANT_MELON": 50
+    },
+    "7,4": {
+      "PLANT_STRAWBERRY": 697,
+      "EMPTY": 341,
+      "LOCKED": 520,
+      "PLANT_CARROT": 219,
+      "ANIMAL_SHEEP": 593,
+      "PLANT_WHEAT": 392,
+      "ANIMAL_COW": 158,
+      "PLANT_MELON": 80
+    },
+    "8,4": {
+      "PLANT_WHEAT": 388,
+      "PLANT_STRAWBERRY": 1156,
+      "EMPTY": 400,
+      "LOCKED": 520,
+      "PLANT_CARROT": 144,
+      "PLANT_MELON": 110,
+      "ANIMAL_SHEEP": 266,
+      "ANIMAL_COW": 16
+    },
+    "9,4": {
+      "PLANT_STRAWBERRY": 918,
+      "EMPTY": 545,
+      "LOCKED": 520,
+      "PLANT_CARROT": 167,
+      "PLANT_WHEAT": 368,
+      "ANIMAL_COW": 79,
+      "PLANT_MELON": 164,
+      "ANIMAL_SHEEP": 239
+    }
+  },
+  "quadrant_occupancy": {
+    "NW": {
+      "PLANT_WHEAT": 22819,
+      "ANIMAL_COW": 11933,
+      "EMPTY": 10534,
+      "ANIMAL_SHEEP": 3551,
+      "PLANT_TOMATO": 4416,
+      "PLANT_CARROT": 1617,
+      "PLANT_MELON": 15591,
+      "PLANT_STRAWBERRY": 4539
+    },
+    "NE": {
+      "PLANT_WHEAT": 17247,
+      "EMPTY": 10439,
+      "LOCKED": 13000,
+      "PLANT_STRAWBERRY": 18377,
+      "PLANT_CARROT": 6406,
+      "ANIMAL_SHEEP": 4688,
+      "ANIMAL_COW": 3201,
+      "PLANT_TOMATO": 948,
+      "PLANT_MELON": 694
+    },
+    "SHED_ACCESS": {
+      "PLANT_TOMATO": 1308,
+      "EMPTY": 1159,
+      "PLANT_MELON": 945,
+      "PLANT_WHEAT": 404,
+      "PLANT_CARROT": 270,
+      "PLANT_STRAWBERRY": 1394,
+      "LOCKED": 520
+    },
+    "CULTIVABLE": {
+      "PLANT_WHEAT": 39662,
+      "ANIMAL_COW": 15134,
+      "EMPTY": 19814,
+      "ANIMAL_SHEEP": 8239,
+      "PLANT_TOMATO": 4056,
+      "PLANT_CARROT": 7753,
+      "PLANT_MELON": 15340,
+      "PLANT_STRAWBERRY": 21522,
+      "LOCKED": 12480
+    }
+  },
+  "wheat_summary": {
+    "total_plantings": 10146,
+    "per_game": 101.46,
+    "counts": {
+      "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 5509,
+      "W1_FEED_CRITICAL": 2144,
+      "W3_LOW_MARGIN_SURPLUS": 2493
+    },
+    "by_day": {
+      "0": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 500,
+        "W1_FEED_CRITICAL": 200
+      },
+      "1": {
+        "W1_FEED_CRITICAL": 100
+      },
+      "4": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 700
+      },
+      "6": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 331
+      },
+      "7": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 148
+      },
+      "9": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 406
+      },
+      "11": {
+        "W1_FEED_CRITICAL": 533,
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 337
+      },
+      "12": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 131,
+        "W1_FEED_CRITICAL": 207
+      },
+      "14": {
+        "W1_FEED_CRITICAL": 266,
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 75
+      },
+      "15": {
+        "W1_FEED_CRITICAL": 219,
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 343
+      },
+      "16": {
+        "W1_FEED_CRITICAL": 278,
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 231
+      },
+      "17": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 379,
+        "W1_FEED_CRITICAL": 13
+      },
+      "19": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 520
+      },
+      "20": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 470
+      },
+      "21": {
+        "W3_LOW_MARGIN_SURPLUS": 418
+      },
+      "22": {
+        "W3_LOW_MARGIN_SURPLUS": 388
+      },
+      "23": {
+        "W3_LOW_MARGIN_SURPLUS": 460
+      },
+      "24": {
+        "W3_LOW_MARGIN_SURPLUS": 656
+      },
+      "25": {
+        "W3_LOW_MARGIN_SURPLUS": 571
+      },
+      "8": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 210
+      },
+      "13": {
+        "W1_FEED_CRITICAL": 311,
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 53
+      },
+      "18": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 379,
+        "W1_FEED_CRITICAL": 11
+      },
+      "10": {
+        "W2_ECONOMICALLY_PROFITABLE_SURPLUS": 296,
+        "W1_FEED_CRITICAL": 6
+      }
+    }
+  },
+  "fertilizer_summary": {
+    "total_applications": 2428,
+    "per_game": 24.28,
+    "counts": {
+      "F2_MARGINALLY_POSITIVE": 725,
+      "F4_NEGATIVE_VS_SELLING": 114,
+      "F1_STRONGLY_POSITIVE": 1589
+    },
+    "by_crop": {
+      "TOMATO": {
+        "F2_MARGINALLY_POSITIVE": 273,
+        "F4_NEGATIVE_VS_SELLING": 114,
+        "F1_STRONGLY_POSITIVE": 77
+      },
+      "STRAWBERRY": {
+        "F2_MARGINALLY_POSITIVE": 452,
+        "F1_STRONGLY_POSITIVE": 1512
+      }
+    },
+    "mean_net_value": 53.57,
+    "mean_net_value_by_crop": {
+      "TOMATO": 4.01,
+      "STRAWBERRY": 65.28
+    }
+  },
+  "idle_summary": {
+    "total_idle_tile_days": 19814,
+    "per_game": 198.14,
+    "counts": {
+      "E5_RECOVERABLE": 13259,
+      "E1_TERMINAL_SEASON": 6555
+    }
+  },
+  "opportunity_ledger": [
+    {
+      "id": "T1",
+      "name": "Marginal Wheat Rationalization (Days 21\u201325)",
+      "activation_freq_per_game": 24.93,
+      "expected_gain_per_game": 1121.85,
+      "detectability_sample_size": 5,
+      "recommendation": "GO"
+    },
+    {
+      "id": "T2",
+      "name": "Fertilizer Negative-ROI Pruning (F4 Elimination)",
+      "activation_freq_per_game": 1.14,
+      "expected_gain_per_game": 52.65,
+      "detectability_sample_size": 1996,
+      "recommendation": "CONSIDER"
+    },
+    {
+      "id": "T3",
+      "name": "Late-Season Crop Replacement (Strawberry/Tomato -> Carrot)",
+      "activation_freq_per_game": 216.87,
+      "expected_gain_per_game": 150.0,
+      "detectability_sample_size": 246,
+      "recommendation": "GO"
+    },
+    {
+      "id": "T4",
+      "name": "Recoverable Idle Tile Activation (E5 Slack Conversion)",
+      "activation_freq_per_game": 132.59,
+      "expected_gain_per_game": 500.0,
+      "detectability_sample_size": 23,
+      "recommendation": "GO"
+    }
+  ]
+}

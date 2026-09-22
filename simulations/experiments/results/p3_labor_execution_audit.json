@@ -1,0 +1,66 @@
+{
+  "baseline_sha": "536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e",
+  "n_games": 100,
+  "mean_score": 102696.82,
+  "median_score": 102682.0,
+  "turn_accounting_per_game": {
+    "total_available": 7380.15,
+    "productive_crop": 1320.56,
+    "animal_actions": 695.9,
+    "logistics": 135.43,
+    "infrastructure": 27.6,
+    "movement": 4763.1,
+    "movement_necessary": 3905.742,
+    "movement_avoidable": 857.3580000000001,
+    "idle_noop": 437.56,
+    "reconciliation_pct": 100.0
+  },
+  "economic_losses_per_game": {
+    "missed_watering_bonus_dollars": 9630.95,
+    "plant_deaths_dollars": 0.0,
+    "decayed_crop_dollars": 6031.8,
+    "unharvested_endgame_dollars": 0.0,
+    "missed_feed_dollars": 2686.8,
+    "missed_care_multiplier_dollars": 3926.0,
+    "uncollected_fertilizer_dollars": 221.0,
+    "total_measured_losses_dollars": 22496.55
+  },
+  "cohort_stats_per_game": {
+    "farmer": {
+      "turns": 719.0,
+      "productive_crop": 121.1,
+      "animal_actions": 84.1,
+      "movement": 439.92,
+      "idle_noop": 44.91
+    },
+    "hands_1_4": {
+      "turns": 2752.8,
+      "productive_crop": 507.11,
+      "animal_actions": 306.33,
+      "movement": 1660.87,
+      "idle_noop": 210.47
+    },
+    "hands_5_8": {
+      "turns": 2175.8,
+      "productive_crop": 404.71,
+      "animal_actions": 170.22,
+      "movement": 1454.44,
+      "idle_noop": 107.0
+    },
+    "hands_9_10": {
+      "turns": 899.64,
+      "productive_crop": 151.7,
+      "animal_actions": 70.67,
+      "movement": 626.02,
+      "idle_noop": 37.13
+    },
+    "hands_11_12": {
+      "turns": 832.91,
+      "productive_crop": 135.94,
+      "animal_actions": 64.58,
+      "movement": 581.85,
+      "idle_noop": 38.05
+    }
+  },
+  "errors": 0
+}

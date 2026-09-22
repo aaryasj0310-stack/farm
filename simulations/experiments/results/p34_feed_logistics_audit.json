@@ -1,0 +1,62 @@
+{
+  "n_games": 20,
+  "shed_capacity_engine": 100,
+  "phase1_reconciliation": {
+    "mean_late_deposits": 6.0,
+    "overflow_true_count": 120,
+    "overflow_false_count": 0,
+    "action_breakdown": {
+      "PICKUP_COW": 160,
+      "PICKUP_WHEAT": 1693,
+      "PICKUP_SHEEP": 146,
+      "PICKUP_FERTILIZER": 381,
+      "PLACE_WHEAT": 62,
+      "PLACE_WOOL": 15,
+      "DROP_UNKNOWN": 402,
+      "PLACE_MILK": 16,
+      "PLACE_STRAWBERRY": 20,
+      "PLACE_MELON": 4,
+      "PLACE_TOMATO": 2,
+      "PLACE_CARROT": 1,
+      "PLACE_FERTILIZER": 3
+    },
+    "day29_actions_executed": 20.15,
+    "day29_sold": {
+      "WHEAT": 1126,
+      "WOOL": 207,
+      "STRAWBERRY": 141,
+      "FERTILIZER": 379,
+      "MILK": 313,
+      "TOMATO": 41,
+      "CARROT": 212,
+      "MELON": 12
+    },
+    "day29_unsold": {}
+  },
+  "phase2_3_pickup_ledger": {
+    "mean_pickups_game": 84.65,
+    "repeat_pickups_game": 13.95,
+    "distinct_journeys_game": 70.0,
+    "mean_manhattan_dist": 1.3225044300059068,
+    "mean_travel_steps": 31.269935026580036,
+    "qty_distribution": {
+      "1": 213,
+      "2": 281,
+      "3": 1199
+    }
+  },
+  "phase4_parallelism": {
+    "mean_feeders_per_day": 3.7413793103448274,
+    "mean_animals_fed_day": 7.175862068965517,
+    "mean_unfed_eod": 14.1,
+    "cf_saved_journeys_per_game": {
+      "4": 2.4,
+      "5": 3.05,
+      "6": 12.45
+    }
+  },
+  "phase5_recoverable_value": {
+    "cf_journeys_saved_5": 3.05,
+    "potential_turns_saved": 95.3733018310691
+  }
+}
