@@ -1,28 +1,28 @@
-# P6 Mutually Exclusive Recoverable-Value Ledger
+# P6 Mutually Exclusive Recoverable-Value Ledger (P6-R Corrected)
 
 ## 1. Accounting Principles & Epistemic Standards
 
-To ensure absolute scientific rigor and avoid double-counting, every potential opportunity identified in the P6 Audit is strictly classified under four epistemic definitions:
+To ensure absolute scientific rigor and avoid double-counting, every potential opportunity identified in the P6 Audit has been re-evaluated and classified under four epistemic definitions:
 
 1. **`MEASURED FACT`**: Direct physical observation from simulation telemetry across 100 baseline games (exact units, cash spent, cash realized).
-2. **`INFERRED RECOVERABLE VALUE`**: Conservative, causal estimate of net cash that can be captured by modifying a specific mechanism, accounting for market price slippage, worker opportunity costs, and downstream interactions.
-3. **`THEORETICAL UPPER BOUND`**: Mathematical maximum value assuming zero friction, zero price elasticity, zero transit time, and infinite shed capacity.
-4. **`NOT A REAL OPPORTUNITY`**: Apparent paper gains that cannot be physically harvested without causing equal or greater systemic regressions (e.g. forced rapid harvesting leading to shed discards, or crop replanting cannibalizing livestock feed as seen in P5.1).
+2. **`MEASURED REFERENCE VALUE`**: Calculated cash value of observed physical loss at catalog base prices or baseline realized sale prices.
+3. **`UNTESTED HYPOTHESIS`**: Realistic net cash recoverable via algorithmic modification after accounting for market price elasticity, sell-timing constraints, and worker opportunity costs.
+4. **`NOT A REAL OPPORTUNITY`**: Apparent paper gains that cannot be physically captured under the game rules or without causing equal or greater systemic collapse.
 
 ---
 
 ## 2. Mutually Exclusive Recoverable Ledger
 
-| Ledger Item | Primary Root Cause | Measured Fact (Telemetry Data) | Theoretical Upper Bound | Inferred Recoverable Value | Epistemic Classification |
-| :--- | :--- | :--- | :---: | :---: | :---: |
-| **1. Shed Overflow Discards** | Shed 100-cap overflow at Day-End drop-off | 46.31 units/game destroyed (\$6,026.53/game) | \$6,026.53 | **+\$3,800.00 – \$4,600.00** | `MEASURED FACT` / `INFERRED RECOVERABLE` |
-| **2. Unharvested Day-29 Assets** | Harvest dispatch terminates early on Day 29 | 11.50 mature units left on tiles at Turn 720 | \$1,456.30 | **+\$900.00 – \$1,250.00** | `MEASURED FACT` / `INFERRED RECOVERABLE` |
-| **3. Livestock Missed Care Bonus** | Worker transit delays causing missed daily cares | 24.69 missed cares/game (17.1 Cow, 7.6 Sheep) | \$5,681.00 | **+\$1,200.00 – \$1,800.00** | `INFERRED RECOVERABLE VALUE` |
-| **4. Fertilizer Disposal Backlog** | Market order slot exhaustion bumps fertilizer | 33.47 units produced but unsold/unliquidated | \$2,723.49 | **+\$800.00 – \$1,400.00** | `INFERRED RECOVERABLE VALUE` |
-| **5. Day 28 Wheat Churn Spread** | Desynchronized simultaneous buy/sell orders | 453 units bought / 468 sold on Day 28 | \$500.00 | **+\$150.00 – \$300.00** | `MEASURED FACT` (Direct) |
-| **6. Freed Worker Labor (Crops)** | 64.85% transit overhead (4,783 moves) | 400–600 moves recoverable via route bundling | \$6,000.00 | **+\$800.00 – \$1,500.00** | `INFERRED RECOVERABLE VALUE` |
-| **7. "Living Storage" Tile Turnover** | Crops held mature for 679.5 tile-days (51.5%) | 51.5% of farm occupied by mature plants | \$12,000.00 | **\$0.00 (Structural)** | `NOT A REAL OPPORTUNITY` (In isolation) |
-| **TOTALS** | — | **\$101,035.79 Baseline** | **\$34,387.32** | **+\$7,650.00 – \$10,850.00** | — |
+| Ledger Item | Primary Root Cause | Measured Fact (Telemetry Data) | Reference Valuation | Feasible Recoverable Cash | Epistemic Classification | Status |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| **1. Shed Overflow Discards** | Shed 100-cap overflow at midnight worker drop-off | 46.31 units/game destroyed across 16.76 events | \$4,300.60 (base) / \$6,026.53 (realized) | **+\$2,500.00 – \$4,000.00** | `MEASURED FACT` / `UNTESTED HYPOTHESIS` | **PRIMARY TARGET (P6.1)**. 78% in Strawberry (9.11 u), Wool (4.80 u), Milk (4.19 u). |
+| **2. Livestock Care Adherence** | Transit congestion causing late-day missed cares | 15.81 Cow / 11.39 Sheep missed production cares | \$4,809.52 (27.20 u @ realized) | **+\$800.00 – \$1,500.00** | `MEASURED FACT` / `UNTESTED HYPOTHESIS` | Secondary target. Requires tighter routing to prevent late-day care skips. |
+| **3. Worker Transit Labor** | Center shed shuttling (64.85% moves / 4,783 moves) | 400–600 moves recoverable via route bundling | \$6,000.00 (labor equiv) | **+\$500.00 – \$1,200.00** | `INFERRED ESTIMATE` | Requires route bundling; high risk of secondary regressions if poorly scheduled. |
+| **4. Day 28 Wheat Churn** | Simultaneous opposing buy/sell orders (20 u/hr) | 440.4 b / 466.0 s (Net +$1,040.97 cash) | \$0.00 (Already net positive) | **\$0.00 (Friction only)** | `MEASURED FACT` | Churn yields net cash. Eliminating it saves 40 slots/day but direct cash lift is ~\$0. |
+| **5. Fertilizer Backlog** | Alleged market slot saturation bumping fertilizer | 218.1 col = 187.8 s + 23.7 fert + 4.7 d + 2.0 w | \$0.00 (Conservation closed) | **\$0.00 (Refuted)** | `NOT A REAL OPPORTUNITY` | **WITHDRAWN**. Ending shed is 0.00. Mathematical conservation closed ($\text{Diff}=0$). |
+| **6. Final-Day Harvest** | Alleged early harvest shutdown on Day 29 | 11.53 terminal units spawned at step 719 | \$1,456.30 (Post-game) | **\$0.00 (Refuted)** | `NOT A REAL OPPORTUNITY` | **WITHDRAWN**. Pre-EOD mature = 0.00. Physically unharvestable under engine rules. |
+| **7. "Living Storage" Tile Idle** | Outdoor storage buffering shed capacity cap | 51.47% tile-days holding mature crops | Structural buffer | **\$0.00 (Systemic)** | `NOT A REAL OPPORTUNITY` | Required to buffer shed cap (100). Cannot be harvested without causing discards. |
+| **TOTALS** | — | **100 Games (Baseline Mean: $101,035.79)** | — | **+\$3,800.00 – \$6,700.00** | — | **Defensible Realizable Baseline Potential** |
 
 ---
 
@@ -31,26 +31,19 @@ To ensure absolute scientific rigor and avoid double-counting, every potential o
 ```
 [Baseline Current Mean: $101,035.79]
        │
-       ├─► +$4,200.00 (Eliminate Shed Discards: Strawberries, Wool, Milk)
-       ├─► +$1,500.00 (100% Livestock Care Adherence via Priority Dispatch)
-       ├─► +$1,100.00 (Harvest Day-29 Season-End Field Output)
-       ├─► +$1,100.00 (Liquidate Fertilizer Backlog)
-       ├─► +$1,150.00 (Freed Labor into Incremental Crops)
-       ├─► +$200.00   (Day 28 Wheat Churn Brokerage Spread)
+       ├─► +$3,250.00 (P6.1: Shed-Overflow Prevention via Pre-Midnight Storage Hygiene)
+       ├─► +$1,150.00 (Future: Livestock Care Scheduling & Route Prioritization)
+       ├─►   +$850.00 (Future: Worker Transit Reduction & Route Bundling)
        │
        ▼
-[Realistic Optimized Baseline Ceiling: ~$110,300.00 / game]
+[Defensible Optimized Baseline Ceiling: ~$106,200.00 – $107,800.00 / game]
        │
-       ▼  Remaining Gap to $130,000 Target: ~$19,700.00 / game
+       ▼  Remaining Gap to $130,000 Target: ~$22,200.00 – $23,800.00 / game
 ```
 
 ### Critical Epistemic Conclusion
-Fixing the measurable inefficiencies and bugs in the current production baseline recovers **+$7,650 to +$10,850 / game**, lifting performance from **~$101.0k to ~$109k–$112k**.
+Correcting the P6 audit eliminates fictitious gains (fertilizer backlog and final-day harvest) and resets the realistic baseline recovery ceiling to **+$3,800 to +$6,700 / game**, lifting performance from **~$101.0k to ~$106k–$108k**.
 
 > [!WARNING]
-> **The $130k Target Cannot Be Reached by "Bug Fixes" Alone**:
-> Anyone claiming that the baseline can reach $130,000 solely by fixing shed discards and worker transit is mathematically mistaken. 
-> To bridge the remaining **~$19,700 gap** between ~$110k and $130k requires **Macro-Architectural Expansion**:
-> 1. Profitable activation of the **SW Quadrant** ($2,000 land cost; requires dedicated squad logistics).
-> 2. High-density animal scaling (expanding herd beyond 7 cows / 5 sheep).
-> 3. Introducing an automated multi-crop scheduler that operates outside the core wheat quadrant.
+> **The $130k Target Cannot Be Reached by Baseline Bug Fixes Alone**:
+> Reaching the competition target of **$130,000** strictly requires **Macro-Architectural Expansion** (profitable SW quadrant development and secondary livestock scaling) once storage hygiene is established.

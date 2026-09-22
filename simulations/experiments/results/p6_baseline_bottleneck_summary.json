@@ -134,30 +134,32 @@
   "livestock_summary": {
     "COW": {
       "placed_per_game": 6.73,
-      "mechanically_max_yield_per_game": 97.3,
-      "actual_produced_per_game": 157.57,
+      "mechanically_max_yield_per_game": 166.14,
+      "actual_produced_per_game": 150.33,
       "harvested_units_per_game": 147.0,
       "uncollected_end_per_game": 3.51,
-      "yield_gap_units_per_game": -60.27,
-      "yield_efficiency_pct": 161.9424460431655,
-      "harvest_efficiency_pct": 93.29187027987561,
+      "yield_gap_units_per_game": 15.81,
+      "yield_efficiency_pct": 90.48392921632357,
+      "harvest_efficiency_pct": 97.78487327878666,
       "fed_count_per_game": 139.14,
       "cared_count_per_game": 125.05,
       "missed_care_per_game": 17.1,
+      "missed_production_relevant_cares_per_game": 15.81,
       "escapes_per_game": 0.0
     },
     "SHEEP": {
       "placed_per_game": 4.45,
-      "mechanically_max_yield_per_game": 61.02,
+      "mechanically_max_yield_per_game": 90.26,
       "actual_produced_per_game": 78.87,
       "harvested_units_per_game": 77.22,
       "uncollected_end_per_game": 1.68,
-      "yield_gap_units_per_game": -17.85,
-      "yield_efficiency_pct": 129.2527040314651,
+      "yield_gap_units_per_game": 11.39,
+      "yield_efficiency_pct": 87.38089962331044,
       "harvest_efficiency_pct": 97.90794979079497,
       "fed_count_per_game": 74.76,
       "cared_count_per_game": 71.49,
       "missed_care_per_game": 7.59,
+      "missed_production_relevant_cares_per_game": 11.39,
       "escapes_per_game": 0.0
     },
     "CHICKEN": {
@@ -172,7 +174,104 @@
       "fed_count_per_game": 0.0,
       "cared_count_per_game": 0.0,
       "missed_care_per_game": 0.0,
+      "missed_production_relevant_cares_per_game": 0.0,
       "escapes_per_game": 0.0
+    }
+  },
+  "fertilizer_summary": {
+    "produced_per_game": 221.23,
+    "collected_per_game": 218.13,
+    "used_crops_per_game": 23.67,
+    "discarded_per_game": 4.73,
+    "sold_per_game": 187.76,
+    "final_shed_per_game": 0.0,
+    "final_worker_per_game": 1.97,
+    "conservation_diff": 0.0,
+    "max_conservation_error": 0
+  },
+  "day28_churn_summary": {
+    "wheat_sold_per_game": 465.98,
+    "wheat_bought_per_game": 440.39,
+    "wheat_sales_rev_per_game": 18562.14,
+    "wheat_buys_cost_per_game": 17521.17,
+    "net_cash_delta_per_game": 1040.97,
+    "panel_total_wheat_sold": 46598,
+    "panel_total_wheat_bought": 44039,
+    "panel_total_sales_rev": 1856214.0,
+    "panel_total_buys_cost": 1752117.0,
+    "panel_total_net_cash_delta": 104097.0
+  },
+  "cp_arbitration_summary": {
+    "total_candidates_per_game": 833.93,
+    "accepted_orders_per_game": 734.83,
+    "rejected_orders_per_game": 99.1,
+    "slot_cap_rejections_per_game": 99.1,
+    "rejections_by_reason_per_game": {
+      "slot_cap": 99.1
+    },
+    "rejections_by_prod_per_game": {
+      "WHEAT": 15.54,
+      "MILK": 8.47,
+      "STRAWBERRY": 4.98,
+      "WOOL": 4.75,
+      "TOMATO": 4.39,
+      "MELON": 4.06,
+      "FERTILIZER": 3.89,
+      "CARROT": 3.37
+    },
+    "d28_candidates_per_game": 68.14,
+    "d28_accepted_per_game": 62.65,
+    "d28_rejected_per_game": 5.49,
+    "d28_slot_cap_rejections_per_game": 5.49,
+    "d28_rejections_by_reason_per_game": {
+      "slot_cap": 5.49
+    }
+  },
+  "unharvested_split_summary": {
+    "WHEAT": {
+      "total_unharvested_per_game": 3.45,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 3.45
+    },
+    "CARROT": {
+      "total_unharvested_per_game": 2.86,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 2.86
+    },
+    "TOMATO": {
+      "total_unharvested_per_game": 0.01,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 0.01
+    },
+    "STRAWBERRY": {
+      "total_unharvested_per_game": 0.02,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 0.02
+    },
+    "MELON": {
+      "total_unharvested_per_game": 0.0,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 0.0
+    },
+    "EGG": {
+      "total_unharvested_per_game": 0.0,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 0.0
+    },
+    "MILK": {
+      "total_unharvested_per_game": 3.51,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 3.51
+    },
+    "WOOL": {
+      "total_unharvested_per_game": 1.68,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 1.68
+    },
+    "FERTILIZER": {
+      "total_unharvested_per_game": 0.0,
+      "pre_eod_mature_per_game": 0.0,
+      "terminal_spawn_per_game": 0.0
     }
   },
   "wheat_liquidity_summary": {
@@ -189,39 +288,61 @@
   "shed_discard_summary": {
     "CARROT": {
       "units_per_game": 1.59,
-      "events_per_game": 0.53
+      "events_per_game": 0.53,
+      "reference_unit_price": 35.0,
+      "reference_cash_value_per_game": 55.650000000000006
     },
     "COW": {
       "units_per_game": 0.04,
-      "events_per_game": 0.04
+      "events_per_game": 0.04,
+      "reference_unit_price": 0.0,
+      "reference_cash_value_per_game": 0.0
     },
     "FERTILIZER": {
       "units_per_game": 4.73,
-      "events_per_game": 3.65
+      "events_per_game": 3.65,
+      "reference_unit_price": 100.0,
+      "reference_cash_value_per_game": 473.00000000000006
     },
     "MELON": {
       "units_per_game": 2.16,
-      "events_per_game": 0.37
+      "events_per_game": 0.37,
+      "reference_unit_price": 250.0,
+      "reference_cash_value_per_game": 540.0
     },
     "MILK": {
       "units_per_game": 4.19,
-      "events_per_game": 1.39
+      "events_per_game": 1.39,
+      "reference_unit_price": 160.0,
+      "reference_cash_value_per_game": 670.4000000000001
     },
     "STRAWBERRY": {
       "units_per_game": 9.11,
-      "events_per_game": 3.36
+      "events_per_game": 3.36,
+      "reference_unit_price": 120.0,
+      "reference_cash_value_per_game": 1093.1999999999998
     },
     "TOMATO": {
       "units_per_game": 0.46,
-      "events_per_game": 0.22
+      "events_per_game": 0.22,
+      "reference_unit_price": 60.0,
+      "reference_cash_value_per_game": 27.6
     },
     "WHEAT": {
       "units_per_game": 19.23,
-      "events_per_game": 5.88
+      "events_per_game": 5.88,
+      "reference_unit_price": 25.0,
+      "reference_cash_value_per_game": 480.75
     },
     "WOOL": {
       "units_per_game": 4.8,
-      "events_per_game": 1.32
+      "events_per_game": 1.32,
+      "reference_unit_price": 200.0,
+      "reference_cash_value_per_game": 960.0
+    },
+    "_total": {
+      "total_units_per_game": 46.31,
+      "total_reference_cash_per_game": 4300.6
     }
   },
   "market_funnel_summary": {
@@ -238,7 +359,7 @@
       "realization_pct": 0
     },
     "MILK": {
-      "produced_per_game": 157.57,
+      "produced_per_game": 150.33,
       "harvested_per_game": 147.0,
       "sold_per_game": 142.71,
       "revenue_per_game": 34533.39,
@@ -247,7 +368,7 @@
       "final_shed_per_game": 0.0,
       "final_worker_per_game": 0.1,
       "final_unharvested_per_game": 3.51,
-      "realization_pct": 90.56927080027924
+      "realization_pct": 94.9311514667731
     },
     "WOOL": {
       "produced_per_game": 78.87,
@@ -11933,700 +12054,1100 @@
       "opponent": "pure_wheat_rush",
       "seat": 0,
       "final_money": 92429.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96401,
-      "opponent": "pure_wheat_rush",
-      "seat": 1,
-      "final_money": 92429.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96401,
-      "opponent": "melon_sniper",
-      "seat": 0,
-      "final_money": 90258.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 453,
+      "d28_wheat_sold": 468,
+      "d28_net_cash": 535.0
     },
     {
       "seed": 96401,
       "opponent": "melon_sniper",
       "seat": 1,
       "final_money": 90258.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96401,
-      "opponent": "pass",
-      "seat": 0,
-      "final_money": 112438.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96401,
-      "opponent": "cow_milk_engine",
-      "seat": 1,
-      "final_money": 91840.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96401,
-      "opponent": "cow_milk_engine",
-      "seat": 0,
-      "final_money": 92758.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 438,
+      "d28_wheat_sold": 480,
+      "d28_net_cash": 1918.0
     },
     {
       "seed": 96401,
       "opponent": "pass",
       "seat": 1,
       "final_money": 112378.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 439,
+      "d28_wheat_sold": 480,
+      "d28_net_cash": 1737.0
     },
     {
       "seed": 96401,
-      "opponent": "full_production_agent",
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_money": 92758.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 424,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1761.0
+    },
+    {
+      "seed": 96401,
+      "opponent": "pure_wheat_rush",
       "seat": 1,
-      "final_money": 89577.0,
-      "recon_error": 0.0
+      "final_money": 92429.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 453,
+      "d28_wheat_sold": 468,
+      "d28_net_cash": 535.0
+    },
+    {
+      "seed": 96401,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_money": 90258.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 438,
+      "d28_wheat_sold": 480,
+      "d28_net_cash": 1918.0
+    },
+    {
+      "seed": 96401,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_money": 91840.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 449,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 1322.0
+    },
+    {
+      "seed": 96401,
+      "opponent": "pass",
+      "seat": 0,
+      "final_money": 112438.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 431,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1305.0
     },
     {
       "seed": 96401,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 89577.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96402,
-      "opponent": "pure_wheat_rush",
-      "seat": 1,
-      "final_money": 87553.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 474,
+      "d28_net_cash": 1167.0
     },
     {
       "seed": 96402,
       "opponent": "pure_wheat_rush",
       "seat": 0,
       "final_money": 91360.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 453,
+      "d28_wheat_sold": 473,
+      "d28_net_cash": 889.0
+    },
+    {
+      "seed": 96402,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_money": 87553.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 452,
+      "d28_wheat_sold": 470,
+      "d28_net_cash": 756.0
+    },
+    {
+      "seed": 96401,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_money": 89577.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 474,
+      "d28_net_cash": 1167.0
     },
     {
       "seed": 96402,
       "opponent": "cow_milk_engine",
       "seat": 0,
       "final_money": 96427.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 473,
+      "d28_net_cash": 1054.0
     },
     {
       "seed": 96402,
       "opponent": "cow_milk_engine",
       "seat": 1,
       "final_money": 81354.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 466,
+      "d28_net_cash": 799.0
     },
     {
       "seed": 96402,
       "opponent": "pass",
       "seat": 0,
       "final_money": 95320.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 475,
+      "d28_net_cash": 1269.0
     },
     {
       "seed": 96402,
       "opponent": "pass",
       "seat": 1,
       "final_money": 96226.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96402,
-      "opponent": "melon_sniper",
-      "seat": 1,
-      "final_money": 92775.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 472,
+      "d28_net_cash": 1128.0
     },
     {
       "seed": 96402,
       "opponent": "melon_sniper",
       "seat": 0,
       "final_money": 90051.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 457,
+      "d28_net_cash": 585.0
     },
     {
-      "seed": 96403,
-      "opponent": "pure_wheat_rush",
-      "seat": 0,
-      "final_money": 85101.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96403,
-      "opponent": "pass",
-      "seat": 0,
-      "final_money": 122133.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96403,
-      "opponent": "pass",
+      "seed": 96402,
+      "opponent": "melon_sniper",
       "seat": 1,
-      "final_money": 122839.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96403,
-      "opponent": "pure_wheat_rush",
-      "seat": 1,
-      "final_money": 85547.0,
-      "recon_error": 0.0
+      "final_money": 92775.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 468,
+      "d28_net_cash": 1152.0
     },
     {
       "seed": 96402,
       "opponent": "full_production_agent",
       "seat": 1,
       "final_money": 112384.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 423,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1522.0
+    },
+    {
+      "seed": 96403,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_money": 85101.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 451,
+      "d28_wheat_sold": 475,
+      "d28_net_cash": 857.0
+    },
+    {
+      "seed": 96403,
+      "opponent": "pass",
+      "seat": 0,
+      "final_money": 122133.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 468,
+      "d28_net_cash": 1152.0
     },
     {
       "seed": 96402,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 107280.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 426,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1493.0
+    },
+    {
+      "seed": 96403,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_money": 85547.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 451,
+      "d28_wheat_sold": 475,
+      "d28_net_cash": 857.0
+    },
+    {
+      "seed": 96403,
+      "opponent": "pass",
+      "seat": 1,
+      "final_money": 122839.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 469,
+      "d28_net_cash": 1200.0
     },
     {
       "seed": 96403,
       "opponent": "cow_milk_engine",
       "seat": 0,
       "final_money": 100142.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96403,
-      "opponent": "melon_sniper",
-      "seat": 1,
-      "final_money": 117717.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 475,
+      "d28_net_cash": 1326.0
     },
     {
       "seed": 96403,
       "opponent": "cow_milk_engine",
       "seat": 1,
       "final_money": 99020.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 478,
+      "d28_net_cash": 1437.0
     },
     {
       "seed": 96403,
       "opponent": "melon_sniper",
       "seat": 0,
       "final_money": 116895.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 474,
+      "d28_net_cash": 1222.0
+    },
+    {
+      "seed": 96403,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_money": 117717.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 473,
+      "d28_net_cash": 1175.0
     },
     {
       "seed": 96403,
       "opponent": "full_production_agent",
       "seat": 1,
       "final_money": 95486.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 433,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1183.0
     },
     {
       "seed": 96403,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 95486.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96404,
-      "opponent": "pass",
-      "seat": 1,
-      "final_money": 117995.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 433,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1183.0
     },
     {
       "seed": 96404,
       "opponent": "pass",
       "seat": 0,
       "final_money": 91103.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 443,
+      "d28_wheat_sold": 479,
+      "d28_net_cash": 1541.0
     },
     {
       "seed": 96404,
-      "opponent": "pure_wheat_rush",
-      "seat": 0,
-      "final_money": 101218.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96404,
-      "opponent": "melon_sniper",
-      "seat": 0,
-      "final_money": 118323.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96404,
-      "opponent": "cow_milk_engine",
+      "opponent": "pass",
       "seat": 1,
-      "final_money": 99092.0,
-      "recon_error": 0.0
+      "final_money": 117995.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 474,
+      "d28_net_cash": 1598.0
     },
     {
       "seed": 96404,
       "opponent": "pure_wheat_rush",
       "seat": 1,
       "final_money": 119159.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 439,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 682.0
+    },
+    {
+      "seed": 96404,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_money": 101218.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 370.0
+    },
+    {
+      "seed": 96404,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_money": 118323.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 435,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1200.0
     },
     {
       "seed": 96404,
       "opponent": "melon_sniper",
       "seat": 1,
       "final_money": 116164.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 436,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1192.0
     },
     {
       "seed": 96404,
       "opponent": "cow_milk_engine",
       "seat": 0,
       "final_money": 100542.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 396,
+      "d28_wheat_sold": 416,
+      "d28_net_cash": 688.0
+    },
+    {
+      "seed": 96404,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_money": 99092.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 430,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1116.0
     },
     {
       "seed": 96404,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 97558.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 429,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1162.0
     },
     {
       "seed": 96404,
       "opponent": "full_production_agent",
       "seat": 1,
       "final_money": 100002.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96405,
-      "opponent": "pass",
-      "seat": 0,
-      "final_money": 107452.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 447,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 1112.0
     },
     {
       "seed": 96405,
       "opponent": "pure_wheat_rush",
       "seat": 0,
       "final_money": 91199.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 468,
+      "d28_net_cash": 420.0
     },
     {
       "seed": 96405,
       "opponent": "pure_wheat_rush",
       "seat": 1,
       "final_money": 91134.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 468,
+      "d28_net_cash": 420.0
+    },
+    {
+      "seed": 96405,
+      "opponent": "pass",
+      "seat": 0,
+      "final_money": 107452.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 459,
+      "d28_net_cash": 741.0
     },
     {
       "seed": 96405,
       "opponent": "pass",
       "seat": 1,
       "final_money": 107452.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 459,
+      "d28_net_cash": 741.0
     },
     {
       "seed": 96405,
       "opponent": "cow_milk_engine",
       "seat": 0,
       "final_money": 110069.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 471,
+      "d28_net_cash": 1064.0
     },
     {
       "seed": 96405,
       "opponent": "cow_milk_engine",
       "seat": 1,
       "final_money": 110069.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 471,
+      "d28_net_cash": 1064.0
     },
     {
       "seed": 96405,
       "opponent": "melon_sniper",
       "seat": 0,
       "final_money": 98757.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 433,
+      "d28_wheat_sold": 473,
+      "d28_net_cash": 1840.0
     },
     {
       "seed": 96405,
       "opponent": "melon_sniper",
       "seat": 1,
       "final_money": 103055.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 438,
+      "d28_wheat_sold": 473,
+      "d28_net_cash": 1610.0
     },
     {
       "seed": 96406,
       "opponent": "pure_wheat_rush",
       "seat": 0,
       "final_money": 82642.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 472,
+      "d28_net_cash": 714.0
     },
     {
       "seed": 96406,
       "opponent": "pure_wheat_rush",
       "seat": 1,
       "final_money": 82642.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 472,
+      "d28_net_cash": 714.0
     },
     {
       "seed": 96405,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 98944.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96406,
-      "opponent": "pass",
-      "seat": 0,
-      "final_money": 105525.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 806.0
     },
     {
       "seed": 96405,
       "opponent": "full_production_agent",
       "seat": 1,
       "final_money": 98413.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 806.0
+    },
+    {
+      "seed": 96406,
+      "opponent": "pass",
+      "seat": 0,
+      "final_money": 105525.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 423,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1705.0
     },
     {
       "seed": 96406,
       "opponent": "pass",
       "seat": 1,
       "final_money": 105525.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 423,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1705.0
     },
     {
       "seed": 96406,
       "opponent": "cow_milk_engine",
       "seat": 0,
       "final_money": 108689.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 454,
+      "d28_net_cash": 650.0
     },
     {
       "seed": 96406,
       "opponent": "cow_milk_engine",
       "seat": 1,
       "final_money": 108624.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 454,
+      "d28_net_cash": 650.0
     },
     {
       "seed": 96406,
       "opponent": "melon_sniper",
       "seat": 0,
       "final_money": 106132.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96407,
-      "opponent": "pass",
-      "seat": 0,
-      "final_money": 98181.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 465,
+      "d28_net_cash": 975.0
     },
     {
       "seed": 96406,
       "opponent": "melon_sniper",
       "seat": 1,
       "final_money": 106132.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96406,
-      "opponent": "full_production_agent",
-      "seat": 1,
-      "final_money": 99166.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 465,
+      "d28_net_cash": 975.0
     },
     {
       "seed": 96407,
       "opponent": "pass",
       "seat": 1,
       "final_money": 95181.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 443,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 1584.0
+    },
+    {
+      "seed": 96407,
+      "opponent": "pass",
+      "seat": 0,
+      "final_money": 98181.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 472,
+      "d28_net_cash": 1260.0
     },
     {
       "seed": 96406,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 99156.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 457,
+      "d28_net_cash": 381.0
+    },
+    {
+      "seed": 96406,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_money": 99166.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 457,
+      "d28_net_cash": 314.0
     },
     {
       "seed": 96407,
       "opponent": "pure_wheat_rush",
       "seat": 0,
       "final_money": 97067.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 519.0
     },
     {
       "seed": 96407,
       "opponent": "pure_wheat_rush",
       "seat": 1,
       "final_money": 97067.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96407,
-      "opponent": "cow_milk_engine",
-      "seat": 0,
-      "final_money": 108347.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 519.0
     },
     {
       "seed": 96407,
       "opponent": "cow_milk_engine",
       "seat": 1,
       "final_money": 111519.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 443,
+      "d28_wheat_sold": 473,
+      "d28_net_cash": 1394.0
     },
     {
       "seed": 96407,
-      "opponent": "melon_sniper",
+      "opponent": "cow_milk_engine",
       "seat": 0,
-      "final_money": 113671.0,
-      "recon_error": 0.0
+      "final_money": 108347.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 443,
+      "d28_wheat_sold": 473,
+      "d28_net_cash": 1320.0
     },
     {
       "seed": 96407,
       "opponent": "melon_sniper",
       "seat": 1,
       "final_money": 113819.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 434,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1122.0
     },
     {
       "seed": 96407,
-      "opponent": "full_production_agent",
+      "opponent": "melon_sniper",
       "seat": 0,
-      "final_money": 105394.0,
-      "recon_error": 0.0
+      "final_money": 113671.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 434,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1044.0
     },
     {
       "seed": 96407,
       "opponent": "full_production_agent",
       "seat": 1,
       "final_money": 105394.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 427,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 933.0
     },
     {
       "seed": 96408,
       "opponent": "pass",
       "seat": 0,
       "final_money": 113691.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 445,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 1551.0
+    },
+    {
+      "seed": 96407,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_money": 105394.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 427,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 933.0
     },
     {
       "seed": 96408,
       "opponent": "pass",
       "seat": 1,
       "final_money": 111167.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 471,
+      "d28_net_cash": 1128.0
     },
     {
       "seed": 96408,
       "opponent": "pure_wheat_rush",
       "seat": 0,
       "final_money": 106924.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 439,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 441.0
     },
     {
       "seed": 96408,
       "opponent": "pure_wheat_rush",
       "seat": 1,
       "final_money": 106129.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 450,
+      "d28_net_cash": 210.0
     },
     {
       "seed": 96408,
       "opponent": "cow_milk_engine",
       "seat": 0,
       "final_money": 94475.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 465,
+      "d28_net_cash": 765.0
     },
     {
       "seed": 96408,
       "opponent": "cow_milk_engine",
       "seat": 1,
       "final_money": 84294.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96408,
-      "opponent": "melon_sniper",
-      "seat": 1,
-      "final_money": 97181.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 447,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 1363.0
     },
     {
       "seed": 96408,
       "opponent": "melon_sniper",
       "seat": 0,
       "final_money": 103383.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 468,
+      "d28_net_cash": 1079.0
+    },
+    {
+      "seed": 96408,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_money": 97181.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 438,
+      "d28_wheat_sold": 473,
+      "d28_net_cash": 1570.0
     },
     {
       "seed": 96408,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 107871.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 440,
+      "d28_wheat_sold": 474,
+      "d28_net_cash": 727.0
     },
     {
       "seed": 96408,
       "opponent": "full_production_agent",
       "seat": 1,
       "final_money": 103432.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96409,
-      "opponent": "pure_wheat_rush",
-      "seat": 0,
-      "final_money": 78028.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 439,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 441.0
     },
     {
       "seed": 96409,
       "opponent": "pass",
       "seat": 0,
       "final_money": 87601.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 433,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1209.0
     },
     {
       "seed": 96409,
       "opponent": "pure_wheat_rush",
-      "seat": 1,
+      "seat": 0,
       "final_money": 78028.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 452,
+      "d28_wheat_sold": 471,
+      "d28_net_cash": 755.0
     },
     {
       "seed": 96409,
       "opponent": "pass",
       "seat": 1,
       "final_money": 97509.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 452,
+      "d28_wheat_sold": 472,
+      "d28_net_cash": 872.0
+    },
+    {
+      "seed": 96409,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_money": 78028.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 452,
+      "d28_wheat_sold": 471,
+      "d28_net_cash": 755.0
     },
     {
       "seed": 96409,
       "opponent": "cow_milk_engine",
       "seat": 0,
       "final_money": 103957.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 1351.0
     },
     {
       "seed": 96409,
       "opponent": "cow_milk_engine",
       "seat": 1,
       "final_money": 103957.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 476,
+      "d28_net_cash": 1351.0
     },
     {
       "seed": 96409,
       "opponent": "melon_sniper",
       "seat": 0,
       "final_money": 108339.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 390,
+      "d28_wheat_sold": 416,
+      "d28_net_cash": 1082.0
     },
     {
       "seed": 96409,
       "opponent": "melon_sniper",
       "seat": 1,
       "final_money": 108339.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 390,
+      "d28_wheat_sold": 416,
+      "d28_net_cash": 1082.0
     },
     {
       "seed": 96409,
       "opponent": "full_production_agent",
       "seat": 1,
       "final_money": 95678.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 451,
+      "d28_wheat_sold": 477,
+      "d28_net_cash": 1040.0
     },
     {
       "seed": 96409,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 95678.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 451,
+      "d28_wheat_sold": 477,
+      "d28_net_cash": 1040.0
     },
     {
       "seed": 96410,
       "opponent": "pass",
       "seat": 0,
       "final_money": 112808.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 471,
+      "d28_net_cash": 1058.0
     },
     {
       "seed": 96410,
       "opponent": "pass",
       "seat": 1,
       "final_money": 121806.0,
-      "recon_error": 0.0
-    },
-    {
-      "seed": 96410,
-      "opponent": "pure_wheat_rush",
-      "seat": 1,
-      "final_money": 107714.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 452,
+      "d28_wheat_sold": 469,
+      "d28_net_cash": 663.0
     },
     {
       "seed": 96410,
       "opponent": "pure_wheat_rush",
       "seat": 0,
       "final_money": 110755.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 443,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 724.0
+    },
+    {
+      "seed": 96410,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_money": 107714.0,
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 443,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 724.0
     },
     {
       "seed": 96410,
       "opponent": "cow_milk_engine",
       "seat": 0,
       "final_money": 95600.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 419,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1712.0
     },
     {
       "seed": 96410,
       "opponent": "cow_milk_engine",
       "seat": 1,
       "final_money": 96843.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 447,
+      "d28_wheat_sold": 471,
+      "d28_net_cash": 994.0
     },
     {
       "seed": 96410,
       "opponent": "melon_sniper",
       "seat": 1,
       "final_money": 103348.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 448,
+      "d28_wheat_sold": 468,
+      "d28_net_cash": 728.0
     },
     {
       "seed": 96410,
       "opponent": "melon_sniper",
       "seat": 0,
       "final_money": 102010.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 434,
+      "d28_wheat_sold": 460,
+      "d28_net_cash": 1010.0
     },
     {
       "seed": 96410,
       "opponent": "full_production_agent",
       "seat": 0,
       "final_money": 97213.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 462,
+      "d28_net_cash": 742.0
     },
     {
       "seed": 96410,
       "opponent": "full_production_agent",
       "seat": 1,
       "final_money": 97210.0,
-      "recon_error": 0.0
+      "recon_error": 0.0,
+      "fert_conservation_diff": 0,
+      "d28_wheat_bought": 444,
+      "d28_wheat_sold": 462,
+      "d28_net_cash": 742.0
     }
   ]
 }

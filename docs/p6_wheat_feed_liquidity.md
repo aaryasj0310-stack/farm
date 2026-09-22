@@ -1,14 +1,14 @@
-# P6 Physical Wheat & Feed Liquidity Audit
+# P6 Physical Wheat & Feed Liquidity Audit (P6-R Corrected)
 
 ## 1. Executive Summary & Epistemic Verdict
 
-Physical wheat is the critical lifeblood of Kaggriculture. It is simultaneously:
+Physical wheat is the critical operational commodity in Kaggriculture:
 1. **Biological Feed**: Required daily to prevent livestock escapes and trigger dairy/wool yields.
 2. **Cash Crop**: Harvested and sold for cash ($36,837.79/game).
 3. **Trade Commodity**: Purchased at market ($31,249.44/game) to maintain buffer reserves.
 
 ```
-                             THE WHEAT CHURN CYCLE
+                             THE WHEAT CHURN CYCLE (100-Game Mean)
    ┌────────────────────────────────────────────────────────────────────────┐
    │ Farm Harvested Wheat:                     381.91 units                 │
    │ Purchased from Market:                    863.02 units  ($31,249.44)   │
@@ -23,65 +23,60 @@ Physical wheat is the critical lifeblood of Kaggriculture. It is simultaneously:
 
 > [!IMPORTANT]
 > **Epistemic Classification: `MEASURED FACT`**
-> Across 100 baseline games, the agent's herd consumed only **213.90 units of wheat**, yet the agent harvested **381.91 units** and purchased an astonishing **863.02 units**.
-> Over **80% of all purchased wheat was immediately resold to the market**, creating massive logistical churn, slot congestion, and shed overflow discards.
+> - The herd consumes only **213.90 units of wheat/game**, yet the baseline buys 863.02 units and sells 1,010.72 units.
+> - On Day 28, desynchronized buy/sell orders churned **440.39 units bought vs 465.98 units sold per game** (panel total: 44,039 bought / 46,598 sold).
+> - However, the net financial delta on Day 28 was positive (**+$1,040.97 / game**), zero animals escaped or starved, and market slots were NOT saturated (8 free slots/hour).
 
 ---
 
-## 2. Key Empirical Findings
+## 2. Key Empirical Findings (100-Game Panel)
 
-### 1. Grain Stockouts (Feed Insecurity)
+### 1. Grain Stockouts (Intraday Feed Insecurity)
 - **Mean Stockout Hours / Game**: 1.36 hours
 - **Games Experiencing Stockouts**: **52 out of 100 games (52.0%)**
-- In over half of all baseline games, there was at least one hour where an animal was waiting to be fed, but total wheat across the shed and worker inventories was **zero**.
-- Fortunately, zero animals escaped (escapes = 0.00) because the emergency buy fallback or daily wheat harvest replenished grain before the 2-day starvation limit expired. However, these stockouts triggered panic market orders that disrupted regular trading.
+- In 52 games, there was at least one hour where an unfed animal existed while total wheat across the shed and worker inventories was zero.
+- However, zero animals starved or escaped (escapes = 0.00). Morning harvests or subsequent intraday market purchases arrived before midnight.
 
-### 2. Massive Round-Trip Churn
+### 2. Panel-Wide Wheat Trading
 - **Wheat Sold**: 1,010.72 units @ \$36.45 = \$36,837.79
 - **Wheat Bought**: 863.02 units @ \$36.21 = \$31,249.44
-- **Net Wheat Trade**: +\$5,588.35 cash from trading 1,873 units of wheat.
-- Although the cash spread was positive (+\$0.24/unit), this nominal profit is completely eclipsed by the hidden costs:
-  - **Shed Capacity Choke**: Carrying 20–40 units of buffer wheat leaves no room for high-value items, causing \$6,026.53 in discards.
-  - **Order Slot Depletion**: Consumed hundreds of market slots that could have been used to liquidate high-value produce.
+- **Net Wheat Trade**: +\$5,588.35 cash spread across 1,873.74 traded units.
 
 ---
 
-## 3. The Day 28 Desynchronization Bug
+## 3. The Day 28 Desynchronization Analysis: Fact vs Hypothesis
 
-Detailed hourly inspection of Game 0 (and corroborated across all 100 games) revealed an extreme operational flaw:
+### The Mechanism
+1. **Endgame Liquidator**: Emits `SELL WHEAT 20` every hour starting on Day 28 (`reserved_wheat = 0`).
+2. **OrderBuilder Intraday Feed Protection**: Seeing low wheat in the shed, requests 240 units of buffer wheat (`BUY_PRODUCT WHEAT 20` every hour).
+3. **Engine Execution**: The engine executes `SELL` then `BUY` in lockstep.
 
-```
-Day 28 Hourly Trading Log:
-  Hour 00: Bought  0, Sold 20
-  Hour 01: Bought  0, Sold 20
-  Hour 02: Bought 32, Sold  8
-  Hour 03: Bought 20, Sold 20   <--- Simultaneous opposing orders!
-  Hour 04: Bought 21, Sold 20
-  Hour 05: Bought 20, Sold 20
-  ...
-  Hour 23: Bought 20, Sold 20
-  Total Day 28: 453 units BOUGHT, 468 units SOLD!
-```
-
-### Mechanism of the Bug
-1. **Endgame Liquidator**: Sees Day 28 and attempts to liquidate all shed wheat to maximize cash before game end, emitting `SELL WHEAT 20` every hour.
-2. **Feed Feasibility / OrderBuilder**: Sees Day 28 Hour $h$ with low wheat and attempts to protect the herd against starvation on Day 29, emitting `BUY WHEAT 20` every hour.
-3. **The Root Cause**: `P22A_DAY28_FEED_HARMONIZATION_ENABLED = False` in the production baseline.
-4. **Consequences**:
-   - The agent buys and sells 20 units of wheat in the **exact same hour** for 21 consecutive hours!
-   - This single bug churned **450+ units of wheat on Day 28 alone**, maxing out market slots and filling the shed right before the Day 28 midnight drop, directly triggering the massive **Strawberry ($2,266.63) and Wool ($1,047.17) shed discards**!
+### Panel Reconciliation: 100 Games
+- **Scope Clarification**: The previously cited figure of "453 bought / 468 sold" was from **Game 0 only**.
+- **Panel Average**:
+  * **Units Bought**: 440.39 units/game ($17,521.17 cost)
+  * **Units Sold**: 465.98 units/game ($18,562.14 revenue)
+  * **Net Cash Lift**: **+$1,040.97 / game** (Total: +$104,097.00 across the panel).
+- **Slot Capacity Audit**:
+  * Churn consumed exactly 2 orders per turn (1 SELL, 1 BUY).
+  * 8 out of 10 slots remained available in every churn hour.
+  * CentralPlanner rejections during Day 28: only 5.49 across the entire day.
+- **Shed State Audit**:
+  * Shed wheat at Day 28 Hour 23 was **0.00 units**.
+  * Churn did not cause midnight shed overflow discards.
 
 ---
 
 ## 4. Recoverable Value & Operational Verdict
 
-| Impact Dimension | Measured Severity | Recoverable Cash Value | Epistemic Classification |
+| Impact Dimension | Measured Reality | Financial Impact | Epistemic Classification |
 | :--- | :---: | :---: | :---: |
-| **Day 28 Buy/Sell Churn** | 453 units bought / 468 sold | **+$1,200.00 – $2,500.00** (Indirect via discard reduction) | `INFERRED RECOVERABLE VALUE` |
-| **Direct Discarded Wheat** | 19.23 units / game | **$700.88** | `MEASURED FACT` |
-| **Feed Stockout Elimination** | 1.36 hours in 52% of games | **+$250.00 – $500.00** (Preventing feed-delay care losses) | `INFERRED RECOVERABLE VALUE` |
-| **Total Physical Wheat Opportunity**| — | **+$2,150.00 – $3,700.88** | — |
+| **Day 28 Buy/Sell Churn** | 440.4 b / 466.0 s / game | **Net +$1,040.97 / game** (Profitable net sale) | `MEASURED FACT` |
+| **Direct Discarded Wheat** | 19.23 units / game | **$700.88 loss** (Captured in shed discards) | `MEASURED FACT` |
+| **Feed Stockout Elimination** | 1.36 hours in 52% of games | **$0.00 direct cash** (Zero escapes occurred) | `MEASURED FACT` |
+| **Fertilizer Backlog Claim** | Refuted | **$0.00** (Conservation closed) | `NOT A REAL OPPORTUNITY` |
 
 > [!TIP]
-> **Key Recommendation**:
-> Enforcing strict unidirectional wheat orders (never buy wheat if selling wheat in the same turn) and synchronizing Day 28 feed reservations with endgame liquidation immediately prevents 450 units of fake churn and protects shed room for season-end cash liquidation.
+> **Operational Verdict**:
+> The Day 28 churn is sloppy and wasteful of order slots, but it is financially net-positive and did not cause feed failures or slot saturation. 
+> Fixing it will not produce direct cash lift; it is a code-cleanliness and risk-reduction improvement that should NOT be bundled into P6.1.

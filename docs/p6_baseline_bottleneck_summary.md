@@ -93,6 +93,6 @@ The production baseline generates substantial gross revenue, but surrenders over
 ```
 
 ### Key Takeaway for the Path to $130k
-The production baseline is not failing due to crop yields or pricing models; it is being throttled by **storage bottlenecks ($6.0k discards)**, **market order desynchronization ($31.2k churn)**, and **logistical congestion (64.9% movement)**.
+The production baseline is not failing due to crop yields or pricing models; it is being throttled primarily by **storage overflow destruction (46.31 units / $6.0k reference loss)**, **worker transit overhead (64.9% movement)**, and **missed livestock care operations (27.2 missed production cares)**.
 
-Eliminating shed discards and harmonizing wheat liquidity represents a verified **+$7,000 to +$10,500/game recoverable opportunity**, establishing a clear empirical bridge toward $112k–$115k, with further route optimization opening the trajectory toward $120k+.
+Eliminating shed discards and optimizing care operations represents a defensible **+$3,800 to +$6,700/game recoverable opportunity**, establishing an empirical bridge toward **$106k–$108k**. Reaching the ultimate **$130k target** strictly requires subsequent Macro-Architectural Expansion (profitable SW quadrant activation and secondary herd expansion) once storage hygiene is established.

@@ -122,6 +122,7 @@ def _run_p6_game(seed, opponent, seat):
             "missed_feed_opportunities": 0,
             "care_events": 0,
             "missed_care_opportunities": 0,
+            "missed_production_relevant_cares": 0,
             "production_intervals": 0,
             "units_produced": 0,
             "mechanically_max_units": 0,
@@ -134,9 +135,30 @@ def _run_p6_game(seed, opponent, seat):
     fertilizer_summary = {
         "produced": 0,
         "collected": 0,
+        "used_crops": 0,
         "discarded": 0,
         "sold": 0,
+        "final_shed": 0,
+        "final_worker": 0,
     }
+
+    # Market arbitration tracking (CentralPlanner candidates and rejections)
+    cp_arbitration = {
+        "total_candidates": 0,
+        "accepted_orders": 0,
+        "rejected_orders": 0,
+        "slot_cap_rejections": 0,
+        "rejections_by_reason": defaultdict(int),
+        "rejections_by_prod": defaultdict(int),
+        "d28_candidates": 0,
+        "d28_accepted": 0,
+        "d28_rejected": 0,
+        "d28_slot_cap_rejections": 0,
+        "d28_rejections_by_reason": defaultdict(int),
+    }
+
+    # Final-day unharvested breakdown (pre-EOD mature vs terminal-spawn at step 719)
+    unharvested_pre_eod = defaultdict(int)
 
     # 3. Wheat & Feed Liquidity Tracking
     hourly_wheat_liquidity = []
@@ -445,7 +467,9 @@ def _run_p6_game(seed, opponent, seat):
             elif op == "FERTILIZE":
                 category = "PRODUCTIVE_CROP"
                 detail = "FERTILIZE"
-                if isinstance(tile, dict) and tile.get("kind") == "PLANT":
+                inv = private["inventories"][unit_idx]
+                if isinstance(tile, dict) and tile.get("kind") == "PLANT" and inv.get("FERTILIZER", 0) > 0:
+                    fertilizer_summary["used_crops"] += 1
                     crop = tile.get("crop", "UNKNOWN")
                     crop_lifecycle_p6[crop]["fertilized"] += 1
                 congestion_map[day][hour]["crop"] += 1
@@ -495,15 +519,25 @@ def _run_p6_game(seed, opponent, seat):
                             # Production tick check
                             if days_since_first >= 0 and days_since_first % a_cfg["interval"] == 0:
                                 livestock_summary[anim]["production_intervals"] += 1
-                                # Mechanically max yield achievable = 1 base + max care bonus (interval - 1 cares)
-                                max_care = a_cfg["interval"] - 1
-                                livestock_summary[anim]["mechanically_max_units"] += (1 + max_care)
+                                # Mechanically max yield achievable under engine rules:
+                                # First tick (days_since_first == 0): up to first_yield_day cares banked, capped at max_held
+                                # Subsequent ticks (days_since_first > 0): up to interval cares banked, plus base 1 = min(max_held, 1 + interval)
+                                if days_since_first == 0:
+                                    tick_mech_max = min(a_cfg["max_held"], 1 + a_cfg["first_yield_day"])
+                                else:
+                                    tick_mech_max = min(a_cfg["max_held"], 1 + a_cfg["interval"])
+                                
+                                livestock_summary[anim]["mechanically_max_units"] += tick_mech_max
 
                                 base = 1
                                 bonus = t.get("pending_care_bonus", 0) if t["fed_today"] else 0
-                                actual_yield = (base + bonus) if t["fed_today"] else 0
+                                actual_yield = min(a_cfg["max_held"], base + bonus) if t["fed_today"] else 0
+                                assert actual_yield <= tick_mech_max, f"Yield {actual_yield} exceeded mech max {tick_mech_max}"
                                 livestock_summary[anim]["units_produced"] += actual_yield
                                 market_funnel[a_cfg["product"]]["produced"] += actual_yield
+
+                                missed_care = tick_mech_max - actual_yield
+                                livestock_summary[anim]["missed_production_relevant_cares"] += missed_care
 
                             fertilizer_summary["produced"] += 1
                             market_funnel["FERTILIZER"]["produced"] += 1
@@ -556,6 +590,8 @@ def _run_p6_game(seed, opponent, seat):
                         discarded = n - room
                         shed_discards[item]["units"] += discarded
                         shed_discards[item]["events"].append({"day": day, "units": discarded})
+                        if item == "FERTILIZER":
+                            fertilizer_summary["discarded"] += discarded
                         if item in market_funnel:
                             market_funnel[item]["discarded"] += discarded
                         room = 0
@@ -571,6 +607,24 @@ def _run_p6_game(seed, opponent, seat):
         unlocked_quads = our_farm.get("unlocked_quadrants", ["NW"])
         n_unlocked_tiles = len(unlocked_quads) * 25
         tile_days_summary["unlocked_tile_days"] += n_unlocked_tiles
+
+        if day == 29:
+            # Snapshot produce that was mature and physically on tiles BEFORE Day 29 EOD refresh
+            for y in range(10):
+                for x in range(10):
+                    t = our_farm["tiles"][y][x]
+                    if isinstance(t, dict):
+                        if t.get("kind") == "PLANT":
+                            crop = t.get("crop")
+                            y_u = t.get("yield_units", 0)
+                            if y_u > 0:
+                                unharvested_pre_eod[crop] += y_u
+                        elif "animal" in t:
+                            anim = t.get("animal")
+                            prod = kg.ANIMALS[anim]["product"]
+                            y_u = t.get("yield_units", 0)
+                            if y_u > 0:
+                                unharvested_pre_eod[prod] += y_u
 
         for y in range(10):
             for x in range(10):
@@ -658,6 +712,40 @@ def _run_p6_game(seed, opponent, seat):
             _snapshot_hourly_state(env, env.state)
             act0 = _call_agent(players[0], env.state[0].observation, env.configuration)
             act1 = _call_agent(players[1], env.state[1].observation, env.configuration)
+
+            # Intercept CentralPlanner diagnostics for our agent
+            try:
+                import main as agent_main
+                cp_diag = agent_main.get_central_planner_diagnostics()
+                if cp_diag:
+                    cur_day = step_idx // 24
+                    n_cand = cp_diag.get("total_candidates", 0)
+                    acc_list = cp_diag.get("accepted_details", [])
+                    rej_list = cp_diag.get("rejected_details", [])
+                    cp_arbitration["total_candidates"] += n_cand
+                    cp_arbitration["accepted_orders"] += len(acc_list)
+                    cp_arbitration["rejected_orders"] += len(rej_list)
+                    for r_item in rej_list:
+                        reason = r_item.get("rejection_reason", "unknown")
+                        cp_arbitration["rejections_by_reason"][reason] += 1
+                        if reason == "slot_cap":
+                            cp_arbitration["slot_cap_rejections"] += 1
+                        ord_tuple = r_item.get("order")
+                        if ord_tuple and len(ord_tuple) > 1:
+                            prod = ord_tuple[1]
+                            cp_arbitration["rejections_by_prod"][prod] += 1
+                    if cur_day == 28:
+                        cp_arbitration["d28_candidates"] += n_cand
+                        cp_arbitration["d28_accepted"] += len(acc_list)
+                        cp_arbitration["d28_rejected"] += len(rej_list)
+                        for r_item in rej_list:
+                            reason = r_item.get("rejection_reason", "unknown")
+                            cp_arbitration["d28_rejections_by_reason"][reason] += 1
+                            if reason == "slot_cap":
+                                cp_arbitration["d28_slot_cap_rejections"] += 1
+            except Exception:
+                pass
+
             env.step([act0, act1])
     finally:
         kg._process_market = orig_process_market
@@ -682,6 +770,33 @@ def _run_p6_game(seed, opponent, seat):
         market_funnel[p]["final_shed"] = final_shed.get(p, 0)
         market_funnel[p]["final_worker"] = sum((inv or {}).get(p, 0) for inv in final_worker_inv)
 
+    fertilizer_summary["final_shed"] = final_shed.get("FERTILIZER", 0)
+    fertilizer_summary["final_worker"] = sum((inv or {}).get("FERTILIZER", 0) for inv in final_worker_inv)
+    fertilizer_summary["sold"] = cash_ledger["sells"]["FERTILIZER"]["units"]
+
+    # Mathematical Conservation Check for Fertilizer:
+    fert_outflows = (fertilizer_summary["sold"] + fertilizer_summary["used_crops"] + 
+                     fertilizer_summary["discarded"] + fertilizer_summary["final_shed"] + 
+                     fertilizer_summary["final_worker"])
+    fert_diff = fertilizer_summary["collected"] - fert_outflows
+    assert fert_diff == 0, f"Fertilizer conservation violated: collected={fertilizer_summary['collected']} vs outflows={fert_outflows} (diff={fert_diff})"
+    fertilizer_summary["conservation_error"] = fert_diff
+
+    # Day 28 wheat metrics
+    d28_wheat_sold = sum(units for d, h, units, p in wheat_sales_log if d == 28)
+    d28_wheat_bought = sum(units for d, h, units, p in wheat_purchases_log if d == 28)
+    d28_wheat_rev = sum(units * p for d, h, units, p in wheat_sales_log if d == 28)
+    d28_wheat_cost = sum(units * p for d, h, units, p in wheat_purchases_log if d == 28)
+    d28_net_cash = d28_wheat_rev - d28_wheat_cost
+
+    day28_metrics = {
+        "wheat_sold": d28_wheat_sold,
+        "wheat_bought": d28_wheat_bought,
+        "wheat_sales_rev": d28_wheat_rev,
+        "wheat_buys_cost": d28_wheat_cost,
+        "net_cash_delta": d28_net_cash,
+    }
+
     # Final uncollected produce on plants and animals
     for row in final_farm.get("tiles", []):
         for t in row:
@@ -702,6 +817,18 @@ def _run_p6_game(seed, opponent, seat):
                     if prod in market_funnel:
                         market_funnel[prod]["final_unharvested"] += y
 
+    # Unharvested breakdown (pre-EOD mature vs terminal spawn at step 719)
+    unharvested_breakdown = {}
+    for p in PRODUCTS:
+        tot_unh = market_funnel[p]["final_unharvested"]
+        pre_eod = unharvested_pre_eod.get(p, 0)
+        term_spawn = tot_unh - pre_eod
+        unharvested_breakdown[p] = {
+            "total_unharvested": tot_unh,
+            "pre_eod_mature": pre_eod,
+            "terminal_spawn": term_spawn,
+        }
+
     # Exact Cash Reconciliation check
     tot_sells = sum(v["revenue"] for v in cash_ledger["sells"].values())
     tot_buys_prod = sum(v["cost"] for v in cash_ledger["buys_product"].values())
@@ -712,6 +839,7 @@ def _run_p6_game(seed, opponent, seat):
 
     recon_cash = 3000.0 + tot_sells - tot_buys_prod - tot_buys_seed - tot_buys_anim - tot_hires - tot_land
     recon_error = abs(recon_cash - final_money)
+    assert recon_error < 1e-4, f"Cash reconciliation error: {recon_error}"
 
     def _to_plain_dict(obj):
         if isinstance(obj, (defaultdict, dict)):
@@ -735,6 +863,9 @@ def _run_p6_game(seed, opponent, seat):
         "worker_idle_pass_counts": worker_idle_pass_counts,
         "livestock_summary": livestock_summary,
         "fertilizer_summary": fertilizer_summary,
+        "cp_arbitration": cp_arbitration,
+        "day28_metrics": day28_metrics,
+        "unharvested_breakdown": unharvested_breakdown,
         "grain_stockout_events": grain_stockout_events,
         "wheat_sales_log": wheat_sales_log,
         "wheat_purchases_log": wheat_purchases_log,
@@ -883,6 +1014,7 @@ def _aggregate_results(results):
         tot_harvested = sum(r["livestock_summary"][anim]["harvested_units"] for r in results)
         tot_uncollected = sum(r["livestock_summary"][anim]["uncollected_end_units"] for r in results)
         tot_missed_care = sum(r["livestock_summary"][anim]["missed_care_opportunities"] for r in results)
+        tot_missed_prod_care = sum(r["livestock_summary"][anim]["missed_production_relevant_cares"] for r in results)
         tot_escapes = sum(r["livestock_summary"][anim]["escapes"] for r in results)
         tot_fed = sum(r["livestock_summary"][anim]["feed_events"] for r in results)
         tot_cared = sum(r["livestock_summary"][anim]["care_events"] for r in results)
@@ -899,7 +1031,97 @@ def _aggregate_results(results):
             "fed_count_per_game": tot_fed / N,
             "cared_count_per_game": tot_cared / N,
             "missed_care_per_game": tot_missed_care / N,
+            "missed_production_relevant_cares_per_game": tot_missed_prod_care / N,
             "escapes_per_game": tot_escapes / N,
+        }
+
+    # Fertilizer Mathematical Conservation Summary
+    fert_prod = sum(r["fertilizer_summary"]["produced"] for r in results)
+    fert_col = sum(r["fertilizer_summary"]["collected"] for r in results)
+    fert_used = sum(r["fertilizer_summary"]["used_crops"] for r in results)
+    fert_disc = sum(r["fertilizer_summary"]["discarded"] for r in results)
+    fert_sold = sum(r["fertilizer_summary"]["sold"] for r in results)
+    fert_shed = sum(r["fertilizer_summary"]["final_shed"] for r in results)
+    fert_work = sum(r["fertilizer_summary"]["final_worker"] for r in results)
+    max_fert_err = max(abs(r["fertilizer_summary"].get("conservation_error", 0)) for r in results)
+
+    fertilizer_agg = {
+        "produced_per_game": fert_prod / N,
+        "collected_per_game": fert_col / N,
+        "used_crops_per_game": fert_used / N,
+        "discarded_per_game": fert_disc / N,
+        "sold_per_game": fert_sold / N,
+        "final_shed_per_game": fert_shed / N,
+        "final_worker_per_game": fert_work / N,
+        "conservation_diff": (fert_col - (fert_sold + fert_used + fert_disc + fert_shed + fert_work)) / N,
+        "max_conservation_error": max_fert_err,
+    }
+
+    # Day 28 Wheat Churn Summary
+    d28_sold_u = sum(r["day28_metrics"]["wheat_sold"] for r in results)
+    d28_bought_u = sum(r["day28_metrics"]["wheat_bought"] for r in results)
+    d28_sold_rev = sum(r["day28_metrics"]["wheat_sales_rev"] for r in results)
+    d28_bought_cost = sum(r["day28_metrics"]["wheat_buys_cost"] for r in results)
+    d28_net_cash = sum(r["day28_metrics"]["net_cash_delta"] for r in results)
+
+    day28_churn_agg = {
+        "wheat_sold_per_game": d28_sold_u / N,
+        "wheat_bought_per_game": d28_bought_u / N,
+        "wheat_sales_rev_per_game": d28_sold_rev / N,
+        "wheat_buys_cost_per_game": d28_bought_cost / N,
+        "net_cash_delta_per_game": d28_net_cash / N,
+        "panel_total_wheat_sold": d28_sold_u,
+        "panel_total_wheat_bought": d28_bought_u,
+        "panel_total_sales_rev": d28_sold_rev,
+        "panel_total_buys_cost": d28_bought_cost,
+        "panel_total_net_cash_delta": d28_net_cash,
+    }
+
+    # CentralPlanner Market Arbitration Summary
+    tot_cp_cand = sum(r["cp_arbitration"]["total_candidates"] for r in results)
+    tot_cp_acc = sum(r["cp_arbitration"]["accepted_orders"] for r in results)
+    tot_cp_rej = sum(r["cp_arbitration"]["rejected_orders"] for r in results)
+    tot_cp_slot_rej = sum(r["cp_arbitration"]["slot_cap_rejections"] for r in results)
+    d28_cp_cand = sum(r["cp_arbitration"]["d28_candidates"] for r in results)
+    d28_cp_acc = sum(r["cp_arbitration"]["d28_accepted"] for r in results)
+    d28_cp_rej = sum(r["cp_arbitration"]["d28_rejected"] for r in results)
+    d28_cp_slot_rej = sum(r["cp_arbitration"]["d28_slot_cap_rejections"] for r in results)
+
+    agg_cp_reasons = defaultdict(int)
+    agg_cp_prods = defaultdict(int)
+    agg_d28_reasons = defaultdict(int)
+    for r in results:
+        for rsn, cnt in r["cp_arbitration"]["rejections_by_reason"].items():
+            agg_cp_reasons[rsn] += cnt
+        for prod, cnt in r["cp_arbitration"]["rejections_by_prod"].items():
+            agg_cp_prods[prod] += cnt
+        for rsn, cnt in r["cp_arbitration"]["d28_rejections_by_reason"].items():
+            agg_d28_reasons[rsn] += cnt
+
+    cp_arbitration_agg = {
+        "total_candidates_per_game": tot_cp_cand / N,
+        "accepted_orders_per_game": tot_cp_acc / N,
+        "rejected_orders_per_game": tot_cp_rej / N,
+        "slot_cap_rejections_per_game": tot_cp_slot_rej / N,
+        "rejections_by_reason_per_game": {k: v / N for k, v in sorted(agg_cp_reasons.items(), key=lambda x: -x[1])},
+        "rejections_by_prod_per_game": {k: v / N for k, v in sorted(agg_cp_prods.items(), key=lambda x: -x[1])},
+        "d28_candidates_per_game": d28_cp_cand / N,
+        "d28_accepted_per_game": d28_cp_acc / N,
+        "d28_rejected_per_game": d28_cp_rej / N,
+        "d28_slot_cap_rejections_per_game": d28_cp_slot_rej / N,
+        "d28_rejections_by_reason_per_game": {k: v / N for k, v in sorted(agg_d28_reasons.items(), key=lambda x: -x[1])},
+    }
+
+    # Unharvested Produce Split Summary (Pre-EOD Mature vs Step 719 Terminal Spawn)
+    unharv_agg = {}
+    for prod in PRODUCTS:
+        tot_u = sum(r["unharvested_breakdown"][prod]["total_unharvested"] for r in results)
+        pre_u = sum(r["unharvested_breakdown"][prod]["pre_eod_mature"] for r in results)
+        term_u = sum(r["unharvested_breakdown"][prod]["terminal_spawn"] for r in results)
+        unharv_agg[prod] = {
+            "total_unharvested_per_game": tot_u / N,
+            "pre_eod_mature_per_game": pre_u / N,
+            "terminal_spawn_per_game": term_u / N,
         }
 
     tot_stockout_hours = sum(len(r["grain_stockout_events"]) for r in results)
@@ -928,11 +1150,27 @@ def _aggregate_results(results):
             discard_agg[item] += d.get("units", 0)
             discard_events_agg[item] += d.get("count", 0)
 
-    shed_discard_summary = {
-        item: {
-            "units_per_game": discard_agg[item] / N,
-            "events_per_game": discard_events_agg[item] / N,
-        } for item in sorted(discard_agg.keys())
+    BASE_PRICES = {
+        "WHEAT": 25.0, "CARROT": 35.0, "TOMATO": 60.0, "STRAWBERRY": 120.0,
+        "MELON": 250.0, "EGG": 50.0, "MILK": 160.0, "WOOL": 200.0, "FERTILIZER": 100.0
+    }
+    shed_discard_summary = {}
+    total_discard_ref_cash = 0.0
+    for item in sorted(discard_agg.keys()):
+        units_pg = discard_agg[item] / N
+        events_pg = discard_events_agg[item] / N
+        ref_p = BASE_PRICES.get(item, 0.0)
+        ref_cash = units_pg * ref_p
+        total_discard_ref_cash += ref_cash
+        shed_discard_summary[item] = {
+            "units_per_game": units_pg,
+            "events_per_game": events_pg,
+            "reference_unit_price": ref_p,
+            "reference_cash_value_per_game": ref_cash,
+        }
+    shed_discard_summary["_total"] = {
+        "total_units_per_game": sum(discard_agg.values()) / N,
+        "total_reference_cash_per_game": total_discard_ref_cash,
     }
 
     market_funnel_agg = {}
@@ -1022,6 +1260,10 @@ def _aggregate_results(results):
             "seat": sc["seat"],
             "final_money": r["final_money"],
             "recon_error": r["recon_error"],
+            "fert_conservation_diff": r["fertilizer_summary"].get("conservation_error", 0),
+            "d28_wheat_bought": r["day28_metrics"]["wheat_bought"],
+            "d28_wheat_sold": r["day28_metrics"]["wheat_sold"],
+            "d28_net_cash": r["day28_metrics"]["net_cash_delta"],
         })
 
     return {
@@ -1035,6 +1277,10 @@ def _aggregate_results(results):
         "seat_summary": seat_summary,
         "transit_summary": transit_summary,
         "livestock_summary": livestock_agg,
+        "fertilizer_summary": fertilizer_agg,
+        "day28_churn_summary": day28_churn_agg,
+        "cp_arbitration_summary": cp_arbitration_agg,
+        "unharvested_split_summary": unharv_agg,
         "wheat_liquidity_summary": wheat_liquidity_summary,
         "shed_discard_summary": shed_discard_summary,
         "market_funnel_summary": market_funnel_agg,

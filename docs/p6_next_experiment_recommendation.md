@@ -1,81 +1,87 @@
-# P6 Next Experiment Recommendation: P7 Storage Hygiene & Endgame Harmonization
+# P6 Next Experiment Recommendation: P6.1 Shed-Overflow Prevention via Pre-Midnight Storage Hygiene
 
 ## 1. Executive Summary & Epistemic Justification
 
-The P6 Baseline System Bottleneck Audit demonstrated with mathematical closure ($\epsilon = 0.000000$) that the production baseline loses:
-- **$6,026.53 / game** in shed overflow discards (Strawberries $2,267, Wool $1,047, Milk $1,014).
-- **$1,456.30 / game** in unharvested mature products at season end.
-- **450+ units of fake wheat churn** on Day 28, generating 136 artificial stockout events.
+The P6-R audit verified with mathematical closure ($\epsilon = 0.000000$) that shed overflows destroy:
+$$\mathbf{46.31 \text{ units/game}} \quad (\mathbf{\$4,300.60 \text{ base}} \; / \; \mathbf{\$6,026.53 \text{ realized price reference value}})$$
+Over 78% of this destruction is concentrated in three high-value goods:
+- **Strawberry**: 9.11 units discarded (\$2,266.63)
+- **Wool**: 4.80 units discarded (\$1,047.17)
+- **Milk**: 4.19 units discarded (\$1,013.91)
 
-Crucially, **none of these losses require altering crop rotation schedules, buying new quadrants, or changing herd sizing**.
-The failure of P5.1 proved that attempting crop rotations while the underlying storage and feed ledgers are unstable causes severe systemic collapse (-$1,020/game).
+Crucially, the audit proved that other hypothesized gains were either fictitious (fertilizer backlog = $0, final-day terminal harvest = $0) or financially net-positive (Day 28 wheat churn = +$1,040 net cash).
 
-Therefore, the next experiment must be:
-$$\mathbf{P7: \text{ Storage Hygiene \& Endgame Liquidation Harmonization}}$$
+Therefore, the next experiment must **NOT** be a bundled multi-variable reform. In strict adherence to scientific isolation principles, the next experiment is:
+
+$$\mathbf{P6.1: \text{ Shed-Overflow Prevention via Pre-Midnight Storage Hygiene}}$$
+
+> [!IMPORTANT]
+> **Strict Single-Variable Scope**:
+> P6.1 tests **strictly one mechanism**: pre-midnight storage headroom preservation.
+> Do **NOT** combine with Day 28 feed harmonization, Day 29 endgame harvesting, crop substitution, or worker routing refactors.
+
+---
+
+## 2. Hypothesis P6.1
+
+> **Hypothesis P6.1 (Pre-Midnight Storage Hygiene)**:
+> *By monitoring shed inventory during late evening hours (Hours 20–22) and proactively liquidating surplus buffer items to maintain at least 25 units of shed headroom before workers execute their midnight inventory drops, physical shed overflow discards will decrease by $\ge 70\%$ ($\ge 32$ units preserved per game), delivering a net paired cash lift of $\ge +\$2,000.00 / \text{game}$ on the discovery panel without increasing animal feed starvation.*
+
+---
+
+## 3. Implementation Specification for P6.1
+
+### 1. Architectural Placement
+All changes will be isolated behind an explicit feature flag in `agent/config.py`:
+```python
+P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = False  # Disabled by default
+```
+
+### 2. Algorithmic Mechanism
+During late evening hours (`ctx["hour"] in (20, 21, 22)`):
+1. **Compute Expected Midnight Influx**:
+   $$\text{carried\_load} = \sum_{\text{workers}} \sum \text{inventory\_units}$$
+   $$\text{projected\_midnight\_shed} = \text{current\_shed\_occupancy} + \text{carried\_load}$$
+2. **Headroom Trigger**:
+   If $\text{projected\_midnight\_shed} > 75$ (headroom $< 25$ units):
+   Identify surplus liquidation candidates in strict priority:
+   - **Tier 1 (Excess Fertilizer)**: Sell fertilizer exceeding immediate farm needs (`shed["FERTILIZER"] > 5`).
+   - **Tier 2 (Excess Cash Crops)**: Drip-sell strawberries, wool, milk, or melons already deposited in shed.
+   - **Tier 3 (Discretionary Wheat)**: Sell surplus wheat strictly above the safe feed reserve floor:
+     $$\text{safe\_reserve\_floor} = \max(15, 2.0 \times \text{daily\_feed\_need})$$
+3. **Safety Safeguards**:
+   - **Hard Invariant 1 (Feed Protection)**: Never sell wheat if remaining shed wheat $\le \text{safe\_reserve\_floor}$.
+   - **Hard Invariant 2 (Priority Domination)**: Never displace `P0_CRITICAL` market orders (emergency feed wheat purchases).
+   - **Hard Invariant 3 (Time Window Lock)**: Storage hygiene flushes are active strictly during Hours 20–22, preventing disruption to intraday market operations.
+
+---
+
+## 4. Experimental Design & Go / No-Go Decision Gates
+
+### Evaluation Protocol
+- **Panel**: 100 matched pairs (10 discovery seeds `96,401`–`96,410` $\times$ 5 opponents $\times$ 2 balanced seats = 200 live games).
+- **Control**: Production baseline commit `536f1e7` ($101,035.79 mean cash).
+- **Treatment**: Production baseline with `P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = True`.
+- **Protected Verification**: Held-out tournament seeds `98,001`–`98,050` remain 100% untouched.
+
+### Quantitative Decision Gates
 
 ```
-                       P7 CAUSAL RECOVERY ARCHITECTURE
+                            P6.1 DECISION GATES
   ┌────────────────────────────────────────────────────────────────────────┐
-  │ 1. Pre-Midnight Shed Headroom Protection (Hours 20–22):                 │
-  │    Liquidate excess fertilizer & surplus wheat when shed > 60 units.   │
-  │    EXPECTED RECOVERY: +$3,500.00 – $4,500.00 / game                     │
+  │ 1. GO (Pass to Pre-Merge Audit):                                       │
+  │    - Mean Paired Cash Delta >= +$2,000.00 / game (p < 0.01)            │
+  │    - Physical shed discards reduced by >= 70% (<= 14 units vs 46.31)   │
+  │    - Animal feed starvation rate strictly 0.0% (zero missed feeds)     │
   ├────────────────────────────────────────────────────────────────────────┤
-  │ 2. Day 28–29 Feed Liquidation Harmonization:                           │
-  │    Enforce unidirectional wheat orders; forbid simultaneous BUY/SELL;   │
-  │    delay feed wheat dump until Day 29 Hour 18.                         │
-  │    EXPECTED RECOVERY: +$1,000.00 – $2,000.00 / game                     │
+  │ 2. ITERATE:                                                            │
+  │    - Mean Paired Cash Delta between +$800.00 and +$2,000.00 / game      │
+  │    - Discard reduction between 40% and 70%                             │
+  │    - Zero animal feed starvation                                       │
   ├────────────────────────────────────────────────────────────────────────┤
-  │ 3. Day 29 Endgame Harvest Sweeper:                                     │
-  │    Extend pasture and high-value crop harvesting to Day 29 Hour 22.    │
-  │    EXPECTED RECOVERY: +$800.00 – $1,200.00 / game                      │
-  ├────────────────────────────────────────────────────────────────────────┤
-  │ TOTAL INFERRED VALUE: +$5,300.00 to +$7,700.00 / game                   │
-  │ TARGET FINAL CASH:   ~$106,300.00 to ~$108,700.00 / game               │
+  │ 3. NO-GO (Reject):                                                     │
+  │    - Mean Paired Cash Delta < +$800.00 / game                          │
+  │    - Any increase in animal feed starvation or missed feeds            │
+  │    - Significant price collapse (>15%) on liquidated cash crops        │
   └────────────────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## 2. Hypothesis & Mechanistic Specification
-
-### Hypothesis P7.1 (Shed Headroom Preservation)
-> *By enforcing a pre-midnight shed flush at Hour 21 (selling down fertilizer and surplus wheat whenever shed occupancy exceeds 60 units), midnight discard events will drop by $\ge 80\%$, recovering at least +\$3,500/game in preserved high-value strawberries, wool, and milk without causing downstream inventory starvation.*
-
-### Hypothesis P7.2 (Day 28 Desynchronization Fix)
-> *By enforcing strict order exclusivity (if `SELL WHEAT` is active, suppress `BUY WHEAT` in the same hour) and reserving exact Day 29 feed requirements before liquidating remaining grain, the 450-unit wheat churn on Day 28 will drop to zero, completely eliminating the 136 stockout events and freeing 40+ market transaction slots.*
-
-### Hypothesis P7.3 (Final Day Asset Harvesting)
-> *By overriding the idle/pass behavior during Day 29 Hours 16–22 to dispatch workers to collect all mature in-pasture milk and wool, unharvested asset loss will decrease from \$1,456/game to < \$300/game.*
-
----
-
-## 3. Implementation Blueprint for P7
-
-1. **Module: `agent/market/order_builder.py`**:
-   - Add invariant check: If any `SELL WHEAT` order is generated, strictly assert that `intents["buy_wheat"] = 0`.
-   - Implement `Shed Headroom Gate`: If `ctx["hour"] in (20, 21, 22)` and `current_shed_load > 60`:
-     - Force-queue `SELL FERTILIZER` and `SELL WHEAT` up to available market slots.
-
-2. **Module: `agent/strategy/endgame_liquidator.py`**:
-   - Restrict wheat liquidation:
-     ```python
-     # Retain strictly: remaining_animals * remaining_days feed units
-     required_feed_wheat = animals_count * max(0, 30 - day)
-     liquidatable_wheat = max(0, shed_wheat - required_feed_wheat)
-     ```
-   - Only dump `liquidatable_wheat`, never the survival feed envelope.
-
-3. **Module: `agent/execution/task_scheduler.py`**:
-   - On Day 29 Hours 18–22, inject high-priority `HARVEST` tasks for all pasture coordinates with `yield_units > 0`.
-
----
-
-## 4. Experimental Design & Success Criteria
-
-- **Panel**: 100 matched pairs (same 10 discovery seeds `96,401–96,410` $\times$ 5 opponents $\times$ 2 seats).
-- **Control**: Baseline commit `536f1e7` ($101,035.79 mean cash).
-- **Treatment**: Baseline + P7 Storage Hygiene & Harmonization.
-- **Go / No-Go Decision Gate**:
-  - **Go**: Mean paired cash delta $\ge +\$3,500.00 / \text{game}$ with $p < 0.01$ and zero increase in animal escapes.
-  - **Iterate**: Mean paired delta between $+\$1,000$ and $+\$3,500$.
-  - **No-Go**: Mean paired delta $< +\$1,000$ or increased stockout starvation.
