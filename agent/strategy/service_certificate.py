@@ -86,9 +86,10 @@ class ServiceCertificate:
         self,
         current_day: int,
         current_hour: int,
-        worker_count: int,
+        worker_count: Optional[int],
         tasks: List[ServiceTask],
         horizon_hours: int = 72,
+        planned_hires: Optional[Dict[int, int]] = None,
     ) -> CertificateResult:
         """Evaluate serviceability over rolling horizon (e.g. 72 hours).
 
@@ -112,23 +113,46 @@ class ServiceCertificate:
         binding_res = "WORKER_HOURS"
         failing_tasks = []
 
-        # 1. Verify physical causal dependencies (e.g. HARVEST -> FEED, HARVEST -> PLACE -> SELL)
+        # 1. Verify physical causal dependencies and earliest start constraints
+        # Example chains: HARVEST -> FEED, HARVEST -> PLACE -> SELL
         for t in tasks:
+            # Standalone earliest start hour check
+            earliest_self_start = max(0, t.earliest_start_hour)
+            if earliest_self_start + t.estimated_duration_actions > t.hour_deadline:
+                if t not in failing_tasks:
+                    failing_tasks.append(t)
+                binding_res = "TASK_DEPENDENCY"
+                binding_day = t.day
+                binding_hour = t.hour_deadline
+
+            # Causal prerequisite check
             if t.prerequisite_task_id:
                 prereq = tasks_by_id.get(t.prerequisite_task_id)
                 if prereq is not None:
-                    # Prerequisite must finish on earlier day OR on same day before t's earliest start / deadline
-                    prereq_completion_day = prereq.day
-                    prereq_completion_hour = prereq.hour_deadline + prereq.estimated_duration_actions
-                    if prereq_completion_day > t.day or (
-                        prereq_completion_day == t.day and prereq_completion_hour > t.hour_deadline
-                    ):
-                        failing_tasks.append(t)
+                    # Prerequisite on future day -> cannot satisfy dependency today
+                    if prereq.day > t.day:
+                        if t not in failing_tasks:
+                            failing_tasks.append(t)
                         binding_res = "TASK_DEPENDENCY"
                         binding_day = t.day
                         binding_hour = t.hour_deadline
+                    elif prereq.day == t.day:
+                        # Prerequisite finishes at earliest: max(prereq.earliest_start_hour, prereq.hour_deadline) + prereq.estimated_duration_actions
+                        prereq_start = max(prereq.earliest_start_hour, prereq.hour_deadline)
+                        prereq_earliest_finish = prereq_start + prereq.estimated_duration_actions
+                        # Dependent cannot start before max(its own earliest start, prerequisite completion)
+                        dep_earliest_start = max(earliest_self_start, prereq_earliest_finish)
+                        dep_earliest_finish = dep_earliest_start + t.estimated_duration_actions
+
+                        if dep_earliest_finish > t.hour_deadline:
+                            if t not in failing_tasks:
+                                failing_tasks.append(t)
+                            binding_res = "TASK_DEPENDENCY"
+                            binding_day = t.day
+                            binding_hour = t.hour_deadline
 
         # 2. Iterate over each hour in the horizon for labor action budget
+        hires_dict = planned_hires or {}
         for h_step in range(horizon_hours):
             abs_hour = (current_day * TURNS_PER_DAY + current_hour) + h_step
             day = abs_hour // TURNS_PER_DAY
@@ -137,10 +161,22 @@ class ServiceCertificate:
             if day >= 30:
                 break
 
-            # Worker capacity in this hour
-            sched_workers = 1 + get_target_hands(day)
-            # In hour 0, new hires have not settled yet (settle at H1)
-            effective_workers = sched_workers if hour > 0 else (1 + get_target_hands(max(0, day - 1)))
+            # Worker capacity in this hour:
+            # Uses actual observed worker_count as starting capacity.
+            # Does NOT silently substitute get_target_hands(day) if worker_count is supplied.
+            if worker_count is not None:
+                base_w = max(1, worker_count)
+                if day == current_day:
+                    effective_workers = base_w
+                else:
+                    # Explicit planned hires for future days
+                    extra_h = sum(hires_dict.get(d, 0) for d in range(current_day + 1, day + 1))
+                    effective_workers = base_w + extra_h
+            else:
+                # Fallback to configured target schedule only if worker_count is not provided
+                sched_workers = 1 + get_target_hands(day)
+                effective_workers = sched_workers if hour > 0 else (1 + get_target_hands(max(0, day - 1)))
+
             hourly_action_budget = effective_workers  # 1 action per worker per hour
 
             # Tasks with deadline in this hour

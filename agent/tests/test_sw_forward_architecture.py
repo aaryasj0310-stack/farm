@@ -726,3 +726,231 @@ def test_service_certificate_dependency_enforcement():
     res_valid = sc.evaluate_multi_day(5, 0, 4, [t_harvest, t_feed_valid])
     assert res_valid.feasible is True
 
+
+# ==============================================================================
+# PHASE A-R2 HARDENING REGRESSION TESTS
+# ==============================================================================
+
+def test_storage_inventory_conservation_invariant():
+    """Verify inventory conservation invariant and backpack preservation on partial deposit."""
+    from strategy.resource_ledger import ResourceLedger, WorkerStorageState
+
+    rl = ResourceLedger()
+    rl.day = 5
+    rl.hour = 10
+    rl.current_shed_occupancy = 80  # Shed capacity 100 -> 20 headroom
+    rl.shed_inventory = {"WHEAT": 80}
+
+    # 2 workers: each carrying 15 units of WHEAT (total 30 units carried)
+    # Worker 0 reaches shed at H12, Worker 1 reaches shed at H14
+    rl.workers = [
+        WorkerStorageState(worker_id=0, pos=(4, 4), inventory={"WHEAT": 15}, earliest_deposit_hour=12),
+        WorkerStorageState(worker_id=1, pos=(4, 4), inventory={"WHEAT": 15}, earliest_deposit_hour=14),
+    ]
+
+    timeline = rl.project_storage_timeline(horizon_hours=24)
+
+    # Invariant: inventory must be strictly conserved
+    assert timeline["inventory_conserved"] is True
+    # At H12: shed has 80 + 15 = 95 units
+    assert timeline["timeline"][12]["shed_occupancy"] == 95
+    # At H14: shed has 95 + 5 = 100 units (capped at 100)
+    assert timeline["timeline"][14]["shed_occupancy"] == 100
+    # Undeposited 10 units remain carried in worker 1's backpack
+    assert timeline["timeline"][14]["worker_carried"] == 10
+    # At midnight: shed is full, so the 10 units remaining in backpack are discarded
+    assert timeline["expected_overflow"] == 10
+    assert timeline["discarded_products"]["WHEAT"] == 10
+    # Equation: 80 (initial shed) + 30 (initial carried) - 10 (discarded) == 100 (final shed) + 0 (final carried)
+    assert (80 + 30 - timeline["expected_overflow"]) == (timeline["final_projected_shed"] + timeline["final_projected_carried"])
+
+
+def test_physical_feed_accessibility_channels():
+    """Verify physical feed evaluation channels: shed, carried, and same-day in-ground harvest."""
+    from strategy.resource_ledger import ResourceLedger, WorkerStorageState, InGroundWheatHarvest
+
+    rl = ResourceLedger()
+    rl.day = 5
+    rl.hour = 8
+
+    # 1. Shed Feed Channel
+    # Worker at (4, 4) shed-adjacent, shed has 10 wheat, animal at (4, 2)
+    rl.shed_wheat = 10
+    rl.workers = [WorkerStorageState(worker_id=0, pos=(4, 4))]
+    ok, comp, det = rl.evaluate_shed_feed_feasibility(animal_pos=(4, 2), current_hour=8, worker_id=0)
+    assert ok is True
+    # Worker at (4, 4) is shed access tile (dist=0). To animal (4, 2) is dist=2.
+    # 0 + 1 (PICKUP) + 2 (travel) + 1 (FEED) = 4 actions -> completes at H12
+    assert comp == 12
+    assert det["mode"] == "SHED_PICKUP_FEED"
+
+    # Empty shed -> infeasible
+    rl.shed_wheat = 0
+    ok_empty, _, _ = rl.evaluate_shed_feed_feasibility(animal_pos=(4, 2), current_hour=8, worker_id=0)
+    assert ok_empty is False
+
+    # 2. Carried Feed Channel
+    # Nearby worker at (4, 3) carrying 1 wheat -> animal at (4, 2)
+    rl.workers = [WorkerStorageState(worker_id=1, pos=(4, 3), inventory={"WHEAT": 1})]
+    ok_c, comp_c, det_c = rl.evaluate_carried_feed_feasibility(animal_pos=(4, 2), current_hour=8, worker_id=1)
+    assert ok_c is True
+    # dist = 1 + 1 (FEED) = 2 actions -> completes at H10
+    assert comp_c == 10
+    assert det_c["mode"] == "CARRIED_FEED"
+
+    # Distant worker at (9, 9) carrying 1 wheat -> travel is 12 + 1 = 13 actions -> at H20 completes at 20 + 13 = 33 > 23 (infeasible)
+    rl.workers = [WorkerStorageState(worker_id=2, pos=(9, 9), inventory={"WHEAT": 1})]
+    ok_d, _, _ = rl.evaluate_carried_feed_feasibility(animal_pos=(4, 2), current_hour=20, worker_id=2)
+    assert ok_d is False
+
+    # 3. Same-Day In-Ground Harvest & Deposit Channel
+    harvest = InGroundWheatHarvest(planted_day=2, earliest_harvest_day=4, tile_pos=(3, 3), expected_yield=6)
+    rl.workers = [WorkerStorageState(worker_id=0, pos=(3, 3))]
+    ok_h, comp_h, det_h = rl.evaluate_same_day_harvest_shed_deposit_feasibility(
+        wheat_harvest=harvest, current_hour=10, worker_id=0
+    )
+    assert ok_h is True
+    # dist to wheat = 0 + 1 (HARVEST) + dist to shed (3,3 to 4,4 = 2) + 1 (PLACE) = 4 actions -> completes H14
+    assert comp_h == 14
+    assert det_h["mode"] == "HARVEST_PLACE_SHED"
+
+
+def test_service_certificate_workforce_capacity():
+    """Verify ServiceCertificate respects actual observed worker_count."""
+    sc = ServiceCertificate()
+
+    # 8 tasks at H12, each taking 1 action
+    tasks = [
+        ServiceTask(
+            task_id=f"t_{i}",
+            op="WATER",
+            pos=(i, 2),
+            region="NW",
+            day=5,
+            hour_deadline=12,
+            tier=CommitmentTier.HARD,
+            estimated_duration_actions=1,
+        )
+        for i in range(8)
+    ]
+
+    # Capacity with 5 workers: budget = 5 actions/hr < ~11 demand -> infeasible
+    res_5 = sc.evaluate_multi_day(5, 0, worker_count=5, tasks=tasks)
+    assert res_5.feasible is False
+    assert res_5.binding_resource == "WORKER_HOURS"
+
+    # Capacity with 12 workers: budget = 12 actions/hr >= 11 demand -> feasible
+    res_12 = sc.evaluate_multi_day(5, 0, worker_count=12, tasks=tasks)
+    assert res_12.feasible is True
+
+
+def test_cohort_planner_valuation_and_sequential_pricing():
+    """Verify CohortPlanner sequential pricing and explicit valuation override."""
+    cp = CohortPlanner()
+
+    candidate = cp.build_candidate_crop_cohort(
+        cohort_id="c_melon",
+        crop="MELON",
+        region="SW",
+        tiles=[(1, 6), (2, 6), (3, 6), (4, 6)],
+        plant_day=2,
+    )
+
+    # 1. Normal pricing at MARKET_I0
+    eval_normal = cp.evaluate_opportunity_cost(
+        candidate=candidate,
+        displaced_cohorts=[],
+        market_inventory={"MELON": 10000},
+    )
+    assert eval_normal.expected_gross_revenue > 4000.0
+
+    # 2. Glutted pricing: MELON supply in market already +300 units
+    eval_glutted = cp.evaluate_opportunity_cost(
+        candidate=candidate,
+        displaced_cohorts=[],
+        market_inventory={"MELON": 10300},
+    )
+    assert eval_glutted.expected_gross_revenue < eval_normal.expected_gross_revenue
+
+    # 3. Sequential pricing with existing planned supply
+    eval_sequential = cp.evaluate_opportunity_cost(
+        candidate=candidate,
+        displaced_cohorts=[],
+        market_inventory={"MELON": 10000},
+        existing_supply=200,
+    )
+    assert eval_sequential.expected_gross_revenue < eval_normal.expected_gross_revenue
+
+    # 4. Explicit override is preserved
+    candidate.has_explicit_valuation = True
+    candidate.expected_gross_revenue = 9999.0
+    eval_override = cp.evaluate_opportunity_cost(
+        candidate=candidate,
+        displaced_cohorts=[],
+        market_inventory={"MELON": 10500},
+    )
+    assert eval_override.expected_gross_revenue == 9999.0
+
+
+def test_crop_lifecycle_and_end_of_season_cutoffs():
+    """Verify crop lifecycles and day 30 cutoffs."""
+    cp = CohortPlanner()
+
+    # Normal early wheat
+    wheat_early = cp.build_candidate_crop_cohort("w_early", "WHEAT", "NW", [(1, 1)], plant_day=1)
+    assert wheat_early.expected_gross_revenue > 0
+    assert len(wheat_early.harvest_windows) == 1
+
+    # Normal early strawberry
+    straw_early = cp.build_candidate_crop_cohort("s_early", "STRAWBERRY", "SW", [(1, 6)], plant_day=1)
+    assert straw_early.expected_gross_revenue > 0
+    assert len(straw_early.harvest_windows) == 4
+    # Alternate watering schedule
+    assert len(straw_early.watering_schedule) >= 4
+
+    # End-of-season cutoff: Wheat planted day 29 cannot yield before day 30
+    wheat_late = cp.build_candidate_crop_cohort("w_late", "WHEAT", "NW", [(1, 1)], plant_day=29)
+    assert wheat_late.expected_gross_revenue == 0.0
+    assert wheat_late.market_supply_units == 0
+    assert len(wheat_late.harvest_windows) == 0
+
+    # End-of-season cutoff: Strawberry planted day 25 cannot yield before day 30 (first yield is day 35)
+    straw_late = cp.build_candidate_crop_cohort("s_late", "STRAWBERRY", "SW", [(1, 6)], plant_day=25)
+    assert straw_late.expected_gross_revenue == 0.0
+    assert straw_late.market_supply_units == 0
+    assert len(straw_late.harvest_windows) == 0
+
+
+def test_whole_farm_planner_rich_disagreements():
+    """Verify WholeFarmPlanner detects rich disagreement types."""
+    from strategy.whole_farm_planner import WholeFarmPlanner, ShadowSnapshot
+
+    wfp = WholeFarmPlanner()
+
+    # Create snapshot where:
+    # 1. Money is high ($2800), SW not unlocked, baseline wants NO land buy -> LAND_PURCHASE_MISMATCH
+    # 2. Market inventory for STRAWBERRY is heavily glutted (10150) -> MARKET_VALUATION_DISCREPANCY
+    # 3. Baseline wants to buy animal COW, but certificate / feed fails -> LIVESTOCK_ADMISSION_MISMATCH
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2800.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 20.0),),
+        market_inventories=(("STRAWBERRY", 10200),),
+        baseline_intents=(("buy_land", False), ("buy_animal", "COW"), ("plant_crop", "CARROT")),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    res = wfp.evaluate(snapshot)
+    assert res is not None
+    assert len(res.decision.disagreements_with_baseline) > 0
+    dis_types = {d["type"] for d in res.decision.disagreements_with_baseline}
+    assert "LAND_PURCHASE_MISMATCH" in dis_types or "MARKET_VALUATION_DISCREPANCY" in dis_types or "CROP_PORTFOLIO_MISMATCH" in dis_types
+
+

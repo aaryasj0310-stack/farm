@@ -117,6 +117,8 @@ class ShadowDecision:
     proposed_livestock_cohorts: List[str] = field(default_factory=list)
     proposed_hires: int = 0
     disagreements_with_baseline: List[Dict[str, Any]] = field(default_factory=list)
+    selected_portfolio: Optional[Dict[str, Any]] = None
+    market_valuation_discrepancies: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -155,7 +157,7 @@ class WholeFarmPlanner:
     def evaluate(self, snapshot: ShadowSnapshot, raw_ctx: Optional[Dict[str, Any]] = None) -> ShadowResult:
         """Run complete shadow evaluation on the frozen snapshot.
 
-        Enforces read-only isolation and event-driven replanning.
+        Enforces read-only isolation, real substrate integration, and event-driven replanning.
         """
         start_t = time.perf_counter()
 
@@ -178,10 +180,46 @@ class WholeFarmPlanner:
         if is_event_turn:
             self.last_replan_day = snapshot.day
 
-        # --- Forward Service Certificate Evaluation (72-hour horizon) ---
-        # Generate representative tasks for current farm footprint
+        # 1. Candidate Portfolios & Opportunity-Cost Evaluation
+        sw_tiles = [(x, y) for y in range(5, 10) for x in range(0, 5) if (x, y) != (4, 5)]
+        candidate_portfolios = self.cohort_planner.generate_candidate_portfolios(snapshot.day, sw_tiles)
+
+        market_inv_dict = dict(snapshot.market_inventories)
+        portfolio_evals = []
+        best_portfolio_data = None
+        best_delta = -float("inf")
+
+        for port in candidate_portfolios:
+            total_delta = 0.0
+            cohort_names = []
+            for crop_name, n_units, tiles in port["allocations"]:
+                c_cohort = self.cohort_planner.build_candidate_crop_cohort(
+                    cohort_id=f"shadow_{crop_name.lower()}_{snapshot.day}",
+                    crop=crop_name,
+                    region="SW",
+                    tiles=tiles,
+                    plant_day=snapshot.day,
+                    is_discretionary=True,
+                )
+                eval_res = self.cohort_planner.evaluate_opportunity_cost(
+                    candidate=c_cohort,
+                    displaced_cohorts=[],
+                    market_inventory=market_inv_dict,
+                    feed_deficit_risk=False,
+                )
+                total_delta += eval_res.delta_final_cash
+                cohort_names.append(c_cohort.cohort_id)
+            portfolio_evals.append((port, total_delta, cohort_names))
+            if total_delta > best_delta:
+                best_delta = total_delta
+                best_portfolio_data = (port, total_delta, cohort_names)
+
+        # 2. Feed & Storage Projections
+        feed_status = self.ledger.project_feed_balance(horizon_days=3)
+        storage_status = self.ledger.project_storage_timeline(horizon_hours=72)
+
+        # 3. Forward Service Certificate Evaluation (72-hour horizon)
         simulated_tasks: List[ServiceTask] = []
-        # Routine survival/watering tasks across the farm
         for d_offset in range(3):
             eval_day = snapshot.day + d_offset
             if eval_day >= 30:
@@ -213,7 +251,7 @@ class WholeFarmPlanner:
                 )
             )
             # Planned SW tranche workload (if SW active or ramping)
-            if plan.state in (StrategicState.SW_RAMPING, StrategicState.THREE_QUADRANT_OPERATION):
+            if best_portfolio_data and ("SW" in snapshot.unlocked_quadrants or plan.state in (StrategicState.SW_RAMPING, StrategicState.THREE_QUADRANT_OPERATION)):
                 simulated_tasks.append(
                     ServiceTask(
                         task_id=f"sw_service_day_{eval_day}",
@@ -236,7 +274,7 @@ class WholeFarmPlanner:
             horizon_hours=72,
         )
 
-        # --- Decision Compilation & Baseline Discrepancy Tracking ---
+        # 4. Decision Compilation & Rich Baseline Disagreement Tracking
         disagreements = []
         baseline_intents_dict = dict(snapshot.baseline_intents)
         baseline_buys_land = bool(baseline_intents_dict.get("buy_land", False))
@@ -246,38 +284,105 @@ class WholeFarmPlanner:
         if "SW" not in snapshot.unlocked_quadrants and 3 not in snapshot.unlocked_quadrants:
             if plan.state == StrategicState.SW_READY and cert_result.feasible:
                 # Land purchase requires $2,000 cash plus seed/hire reserves
-                if snapshot.money >= 2200:
+                if snapshot.money >= 2200 and best_delta > 0:
                     sw_recommended = True
 
+        # Disagreement 1: LAND_PURCHASE_MISMATCH
         if baseline_buys_land != sw_recommended:
             disagreements.append({
                 "type": "LAND_PURCHASE_MISMATCH",
                 "baseline_decision": baseline_buys_land,
                 "shadow_decision": sw_recommended,
                 "reason": (
-                    f"Shadow planner recommends SW purchase on Day {snapshot.day} based on certified 72h forward feasibility"
+                    f"Shadow planner recommends SW purchase on Day {snapshot.day} based on certified 72h forward feasibility and candidate portfolio delta (${best_delta:.1f})"
                     if sw_recommended else
-                    f"Shadow planner rejects land buy: cert_feasible={cert_result.feasible}, money={snapshot.money:.1f}"
+                    f"Shadow planner rejects land buy: cert_feasible={cert_result.feasible}, money={snapshot.money:.1f}, best_delta={best_delta:.1f}"
                 ),
             })
 
-        # Check animal admissions vs baseline
+        # Disagreement 2: LIVESTOCK_ADMISSION_MISMATCH
         baseline_animal = baseline_intents_dict.get("buy_animal")
-        if baseline_animal and not cert_result.feasible:
+        if baseline_animal and (not cert_result.feasible or not feed_status["is_feed_safe"]):
             disagreements.append({
                 "type": "LIVESTOCK_ADMISSION_MISMATCH",
                 "baseline_decision": baseline_animal,
                 "shadow_decision": "REJECT",
-                "reason": "Forward service certificate indicates upcoming labor/feed congestion; animal purchase unsafe",
+                "reason": f"Forward certificate or feed safety rejects animal admission: cert_feasible={cert_result.feasible}, feed_safe={feed_status['is_feed_safe']}",
             })
+
+        # Disagreement 3: CROP_PORTFOLIO_MISMATCH
+        baseline_crop = baseline_intents_dict.get("plant_crop")
+        if best_portfolio_data and baseline_crop:
+            port_crops = [alloc[0] for alloc in best_portfolio_data[0]["allocations"]]
+            if baseline_crop not in port_crops:
+                disagreements.append({
+                    "type": "CROP_PORTFOLIO_MISMATCH",
+                    "baseline_decision": baseline_crop,
+                    "shadow_decision": port_crops,
+                    "reason": f"Shadow candidate portfolio ({best_portfolio_data[0]['name']}) selects {port_crops} (delta ${best_delta:.1f}) instead of baseline {baseline_crop}",
+                })
+
+        # Disagreement 4: HIRE_SCHEDULE_MISMATCH
+        baseline_hire = baseline_intents_dict.get("hire_hand", False)
+        shadow_recommends_hire = cert_result.binding_resource == "LABOR" and not cert_result.feasible and snapshot.money >= 100
+        if baseline_hire != shadow_recommends_hire:
+            disagreements.append({
+                "type": "HIRE_SCHEDULE_MISMATCH",
+                "baseline_decision": baseline_hire,
+                "shadow_decision": shadow_recommends_hire,
+                "reason": f"Labor certificate binding={cert_result.binding_resource}, feasible={cert_result.feasible}",
+            })
+
+        # Disagreement 5: FEED_ASSUMPTION_MISMATCH
+        if not feed_status["is_feed_safe"] and baseline_intents_dict.get("feed_animals", True):
+            disagreements.append({
+                "type": "FEED_ASSUMPTION_MISMATCH",
+                "baseline_decision": "ASSUME_FEED_AVAILABLE",
+                "shadow_decision": "FEED_DEFICIT_RISK",
+                "reason": f"Ledger project_feed_balance indicates deficit of {feed_status.get('net_balance', 0)} wheat units",
+            })
+
+        # Disagreement 6: STORAGE_CONGESTION_WARNING
+        if storage_status.get("peak_usage", 0) > 85:
+            disagreements.append({
+                "type": "STORAGE_CONGESTION_WARNING",
+                "baseline_decision": "NO_CONGESTION_HANDLING",
+                "shadow_decision": f"PEAK_USAGE_{storage_status.get('peak_usage')}",
+                "reason": f"Projected peak storage {storage_status.get('peak_usage')}/100 exceeds safe threshold (85)",
+            })
+
+        # Disagreement 7: MARKET_VALUATION_DISCREPANCY
+        market_disc = []
+        for prod, inv in snapshot.market_inventories:
+            dep_loss = self.cohort_planner.estimate_price_depression_loss(prod, 10, inv)
+            if dep_loss > 100:
+                market_disc.append({
+                    "product": prod,
+                    "market_inv": inv,
+                    "depression_loss_10_units": dep_loss,
+                })
+        if market_disc:
+            disagreements.append({
+                "type": "MARKET_VALUATION_DISCREPANCY",
+                "baseline_decision": "NOMINAL_PRICING",
+                "shadow_decision": "SEQUENTIAL_DEPRESSION_AWARE",
+                "reason": f"Significant price depression detected on: {[m['product'] for m in market_disc]}",
+            })
+
+        proposed_crops = best_portfolio_data[2] if (best_portfolio_data and sw_recommended) else (
+            ["SW_TRANCHE_1_WHEAT_STRAWBERRY"] if sw_recommended else []
+        )
 
         decision = ShadowDecision(
             strategic_state=plan.state.value,
             target_sw_day=plan.expansion_target.target_day,
             sw_purchase_recommended=sw_recommended,
-            proposed_crop_cohorts=["SW_TRANCHE_1_WHEAT_STRAWBERRY"] if sw_recommended else [],
+            proposed_crop_cohorts=proposed_crops,
+            proposed_livestock_cohorts=[],
             proposed_hires=snapshot.active_worker_count - 1,
             disagreements_with_baseline=disagreements,
+            selected_portfolio=best_portfolio_data[0] if best_portfolio_data else None,
+            market_valuation_discrepancies=market_disc,
         )
 
         elapsed_ms = (time.perf_counter() - start_t) * 1000.0
@@ -287,7 +392,7 @@ class WholeFarmPlanner:
             latency_ms=elapsed_ms,
             event_replan_triggered=is_event_turn,
             resource_slack=cert_result.minimum_slack,
-            feed_is_safe=self.ledger.project_feed_balance(horizon_days=3)["is_feed_safe"],
+            feed_is_safe=feed_status["is_feed_safe"],
             cash_projected_available=self.ledger.project_available_cash(snapshot.day, snapshot.hour),
             binding_resource=cert_result.binding_resource,
             repair_options_count=len(cert_result.repair_options),

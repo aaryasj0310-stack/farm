@@ -39,6 +39,8 @@ class CropCohort:
     remaining_labor_obligation: int = 0
     market_supply_units: int = 0
     is_discretionary: bool = False
+    baseline_estimated_revenue: float = 0.0
+    has_explicit_valuation: bool = False
 
 
 @dataclass
@@ -117,30 +119,53 @@ class CohortPlanner:
                     harvest_windows.append((h_day, 0, units))
                     total_units += units
 
-            # Watering schedule: needs water on planting day and all active production days
-            # To prevent weeds and guarantee production bonus
-            last_h = harvest_windows[-1][0] if harvest_windows else plant_day
-            for d in range(plant_day, min(SEASON_DAYS, last_h + 1)):
-                watering_days.append(d)
+            if harvest_windows:
+                last_h = harvest_windows[-1][0]
+                # Ongoing crops in game engine alternate watering requirements (needs_water_today)
+                # Plant day + alternate days up to last harvest to maintain hydration and avoid weed decay
+                w_set = {plant_day}
+                for d in range(plant_day + 1, min(SEASON_DAYS, last_h + 1)):
+                    if (d - plant_day) % 2 == 0:
+                        w_set.add(d)
+                for hw in harvest_windows:
+                    w_set.add(hw[0])
+                watering_days = sorted(list(w_set))
+            else:
+                # Planted too late to yield any harvest before season ends
+                watering_days = [plant_day] if plant_day < SEASON_DAYS else []
 
             # Operations: 1 plant + watering days + harvests
             labor_ops = len(tiles) * (1 + len(watering_days) + len(harvest_windows))
 
         else:
             # One-time crop (Wheat, Carrot, Melon)
-            h_day = max_harvest
-            if h_day < SEASON_DAYS:
+            # Must reach at least first_yield_day before season ends
+            if first_harvest < SEASON_DAYS:
+                h_day = min(SEASON_DAYS - 1, max_harvest)
                 units = len(tiles) * max_yield
                 harvest_windows.append((h_day, 0, units))
                 total_units += units
 
-            for d in range(plant_day, min(SEASON_DAYS, h_day)):
-                watering_days.append(d)
+                # Bonus watering window: window_start = plant_day + (max_yield_day + 1) // 2
+                w_start = plant_day + (c_info["max_yield_day"] + 1) // 2
+                w_end = min(SEASON_DAYS - 1, plant_day + c_info["max_yield_day"])
+                w_set = {plant_day}
+                for d in range(w_start, w_end + 1):
+                    w_set.add(d)
+                watering_days = sorted(list(w_set))
+            else:
+                # End-of-season cutoff: cannot yield before day 30
+                harvest_windows = []
+                total_units = 0
+                watering_days = [plant_day] if plant_day < SEASON_DAYS else []
 
-            labor_ops = len(tiles) * (1 + len(watering_days) + 1)
+            labor_ops = len(tiles) * (1 + len(watering_days) + (1 if harvest_windows else 0))
 
         # Engine-exact baseline revenue estimate under base market conditions
-        expected_gross = float(total_revenue_estimate(crop, MARKET_I0, total_units))
+        if total_units <= 0:
+            expected_gross = 0.0
+        else:
+            expected_gross = float(total_revenue_estimate(crop, MARKET_I0, total_units))
 
         return CropCohort(
             cohort_id=cohort_id,
@@ -158,6 +183,8 @@ class CohortPlanner:
             remaining_labor_obligation=labor_ops,
             market_supply_units=total_units,
             is_discretionary=is_discretionary,
+            baseline_estimated_revenue=expected_gross,
+            has_explicit_valuation=False,
         )
 
     def estimate_price_depression_loss(self, product: str, additional_units: int, current_inv: int) -> float:
@@ -183,35 +210,54 @@ class CohortPlanner:
         displaced_cohorts: List[CropCohort],
         market_inventory: Dict[str, int],
         feed_deficit_risk: bool = False,
+        existing_supply: int = 0,
     ) -> OpportunityCostEvaluation:
         """Compute counterfactual ΔFC for admitting candidate cohort.
 
         ΔFC = TerminalCash(WITH) - TerminalCash(WITHOUT)
 
         Realized revenues are calculated using engine-exact sequential pricing (total_revenue_estimate).
+        Sequential own-supply pricing evaluates against cand_inv + existing_supply.
         Price cannibalization is already embedded in the trajectory revenues; it is NOT double-subtracted.
         """
-        # 1. Candidate gross revenue under engine-exact pricing
+        # 1. Candidate gross revenue under engine-exact sequential pricing
         cand_inv = market_inventory.get(candidate.crop, MARKET_I0)
-        if candidate.expected_gross_revenue > 0:
+        has_cand_override = candidate.has_explicit_valuation or (
+            candidate.expected_gross_revenue > 0
+            and abs(candidate.expected_gross_revenue - candidate.baseline_estimated_revenue) > 1e-4
+        )
+
+        if has_cand_override:
             cand_gross = candidate.expected_gross_revenue
         else:
-            cand_gross = float(total_revenue_estimate(candidate.crop, cand_inv, candidate.market_supply_units))
+            eff_cand_inv = cand_inv + existing_supply
+            if candidate.market_supply_units <= 0:
+                cand_gross = 0.0
+            else:
+                cand_gross = float(total_revenue_estimate(candidate.crop, eff_cand_inv, candidate.market_supply_units))
         cand_seed = candidate.seed_cost
 
         # 2. Diagnostic price depression decomposition (reported for observability, not double-subtracted)
+        eff_cand_inv = cand_inv + existing_supply
         cannibalization = self.estimate_price_depression_loss(
-            candidate.crop, candidate.market_supply_units, cand_inv
+            candidate.crop, candidate.market_supply_units, eff_cand_inv
         )
 
         # 3. Displaced core value under engine-exact pricing
         displaced_value = 0.0
         for dc in displaced_cohorts:
-            if dc.expected_gross_revenue > 0:
+            has_dc_override = dc.has_explicit_valuation or (
+                dc.expected_gross_revenue > 0
+                and abs(dc.expected_gross_revenue - dc.baseline_estimated_revenue) > 1e-4
+            )
+            if has_dc_override:
                 dc_gross = dc.expected_gross_revenue
             else:
                 dc_inv = market_inventory.get(dc.crop, MARKET_I0)
-                dc_gross = float(total_revenue_estimate(dc.crop, dc_inv, dc.market_supply_units))
+                if dc.market_supply_units <= 0:
+                    dc_gross = 0.0
+                else:
+                    dc_gross = float(total_revenue_estimate(dc.crop, dc_inv, dc.market_supply_units))
             displaced_value += max(0.0, dc_gross - dc.seed_cost)
 
         # 4. Feed opportunity cost (if candidate displaces wheat or creates feed risk)

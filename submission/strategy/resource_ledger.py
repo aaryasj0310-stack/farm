@@ -386,26 +386,201 @@ class ResourceLedger:
             "deadline": 23,
         }
 
+    def evaluate_shed_feed_feasibility(
+        self,
+        animal_pos: Tuple[int, int],
+        current_hour: Optional[int] = None,
+        worker_id: Optional[int] = None,
+    ) -> Tuple[bool, int, Dict[str, Any]]:
+        """Evaluate physical chain: Worker pos -> travel to shed -> PICKUP WHEAT -> travel to animal -> FEED.
+
+        Requires self.shed_wheat > 0.
+        """
+        cur_h = self.hour if current_hour is None else current_hour
+        if self.shed_wheat <= 0:
+            return False, 999, {"reason": "no_shed_wheat_available"}
+
+        candidate_workers = self.workers
+        if worker_id is not None:
+            candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
+        if not candidate_workers:
+            candidate_workers = [WorkerStorageState(worker_id=0, pos=FARMER_SPAWN)]
+
+        best_completion = 999
+        best_worker = None
+
+        for w in candidate_workers:
+            dist_to_shed = min(abs(w.pos[0] - sx) + abs(w.pos[1] - sy) for sx, sy in SHED_ACCESS_TILES)
+            dist_shed_to_animal = min(abs(sx - animal_pos[0]) + abs(sy - animal_pos[1]) for sx, sy in SHED_ACCESS_TILES)
+            # travel to shed + 1 (PICKUP) + travel to animal + 1 (FEED)
+            actions_needed = dist_to_shed + 1 + dist_shed_to_animal + 1
+            completion = cur_h + actions_needed
+            if completion < best_completion:
+                best_completion = completion
+                best_worker = w.worker_id
+
+        feasible = (best_completion <= 23)
+        return feasible, best_completion, {
+            "feasible": feasible,
+            "completion_hour": best_completion,
+            "best_worker": best_worker,
+            "mode": "SHED_PICKUP_FEED",
+            "deadline": 23,
+        }
+
+    def evaluate_carried_feed_feasibility(
+        self,
+        animal_pos: Tuple[int, int],
+        current_hour: Optional[int] = None,
+        worker_id: Optional[int] = None,
+    ) -> Tuple[bool, int, Dict[str, Any]]:
+        """Evaluate physical chain: Worker carrying wheat -> travel to animal -> FEED.
+
+        Only workers who currently carry at least 1 wheat in their backpack are eligible.
+        Distant workers whose travel exceeds remaining hours are deemed infeasible.
+        """
+        cur_h = self.hour if current_hour is None else current_hour
+        candidate_workers = [
+            w for w in self.workers
+            if w.inventory.get("WHEAT", 0) > 0 and (worker_id is None or w.worker_id == worker_id)
+        ]
+        if not candidate_workers:
+            return False, 999, {"reason": "no_worker_carrying_wheat"}
+
+        best_completion = 999
+        best_worker = None
+
+        for w in candidate_workers:
+            dist_to_animal = abs(w.pos[0] - animal_pos[0]) + abs(w.pos[1] - animal_pos[1])
+            # travel to animal + 1 (FEED)
+            actions_needed = dist_to_animal + 1
+            completion = cur_h + actions_needed
+            if completion < best_completion:
+                best_completion = completion
+                best_worker = w.worker_id
+
+        feasible = (best_completion <= 23)
+        return feasible, best_completion, {
+            "feasible": feasible,
+            "completion_hour": best_completion,
+            "best_worker": best_worker,
+            "mode": "CARRIED_FEED",
+            "deadline": 23,
+        }
+
+    def evaluate_same_day_harvest_shed_deposit_feasibility(
+        self,
+        wheat_harvest: InGroundWheatHarvest,
+        current_hour: Optional[int] = None,
+        worker_id: Optional[int] = None,
+    ) -> Tuple[bool, int, Dict[str, Any]]:
+        """Evaluate physical chain: Worker pos -> travel to wheat -> HARVEST -> travel to shed -> PLACE.
+
+        Product must enter the shed before it is market-accessible.
+        Includes 1 action for HARVEST and 1 action for PLACE.
+        """
+        cur_h = self.hour if current_hour is None else current_hour
+        if self.day < wheat_harvest.earliest_harvest_day:
+            return False, 999, {"reason": "wheat_not_harvestable_today"}
+
+        candidate_workers = self.workers
+        if worker_id is not None:
+            candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
+        if not candidate_workers:
+            candidate_workers = [WorkerStorageState(worker_id=0, pos=FARMER_SPAWN)]
+
+        best_completion = 999
+        best_worker = None
+
+        for w in candidate_workers:
+            dist_to_wheat = abs(w.pos[0] - wheat_harvest.tile_pos[0]) + abs(w.pos[1] - wheat_harvest.tile_pos[1])
+            dist_wheat_to_shed = min(abs(wheat_harvest.tile_pos[0] - sx) + abs(wheat_harvest.tile_pos[1] - sy) for sx, sy in SHED_ACCESS_TILES)
+            # travel to wheat + 1 (HARVEST) + travel to shed + 1 (PLACE)
+            actions_needed = dist_to_wheat + 1 + dist_wheat_to_shed + 1
+            completion = cur_h + actions_needed
+            if completion < best_completion:
+                best_completion = completion
+                best_worker = w.worker_id
+
+        feasible = (best_completion <= 23)
+        return feasible, best_completion, {
+            "feasible": feasible,
+            "completion_hour": best_completion,
+            "best_worker": best_worker,
+            "mode": "HARVEST_PLACE_SHED",
+            "deadline": 23,
+        }
+
+    def evaluate_feed_feasibility_for_animal(
+        self,
+        animal_pos: Tuple[int, int],
+        current_hour: Optional[int] = None,
+        worker_id: Optional[int] = None,
+    ) -> Tuple[bool, str, int, Dict[str, Any]]:
+        """Determine most efficient physically causal method to feed an animal today.
+
+        Hierarchy:
+        1. Carried wheat (worker carrying wheat -> travel -> FEED)
+        2. Shed wheat (worker -> shed -> PICKUP -> animal -> FEED)
+        3. Harvest wheat (worker -> wheat -> HARVEST -> animal -> FEED)
+        """
+        # 1. Carried wheat
+        ok_c, comp_c, det_c = self.evaluate_carried_feed_feasibility(animal_pos, current_hour, worker_id)
+        if ok_c:
+            return True, "CARRIED_FEED", comp_c, det_c
+
+        # 2. Shed wheat
+        ok_s, comp_s, det_s = self.evaluate_shed_feed_feasibility(animal_pos, current_hour, worker_id)
+        if ok_s:
+            return True, "SHED_PICKUP_FEED", comp_s, det_s
+
+        # 3. Same-day mature wheat
+        best_h_comp = 999
+        best_h_det = {}
+        for h in self.in_ground_wheat:
+            if h.earliest_harvest_day <= self.day:
+                ok_h, comp_h, det_h = self.evaluate_same_day_harvest_feed_feasibility(
+                    h, animal_pos, current_hour, worker_id
+                )
+                if ok_h and comp_h < best_h_comp:
+                    best_h_comp = comp_h
+                    best_h_det = det_h
+
+        if best_h_comp <= 23:
+            return True, "HARVEST_FEED", best_h_comp, best_h_det
+
+        return False, "NONE", 999, {"reason": "no_physically_causal_feed_route"}
+
     def get_projected_accessible_wheat(self, day: int, hour: int = 23) -> int:
         """Wheat physically accessible for feeding or selling by (day, hour).
 
         Causal invariants:
-        1. Future wheat maturing on day > target_day provides 0 accessible units.
-        2. Today's in-ground wheat counts only if physically harvestable and reachable before H23.
+        1. Future wheat maturing on day > target_day provides 0 accessible units today.
+        2. Today's in-ground wheat counts only if physically harvestable and full physical chain completes before hour.
+           For shed access: move + HARVEST (1) + move + PLACE (1) <= hour - current_hour.
         """
         if day < self.day:
             return 0
 
         if day == self.day:
-            # Immediately accessible
-            accessible = self.shed_wheat + self.worker_carried_wheat
-            # Add same-day in-ground wheat that can physically reach feed or shed before hour
+            # Immediately accessible in shed
+            accessible = self.shed_wheat
+            # Carried wheat accessible if worker can reach shed and PLACE before hour
+            for w in self.workers:
+                w_wheat = w.inventory.get("WHEAT", 0)
+                if w_wheat > 0:
+                    dist_to_shed = min(abs(w.pos[0] - sx) + abs(w.pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
+                    # move to shed + 1 (PLACE) <= remaining hours
+                    if (self.hour + dist_to_shed + 1) <= hour:
+                        accessible += w_wheat
+
+            # Same-day in-ground wheat that can complete HARVEST -> PLACE before hour
             for h in self.in_ground_wheat:
                 if h.earliest_harvest_day <= self.day:
-                    # Generic access to shed or animals: check if reachable within available hours
-                    dist_to_shed = min(abs(h.tile_pos[0] - sx) + abs(h.tile_pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
-                    # 1 harvest + dist_to_shed <= remaining hours
-                    if (self.hour + 1 + dist_to_shed) <= hour:
+                    dist_to_wheat = min(abs(w.pos[0] - h.tile_pos[0]) + abs(w.pos[1] - h.tile_pos[1]) for w in (self.workers or [WorkerStorageState(0, FARMER_SPAWN)]))
+                    dist_wheat_to_shed = min(abs(h.tile_pos[0] - sx) + abs(h.tile_pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
+                    # move + 1 (HARVEST) + move + 1 (PLACE)
+                    if (self.hour + dist_to_wheat + 1 + dist_wheat_to_shed + 1) <= hour:
                         accessible += h.expected_yield
             return accessible
 
@@ -548,11 +723,22 @@ class ResourceLedger:
                         avail = max(0, self.shed_capacity - shed_occ)
                         dep = min(tot, avail)
                         shed_occ += dep
-                        # Clear deposited items
-                        worker_carried[w_id] = {}
+                        # Conserve inventory: deduct deposited items from worker_carried[w_id], leaving undeposited remainder
+                        remaining_to_dep = dep
+                        new_inv = {}
+                        for prod, cnt in items.items():
+                            if remaining_to_dep > 0:
+                                take = min(cnt, remaining_to_dep)
+                                remaining_to_dep -= take
+                                if cnt - take > 0:
+                                    new_inv[prod] = cnt - take
+                            else:
+                                new_inv[prod] = cnt
+                        worker_carried[w_id] = new_inv
 
             # 2. Market sales from shed (cannot sell from backpack!)
             sold = sales_by_hour.get(h, 0)
+            actual_sold = 0
             if sold > 0:
                 actual_sold = min(shed_occ, sold)
                 shed_occ -= actual_sold
@@ -562,6 +748,7 @@ class ResourceLedger:
                 "shed_occupancy": shed_occ,
                 "worker_carried": total_carried_now,
                 "sales": sold,
+                "actual_sold": actual_sold,
             }
 
         # 3. Midnight auto-transfer of remaining backpack goods into shed
@@ -581,15 +768,29 @@ class ResourceLedger:
                     disc = min(cnt, overflow_rem)
                     discarded_products[prod] = discarded_products.get(prod, 0) + disc
                     overflow_rem -= disc
+            final_shed = self.shed_capacity
+            final_carried = 0
+        else:
+            expected_overflow = 0
+            final_shed = potential_midnight_shed
+            final_carried = 0
+        initial_carried = sum(sum(w.inventory.values()) for w in self.workers)
+        initial_physical_total = self.current_shed_occupancy + initial_carried
+        total_sold = sum(entry["actual_sold"] for entry in timeline.values())
+        final_physical_total = final_shed + final_carried
+        inventory_conserved = (initial_physical_total - total_sold - expected_overflow == final_physical_total)
 
         return {
             "initial_shed_occupancy": self.current_shed_occupancy,
-            "final_projected_shed": min(self.shed_capacity, potential_midnight_shed),
+            "initial_worker_carried": initial_carried,
+            "final_projected_shed": final_shed,
+            "final_projected_carried": final_carried,
             "expected_overflow": expected_overflow,
             "discarded_products": discarded_products,
             "overflow_workers": overflow_workers,
             "is_storage_safe": (expected_overflow == 0),
             "timeline": timeline,
+            "inventory_conserved": inventory_conserved,
         }
 
     def snapshot(self) -> Dict[str, Any]:
