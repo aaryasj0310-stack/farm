@@ -125,10 +125,8 @@ def main():
     deltas = np.array(deltas)
     mean_delta = np.mean(deltas)
     median_delta = np.median(deltas)
-    lower_p = np.percentile(deltas, 10)
-    upper_p = np.percentile(deltas, 90)
-    trimmed_deltas = deltas[(deltas >= lower_p) & (deltas <= upper_p)]
-    trimmed_mean = np.mean(trimmed_deltas)
+    s_deltas = np.sort(deltas)
+    trimmed_mean = np.mean(s_deltas[10:90])
 
     print("="*70)
     print("SUMMARY METRICS")
@@ -166,7 +164,7 @@ def main():
         tot_treat_rev += t_r
         print(f"  {p:<12}: Ctrl ${c_r:9.2f} ({c_q:5.2f}u) | Treat ${t_r:9.2f} ({t_q:5.2f}u) | Delta ${d_r:+9.2f} ({d_q:+5.2f}u)")
     d_tot_rev = tot_treat_rev - tot_ctrl_rev
-    print(f"TOTAL REVENUE DELTA: ${d_tot_rev:+,.2f}")
+    print(f"TOTAL REVENUE: Ctrl ${tot_ctrl_rev:9.2f} | Treat ${tot_treat_rev:9.2f} | Delta ${d_tot_rev:+,.2f}")
 
     print("\n--- OUTFLOWS (EXPENDITURES) ---")
     tot_ctrl_exp = 0.0

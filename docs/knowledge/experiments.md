@@ -284,27 +284,29 @@
      - Late-evening drip sales did NOT depress town shop prices in isolation, but caused severe pricing degradation (-$19.95/u on wool) when competing against `full_production_agent`.
 - **Architectural Lesson for P6.2**:
   - Pure market liquidation cannot solve discards when goods are physically trapped in worker backpacks.
-  - P6.1-C proved that manual intraday worker shed drop-off is economically unviable (walking round-trip takes 16–30 hours, destroying far more value in lost watering/care than the saved discards).
-  - P6.2 must abandon manual shed overflow prevention and pivot toward dynamic feed buffer management and market-aware sales timing.
+  - While dedicated long-distance deposit trips for low-value wheat are uneconomic, real 10×10 geometry (max distance 8 steps, mean 4 steps) makes opportunistic near-shed deposits and end-of-day deposits (where hands despawn anyway, incurring zero return-trip cost) highly profitable.
+  - P6.2 must target opportunistic near-shed and end-of-day deposits of high-value produce (Melons, Milk, Strawberries) coupled with same-turn market sales.
 
-### Forensic Investigation: P6.1-C Causal Reconciliation
+### Forensic Investigation: P6.1-C Causal Reconciliation (Revalidated in P6.1-C-R)
 - **Type**: CAUSAL RECONCILIATION & FORENSIC ACCOUNTING AUDIT
-- **Date**: 2026-09-22
+- **Date**: 2026-09-22 (Revalidated 2026-09-23)
 - **Baseline Commit**: `536f1e7071eaa9cdb0f1f3bdb733dce7f75ee77e` (Production Baseline)
 - **Active Branch**: `experiment/sw-p13-planting-gate`
 - **Scope**: Complete transaction interception and hourly trajectory mapping across all 100 scenario pairs (200 live games on seeds `96,411`–`96,420`).
 - **Accounting Closure**: Max single-game cash reconciliation error: **0.000000** ($\epsilon = 0.000000$).
-- **Final Cash Delta**: **+$1,439.86 / game** (Mean) | **+$642.50 / game** (Median) | **+$1,194.20 / game** (10% Trimmed Mean)
+  * Control: $3,000.00 + $145,803.18 (Sales) - $48,912.40 (Exp) = **$99,890.78** (Residual: 0.000000)
+  * Treatment: $3,000.00 + $146,464.88 (Sales) - $48,134.24 (Exp) = **$101,330.64** (Residual: 0.000000)
+- **Final Cash Delta**: **+$1,439.86 / game** (Mean) | **+$642.50 / game** (Even-N Median) | **+$1,250.08 / game** (10% Trimmed Mean, slice `[10:90]`)
 - **Causal Waterfall Breakdown**:
   * **Gross Sales Revenue Delta**: **+$661.70 / game**
-    - Milk: +$799.35 (+1.97 u)
-    - Melon: +$535.48 (+2.45 u)
-    - Strawberry: +$115.62 (+0.68 u)
+    - Milk: +$799.35 (+1.97 u) [Quantity effect +$470.66, Price effect +$324.13 @ $238.91/u Ctrl vs $241.23/u Treat]
+    - Melon: +$535.48 (+2.45 u) [Quantity effect +$585.17, Price effect -$48.36]
+    - Strawberry: +$115.62 (+0.68 u) [Quantity effect +$170.23, Price effect -$54.13]
     - Carrot: +$49.40 (+0.54 u)
     - Tomato: +$39.15 (+0.45 u)
     - Fertilizer: -$8.41 (-0.22 u)
-    - Wool: -$137.40 (-0.06 u)
-    - Wheat: -$731.49 (-24.24 u)
+    - Wool: -$137.40 (-0.06 u) [Price effect -$124.16 due to FPA competition]
+    - Wheat: -$731.49 (-24.24 u) [Quantity effect -$854.25, Price effect +$125.74]
   * **Gross Expenditure Delta**: **-$778.16 / game (Expenditure Savings)**
     - Feed Wheat Purchases: **-$749.18** (-23.16 u) [96.3% of all savings]
     - Seed Purchases: -$4.90
@@ -320,14 +322,16 @@
      - Trajectories are 100% bit-for-bit identical for the first 260 hours ($t=0 \dots 260$, $\text{Delta} = \$0.00$). First divergence occurred at $t=261$ (Day 10, Hour 21).
   3. *[MEASURED FACT] Outlier Concentration*:
      - Top 1 pair = 12.1% of total gain; top 5 pairs = 53.2%; top 10 pairs = **89.6%** ($129k / $144k).
-     - Win rate was only **57.0%** (57 wins, 43 losses).
+     - Win rate was **58.0%** (58 wins, 42 losses).
   4. *[MEASURED FACT] Severe Deficit Against `full_production_agent`*:
      - Treatment lost by **-$1,543.55 / game** with a **35.0% win rate** against FPA.
      - Uncoordinated pre-midnight sales degraded town wool market price from $237.50/u to $217.55/u (-$19.95/u), losing -$2,153.95 in wool revenue.
-  5. *[MEASURED FACT] Intraday Worker Deposit Infeasible*:
-     - Transit round-trip between field plots and shed requires 16–30 hours (exceeding a full working day).
-     - Opportunity cost of lost watering/milking actions is 5x–10x higher than the value of discarded produce. The engine's midnight teleportation dump is already mathematically superior.
+  5. *[CORRECTION] Real Engine Geometry & Deposit Feasibility*:
+     - Engine runs on a **10×10 board** with a **100-capacity shed** centered at `(4,4), (5,4), (4,5), (5,5)`.
+     - Maximum distance to shed access is 8 steps (corners); average distance across all tiles is 4.0 steps (round-trip 8 steps).
+     - Opportunistic deposits (0 extra steps) and end-of-day deposits (where hands despawn at midnight, incurring 0 return steps) are highly profitable.
 - **Classification & Final Taxonomy**:
   - Mechanism Verdict: **MECHANISM NO-GO**
   - Final Taxonomy: **Option B (Storage Mechanism Failed, Cash Signal Mostly Incidental / Feed Buffer Arbitrage)**.
-  - Action: Keep `P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = False`. Do not promote to production. Pivot to P6.2.
+  - Action: Keep `P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = False`. Do not promote to production.
+  - Selected P6.2 Experiment: **Candidate A (Opportunistic Near-Shed Deposit-and-Sell)**.

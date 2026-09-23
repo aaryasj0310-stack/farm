@@ -1,4 +1,4 @@
-# P6.1-C Cash Delta Reconciliation
+# P6.1-C Cash Delta Reconciliation (Corrected)
 
 ## Executive Summary
 
@@ -8,9 +8,13 @@ In P6.1, the reported final cash advantage was **+$1,439.86/game**. P6.1 attribu
 
 Forensic accounting via transaction-level interception across all 200 live simulation runs proves that:
 1. **The single-game accounting residual error is exactly $\epsilon = 0.000000$ across all 100 matched pairs.**
-2. The unexplained **+$778.16** is **NOT** compounding yield or return on invested capital. It is **AN EXPENDITURE SAVINGS OF EXACTLY +$778.16**, driven overwhelmingly by **$749.18 in reduced feed wheat purchases from town**.
-3. Feed wheat purchase savings ($+\$749.18$) almost exactly mirror the reduction in wheat sales revenue ($-\$731.49$). Treatment held 24.24 fewer units of wheat in shed market dumps, thereby avoiding the purchase of 23.16 units of feed wheat at an unfavorable town retail spread.
-4. The remaining **+$1,393.19** of final cash delta is driven by high-value product sales increases (Milk +$799.35, Melon +$535.48, Strawberry +$115.62, Carrot +$49.40, Tomato +$39.15, less Wool -$137.40 and Fertilizer -$8.41), offset by minor non-wheat expenditure deltas.
+2. **Absolute Cash Accounting**:
+   - Control: $\$3,000.00 + \$145,803.18 \text{ (Sales)} - \$48,912.40 \text{ (Exp)} = \mathbf{\$99,890.78}$
+   - Treatment: $\$3,000.00 + \$146,464.88 \text{ (Sales)} - \$48,134.24 \text{ (Exp)} = \mathbf{\$101,330.64}$
+   *(Note: An earlier draft reported $113,873.34 and $114,535.04 due to an incomplete crop sales filter in the display script; both arms were underreported by exactly $31,929.84. The underlying simulation engine and telemetry closed with exact precision).*
+3. The unexplained **+$778.16** is **NOT** compounding yield or return on invested capital. It is **AN EXPENDITURE SAVINGS OF EXACTLY +$778.16**, driven overwhelmingly by **$749.18 in reduced feed wheat purchases from town**.
+4. Feed wheat purchase savings ($+\$749.18$) almost exactly mirror the reduction in wheat sales revenue ($-\$731.49$). Treatment held 24.24 fewer units of wheat in shed market dumps, thereby avoiding the purchase of 23.16 units of feed wheat at an unfavorable town retail spread.
+5. The remaining **+$1,393.19** of final cash delta is driven by high-value product sales increases (Milk +$799.35, Melon +$535.48, Strawberry +$115.62, Carrot +$49.40, Tomato +$39.15, less Wool -$137.40 and Fertilizer -$8.41), offset by minor non-wheat expenditure deltas.
 
 ---
 
@@ -20,23 +24,23 @@ All values represent the per-game arithmetic mean across the 100 matched pairs (
 
 $$\text{Final Cash Delta} = \Delta \text{Revenue} - \Delta \text{Expenditures}$$
 
-| Line Item | Control Mean | Treatment Mean | Net Delta (T - C) | Economic Classification |
+| Line Item | Control Mean | Treatment Mean | Net Delta (T − C) | Economic Classification |
 | :--- | :---: | :---: | :---: | :--- |
-| **Gross Product Sales Revenue** | **$113,873.34** | **$114,535.04** | **+$661.70** | **Total Revenue Inflow Delta** |
+| **Gross Product Sales Revenue** | **$145,803.18** | **$146,464.88** | **+$661.70** | **Total Revenue Inflow Delta** |
 | • Wheat Sales | $36,066.82 (1023.42u) | $35,335.33 (999.18u) | -$731.49 (-24.24u) | Reduced wheat dumping (buffer) |
+| • Carrot Sales | $2,768.46 (69.98u) | $2,817.86 (70.52u) | +$49.40 (+0.54u) | Minor yield / price timing |
+| • Tomato Sales | $1,545.37 (23.21u) | $1,584.52 (23.66u) | +$39.15 (+0.45u) | Minor yield / price timing |
+| • Strawberry Sales | $19,105.92 (76.32u) | $19,221.54 (77.00u) | +$115.62 (+0.68u) | Harvest yield variation |
+| • Melon Sales | $21,331.08 (89.31u) | $21,866.56 (91.76u) | +$535.48 (+2.45u) | Salvaged 1.05u discards + field timing |
 | • Milk Sales | $33,433.55 (139.94u) | $34,232.90 (141.91u) | +$799.35 (+1.97u) | Preserved production & minor discard save |
-| • Melon Sales | $11,922.95 (54.58u) | $12,458.43 (57.03u) | +$535.48 (+2.45u) | Salvaged 1.05u discards + field timing |
-| • Strawberry Sales | $7,725.12 (45.38u) | $7,840.74 (46.06u) | +$115.62 (+0.68u) | Harvest yield variation |
-| • Carrot Sales | $4,855.94 (53.30u) | $4,905.34 (53.84u) | +$49.40 (+0.54u) | Minor yield / price timing |
-| • Tomato Sales | $4,589.90 (52.68u) | $4,629.05 (53.13u) | +$39.15 (+0.45u) | Minor yield / price timing |
 | • Wool Sales | $16,278.92 (73.22u) | $16,141.52 (73.16u) | -$137.40 (-0.06u) | Market price degradation in FPA matches |
 | • Fertilizer Sales | $15,273.06 (187.74u) | $15,264.65 (187.52u) | -$8.41 (-0.22u) | Negligible variation |
-| • Egg Sales | $0.00 (0.00u) | $0.00 (0.00u) | $0.00 (0.00u) | Chickens disabled in baseline |
+| • Egg Sales | $0.00 (0.00u) | $0.00 (0.00u) | $0.00 (0.00u) | Geese disabled in baseline |
 | **Gross Cash Expenditures** | **$48,912.40** | **$48,134.24** | **-$778.16** | **Total Expenditure Outflow Delta (Savings)** |
-| • Feed Wheat Purchases | $30,780.44 (877.70u) | $30,031.26 (854.54u) | -$749.18 (-23.16u) | **Avoided store feed purchases (+Savings)** |
+| • Feed Wheat Purchases | $30,780.44 (877.70u) | $30,031.26 (854.54u) | **-$749.18 (-23.16u)** | **Avoided store feed purchases (+Savings)** |
 | • Seed Purchases | $4,685.40 | $4,680.50 | -$4.90 | Minor planting schedule difference |
 | • Animal Purchases | $4,903.00 | $4,889.00 | -$14.00 | Minor purchase timing difference |
-| • Worker Wages (Hires) | $7,543.56 | $7,533.48 | -$10.08 | Minor hire step offset |
+| • Worker Wages (Hires) | $7,543.56 (293.99 hires) | $7,533.48 (293.92 hires) | -$10.08 (-0.07 hires) | Minor hire step offset |
 | • Land Expansion | $1,000.00 | $1,000.00 | $0.00 | Identical expansion policy |
 | • Fertilizer Purchases | $0.00 | $0.00 | $0.00 | Never purchased from town |
 | **Reconciled Net Delta** | — | — | **+$1,439.86** | **$\Delta \text{Revenue} - \Delta \text{Expenditures}$** |
