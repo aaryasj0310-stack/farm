@@ -1,6 +1,6 @@
 """Multi-Day Time-Aware Service Certificate with Structured Repair Options.
 
-Part of the SW-First Forward Architecture Redesign (Phase A).
+Part of the SW-First Forward Architecture Redesign (Phase A & A-R).
 Provides two levels of service certification:
 1. ExecutionCertificate: Current day/hour -> midnight (exact unit positions & actions)
 2. ForwardServiceCertificate: Rolling 72-96 hour horizon:
@@ -8,7 +8,10 @@ Provides two levels of service certification:
    - H24-H48: exact cohort deadlines & regional transit
    - H48-H96: conservative capacity envelopes
 
-Returns structured RepairOptions (not free-text) to enable algorithmic repair selection.
+Features:
+- Exact physical task dependency tracking (HARVEST -> FEED, HARVEST -> PLACE -> SELL)
+- Earliest-start and causal precedence enforcement
+- Structured RepairOptions (DROP, DELAY, DOWNSIZE, HIRE) with economic opportunity costs
 """
 from __future__ import annotations
 
@@ -30,9 +33,9 @@ class CommitmentTier(str, Enum):
 
 @dataclass
 class ServiceTask:
-    """A scheduled task with spatial coordinates and deadline."""
+    """A scheduled task with spatial coordinates, deadline, and physical dependencies."""
     task_id: str
-    op: str                          # FEED, WATER, HARVEST, PLANT, DIG, FERTILIZE, PLACE
+    op: str                          # FEED, WATER, HARVEST, PLANT, DIG, FERTILIZE, PLACE, SELL
     pos: Tuple[int, int]
     region: str                      # "NW", "NE", "SW"
     day: int
@@ -41,6 +44,9 @@ class ServiceTask:
     estimated_duration_actions: int = 1
     cohort_id: Optional[str] = None
     value: float = 0.0
+    prerequisite_task_id: Optional[str] = None
+    earliest_start_hour: int = 0
+    task_type: str = "GENERIC"
 
 
 @dataclass
@@ -64,7 +70,7 @@ class CertificateResult:
     peak_workload: int               # Highest action demand in any single hour
     binding_day: int
     binding_hour: int
-    binding_resource: str            # "WORKER_HOURS", "FEED_CARRIER", "SHED_SPACE", "CASH"
+    binding_resource: str            # "WORKER_HOURS", "FEED_CARRIER", "SHED_SPACE", "CASH", "TASK_DEPENDENCY"
     failing_tasks: List[ServiceTask] = field(default_factory=list)
     repair_options: List[RepairOption] = field(default_factory=list)
     horizon_hours: int = 72
@@ -87,11 +93,11 @@ class ServiceCertificate:
         """Evaluate serviceability over rolling horizon (e.g. 72 hours).
 
         Simulates demand vs capacity across 3 distinct fidelity zones:
-        - Zone 1 (H0-H24): Exact unit actions and travel overhead
+        - Zone 1 (H0-H24): Exact unit actions, travel overhead, physical dependency ordering
         - Zone 2 (H24-H48): Exact cohort deadlines + regional transit factor
         - Zone 3 (H48-H72+): Capacity envelopes
         """
-        # Group tasks by (day, hour)
+        tasks_by_id = {t.task_id: t for t in tasks}
         tasks_by_day_hour: Dict[Tuple[int, int], List[ServiceTask]] = {}
         for t in tasks:
             key = (t.day, t.hour_deadline)
@@ -106,7 +112,23 @@ class ServiceCertificate:
         binding_res = "WORKER_HOURS"
         failing_tasks = []
 
-        # Iterate over each hour in the horizon
+        # 1. Verify physical causal dependencies (e.g. HARVEST -> FEED, HARVEST -> PLACE -> SELL)
+        for t in tasks:
+            if t.prerequisite_task_id:
+                prereq = tasks_by_id.get(t.prerequisite_task_id)
+                if prereq is not None:
+                    # Prerequisite must finish on earlier day OR on same day before t's earliest start / deadline
+                    prereq_completion_day = prereq.day
+                    prereq_completion_hour = prereq.hour_deadline + prereq.estimated_duration_actions
+                    if prereq_completion_day > t.day or (
+                        prereq_completion_day == t.day and prereq_completion_hour > t.hour_deadline
+                    ):
+                        failing_tasks.append(t)
+                        binding_res = "TASK_DEPENDENCY"
+                        binding_day = t.day
+                        binding_hour = t.hour_deadline
+
+        # 2. Iterate over each hour in the horizon for labor action budget
         for h_step in range(horizon_hours):
             abs_hour = (current_day * TURNS_PER_DAY + current_hour) + h_step
             day = abs_hour // TURNS_PER_DAY
@@ -116,7 +138,6 @@ class ServiceCertificate:
                 break
 
             # Worker capacity in this hour
-            # Note: Day 0-30 target hands schedule
             sched_workers = 1 + get_target_hands(day)
             # In hour 0, new hires have not settled yet (settle at H1)
             effective_workers = sched_workers if hour > 0 else (1 + get_target_hands(max(0, day - 1)))
@@ -126,9 +147,6 @@ class ServiceCertificate:
             due_tasks = tasks_by_day_hour.get((day, hour), [])
 
             # Fidelity adjustment:
-            # In Zone 1 (h_step < 24): add ~30% travel overhead for regional tasks
-            # In Zone 2 (24 <= h_step < 48): add ~20% transit buffer
-            # In Zone 3 (h_step >= 48): flat 15% buffer
             if h_step < 24:
                 travel_factor = 1.35
             elif h_step < 48:
@@ -145,14 +163,17 @@ class ServiceCertificate:
             slack = hourly_action_budget - total_estimated_demand
             if slack < min_slack:
                 min_slack = slack
-                binding_day = day
-                binding_hour = hour
+                if not failing_tasks:
+                    binding_day = day
+                    binding_hour = hour
+                    binding_res = "WORKER_HOURS"
 
             if slack < 0:
                 # Capacity deficit! Hard tasks fail
                 for t in due_tasks:
                     if t.tier == CommitmentTier.HARD:
-                        failing_tasks.append(t)
+                        if t not in failing_tasks:
+                            failing_tasks.append(t)
 
         feasible = (min_slack >= 0) and (len(failing_tasks) == 0)
 
@@ -203,48 +224,63 @@ class ServiceCertificate:
                     type="DROP_COHORT",
                     target=cid,
                     actions_freed=freed,
-                    cash_freed=50.0,
+                    cash_freed=0.0,
                     expected_value_lost=loss,
                     deadline_slack_gained=freed,
                     resolves_certificate=resolves,
-                    reason=f"Drop discretionary cohort {cid} to recover {freed} actions at Day {binding_day}",
+                    reason=f"Drop discretionary cohort {cid} to recover {freed} actions in binding window Day {binding_day} H{binding_hour}",
                 )
             )
 
-        # Candidate Repair 2: Downsize SW tranche
-        sw_strategic = [
+        # Candidate Repair 2: Delay strategic SW planting by 1 day
+        sw_planting_tasks = [
             t for t in tasks
-            if t.day == binding_day and t.region == "SW" and t.tier == CommitmentTier.STRATEGIC
+            if t.day == binding_day and t.tier == CommitmentTier.STRATEGIC and t.region == "SW" and t.op in ("PLANT", "DIG")
         ]
-        if sw_strategic:
-            sw_freed = sum(t.estimated_duration_actions for t in sw_strategic)
+        if sw_planting_tasks:
+            freed = sum(t.estimated_duration_actions for t in sw_planting_tasks)
+            repairs.append(
+                RepairOption(
+                    type="DELAY_COHORT",
+                    target="SW_TRANCHE",
+                    actions_freed=freed,
+                    cash_freed=0.0,
+                    expected_value_lost=250.0,  # 1 day delayed yield
+                    deadline_slack_gained=freed,
+                    resolves_certificate=(freed >= deficit),
+                    reason=f"Delay SW tranche planting by 1 day to alleviate binding peak on Day {binding_day}",
+                )
+            )
+
+        # Candidate Repair 3: Downsize tranche size
+        if sw_planting_tasks and len(sw_planting_tasks) > 4:
+            freed = len(sw_planting_tasks) // 2
             repairs.append(
                 RepairOption(
                     type="DOWNSIZE_TRANCHE",
-                    target="SW_TRANCHE",
-                    actions_freed=sw_freed // 2,
-                    cash_freed=200.0,
-                    expected_value_lost=300.0,
-                    deadline_slack_gained=sw_freed // 2,
-                    resolves_certificate=((sw_freed // 2) >= deficit),
-                    reason=f"Scale down SW tranche to recover {sw_freed // 2} actions",
+                    target="SW_TRANCHE_HALF",
+                    actions_freed=freed,
+                    cash_freed=150.0,  # saved seeds
+                    expected_value_lost=500.0,
+                    deadline_slack_gained=freed,
+                    resolves_certificate=(freed >= deficit),
+                    reason=f"Downsize SW tranche by 50% to fit within available labor budget",
                 )
             )
 
-        # Candidate Repair 3: Add peak-day extra hire
+        # Candidate Repair 4: Hire extra farmhand if below day cap
         repairs.append(
             RepairOption(
                 type="HIRE_EXTRA_WORKER",
-                target=f"DAY_{binding_day}_HIRE",
-                actions_freed=20,
-                cash_freed=-233.0,  # Marginal wage cost of 13th hand
-                expected_value_lost=233.0,
-                deadline_slack_gained=20,
-                resolves_certificate=True,
-                reason=f"Hire 1 extra hand on peak Day {binding_day} to provide 20 extra actions",
+                target="HIRE_HAND",
+                actions_freed=23,  # Net 23 actions across remainder of day
+                cash_freed=-200.0, # Hire cost ($54-$72/day)
+                expected_value_lost=0.0,
+                deadline_slack_gained=1,
+                resolves_certificate=(1 >= deficit),
+                reason="Hire additional hand to provide +1 action per remaining hour",
             )
         )
 
-        # Sort repairs: those that resolve certificate first, then lowest value lost
         repairs.sort(key=lambda r: (not r.resolves_certificate, r.expected_value_lost))
         return repairs

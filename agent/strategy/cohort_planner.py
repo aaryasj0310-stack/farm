@@ -1,52 +1,49 @@
-"""Crop and Livestock Cohort Planner with Counterfactual Opportunity-Cost Admission.
+"""Authoritative Opportunity-Cost Cohort Planner.
 
-Part of the SW-First Forward Architecture Redesign (Phase A).
-Replaces isolated positive-EV / threshold admission with:
-    ΔFC = E[FinalCash | Plan WITH candidate] - E[FinalCash | Plan WITHOUT candidate]
-Everything is inside the trajectories (no double subtraction of displaced core).
+Part of the SW-First Forward Architecture Redesign (Phase A & A-R).
+Evaluates prospective crop and livestock cohorts under true whole-farm counterfactuals:
+ΔFC = TerminalCash(WITH candidate) - TerminalCash(WITHOUT candidate)
 
-Exposes:
-- CropCohort and LivestockCohort structured models
-- Dynamic SW layout candidates (not restricted to 15 crop / 9 pasture)
-- Rapid tranche scaling model (Tranche 1: ~8 -> Tranche 2: ~16 -> Tranche 3: ~20-24)
-- Non-linear own-supply market impact pricing
+Features:
+1. Engine-exact sequential price modeling using market/price_math.py (no approximate formulas)
+2. Accurate nonlinear own-supply depression across product-specific curves (MELON, STRAWBERRY, WHEAT, etc.)
+3. Zero double-counting: sequential revenue already embeds own-supply impact into trajectory comparison
+4. Engine-grounded crop timing and lifecycle mechanics (WHEAT, STRAWBERRY, MELON, CARROT, TOMATO)
+5. Dynamic candidate portfolio generation (not hardcoded static production answers)
 """
 from __future__ import annotations
 
-import copy
 import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from config import (
-    CROPS, ANIMALS, MARKET_PARAMS, MARKET_I0, SEASON_DAYS,
-    SW_SOIL_TILES, SW_PASTURE_TILES,
-)
+from config import CROPS, MARKET_I0, MARKET_PARAMS, PRICE_FLOOR, SEASON_DAYS
+from market.price_math import market_price, total_revenue_estimate
 
 
 @dataclass
 class CropCohort:
-    """A planned or active crop planting cohort."""
+    """Standardized representation of a discrete crop planting cohort."""
     cohort_id: str
     crop: str
-    region: str                               # "NW", "NE", "SW"
+    region: str                               # "NW", "NE", "SW", "SE"
     tiles: List[Tuple[int, int]]
     plant_day: int
     plant_hour: int = 0
-    watering_schedule: List[int] = field(default_factory=list)      # Days requiring water
-    fertilizer_schedule: List[int] = field(default_factory=list)    # Days to fertilize
+    watering_schedule: List[int] = field(default_factory=list) # Days requiring watering
+    fertilizer_schedule: List[int] = field(default_factory=list)
     harvest_windows: List[Tuple[int, int, int]] = field(default_factory=list) # (day, hour, expected_units)
     expected_gross_revenue: float = 0.0
     seed_cost: float = 0.0
     labor_actions_required: int = 0
     remaining_labor_obligation: int = 0
     market_supply_units: int = 0
-    is_discretionary: bool = False            # True if marginal/low-value candidate
+    is_discretionary: bool = False
 
 
 @dataclass
 class LivestockCohort:
-    """A planned or active animal cohort."""
+    """Standardized representation of an animal purchase tranche."""
     cohort_id: str
     species: str                              # "COW", "SHEEP", "GOOSE"
     region: str
@@ -71,7 +68,7 @@ class OpportunityCostEvaluation:
     incremental_wage_cost: float
     displaced_core_value: float               # Displaced core crop/livestock output
     feed_opportunity_cost: float              # Additional feed consumption or purchase
-    market_cannibalization_loss: float        # Price depression on existing farm inventory
+    market_cannibalization_loss: float        # Diagnostic price depression on candidate supply
     feasible: bool = True
     admission_decision: str = "REJECT"        # "ADMIT", "DELAY", "DOWNSIZE", "REJECT"
     rejection_reason: Optional[str] = None
@@ -112,7 +109,7 @@ class CohortPlanner:
 
         if ongoing:
             # Multi-harvest crop (Strawberry: 4 ticks, Tomato: 4 ticks)
-            # Up to 4 production ticks
+            # Up to max_yield production ticks
             for tick in range(min(4, max_yield)):
                 h_day = first_harvest + tick * interval
                 if h_day < SEASON_DAYS:
@@ -120,7 +117,8 @@ class CohortPlanner:
                     harvest_windows.append((h_day, 0, units))
                     total_units += units
 
-            # Watering schedule: needs water every day between plant and last harvest
+            # Watering schedule: needs water on planting day and all active production days
+            # To prevent weeds and guarantee production bonus
             last_h = harvest_windows[-1][0] if harvest_windows else plant_day
             for d in range(plant_day, min(SEASON_DAYS, last_h + 1)):
                 watering_days.append(d)
@@ -141,9 +139,8 @@ class CohortPlanner:
 
             labor_ops = len(tiles) * (1 + len(watering_days) + 1)
 
-        # Baseline reference price
-        base_price = MARKET_PARAMS.get(crop, {}).get("base", 30)
-        expected_gross = total_units * base_price
+        # Engine-exact baseline revenue estimate under base market conditions
+        expected_gross = float(total_revenue_estimate(crop, MARKET_I0, total_units))
 
         return CropCohort(
             cohort_id=cohort_id,
@@ -163,6 +160,23 @@ class CohortPlanner:
             is_discretionary=is_discretionary,
         )
 
+    def estimate_price_depression_loss(self, product: str, additional_units: int, current_inv: int) -> float:
+        """Engine-exact realized revenue loss due to own-supply price depression.
+
+        Evaluates exact realized revenue under the engine price curve vs hypothetical nominal spot price:
+        Nominal = additional_units * market_price(product, current_inv)
+        Realized = total_revenue_estimate(product, current_inv, additional_units)
+        Depression_loss = max(0, Nominal - Realized)
+        """
+        if product not in MARKET_PARAMS or additional_units <= 0:
+            return 0.0
+
+        spot_px = market_price(product, current_inv)
+        nominal_rev = float(additional_units * spot_px)
+        realized_rev = float(total_revenue_estimate(product, current_inv, additional_units))
+        loss = max(0.0, nominal_rev - realized_rev)
+        return round(loss, 2)
+
     def evaluate_opportunity_cost(
         self,
         candidate: CropCohort,
@@ -172,26 +186,33 @@ class CohortPlanner:
     ) -> OpportunityCostEvaluation:
         """Compute counterfactual ΔFC for admitting candidate cohort.
 
-        ΔFC = Expected Net Revenue(Candidate)
-            - Displaced Core Net Revenue
-            - Market Cannibalization
-            - Feed Opportunity Cost
-            - Incremental Wages
+        ΔFC = TerminalCash(WITH) - TerminalCash(WITHOUT)
+
+        Realized revenues are calculated using engine-exact sequential pricing (total_revenue_estimate).
+        Price cannibalization is already embedded in the trajectory revenues; it is NOT double-subtracted.
         """
-        # 1. Candidate gross and seed cost
-        cand_gross = candidate.expected_gross_revenue
+        # 1. Candidate gross revenue under engine-exact pricing
+        cand_inv = market_inventory.get(candidate.crop, MARKET_I0)
+        if candidate.expected_gross_revenue > 0:
+            cand_gross = candidate.expected_gross_revenue
+        else:
+            cand_gross = float(total_revenue_estimate(candidate.crop, cand_inv, candidate.market_supply_units))
         cand_seed = candidate.seed_cost
 
-        # 2. Estimate market cannibalization on existing supply
-        # Price function impact: adding units depresses marginal realized price
+        # 2. Diagnostic price depression decomposition (reported for observability, not double-subtracted)
         cannibalization = self.estimate_price_depression_loss(
-            candidate.crop, candidate.market_supply_units, market_inventory.get(candidate.crop, 10000)
+            candidate.crop, candidate.market_supply_units, cand_inv
         )
 
-        # 3. Displaced core value
+        # 3. Displaced core value under engine-exact pricing
         displaced_value = 0.0
         for dc in displaced_cohorts:
-            displaced_value += max(0.0, dc.expected_gross_revenue - dc.seed_cost)
+            if dc.expected_gross_revenue > 0:
+                dc_gross = dc.expected_gross_revenue
+            else:
+                dc_inv = market_inventory.get(dc.crop, MARKET_I0)
+                dc_gross = float(total_revenue_estimate(dc.crop, dc_inv, dc.market_supply_units))
+            displaced_value += max(0.0, dc_gross - dc.seed_cost)
 
         # 4. Feed opportunity cost (if candidate displaces wheat or creates feed risk)
         feed_cost = 0.0
@@ -202,8 +223,8 @@ class CohortPlanner:
         # Incremental wage: assume 0 for baseline workforce unless peak hire required
         incremental_wages = 0.0
 
-        # Net Counterfactual ΔFC
-        delta_fc = cand_gross - cand_seed - cannibalization - displaced_value - feed_cost - incremental_wages
+        # Net Counterfactual ΔFC = (cand_gross - cand_seed) - displaced_value - feed_cost - incremental_wages
+        delta_fc = (cand_gross - cand_seed) - displaced_value - feed_cost - incremental_wages
 
         decision = "ADMIT" if delta_fc > 0 else "REJECT"
         reason = None
@@ -228,24 +249,6 @@ class CohortPlanner:
             admission_decision=decision,
             rejection_reason=reason,
         )
-
-    def estimate_price_depression_loss(self, product: str, additional_units: int, current_inv: int) -> float:
-        """Estimate realized revenue loss on existing/incumbent inventory due to own supply."""
-        if product not in MARKET_PARAMS or additional_units <= 0:
-            return 0.0
-
-        params = MARKET_PARAMS[product]
-        base = params["base"]
-        T = params["T"]
-        bf = params["bf"]
-
-        # Approximate price change per unit
-        # When inventory increases by ΔI, price drops approximately by:
-        # ΔP ≈ base * (ΔI / (T * 2)) for moderate inventory
-        price_drop_per_unit = (base * (additional_units / max(100.0, float(T)))) * 0.25
-        # Total impact across new and incumbent sold units (assuming ~50 incumbent units)
-        total_cannibalization = price_drop_per_unit * min(100, additional_units)
-        return round(max(0.0, total_cannibalization), 2)
 
     def generate_candidate_portfolios(self, current_day: int, available_tiles: List[Tuple[int, int]]) -> List[Dict[str, Any]]:
         """Generate diverse SW candidate allocations for portfolio comparison.

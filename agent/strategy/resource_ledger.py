@@ -1,18 +1,22 @@
 """Authoritative Multi-Resource Commitment Ledger.
 
-Part of the SW-First Forward Architecture Redesign (Phase A).
+Part of the SW-First Forward Architecture Redesign (Phase A & A-R).
 Provides time-indexed accounting across future hours/days for:
 1. Cash (HARD, CONSERVATIVE, SPECULATIVE inflow categories; zero double-reservation)
-2. Feed (Physical accessibility, strict harvest causality, daily animal liabilities)
-3. Market Orders (Engine-exact 10-order cap with command-specific slot costs)
-4. Storage (Sequential execution: harvest -> carrier -> shed -> market -> midnight drop -> discard)
+2. Feed (Physical accessibility, strict harvest causality, daily animal liabilities, same-day physical chains)
+3. Market Orders (Engine-exact 10-order cap per (day, hour) turn with command-specific slot costs)
+4. Storage (Physically causal worker-level state, intraday timeline, deposit/sell chains, midnight auto-drop & discard)
 """
 from __future__ import annotations
 
 import copy
+import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+from config import CROPS, SHED_ACCESS_TILES, TURNS_PER_DAY
+from state.observation_parser import crop_age
 
 
 class InflowConfidence(str, Enum):
@@ -53,24 +57,49 @@ class DatedFeedLiability:
 
 
 @dataclass
+class WorkerStorageState:
+    """Worker-level inventory and spatial accessibility state."""
+    worker_id: int
+    pos: Tuple[int, int]
+    inventory: Dict[str, int] = field(default_factory=dict)
+    carried_total: int = 0
+    distance_to_shed: int = 0
+    earliest_deposit_hour: int = 0
+
+
+@dataclass
 class InGroundWheatHarvest:
-    """Dated wheat harvest event."""
-    day: int
-    hour: int
-    tile_pos: Tuple[int, int]
-    expected_yield: int
+    """Authoritative in-ground wheat harvest tracking with engine-exact timing."""
+    planted_day: int = 0
+    current_age: int = 0
+    tile_pos: Tuple[int, int] = (0, 0)
+    earliest_harvest_day: int = 0      # planted_day + 2 (first_yield_day)
+    max_maturity_day: int = 0          # planted_day + 4 (max_yield_day)
+    expected_yield: int = 6
+    is_harvestable_now: bool = False
+    is_mature_now: bool = False
+    day: int = 0
+    hour: int = 0
+
+    def __post_init__(self) -> None:
+        if self.day != 0 and self.max_maturity_day == 0:
+            self.max_maturity_day = self.day
+        if self.max_maturity_day != 0 and self.day == 0:
+            self.day = self.max_maturity_day
+        if self.earliest_harvest_day == 0 and self.max_maturity_day != 0:
+            self.earliest_harvest_day = self.max_maturity_day
 
 
 @dataclass
 class MarketSlotAllocation:
-    """Reservation of market order capacity (10 max per turn)."""
+    """Reservation of market order capacity (maximum 10 commands per player per turn)."""
     command_type: str              # HIRE, BUY_PRODUCT, BUY_LAND, BUY_ANIMAL, SELL
     slots_consumed: int
     details: Dict[str, Any] = field(default_factory=dict)
 
 
 class ResourceLedger:
-    """Authoritative, unified multi-resource ledger."""
+    """Authoritative, unified multi-resource ledger with engine-exact causality."""
 
     def __init__(self, current_day: int = 0, current_hour: int = 0) -> None:
         self.day: int = current_day
@@ -96,81 +125,146 @@ class ResourceLedger:
         self.shed_capacity: int = 100
         self.current_shed_occupancy: int = 0
         self.current_worker_carried_units: int = 0
+        self.goods_in_shed: Dict[str, int] = {}
+        self.workers: List[WorkerStorageState] = []
 
     def update_from_observation(self, ctx: Dict[str, Any]) -> None:
-        """Synchronize ledger with ground-truth engine observation."""
+        """Synchronize ledger with ground-truth engine observation using authoritative helpers."""
         self.day = ctx.get("day", 0)
         self.hour = ctx.get("hour", 0)
         farm = ctx.get("farm")
         private = ctx.get("private")
 
-        # Cash
+        # 1. Cash
         self.cash_on_hand = float(getattr(farm, "money", 0.0)) if farm else 0.0
 
-        # Feed & Storage
+        # 2. Shed Storage
         shed_dict = getattr(private, "shed", {}) if private else {}
+        self.goods_in_shed = {k: int(v) for k, v in shed_dict.items() if int(v) > 0}
         self.shed_wheat = int(shed_dict.get("WHEAT", 0))
-        self.current_shed_occupancy = sum(int(v) for v in shed_dict.values())
+        self.current_shed_occupancy = sum(self.goods_in_shed.values())
 
+        # 3. Worker State & Carried Inventories
+        self.workers.clear()
         carried_wheat = 0
         carried_total = 0
         inventories = getattr(private, "inventories", []) if private else []
-        for inv in inventories:
-            if isinstance(inv, dict):
-                carried_wheat += int(inv.get("WHEAT", 0))
-                carried_total += sum(int(v) for v in inv.values())
+
+        if farm:
+            farmer_pos = tuple(getattr(farm, "farmer", (4, 4)) or (4, 4))
+            farmer_inv = inventories[0] if len(inventories) > 0 and isinstance(inventories[0], dict) else {}
+            farmer_clean_inv = {k: int(v) for k, v in farmer_inv.items() if int(v) > 0}
+            farmer_dist = min(abs(farmer_pos[0] - sx) + abs(farmer_pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
+            farmer_tot = sum(farmer_clean_inv.values())
+            self.workers.append(
+                WorkerStorageState(
+                    worker_id=0,
+                    pos=farmer_pos,
+                    inventory=farmer_clean_inv,
+                    carried_total=farmer_tot,
+                    distance_to_shed=farmer_dist,
+                    earliest_deposit_hour=min(24, self.hour + farmer_dist),
+                )
+            )
+            carried_wheat += int(farmer_clean_inv.get("WHEAT", 0))
+            carried_total += farmer_tot
+
+            hands = getattr(farm, "hands", []) or []
+            for h_idx, h_pos in enumerate(hands):
+                w_id = h_idx + 1
+                pos = tuple(h_pos) if h_pos is not None else (4, 4)
+                h_inv = inventories[w_id] if len(inventories) > w_id and isinstance(inventories[w_id], dict) else {}
+                h_clean_inv = {k: int(v) for k, v in h_inv.items() if int(v) > 0}
+                h_dist = min(abs(pos[0] - sx) + abs(pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
+                h_tot = sum(h_clean_inv.values())
+                self.workers.append(
+                    WorkerStorageState(
+                        worker_id=w_id,
+                        pos=pos,
+                        inventory=h_clean_inv,
+                        carried_total=h_tot,
+                        distance_to_shed=h_dist,
+                        earliest_deposit_hour=min(24, self.hour + h_dist),
+                    )
+                )
+                carried_wheat += int(h_clean_inv.get("WHEAT", 0))
+                carried_total += h_tot
+
         self.worker_carried_wheat = carried_wheat
         self.current_worker_carried_units = carried_total
 
-        # In-ground wheat tracking
+        # 4. In-ground Wheat Tracking using Authoritative crop_age and planted_day
         self.in_ground_wheat.clear()
         if farm:
             for t in farm.iter_tiles():
-                if getattr(t, "kind", None) == "PLANT" and getattr(t, "crop", None) == "WHEAT":
-                    # Wheat takes 4 days to reach max yield (or 2 for first yield)
-                    age = getattr(t, "age", 0)
-                    rem_days = max(0, 4 - age)
-                    h_day = self.day + rem_days
-                    if h_day < 30:
-                        self.in_ground_wheat.append(
-                            InGroundWheatHarvest(
-                                day=h_day,
-                                hour=0,  # harvests typically targeted in morning
-                                tile_pos=t.pos if hasattr(t, "pos") else (t.x, t.y),
-                                expected_yield=6,
-                            )
-                        )
+                is_plant = getattr(t, "is_plant", False) or getattr(t, "kind", None) == "PLANT"
+                crop_name = getattr(t, "crop", None)
+                if is_plant and crop_name == "WHEAT":
+                    planted_day = getattr(t, "planted_day", None)
+                    if planted_day is not None:
+                        c_age = crop_age(t, self.day)
+                        p_day = planted_day
+                    else:
+                        c_age = 0
+                        p_day = self.day
 
-        # Feed liabilities from existing animals
+                    earliest_h = p_day + 2  # first_yield_day = 2
+                    max_m = p_day + 4       # max_yield_day = 4
+                    is_harv = (self.day >= earliest_h)
+                    is_mat = (self.day >= max_m)
+                    curr_units = int(getattr(t, "yield_units", 0) or 0)
+
+                    if is_mat:
+                        exp_yield = 6 if curr_units == 0 else max(6, curr_units)
+                    elif is_harv:
+                        exp_yield = max(2, curr_units)
+                    else:
+                        exp_yield = 6
+
+                    self.in_ground_wheat.append(
+                        InGroundWheatHarvest(
+                            planted_day=p_day,
+                            current_age=c_age,
+                            tile_pos=t.pos if hasattr(t, "pos") else (t.x, t.y),
+                            earliest_harvest_day=earliest_h,
+                            max_maturity_day=max_m,
+                            expected_yield=exp_yield,
+                            is_harvestable_now=is_harv,
+                            is_mature_now=is_mat,
+                        )
+                    )
+
+        # 5. Animal Feed Liabilities
         self.feed_liabilities.clear()
         if farm:
             for t in farm.iter_tiles():
-                if getattr(t, "is_animal", False) and getattr(t, "animal", None):
-                    # Needs feeding today if not yet fed
-                    fed_today = getattr(t, "fed_today", False)
+                if (getattr(t, "is_animal", False) or getattr(t, "kind", None) == "PASTURE") and getattr(t, "animal", None):
+                    fed_today = bool(getattr(t, "fed_today", False))
+                    pos = t.pos if hasattr(t, "pos") else (t.x, t.y)
+                    sp = getattr(t, "animal", "COW")
                     if not fed_today:
                         self.feed_liabilities.append(
                             DatedFeedLiability(
                                 day=self.day,
                                 hour_deadline=23,
-                                animal_pos=t.pos if hasattr(t, "pos") else (t.x, t.y),
-                                species=t.animal,
+                                animal_pos=pos,
+                                species=sp,
                                 amount=1,
                             )
                         )
-                    # And every subsequent day of the season
+                    # And subsequent days in rolling horizon
                     for fut_day in range(self.day + 1, min(30, self.day + 7)):
                         self.feed_liabilities.append(
                             DatedFeedLiability(
                                 day=fut_day,
                                 hour_deadline=23,
-                                animal_pos=t.pos if hasattr(t, "pos") else (t.x, t.y),
-                                species=t.animal,
+                                animal_pos=pos,
+                                species=sp,
                                 amount=1,
                             )
                         )
 
-        # Prune expired liabilities
+        # 6. Prune expired liabilities and inflows
         self.dated_liabilities = [
             l for l in self.dated_liabilities
             if (l.day > self.day) or (l.day == self.day and l.hour >= self.hour)
@@ -183,17 +277,16 @@ class ResourceLedger:
     # --- Cash Ledger Management ---
 
     def reserve_dated_liquidity(self, day: int, hour: int, amount: float, purpose: str, is_hard: bool = True) -> bool:
-        """Reserve cash for a future dated obligation.
-
-        Returns True if the required liquidity can be guaranteed without
-        compromising existing hard liabilities or dipping below safety reserve at any point.
-        """
+        """Reserve cash for a future dated obligation without dipping below safety reserve."""
         temp_candidate = DatedCashLiability(day, hour, amount, purpose, is_hard)
         test_liabilities = self.dated_liabilities + [temp_candidate]
 
-        # Check net available cash at all relevant liability and inflow timepoints
         checkpoints = {(day, hour)} | {(l.day, l.hour) for l in self.dated_liabilities}
-        for (cd, ch) in checkpoints:
+        for inf in self.dated_inflows:
+            checkpoints.add((inf.day, inf.hour))
+
+        sorted_checkpoints = sorted(list(checkpoints))
+        for (cd, ch) in sorted_checkpoints:
             cash = self.cash_on_hand - self.safety_reserve
             for inf in self.dated_inflows:
                 if (inf.day < cd) or (inf.day == cd and inf.hour <= ch):
@@ -215,23 +308,16 @@ class ResourceLedger:
         self.dated_inflows.append(DatedCashInflow(day, hour, amount, confidence, source))
 
     def project_available_cash(self, target_day: int, target_hour: int, include_speculative: bool = False) -> float:
-        """Calculate conservative net liquidity available at (target_day, target_hour).
-
-        Solvency rule: Hard liabilities CANNOT depend on SPECULATIVE inflows.
-        """
+        """Calculate conservative net liquidity available at (target_day, target_hour)."""
         cash = self.cash_on_hand - self.safety_reserve
 
-        # Add inflows maturing before or at (target_day, target_hour)
         for inf in self.dated_inflows:
             if (inf.day < target_day) or (inf.day == target_day and inf.hour <= target_hour):
-                if inf.confidence == InflowConfidence.HARD:
-                    cash += inf.amount
-                elif inf.confidence == InflowConfidence.CONSERVATIVE:
+                if inf.confidence in (InflowConfidence.HARD, InflowConfidence.CONSERVATIVE):
                     cash += inf.amount
                 elif include_speculative and inf.confidence == InflowConfidence.SPECULATIVE:
                     cash += inf.amount
 
-        # Subtract all existing liabilities maturing before or at (target_day, target_hour)
         for liab in self.dated_liabilities:
             if (liab.day < target_day) or (liab.day == target_day and liab.hour <= target_hour):
                 cash -= liab.amount
@@ -246,63 +332,157 @@ class ResourceLedger:
     # --- Feed Ledger Management ---
 
     def get_accessible_wheat_now(self) -> int:
-        """Wheat immediately physically reachable (shed + carried)."""
+        """Wheat immediately physically reachable (in shed or carried by a worker)."""
         return self.shed_wheat + self.worker_carried_wheat
 
-    def project_feed_balance(self, horizon_days: int = 5) -> Dict[str, Any]:
-        """Project daily feed surplus/deficit over the next N days.
+    def get_projected_mature_wheat(self, day: int) -> int:
+        """Total in-ground wheat reaching full maturity on specified day."""
+        return sum(
+            h.expected_yield for h in self.in_ground_wheat
+            if h.max_maturity_day == day
+        )
 
-        Strict causality enforced: in-ground wheat only contributes AFTER its harvest.
+    def evaluate_same_day_harvest_feed_feasibility(
+        self,
+        wheat_harvest: InGroundWheatHarvest,
+        animal_pos: Tuple[int, int],
+        current_hour: Optional[int] = None,
+        worker_id: Optional[int] = None,
+    ) -> Tuple[bool, int, Dict[str, Any]]:
+        """Evaluate if in-ground wheat can physically complete HARVEST -> FEED before H23.
+
+        Model:
+        Worker pos -> Wheat pos (move) -> HARVEST (1) -> Animal pos (move) -> FEED (1).
         """
-        accessible = self.get_accessible_wheat_now()
+        cur_h = self.hour if current_hour is None else current_hour
+        if self.day < wheat_harvest.earliest_harvest_day:
+            return False, 999, {"reason": "wheat_not_harvestable_today"}
+
+        candidate_workers = self.workers
+        if worker_id is not None:
+            candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
+
+        if not candidate_workers:
+            # Default fallback worker from farmer spawn
+            candidate_workers = [WorkerStorageState(worker_id=0, pos=(4, 4))]
+
+        best_completion = 999
+        best_worker = None
+
+        for w in candidate_workers:
+            dist_to_wheat = abs(w.pos[0] - wheat_harvest.tile_pos[0]) + abs(w.pos[1] - wheat_harvest.tile_pos[1])
+            dist_to_animal = abs(wheat_harvest.tile_pos[0] - animal_pos[0]) + abs(wheat_harvest.tile_pos[1] - animal_pos[1])
+            actions_needed = dist_to_wheat + 1 + dist_to_animal + 1
+            completion = cur_h + actions_needed
+            if completion < best_completion:
+                best_completion = completion
+                best_worker = w.worker_id
+
+        feasible = (best_completion <= 23)
+        return feasible, best_completion, {
+            "feasible": feasible,
+            "completion_hour": best_completion,
+            "best_worker": best_worker,
+            "deadline": 23,
+        }
+
+    def get_projected_accessible_wheat(self, day: int, hour: int = 23) -> int:
+        """Wheat physically accessible for feeding or selling by (day, hour).
+
+        Causal invariants:
+        1. Future wheat maturing on day > target_day provides 0 accessible units.
+        2. Today's in-ground wheat counts only if physically harvestable and reachable before H23.
+        """
+        if day < self.day:
+            return 0
+
+        if day == self.day:
+            # Immediately accessible
+            accessible = self.shed_wheat + self.worker_carried_wheat
+            # Add same-day in-ground wheat that can physically reach feed or shed before hour
+            for h in self.in_ground_wheat:
+                if h.earliest_harvest_day <= self.day:
+                    # Generic access to shed or animals: check if reachable within available hours
+                    dist_to_shed = min(abs(h.tile_pos[0] - sx) + abs(h.tile_pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
+                    # 1 harvest + dist_to_shed <= remaining hours
+                    if (self.hour + 1 + dist_to_shed) <= hour:
+                        accessible += h.expected_yield
+            return accessible
+
+        # For future days: cumulative carryover plus mature harvests from prior days
+        cumulative = self.shed_wheat + self.worker_carried_wheat
+        for offset in range(day - self.day + 1):
+            check_d = self.day + offset
+            if check_d < day:
+                # Add mature harvests from check_d
+                cumulative += self.get_projected_mature_wheat(check_d)
+                # Subtract daily demand on check_d
+                daily_demand = sum(1 for liab in self.feed_liabilities if liab.day == check_d)
+                cumulative = max(0, cumulative - daily_demand)
+
+        return cumulative
+
+    def project_feed_balance(self, horizon_days: int = 5) -> Dict[str, Any]:
+        """Project daily feed surplus/deficit over next N days enforcing strict harvest causality."""
         daily_projection = {}
-        cumulative_balance = accessible
+        opening_balance = self.get_accessible_wheat_now()
+        balance = opening_balance
 
         for offset in range(horizon_days):
             check_day = self.day + offset
             if check_day >= 30:
                 break
 
-            # Inflow on check_day from mature harvests
-            harvest_inflow = sum(
-                h.expected_yield for h in self.in_ground_wheat
-                if h.day == check_day
-            )
+            if offset == 0:
+                # Day 0: only count in-ground harvests that are physically feasible before H23
+                harvest_inflow = 0
+                for h in self.in_ground_wheat:
+                    if h.earliest_harvest_day <= check_day:
+                        dist = min(abs(h.tile_pos[0] - sx) + abs(h.tile_pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
+                        if (self.hour + 1 + dist) <= 23:
+                            harvest_inflow += h.expected_yield
+            else:
+                # Future days: count harvests reaching maturity by check_day
+                harvest_inflow = self.get_projected_mature_wheat(check_day)
 
-            # Demand on check_day
-            feed_demand = sum(
-                1 for liab in self.feed_liabilities
-                if liab.day == check_day
-            )
+            feed_demand = sum(1 for liab in self.feed_liabilities if liab.day == check_day)
+            closing = balance + harvest_inflow - feed_demand
 
-            cumulative_balance += harvest_inflow - feed_demand
             daily_projection[check_day] = {
-                "opening_balance": cumulative_balance + feed_demand - harvest_inflow,
+                "opening_balance": balance,
                 "harvest_inflow": harvest_inflow,
                 "feed_demand": feed_demand,
-                "closing_balance": cumulative_balance,
-                "is_solvent": cumulative_balance >= 0,
+                "closing_balance": closing,
+                "is_solvent": closing >= 0,
             }
+            balance = max(0, closing)
 
         return {
-            "current_accessible": accessible,
+            "current_accessible": opening_balance,
             "daily": daily_projection,
-            "min_projected_balance": min((d["closing_balance"] for d in daily_projection.values()), default=accessible),
+            "min_projected_balance": min((d["closing_balance"] for d in daily_projection.values()), default=opening_balance),
             "is_feed_safe": all(d["is_solvent"] for d in daily_projection.values()),
         }
 
     # --- Market Order Capacity Management ---
 
     def can_reserve_market_slots(self, day: int, hour: int, slots_needed: int) -> bool:
-        """Check if market turn has sufficient unused order slots (max 10)."""
+        """Check if market turn has sufficient unused order slots (maximum 10 commands per turn)."""
         existing = sum(
             alloc.slots_consumed
             for alloc in self.turn_order_allocations.get((day, hour), [])
         )
         return (existing + slots_needed) <= 10
 
-    def allocate_market_slots(self, day: int, hour: int, command_type: str, slots_consumed: int, details: Optional[Dict[str, Any]] = None) -> bool:
-        """Allocate order slots on a specific market turn."""
+    def allocate_market_slots(
+        self,
+        day: int,
+        hour: int,
+        command_type: str,
+        slots_consumed: int,
+        details: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """Allocate order slots on a specific market turn (day, hour)."""
         if not self.can_reserve_market_slots(day, hour, slots_consumed):
             return False
 
@@ -327,9 +507,90 @@ class ResourceLedger:
     def project_storage_headroom(self) -> int:
         """Return conservative available shed space accounting for carried goods."""
         shed_free = max(0, self.shed_capacity - self.current_shed_occupancy)
-        # Worker carried units will deposit at shed or midnight
         net_headroom = shed_free - self.current_worker_carried_units
         return max(0, net_headroom)
+
+    def project_storage_timeline(
+        self,
+        horizon_hours: int = 24,
+        planned_sales: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """Project physical storage timeline from current hour through midnight.
+
+        Models the execution sequence:
+        HARVEST -> worker inventory -> movement to shed -> PLACE -> shed inventory
+        -> market SELL -> cash -> midnight auto-drop of remaining worker inventory -> overflow discard.
+        """
+        sales = planned_sales or []
+        sales_by_hour: Dict[int, int] = {}
+        for s in sales:
+            h = s.get("hour", 0)
+            q = int(s.get("quantity", 0))
+            sales_by_hour[h] = sales_by_hour.get(h, 0) + q
+
+        timeline: Dict[int, Dict[str, Any]] = {}
+        shed_occ = self.current_shed_occupancy
+        worker_carried = copy.deepcopy({w.worker_id: dict(w.inventory) for w in self.workers})
+
+        expected_overflow = 0
+        discarded_products: Dict[str, int] = {}
+        overflow_workers: List[int] = []
+
+        for h in range(self.hour, min(24, self.hour + horizon_hours)):
+            # 1. Worker deposits at shed if reaching shed at hour h
+            for w in self.workers:
+                w_id = w.worker_id
+                if w.earliest_deposit_hour == h and w_id in worker_carried:
+                    items = worker_carried[w_id]
+                    tot = sum(items.values())
+                    if tot > 0:
+                        # Deposit into shed up to capacity
+                        avail = max(0, self.shed_capacity - shed_occ)
+                        dep = min(tot, avail)
+                        shed_occ += dep
+                        # Clear deposited items
+                        worker_carried[w_id] = {}
+
+            # 2. Market sales from shed (cannot sell from backpack!)
+            sold = sales_by_hour.get(h, 0)
+            if sold > 0:
+                actual_sold = min(shed_occ, sold)
+                shed_occ -= actual_sold
+
+            total_carried_now = sum(sum(inv.values()) for inv in worker_carried.values())
+            timeline[h] = {
+                "shed_occupancy": shed_occ,
+                "worker_carried": total_carried_now,
+                "sales": sold,
+            }
+
+        # 3. Midnight auto-transfer of remaining backpack goods into shed
+        remaining_carried = sum(sum(inv.values()) for inv in worker_carried.values())
+        potential_midnight_shed = shed_occ + remaining_carried
+
+        if potential_midnight_shed > self.shed_capacity:
+            expected_overflow = potential_midnight_shed - self.shed_capacity
+            # Identify discarded products and workers
+            overflow_rem = expected_overflow
+            for w_id, inv in worker_carried.items():
+                if sum(inv.values()) > 0:
+                    overflow_workers.append(w_id)
+                for prod, cnt in inv.items():
+                    if overflow_rem <= 0:
+                        break
+                    disc = min(cnt, overflow_rem)
+                    discarded_products[prod] = discarded_products.get(prod, 0) + disc
+                    overflow_rem -= disc
+
+        return {
+            "initial_shed_occupancy": self.current_shed_occupancy,
+            "final_projected_shed": min(self.shed_capacity, potential_midnight_shed),
+            "expected_overflow": expected_overflow,
+            "discarded_products": discarded_products,
+            "overflow_workers": overflow_workers,
+            "is_storage_safe": (expected_overflow == 0),
+            "timeline": timeline,
+        }
 
     def snapshot(self) -> Dict[str, Any]:
         """Return immutable deep-copy summary for telemetry."""
@@ -345,4 +606,5 @@ class ResourceLedger:
             "worker_wheat": self.worker_carried_wheat,
             "shed_occupancy": self.current_shed_occupancy,
             "feed_safe": self.project_feed_balance(horizon_days=3)["is_feed_safe"],
+            "storage_safe": self.project_storage_timeline()["is_storage_safe"],
         }

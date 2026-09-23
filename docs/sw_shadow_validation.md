@@ -43,3 +43,24 @@ In `SHADOW` mode, execution overhead was benchmarked across multi-day evaluation
   - $\text{Max} < 2.50\text{ ms}$
 - **Package Footprint**: Negligible memory growth ($< 50\text{ KB}$ for plan and ledger state).
 - **Time Limits**: Well within Kaggle competition limits (1.0s per turn).
+
+---
+
+## 4. Phase A-R Correctness Hardening Validation
+
+In Phase A-R, four core substrate gaps were hardened and re-verified:
+1. **Authoritative Crop Age & Wheat Feed Causality**:
+   - Replaced fragile tile age attributes with `crop_age(t, day)` and `t.planted_day`.
+   - Explicitly modeled same-day physical chain `Worker -> Wheat -> HARVEST -> Animal -> FEED <= 23`.
+   - Verified that unharvested grain maturing in future turns cannot feed animals on earlier turns.
+2. **Physically Causal Storage Timeline**:
+   - Separated worker backpacks (`WorkerStorageState`) from shed inventory.
+   - Enforced rule that `SELL` orders cannot sell goods carried in backpacks.
+   - Accurately modeled midnight auto-drop and discard mechanics when inventory exceeds 100 units.
+3. **Engine-Exact Sequential Pricing**:
+   - Swapped generic pricing with `market/price_math.py` (`market_price` and `total_revenue_estimate`).
+   - Eliminated double-deduction of cannibalization in $\Delta FC = \text{WITH} - \text{WITHOUT}$.
+4. **Sanity Panel Execution**:
+   - Run on discovery seeds 96401, 42, 100 for 72 steps each in both `OFF` and `SHADOW` modes.
+   - Results: **0 divergences** between OFF and SHADOW actions; **72 shadow evaluations** logged per game; 0 exceptions.
+   - Held-out evaluation seeds 98001–98050 remained strictly untouched.

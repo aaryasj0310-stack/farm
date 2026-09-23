@@ -31,6 +31,31 @@ $$\text{Budget}(h) = \text{EffectiveWorkers}(h) \times 1 \text{ action/hour}$$
 $$\text{Demand}(h) = \left\lceil \sum_{t \in \text{Tasks}(h)} \text{Duration}(t) \times \text{TravelFactor}(h) \right\rceil$$
 $$\text{Slack}(h) = \text{Budget}(h) - \text{Demand}(h)$$
 
+### Task Definition & Causal Dependency Model
+```python
+@dataclass
+class ServiceTask:
+    task_id: str
+    op: str                          # WATER, HARVEST, FEED, PLANT, BUY, SELL, DEPOSIT
+    pos: Tuple[int, int]
+    region: str                      # NW, NE, SW, SE
+    day: int
+    hour_deadline: int               # Hour within the day when task MUST complete
+    tier: CommitmentTier = CommitmentTier.HARD
+    estimated_duration_actions: int = 1
+    cohort_id: Optional[str] = None
+    value: float = 0.0
+    prerequisite_task_id: Optional[str] = None   # Causal dependency
+    earliest_start_hour: int = 0                 # Cannot start before this hour
+    task_type: str = "GENERIC"                   # HARVEST, FEED, DEPOSIT, SELL, etc.
+```
+
+### Causal Ordering Invariants
+Phase A-R enforces physical operation sequences:
+1. **Harvest-to-Feed Causality**: When grain is harvested to feed livestock on the same day, `FEED` tasks declare `prerequisite_task_id = harvest_task.task_id` and cannot execute earlier than `harvest_task.earliest_completion_hour`.
+2. **Deposit-to-Sell Causality**: Market `SELL` orders cannot execute on carried goods until a `DEPOSIT` task has transferred the inventory into the shed.
+3. **Earliest Start Constraints**: Tasks cannot be scheduled earlier than their physical availability hour (e.g. dawn, unlock turn, or prerequisite completion).
+
 ### Certificate Output Record
 ```python
 @dataclass

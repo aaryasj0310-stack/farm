@@ -116,18 +116,66 @@ def test_scenario_p11_feed_service_causality_deficit():
 def test_scenario_p61_harvest_wave_storage_congestion():
     """Scenario P6.1: Concurrent crop harvest waves threaten 100-unit shed capacity.
 
-    Validation: StorageLedger tracks carried units and shed occupancy, flagging
-    when headroom is exhausted before market liquidation.
+    Upgraded to verify physical causality:
+    1. High-value product (20 Strawberry) exists in a distant worker backpack.
+    2. Worker is not at shed and cannot deposit before midnight.
+    3. Shed is at 90 occupancy.
+    4. Midnight auto-transfer occurs (90 + 20 = 110 -> 10 discarded).
+    5. Discarded product and overflow worker are identified.
+
+    Positive Counterpart:
+    Worker reaches shed, deposits items into shed, prior market sale creates headroom,
+    eliminating overflow at midnight.
     """
-    ledger = ResourceLedger(current_day=12, current_hour=0)
+    from strategy.resource_ledger import WorkerStorageState
+
+    # --- Negative Failure Case: Backpack inventory causes midnight overflow ---
+    ledger = ResourceLedger(current_day=12, current_hour=18)
     ledger.shed_capacity = 100
-    ledger.current_shed_occupancy = 85  # 85 units already in shed
-    ledger.current_worker_carried_units = 10  # 10 units carried by workers
+    ledger.current_shed_occupancy = 90
+    ledger.goods_in_shed = {"WHEAT": 90}
 
-    # Net available headroom is only 5 units (100 - 85 - 10)
-    headroom = ledger.project_storage_headroom()
-    assert headroom == 5
+    # Worker 3 carries 20 strawberry at (0, 9) (distance 9 to shed, arrival H27 > H24)
+    worker_far = WorkerStorageState(
+        worker_id=3,
+        pos=(0, 9),
+        inventory={"STRAWBERRY": 20},
+        carried_total=20,
+        distance_to_shed=9,
+        earliest_deposit_hour=27,  # Cannot deposit before midnight!
+    )
+    ledger.workers = [worker_far]
+    ledger.current_worker_carried_units = 20
 
-    # A 12-unit harvest wave incoming without prior sale will risk overflow
-    wave_units = 12
-    assert wave_units > headroom, "Storage ledger correctly flags overflow risk for incoming harvest wave"
+    # Project timeline with no prior market sales
+    timeline_res = ledger.project_storage_timeline(horizon_hours=6, planned_sales=[])
+    assert timeline_res["is_storage_safe"] is False
+    assert timeline_res["expected_overflow"] == 10
+    assert timeline_res["discarded_products"].get("STRAWBERRY", 0) == 10
+    assert 3 in timeline_res["overflow_workers"]
+
+    # --- Positive Counterpart: Deposit + Prior Market Sale restores headroom ---
+    ledger_safe = ResourceLedger(current_day=12, current_hour=18)
+    ledger_safe.shed_capacity = 100
+    ledger_safe.current_shed_occupancy = 90
+    ledger_safe.goods_in_shed = {"WHEAT": 90}
+
+    # Worker 1 carries 20 strawberry at (4, 3) (distance 1 to shed access (4, 4), arrival H19)
+    worker_near = WorkerStorageState(
+        worker_id=1,
+        pos=(4, 3),
+        inventory={"STRAWBERRY": 20},
+        carried_total=20,
+        distance_to_shed=1,
+        earliest_deposit_hour=19,  # Deposits at H19
+    )
+    ledger_safe.workers = [worker_near]
+    ledger_safe.current_worker_carried_units = 20
+
+    # Market sells 30 units from shed at H21
+    planned_sales = [{"hour": 21, "quantity": 30}]
+    timeline_safe = ledger_safe.project_storage_timeline(horizon_hours=6, planned_sales=planned_sales)
+    assert timeline_safe["is_storage_safe"] is True
+    assert timeline_safe["expected_overflow"] == 0
+    assert len(timeline_safe["discarded_products"]) == 0
+

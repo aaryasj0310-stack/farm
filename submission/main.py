@@ -1249,10 +1249,21 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             global _LAST_SHADOW_RESULT
             _shadow_snap = ShadowSnapshot.from_live_state(ctx, mem, plan, asg, market)
             _LAST_SHADOW_RESULT = get_whole_farm_planner().evaluate(_shadow_snap, raw_ctx=ctx)
+            for mod_name in ("agent.main", "main", "submission.main"):
+                if mod_name in sys.modules:
+                    setattr(sys.modules[mod_name], "_LAST_SHADOW_RESULT", _LAST_SHADOW_RESULT)
     except Exception:
         pass
 
     return res
+
+
+_LAST_SHADOW_RESULT: Optional[Any] = None
+
+
+def get_last_shadow_result() -> Optional[Any]:
+    """Return the most recent ShadowResult, if any."""
+    return _LAST_SHADOW_RESULT
 
 
 _LAST_FALLBACK_DIAGNOSTIC: Optional[Dict[str, Any]] = None
