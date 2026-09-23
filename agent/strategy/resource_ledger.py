@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from config import CROPS, SHED_ACCESS_TILES, TURNS_PER_DAY
+from config import CROPS, FARMER_SPAWN, SHED_ACCESS_TILES, TURNS_PER_DAY
 from state.observation_parser import crop_age
 
 
@@ -362,9 +362,12 @@ class ResourceLedger:
         if worker_id is not None:
             candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
 
+        candidate_workers = self.workers
+        if worker_id is not None:
+            candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
+
         if not candidate_workers:
-            # Default fallback worker from farmer spawn
-            candidate_workers = [WorkerStorageState(worker_id=0, pos=(4, 4))]
+            return False, 999, {"reason": "no_worker_available"}
 
         best_completion = 999
         best_worker = None
@@ -404,7 +407,7 @@ class ResourceLedger:
         if worker_id is not None:
             candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
         if not candidate_workers:
-            candidate_workers = [WorkerStorageState(worker_id=0, pos=FARMER_SPAWN)]
+            return False, 999, {"reason": "no_worker_available"}
 
         best_completion = 999
         best_worker = None
@@ -487,7 +490,7 @@ class ResourceLedger:
         if worker_id is not None:
             candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
         if not candidate_workers:
-            candidate_workers = [WorkerStorageState(worker_id=0, pos=FARMER_SPAWN)]
+            return False, 999, {"reason": "no_worker_available"}
 
         best_completion = 999
         best_worker = None
@@ -575,13 +578,14 @@ class ResourceLedger:
                         accessible += w_wheat
 
             # Same-day in-ground wheat that can complete HARVEST -> PLACE before hour
-            for h in self.in_ground_wheat:
-                if h.earliest_harvest_day <= self.day:
-                    dist_to_wheat = min(abs(w.pos[0] - h.tile_pos[0]) + abs(w.pos[1] - h.tile_pos[1]) for w in (self.workers or [WorkerStorageState(0, FARMER_SPAWN)]))
-                    dist_wheat_to_shed = min(abs(h.tile_pos[0] - sx) + abs(h.tile_pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
-                    # move + 1 (HARVEST) + move + 1 (PLACE)
-                    if (self.hour + dist_to_wheat + 1 + dist_wheat_to_shed + 1) <= hour:
-                        accessible += h.expected_yield
+            if self.workers:
+                for h in self.in_ground_wheat:
+                    if h.earliest_harvest_day <= self.day:
+                        dist_to_wheat = min(abs(w.pos[0] - h.tile_pos[0]) + abs(w.pos[1] - h.tile_pos[1]) for w in self.workers)
+                        dist_wheat_to_shed = min(abs(h.tile_pos[0] - sx) + abs(h.tile_pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
+                        # move + 1 (HARVEST) + move + 1 (PLACE)
+                        if (self.hour + dist_to_wheat + 1 + dist_wheat_to_shed + 1) <= hour:
+                            accessible += h.expected_yield
             return accessible
 
         # For future days: cumulative carryover plus mature harvests from prior days
@@ -597,46 +601,159 @@ class ResourceLedger:
 
         return cumulative
 
-    def project_feed_balance(self, horizon_days: int = 5) -> Dict[str, Any]:
-        """Project daily feed surplus/deficit over next N days enforcing strict harvest causality."""
-        daily_projection = {}
-        opening_balance = self.get_accessible_wheat_now()
-        balance = opening_balance
+    def get_aggregate_wheat_inventory(self) -> int:
+        """Explicit alias for total physical wheat inventory (shed + carried)."""
+        return self.shed_wheat + self.worker_carried_wheat
 
-        for offset in range(horizon_days):
+    def project_feed_balance(self, horizon_days: int = 5) -> Dict[str, Any]:
+        """Project daily feed surplus/deficit over next N days enforcing strict harvest causality and physical routing.
+
+        Near-term (Day 0) executes physical route assignment:
+        - Carried wheat by specific workers
+        - Shed wheat pickup + delivery
+        - Same-day in-ground wheat harvest + delivery
+        - Animal deadlines and competition for wheat and worker hours
+        """
+        daily_projection = {}
+
+        # 1. Day 0 Physical Route Simulation
+        today_liabs = [l for l in self.feed_liabilities if l.day == self.day]
+        today_demand = len(today_liabs)
+
+        sim_shed_wheat = max(0, self.shed_wheat)
+        sim_workers = {
+            w.worker_id: {
+                "pos": w.pos,
+                "avail_hour": self.hour,
+                "wheat": max(0, w.inventory.get("WHEAT", 0)),
+            }
+            for w in self.workers
+        }
+        sim_harvests = [
+            {
+                "tile_pos": h.tile_pos,
+                "remaining_yield": max(0, h.expected_yield),
+            }
+            for h in self.in_ground_wheat
+            if h.earliest_harvest_day <= self.day
+        ]
+
+        day_0_feasible = True
+        fed_count = 0
+        unfed_reasons = []
+        assigned_routes = []
+
+        # Sort today's obligations by hour_deadline (most urgent first)
+        sorted_today_liabs = sorted(today_liabs, key=lambda l: l.hour_deadline)
+
+        for liab in sorted_today_liabs:
+            a_pos = liab.animal_pos
+            deadline = liab.hour_deadline
+            best_route = None
+            best_completion = 999
+
+            # Evaluate each worker's physical ability to feed this animal
+            for w_id, w_state in sim_workers.items():
+                w_pos = w_state["pos"]
+                w_hour = w_state["avail_hour"]
+
+                # Route 1: Worker has wheat in backpack
+                if w_state["wheat"] > 0:
+                    dist = abs(w_pos[0] - a_pos[0]) + abs(w_pos[1] - a_pos[1])
+                    comp = w_hour + dist + 1  # travel + 1 (FEED)
+                    if comp <= deadline and comp < best_completion:
+                        best_completion = comp
+                        best_route = ("CARRIED", w_id, None, comp)
+
+                # Route 2: Worker uses shed wheat
+                if sim_shed_wheat > 0:
+                    dist_to_shed = min(abs(w_pos[0] - sx) + abs(w_pos[1] - sy) for sx, sy in SHED_ACCESS_TILES)
+                    dist_shed_to_animal = min(abs(sx - a_pos[0]) + abs(sy - a_pos[1]) for sx, sy in SHED_ACCESS_TILES)
+                    comp = w_hour + dist_to_shed + 1 + dist_shed_to_animal + 1  # travel shed + 1 (PICKUP) + travel animal + 1 (FEED)
+                    if comp <= deadline and comp < best_completion:
+                        best_completion = comp
+                        best_route = ("SHED", w_id, None, comp)
+
+                # Route 3: Worker harvests mature in-ground wheat today
+                for h_idx, h_state in enumerate(sim_harvests):
+                    if h_state["remaining_yield"] > 0:
+                        h_pos = h_state["tile_pos"]
+                        dist_to_wheat = abs(w_pos[0] - h_pos[0]) + abs(w_pos[1] - h_pos[1])
+                        dist_wheat_to_animal = abs(h_pos[0] - a_pos[0]) + abs(h_pos[1] - a_pos[1])
+                        comp = w_hour + dist_to_wheat + 1 + dist_wheat_to_animal + 1  # travel wheat + 1 (HARVEST) + travel animal + 1 (FEED)
+                        if comp <= deadline and comp < best_completion:
+                            best_completion = comp
+                            best_route = ("HARVEST", w_id, h_idx, comp)
+
+            if best_route is not None:
+                route_type, chosen_w_id, chosen_h_idx, comp = best_route
+                fed_count += 1
+                if route_type == "CARRIED":
+                    sim_workers[chosen_w_id]["wheat"] -= 1
+                elif route_type == "SHED":
+                    sim_shed_wheat -= 1
+                elif route_type == "HARVEST":
+                    sim_harvests[chosen_h_idx]["remaining_yield"] -= 1
+
+                sim_workers[chosen_w_id]["pos"] = a_pos
+                sim_workers[chosen_w_id]["avail_hour"] = comp
+                assigned_routes.append({
+                    "animal_pos": a_pos,
+                    "deadline": deadline,
+                    "route_type": route_type,
+                    "worker_id": chosen_w_id,
+                    "completion_hour": comp,
+                })
+            else:
+                day_0_feasible = False
+                unfed_reasons.append(f"Animal at {a_pos} (deadline H{deadline}) has no feasible physical feeding route")
+
+        if today_demand > 0 and fed_count < today_demand:
+            day_0_feasible = False
+
+        # Remaining physical inventory at end of Day 0
+        rem_carried = sum(w["wheat"] for w in sim_workers.values())
+        rem_inventory_day_0 = sim_shed_wheat + rem_carried
+
+        daily_projection[self.day] = {
+            "opening_balance": self.shed_wheat + self.worker_carried_wheat,
+            "harvest_inflow": 0,
+            "feed_demand": today_demand,
+            "closing_balance": rem_inventory_day_0 if day_0_feasible else -len(unfed_reasons),
+            "is_solvent": day_0_feasible,
+            "unfed_reasons": unfed_reasons,
+            "assigned_routes": assigned_routes,
+        }
+
+        # 2. Future days projection (conservative, non-double-counted)
+        running_balance = max(0, rem_inventory_day_0)
+        for offset in range(1, horizon_days):
             check_day = self.day + offset
             if check_day >= 30:
                 break
-
-            if offset == 0:
-                # Day 0: only count in-ground harvests that are physically feasible before H23
-                harvest_inflow = 0
-                for h in self.in_ground_wheat:
-                    if h.earliest_harvest_day <= check_day:
-                        dist = min(abs(h.tile_pos[0] - sx) + abs(h.tile_pos[1] - sy) for (sx, sy) in SHED_ACCESS_TILES)
-                        if (self.hour + 1 + dist) <= 23:
-                            harvest_inflow += h.expected_yield
-            else:
-                # Future days: count harvests reaching maturity by check_day
-                harvest_inflow = self.get_projected_mature_wheat(check_day)
-
+            harvest_inflow = self.get_projected_mature_wheat(check_day)
             feed_demand = sum(1 for liab in self.feed_liabilities if liab.day == check_day)
-            closing = balance + harvest_inflow - feed_demand
-
+            closing = running_balance + harvest_inflow - feed_demand
+            is_solv = (closing >= 0) and day_0_feasible
             daily_projection[check_day] = {
-                "opening_balance": balance,
+                "opening_balance": running_balance,
                 "harvest_inflow": harvest_inflow,
                 "feed_demand": feed_demand,
                 "closing_balance": closing,
-                "is_solvent": closing >= 0,
+                "is_solvent": is_solv,
             }
-            balance = max(0, closing)
+            running_balance = max(0, closing)
+
+        min_bal = min((d["closing_balance"] for d in daily_projection.values()), default=rem_inventory_day_0)
+        is_safe = all(d["is_solvent"] for d in daily_projection.values())
 
         return {
-            "current_accessible": opening_balance,
+            "current_accessible": self.shed_wheat + self.worker_carried_wheat,
             "daily": daily_projection,
-            "min_projected_balance": min((d["closing_balance"] for d in daily_projection.values()), default=opening_balance),
-            "is_feed_safe": all(d["is_solvent"] for d in daily_projection.values()),
+            "min_projected_balance": min_bal,
+            "is_feed_safe": is_safe,
+            "day_0_feasible": day_0_feasible,
+            "unfed_reasons": unfed_reasons,
         }
 
     # --- Market Order Capacity Management ---
@@ -779,10 +896,15 @@ class ResourceLedger:
         total_sold = sum(entry["actual_sold"] for entry in timeline.values())
         final_physical_total = final_shed + final_carried
         inventory_conserved = (initial_physical_total - total_sold - expected_overflow == final_physical_total)
+        peak_shed = max((entry["shed_occupancy"] for entry in timeline.values()), default=self.current_shed_occupancy)
+        peak_carried = max((entry["worker_carried"] for entry in timeline.values()), default=initial_carried)
 
         return {
             "initial_shed_occupancy": self.current_shed_occupancy,
             "initial_worker_carried": initial_carried,
+            "peak_usage": peak_shed,
+            "peak_shed_occupancy": peak_shed,
+            "peak_carried_units": peak_carried,
             "final_projected_shed": final_shed,
             "final_projected_carried": final_carried,
             "expected_overflow": expected_overflow,

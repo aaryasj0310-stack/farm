@@ -113,10 +113,50 @@ class ServiceCertificate:
         binding_res = "WORKER_HOURS"
         failing_tasks = []
 
-        # 1. Verify physical causal dependencies and earliest start constraints
-        # Example chains: HARVEST -> FEED, HARVEST -> PLACE -> SELL
+        # 1. Verify physical causal dependencies, missing prereqs, cycles, and earliest start constraints
+        # Missing prerequisite check
         for t in tasks:
-            # Standalone earliest start hour check
+            if t.prerequisite_task_id and t.prerequisite_task_id not in tasks_by_id:
+                if t not in failing_tasks:
+                    failing_tasks.append(t)
+                binding_res = "TASK_DEPENDENCY"
+                binding_day = t.day
+                binding_hour = t.hour_deadline
+
+        # Cyclic prerequisite check
+        visited: Set[str] = set()
+        rec_stack: Set[str] = set()
+        cyclic_task_ids: Set[str] = set()
+
+        def dfs_detect_cycle(tid: str) -> None:
+            visited.add(tid)
+            rec_stack.add(tid)
+            t_obj = tasks_by_id.get(tid)
+            if t_obj and t_obj.prerequisite_task_id:
+                pid = t_obj.prerequisite_task_id
+                if pid in tasks_by_id:
+                    if pid not in visited:
+                        dfs_detect_cycle(pid)
+                    elif pid in rec_stack:
+                        cyclic_task_ids.add(tid)
+                        cyclic_task_ids.add(pid)
+            rec_stack.remove(tid)
+
+        for t in tasks:
+            if t.task_id not in visited:
+                dfs_detect_cycle(t.task_id)
+
+        if cyclic_task_ids:
+            for c_id in cyclic_task_ids:
+                c_task = tasks_by_id[c_id]
+                if c_task not in failing_tasks:
+                    failing_tasks.append(c_task)
+            binding_res = "TASK_DEPENDENCY"
+            binding_day = current_day
+            binding_hour = current_hour
+
+        # Physical precedence and earliest-start execution checks
+        for t in tasks:
             earliest_self_start = max(0, t.earliest_start_hour)
             if earliest_self_start + t.estimated_duration_actions > t.hour_deadline:
                 if t not in failing_tasks:
@@ -125,11 +165,9 @@ class ServiceCertificate:
                 binding_day = t.day
                 binding_hour = t.hour_deadline
 
-            # Causal prerequisite check
-            if t.prerequisite_task_id:
+            if t.prerequisite_task_id and t.prerequisite_task_id not in cyclic_task_ids:
                 prereq = tasks_by_id.get(t.prerequisite_task_id)
                 if prereq is not None:
-                    # Prerequisite on future day -> cannot satisfy dependency today
                     if prereq.day > t.day:
                         if t not in failing_tasks:
                             failing_tasks.append(t)
@@ -137,11 +175,19 @@ class ServiceCertificate:
                         binding_day = t.day
                         binding_hour = t.hour_deadline
                     elif prereq.day == t.day:
-                        # Prerequisite finishes at earliest: max(prereq.earliest_start_hour, prereq.hour_deadline) + prereq.estimated_duration_actions
-                        prereq_start = max(prereq.earliest_start_hour, prereq.hour_deadline)
-                        prereq_earliest_finish = prereq_start + prereq.estimated_duration_actions
-                        # Dependent cannot start before max(its own earliest start, prerequisite completion)
-                        dep_earliest_start = max(earliest_self_start, prereq_earliest_finish)
+                        # Prerequisite finishes at: prereq.earliest_start_hour + prereq.estimated_duration_actions
+                        prereq_earliest_finish = prereq.earliest_start_hour + prereq.estimated_duration_actions
+                        # Prerequisite must finish before its own deadline
+                        if prereq_earliest_finish > prereq.hour_deadline:
+                            if prereq not in failing_tasks:
+                                failing_tasks.append(prereq)
+                            binding_res = "TASK_DEPENDENCY"
+                            binding_day = prereq.day
+                            binding_hour = prereq.hour_deadline
+
+                        # Travel time between prerequisite and dependent locations
+                        travel = abs(prereq.pos[0] - t.pos[0]) + abs(prereq.pos[1] - t.pos[1])
+                        dep_earliest_start = max(earliest_self_start, prereq_earliest_finish + travel)
                         dep_earliest_finish = dep_earliest_start + t.estimated_duration_actions
 
                         if dep_earliest_finish > t.hour_deadline:
@@ -151,7 +197,35 @@ class ServiceCertificate:
                             binding_day = t.day
                             binding_hour = t.hour_deadline
 
-        # 2. Iterate over each hour in the horizon for labor action budget
+        # 2. Near-term window competition check (Day 0)
+        # Verify cumulative worker actions in any sub-window [w_start, w_end]
+        if worker_count is not None:
+            day0_workers = max(1, worker_count)
+        else:
+            day0_workers = 1 + get_target_hands(current_day)
+
+        day0_tasks = [t for t in tasks if t.day == current_day]
+        for t_target in day0_tasks:
+            w_start = max(current_hour, t_target.earliest_start_hour)
+            w_end = t_target.hour_deadline
+            if w_end >= w_start:
+                # Tasks that must execute within this window
+                competing_tasks = [
+                    t for t in day0_tasks
+                    if t.hour_deadline <= w_end and max(current_hour, t.earliest_start_hour) >= w_start
+                ]
+                total_actions_needed = int(math.ceil(sum(t.estimated_duration_actions for t in competing_tasks) * 1.35))
+                window_hours = w_end - w_start + 1
+                available_capacity = day0_workers * window_hours
+                if total_actions_needed > available_capacity:
+                    if t_target not in failing_tasks:
+                        failing_tasks.append(t_target)
+                    binding_res = "WORKER_HOURS"
+                    binding_day = current_day
+                    binding_hour = w_end
+                    min_slack = min(min_slack, available_capacity - total_actions_needed)
+
+        # 3. Iterate over each hour in the horizon for labor action budget
         hires_dict = planned_hires or {}
         for h_step in range(horizon_hours):
             abs_hour = (current_day * TURNS_PER_DAY + current_hour) + h_step
@@ -161,19 +235,15 @@ class ServiceCertificate:
             if day >= 30:
                 break
 
-            # Worker capacity in this hour:
-            # Uses actual observed worker_count as starting capacity.
-            # Does NOT silently substitute get_target_hands(day) if worker_count is supplied.
+            # Worker capacity in this hour
             if worker_count is not None:
                 base_w = max(1, worker_count)
                 if day == current_day:
                     effective_workers = base_w
                 else:
-                    # Explicit planned hires for future days
                     extra_h = sum(hires_dict.get(d, 0) for d in range(current_day + 1, day + 1))
                     effective_workers = base_w + extra_h
             else:
-                # Fallback to configured target schedule only if worker_count is not provided
                 sched_workers = 1 + get_target_hands(day)
                 effective_workers = sched_workers if hour > 0 else (1 + get_target_hands(max(0, day - 1)))
 
@@ -190,8 +260,14 @@ class ServiceCertificate:
             else:
                 travel_factor = 1.15
 
-            direct_demand = sum(t.estimated_duration_actions for t in due_tasks)
-            total_estimated_demand = int(math.ceil(direct_demand * travel_factor))
+            # Direct demand: on current day, multi-action tasks execute across their permitted window;
+            # on future days, cohort tasks represent deadline capacity envelopes.
+            if day == current_day:
+                direct_demand = sum(min(1, t.estimated_duration_actions) for t in due_tasks)
+                total_estimated_demand = int(math.ceil(direct_demand * (travel_factor if len(due_tasks) > 2 else 1.0)))
+            else:
+                direct_demand = sum(t.estimated_duration_actions for t in due_tasks)
+                total_estimated_demand = int(math.ceil(direct_demand * travel_factor))
 
             if total_estimated_demand > peak_workload:
                 peak_workload = total_estimated_demand

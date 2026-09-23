@@ -689,7 +689,8 @@ def test_service_certificate_dependency_enforcement():
         pos=(4, 3),
         region="NW",
         day=5,
-        hour_deadline=10,
+        hour_deadline=12,
+        earliest_start_hour=10,
         tier=CommitmentTier.HARD,
         estimated_duration_actions=2,
     )
@@ -952,5 +953,335 @@ def test_whole_farm_planner_rich_disagreements():
     assert len(res.decision.disagreements_with_baseline) > 0
     dis_types = {d["type"] for d in res.decision.disagreements_with_baseline}
     assert "LAND_PURCHASE_MISMATCH" in dis_types or "MARKET_VALUATION_DISCREPANCY" in dis_types or "CROP_PORTFOLIO_MISMATCH" in dis_types
+
+
+# ==============================================================================
+# PHASE A-R3 COMPREHENSIVE TESTS
+# ==============================================================================
+
+def test_physical_feed_balance_comprehensive():
+    """Verify physical feed safety projection accounts for real routes, deadlines, and competition."""
+    from strategy.resource_ledger import ResourceLedger, WorkerStorageState, DatedFeedLiability, InGroundWheatHarvest
+
+    # Case 1: Shed wheat sufficient & feasible routes
+    rl1 = ResourceLedger()
+    rl1.day = 5
+    rl1.hour = 8
+    rl1.shed_wheat = 5
+    rl1.workers = [WorkerStorageState(worker_id=0, pos=(4, 4))]
+    rl1.feed_liabilities = [
+        DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(4, 6), species="COW", amount=1),
+    ]
+    res1 = rl1.project_feed_balance(horizon_days=3)
+    assert res1["is_feed_safe"] is True
+    assert res1["day_0_feasible"] is True
+
+    # Case 2: Shed wheat sufficient but animal deadline too early (H2) and worker cannot reach
+    rl2 = ResourceLedger()
+    rl2.day = 5
+    rl2.hour = 1
+    rl2.shed_wheat = 5
+    rl2.workers = [WorkerStorageState(worker_id=0, pos=(9, 9))]  # Dist to shed >= 8, to animal >= 8
+    rl2.feed_liabilities = [
+        DatedFeedLiability(day=5, hour_deadline=2, animal_pos=(0, 0), species="COW", amount=1),
+    ]
+    res2 = rl2.project_feed_balance(horizon_days=3)
+    assert res2["is_feed_safe"] is False
+    assert res2["day_0_feasible"] is False
+    assert len(res2["unfed_reasons"]) > 0
+
+    # Case 3: Distant worker carrying wheat cannot reach animal in time
+    rl3 = ResourceLedger()
+    rl3.day = 5
+    rl3.hour = 20
+    rl3.shed_wheat = 0
+    rl3.workers = [WorkerStorageState(worker_id=0, pos=(9, 9), inventory={"WHEAT": 2})]
+    rl3.feed_liabilities = [
+        DatedFeedLiability(day=5, hour_deadline=22, animal_pos=(0, 0), species="COW", amount=1),  # Dist 18 > 2
+    ]
+    res3 = rl3.project_feed_balance(horizon_days=3)
+    assert res3["is_feed_safe"] is False
+    assert res3["day_0_feasible"] is False
+
+    # Case 4: Animals compete for same single wheat unit in shed
+    rl4 = ResourceLedger()
+    rl4.day = 5
+    rl4.hour = 10
+    rl4.shed_wheat = 1
+    rl4.workers = [WorkerStorageState(worker_id=0, pos=(4, 4)), WorkerStorageState(worker_id=1, pos=(4, 4))]
+    rl4.feed_liabilities = [
+        DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(3, 3), species="COW", amount=1),
+        DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(5, 5), species="SHEEP", amount=1),
+    ]
+    res4 = rl4.project_feed_balance(horizon_days=3)
+    assert res4["is_feed_safe"] is False
+    assert res4["day_0_feasible"] is False
+
+    # Case 5: Animals compete for same worker's remaining actions
+    rl5 = ResourceLedger()
+    rl5.day = 5
+    rl5.hour = 21  # Only 3 hours remaining (H21, H22, H23)
+    rl5.shed_wheat = 10
+    rl5.workers = [WorkerStorageState(worker_id=0, pos=(4, 4))]  # 1 worker
+    # 3 animals at different distant locations, each requiring shed trip + animal trip >= 3 actions
+    rl5.feed_liabilities = [
+        DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(0, 0), species="COW", amount=1),
+        DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(9, 0), species="SHEEP", amount=1),
+        DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(0, 9), species="PIG", amount=1),
+    ]
+    res5 = rl5.project_feed_balance(horizon_days=3)
+    assert res5["is_feed_safe"] is False
+
+    # Case 6: Same-day harvestable wheat physically feeds animal today
+    rl6 = ResourceLedger()
+    rl6.day = 5
+    rl6.hour = 10
+    rl6.shed_wheat = 0
+    rl6.workers = [WorkerStorageState(worker_id=0, pos=(4, 4))]
+    rl6.in_ground_wheat = [
+        InGroundWheatHarvest(tile_pos=(4, 3), earliest_harvest_day=5, expected_yield=2)
+    ]
+    rl6.feed_liabilities = [
+        DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(4, 5), species="COW", amount=1),
+    ]
+    res6 = rl6.project_feed_balance(horizon_days=3)
+    assert res6["is_feed_safe"] is True
+    assert res6["day_0_feasible"] is True
+
+    # Case 7: Same-day harvest cannot reach animal before tight deadline
+    rl7 = ResourceLedger()
+    rl7.day = 5
+    rl7.hour = 10
+    rl7.shed_wheat = 0
+    rl7.workers = [WorkerStorageState(worker_id=0, pos=(9, 9))]
+    rl7.in_ground_wheat = [
+        InGroundWheatHarvest(tile_pos=(0, 0), earliest_harvest_day=5, expected_yield=1)
+    ]
+    rl7.feed_liabilities = [
+        DatedFeedLiability(day=5, hour_deadline=12, animal_pos=(9, 0), species="COW", amount=1),
+    ]
+    res7 = rl7.project_feed_balance(horizon_days=3)
+    assert res7["is_feed_safe"] is False
+
+    # Case 8: Tomorrow's wheat harvest cannot feed animals today
+    rl8 = ResourceLedger()
+    rl8.day = 5
+    rl8.hour = 10
+    rl8.shed_wheat = 0
+    rl8.workers = [WorkerStorageState(worker_id=0, pos=(4, 4))]
+    rl8.in_ground_wheat = [
+        InGroundWheatHarvest(tile_pos=(4, 4), earliest_harvest_day=6, expected_yield=5)  # Day 6 != Day 5
+    ]
+    rl8.feed_liabilities = [
+        DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(4, 5), species="COW", amount=1),
+    ]
+    res8 = rl8.project_feed_balance(horizon_days=3)
+    assert res8["is_feed_safe"] is False
+
+
+def test_service_certificate_dependency_scheduling_advanced():
+    """Verify ServiceCertificate dependency semantics: release time, travel, impossible chains, worker competition, cycles."""
+    sc = ServiceCertificate()
+
+    # 1. Prerequisite starts early, finishes, and dependent executes safely
+    t_prereq = ServiceTask("t_pre", "HARVEST", (2, 2), "NW", day=3, earliest_start_hour=2, hour_deadline=10, tier=CommitmentTier.HARD, estimated_duration_actions=2)
+    t_dep = ServiceTask("t_dep", "FEED", (2, 4), "NW", day=3, earliest_start_hour=0, hour_deadline=12, tier=CommitmentTier.HARD, estimated_duration_actions=1, prerequisite_task_id="t_pre")
+    res1 = sc.evaluate_multi_day(3, 0, 5, [t_prereq, t_dep])
+    assert res1.feasible is True
+
+    # 2. Genuinely impossible dependency chain: prereq finishes at 10, travel is 4, dep takes 2 actions -> finishes 16 > deadline 14
+    t_pre_late = ServiceTask("t_pre_late", "HARVEST", (0, 0), "NW", day=3, earliest_start_hour=8, hour_deadline=11, tier=CommitmentTier.HARD, estimated_duration_actions=2)
+    t_dep_late = ServiceTask("t_dep_late", "FEED", (4, 0), "NW", day=3, earliest_start_hour=0, hour_deadline=14, tier=CommitmentTier.HARD, estimated_duration_actions=2, prerequisite_task_id="t_pre_late")
+    # Finish = max(0, 10 + 4) + 2 = 16 > 14
+    res2 = sc.evaluate_multi_day(3, 0, 5, [t_pre_late, t_dep_late])
+    assert res2.feasible is False
+    assert res2.binding_resource == "TASK_DEPENDENCY"
+    assert any(t.task_id == "t_dep_late" for t in res2.failing_tasks)
+
+    # 3. Competing urgent tasks for one worker on Day 0
+    # Two tasks requiring 4 actions each, window 0..5 (6 hours). 1 worker has 6 actions < 8 actions demanded
+    t_comp1 = ServiceTask("comp1", "WATER", (1, 1), "NW", day=1, earliest_start_hour=0, hour_deadline=5, tier=CommitmentTier.HARD, estimated_duration_actions=4)
+    t_comp2 = ServiceTask("comp2", "WATER", (2, 2), "NW", day=1, earliest_start_hour=0, hour_deadline=5, tier=CommitmentTier.HARD, estimated_duration_actions=4)
+    res_1w = sc.evaluate_multi_day(1, 0, worker_count=1, tasks=[t_comp1, t_comp2])
+    assert res_1w.feasible is False
+    assert res_1w.binding_resource == "WORKER_HOURS"
+
+    # 4. Same chain becomes feasible with 2 workers (12 worker-hours >= 8 demand)
+    res_2w = sc.evaluate_multi_day(1, 0, worker_count=2, tasks=[t_comp1, t_comp2])
+    assert res_2w.feasible is True
+
+    # 5. Missing prerequisite task
+    t_missing = ServiceTask("t_miss", "FEED", (3, 3), "NW", day=2, hour_deadline=10, tier=CommitmentTier.HARD, prerequisite_task_id="nonexistent_prereq_id")
+    res_miss = sc.evaluate_multi_day(2, 0, 4, [t_missing])
+    assert res_miss.feasible is False
+    assert res_miss.binding_resource == "TASK_DEPENDENCY"
+
+    # 6. Cyclic prerequisite (A depends on B, B depends on A)
+    t_cyc_a = ServiceTask("cyc_a", "DIG", (1, 1), "NW", day=2, hour_deadline=10, tier=CommitmentTier.HARD, prerequisite_task_id="cyc_b")
+    t_cyc_b = ServiceTask("cyc_b", "DIG", (1, 2), "NW", day=2, hour_deadline=10, tier=CommitmentTier.HARD, prerequisite_task_id="cyc_a")
+    res_cyc = sc.evaluate_multi_day(2, 0, 4, [t_cyc_a, t_cyc_b])
+    assert res_cyc.feasible is False
+    assert res_cyc.binding_resource == "TASK_DEPENDENCY"
+
+
+def test_fallback_empty_worker_list_no_nameerror():
+    """Verify all fallback paths with empty worker lists return clean failure without NameError or dummy worker."""
+    from strategy.resource_ledger import ResourceLedger, InGroundWheatHarvest
+
+    rl = ResourceLedger()
+    rl.workers = []
+    rl.shed_wheat = 5
+    rl.day = 1
+    rl.hour = 0
+
+    # Route 1: Shed pickup feed
+    ok_shed, h_shed, det_shed = rl.evaluate_shed_feed_feasibility((5, 5))
+    assert ok_shed is False
+    assert det_shed["reason"] == "no_worker_available"
+
+    # Route 2: Carried feed
+    ok_car, h_car, det_car = rl.evaluate_carried_feed_feasibility((5, 5))
+    assert ok_car is False
+    assert det_car["reason"] == "no_worker_carrying_wheat"
+
+    # Route 3: Same-day harvest shed deposit
+    h_item = InGroundWheatHarvest(tile_pos=(4, 4), earliest_harvest_day=1, expected_yield=2)
+    ok_harv, h_harv, det_harv = rl.evaluate_same_day_harvest_shed_deposit_feasibility(h_item)
+    assert ok_harv is False
+    assert det_harv["reason"] == "no_worker_available"
+
+    # Route 4: Overall feed feasibility
+    ok_feed, mode_feed, h_feed, det_feed = rl.evaluate_feed_feasibility_for_animal((5, 5))
+    assert ok_feed is False
+    assert mode_feed == "NONE"
+
+    # Feed balance and storage timeline with empty workers
+    from strategy.resource_ledger import DatedFeedLiability
+    rl.feed_liabilities = [DatedFeedLiability(day=1, hour_deadline=23, animal_pos=(4, 5), species="COW", amount=1)]
+    fb = rl.project_feed_balance(horizon_days=2)
+    assert fb["day_0_feasible"] is False
+    st = rl.project_storage_timeline(horizon_hours=12)
+    assert st["inventory_conserved"] is True
+
+
+def test_storage_warning_telemetry_positive_and_negative():
+    """Verify STORAGE_CONGESTION_WARNING triggers correctly on shed congestion and midnight overflow."""
+    from strategy.whole_farm_planner import WholeFarmPlanner, ShadowSnapshot
+    from strategy.resource_ledger import WorkerStorageState
+
+    wfp = WholeFarmPlanner()
+
+    # Negative Case: Shed 40/100, no carried items -> no warning
+    snap_neg = ShadowSnapshot(
+        day=5,
+        hour=10,
+        step=130,
+        money=1000.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 40),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 20.0),),
+        market_inventories=(("STRAWBERRY", 10000),),
+        baseline_intents=(("buy_land", False),),
+        active_worker_count=3,
+        tiles_summary=(("EMPTY", 100),),
+    )
+    wfp.ledger.shed_wheat = 40
+    wfp.ledger.current_shed_occupancy = 40
+    wfp.ledger.workers = [WorkerStorageState(0, (4, 4)), WorkerStorageState(1, (4, 4))]
+    res_neg = wfp.evaluate(snap_neg)
+    warn_neg = [d for d in res_neg.decision.disagreements_with_baseline if d["type"] == "STORAGE_CONGESTION_WARNING"]
+    assert len(warn_neg) == 0
+
+    # Positive Case: Shed 92/100, distant worker carrying 15 high-value STRAWBERRY units into shed -> midnight overflow!
+    wfp2 = WholeFarmPlanner()
+    snap_pos = ShadowSnapshot(
+        day=5,
+        hour=10,
+        step=130,
+        money=1000.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 92),),
+        carried_inventory_units=15,
+        market_prices=(("STRAWBERRY", 25.0),),
+        market_inventories=(("STRAWBERRY", 10000),),
+        baseline_intents=(("buy_land", False),),
+        active_worker_count=2,
+        tiles_summary=(("EMPTY", 100),),
+    )
+    wfp2.ledger.current_shed_occupancy = 92
+    wfp2.ledger.workers = [
+        WorkerStorageState(worker_id=0, pos=(4, 4)),
+        WorkerStorageState(worker_id=1, pos=(9, 9), inventory={"STRAWBERRY": 15}),
+    ]
+    res_pos = wfp2.evaluate(snap_pos)
+    warn_pos = [d for d in res_pos.decision.disagreements_with_baseline if d["type"] == "STORAGE_CONGESTION_WARNING"]
+    assert len(warn_pos) == 1
+    assert warn_pos[0]["is_policy_disagreement"] is False
+    assert warn_pos[0]["shadow_decision"]["expected_overflow"] > 0
+    assert "STRAWBERRY" in warn_pos[0]["shadow_decision"]["discarded_products"]
+
+
+def test_realistic_production_intent_schema_comparisons():
+    """Verify shadow evaluation against actual production MacroPlan.intents schema."""
+    from strategy.whole_farm_planner import WholeFarmPlanner, ShadowSnapshot
+    from strategy.resource_ledger import WorkerStorageState, DatedFeedLiability
+
+    wfp = WholeFarmPlanner()
+    wfp.ledger.shed_wheat = 0
+    wfp.ledger.workers = [WorkerStorageState(0, (4, 4))]
+    wfp.ledger.feed_liabilities = [DatedFeedLiability(day=5, hour_deadline=23, animal_pos=(4, 5), species="COW", amount=1)]
+
+    # Production intent schema: hire (int), buy_land (bool), buy_seed (dict), buy_animal (dict), buy_wheat (int)
+    prod_intents = (
+        ("hire", 2),
+        ("buy_land", False),
+        ("buy_seed", (("CARROT", 4), ("MELON", 2))),
+        ("buy_animal", (("COW", 1), ("SHEEP", 1))),
+        ("buy_wheat", 10),
+        ("protected_feed_wheat", 5),
+        ("optional_feed_wheat", 5),
+    )
+
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=8,
+        step=128,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 20.0),),
+        market_inventories=(("STRAWBERRY", 10000),),
+        baseline_intents=prod_intents,
+        active_worker_count=2,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    res = wfp.evaluate(snapshot)
+    disagreements = {d["type"]: d for d in res.decision.disagreements_with_baseline}
+
+    # Hiring mismatch uses integer counts
+    assert "HIRE_SCHEDULE_MISMATCH" in disagreements
+    h_dis = disagreements["HIRE_SCHEDULE_MISMATCH"]
+    assert h_dis["baseline_decision"] == 2
+    assert isinstance(h_dis["shadow_decision"], int)
+    assert h_dis["is_policy_disagreement"] is True
+
+    # Livestock admission uses dict breakdown
+    assert "LIVESTOCK_ADMISSION_MISMATCH" in disagreements
+    l_dis = disagreements["LIVESTOCK_ADMISSION_MISMATCH"]
+    assert "COW" in l_dis["baseline_decision"]
+    assert l_dis["is_policy_disagreement"] is True
+
+    # Feed assumption uses buy_wheat diagnostic
+    assert "FEED_ASSUMPTION_MISMATCH" in disagreements
+    f_dis = disagreements["FEED_ASSUMPTION_MISMATCH"]
+    assert f_dis["is_policy_disagreement"] is False
+    assert f_dis["baseline_decision"]["buy_wheat"] == 10
+
 
 
