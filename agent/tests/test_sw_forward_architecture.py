@@ -1284,4 +1284,222 @@ def test_realistic_production_intent_schema_comparisons():
     assert f_dis["baseline_decision"]["buy_wheat"] == 10
 
 
+# ==============================================================================
+# PHASE A-R4 PLANNING & CERTIFICATION GAPS REGRESSION TESTS
+# ==============================================================================
+
+def test_sequential_market_pricing_identity():
+    """Verify sequential own-supply market pricing identity and no double counting."""
+    from strategy.cohort_planner import CohortPlanner, total_revenue_estimate
+
+    cp = CohortPlanner()
+
+    # 1. Engine mathematical identity for MELON
+    I0 = 10000
+    rev_24_melon_first = total_revenue_estimate("MELON", I0, 24)
+    rev_24_melon_second = total_revenue_estimate("MELON", I0 + 24, 24)
+    rev_48_melon_total = total_revenue_estimate("MELON", I0, 48)
+    assert rev_24_melon_first + rev_24_melon_second == rev_48_melon_total
+
+    # 2. Engine mathematical identity for STRAWBERRY
+    rev_24_straw_first = total_revenue_estimate("STRAWBERRY", I0, 24)
+    rev_24_straw_second = total_revenue_estimate("STRAWBERRY", I0 + 24, 24)
+    rev_48_straw_total = total_revenue_estimate("STRAWBERRY", I0, 48)
+    assert rev_24_straw_first + rev_24_straw_second == rev_48_straw_total
+
+    # 3. CohortPlanner opportunity cost evaluation without double-counting
+    c1 = cp.build_candidate_crop_cohort("c1", "MELON", "SW", [(x, 5) for x in range(4)], plant_day=5)
+    c2 = cp.build_candidate_crop_cohort("c2", "MELON", "SW", [(x, 6) for x in range(4)], plant_day=5)
+
+    sim_market_inv = {"MELON": I0}
+    eval1 = cp.evaluate_opportunity_cost(c1, [], sim_market_inv, existing_supply=0)
+    sim_market_inv["MELON"] += c1.market_supply_units
+    eval2 = cp.evaluate_opportunity_cost(c2, [], sim_market_inv, existing_supply=0)
+
+    total_combined_units = c1.market_supply_units + c2.market_supply_units
+    combined_expected_gross = total_revenue_estimate("MELON", I0, total_combined_units)
+    assert round(eval1.expected_gross_revenue + eval2.expected_gross_revenue, 2) == round(float(combined_expected_gross), 2)
+
+
+def test_feed_route_single_shed_access_and_backpack_persistence():
+    """Verify single physically consistent shed access tile and multi-unit wheat harvest backpack persistence."""
+    from strategy.resource_ledger import ResourceLedger, WorkerStorageState, DatedFeedLiability, InGroundWheatHarvest
+
+    rl = ResourceLedger()
+    rl.day = 5
+    rl.hour = 8
+    rl.shed_wheat = 5
+
+    # 1. Single shed access tile consistency
+    # Worker at (0, 0), distant animal at (9, 9)
+    rl.workers = [WorkerStorageState(worker_id=0, pos=(0, 0))]
+    ok, comp, det = rl.evaluate_shed_feed_feasibility(animal_pos=(9, 9), current_hour=8, worker_id=0)
+    assert ok is False
+    assert comp > 23
+    assert det["feasible"] is False
+
+    # Nearby animal at (4, 2)
+    ok_near, comp_near, det_near = rl.evaluate_shed_feed_feasibility(animal_pos=(4, 2), current_hour=8, worker_id=0)
+    assert ok_near is True
+    assert comp_near <= 23
+
+    # 2. Multi-unit wheat harvest with backpack persistence in project_feed_balance
+    rl2 = ResourceLedger()
+    rl2.day = 5
+    rl2.hour = 8
+    rl2.shed_wheat = 0
+    # 1 worker carrying 5 items (space = 15)
+    rl2.workers = [WorkerStorageState(worker_id=0, pos=(3, 3), carried_total=5, inventory={})]
+    # Animal at (4, 2) needing feed today
+    rl2.feed_liabilities = [DatedFeedLiability(day=5, hour_deadline=20, animal_pos=(4, 2), species="COW")]
+    # In-ground wheat mature today with yield of 6 units
+    rl2.in_ground_wheat = [InGroundWheatHarvest(planted_day=2, earliest_harvest_day=4, tile_pos=(3, 3), expected_yield=6)]
+
+    proj = rl2.project_feed_balance(horizon_days=1)
+    assert proj["day_0_feasible"] is True
+    d0 = proj["daily"][5]
+    assert d0["is_solvent"] is True
+    assert len(d0["assigned_routes"]) == 1
+    route = d0["assigned_routes"][0]
+    assert route["route_type"] == "HARVEST"
+    # Worker collected 6 units (since free space 15 >= 6).
+    # 1 unit consumed for feeding COW, remaining 5 units remain in worker's backpack!
+    assert d0["closing_balance"] == 5
+
+
+def test_sw_pre_purchase_certification_oversized_vs_tranche():
+    """Verify candidate SW workload is certified BEFORE recommending purchase; oversized fails, smaller tranche passes."""
+    from strategy.whole_farm_planner import WholeFarmPlanner, ShadowSnapshot
+    from strategy.farm_plan import StrategicState, get_farm_plan
+
+    wfp = WholeFarmPlanner()
+    plan = get_farm_plan()
+    plan.state = StrategicState.SW_READY
+
+    # Farm has heavy core workload (e.g. 10 core crops needing water) with 3 workers
+    mock_tiles_summary = (("STRAWBERRY", 10), ("EMPTY", 90))
+    snapshot = ShadowSnapshot(
+        day=8,
+        hour=0,
+        step=8 * 24,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 120.0),),
+        market_inventories=(("STRAWBERRY", 10000),),
+        baseline_intents=(("buy_land", False),),
+        active_worker_count=3,
+        tiles_summary=mock_tiles_summary,
+    )
+
+    res = wfp.evaluate(snapshot)
+    assert res is not None
+    if res.decision.sw_purchase_recommended:
+        assert res.certificate.feasible is True
+        assert res.decision.selected_portfolio is not None
+        assert res.decision.selected_portfolio["name"] in ("tranche_1_starter", "feed_and_strawberry", "balanced_commercial")
+
+
+def test_crop_policy_disagreement_classification():
+    """Verify normal NW/NE core seed purchases / planting do not trigger false CROP_PORTFOLIO_MISMATCH."""
+    from strategy.whole_farm_planner import WholeFarmPlanner, ShadowSnapshot
+
+    wfp = WholeFarmPlanner()
+
+    # Pre-SW snapshot: baseline buys seeds / plants carrot in NW
+    snapshot_pre_sw = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(("CARROT", 35.0),),
+        market_inventories=(("CARROT", 10000),),
+        baseline_intents=(("buy_seed", {"CARROT": 4}), ("plant_crop", "CARROT")),
+        active_worker_count=4,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    res_pre = wfp.evaluate(snapshot_pre_sw)
+    dis_types_pre = {d["type"] for d in res_pre.decision.disagreements_with_baseline}
+    # Pre-SW baseline planting/buying seeds in NW must NOT trigger CROP_PORTFOLIO_MISMATCH
+    assert "CROP_PORTFOLIO_MISMATCH" not in dis_types_pre
+
+    # Post-SW snapshot: baseline explicitly directs non-portfolio crop to SW
+    snapshot_post_sw = ShadowSnapshot(
+        day=10,
+        hour=0,
+        step=240,
+        money=1500.0,
+        unlocked_quadrants=("NW", "NE", "SW"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(("CARROT", 35.0),),
+        market_inventories=(("CARROT", 10000),),
+        baseline_intents=(("sw_plant_crop", "CARROT"),),
+        active_worker_count=6,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    res_post = wfp.evaluate(snapshot_post_sw)
+    dis_types_post = {d["type"] for d in res_post.decision.disagreements_with_baseline}
+    # Explicit SW conflict DOES trigger CROP_PORTFOLIO_MISMATCH
+    assert "CROP_PORTFOLIO_MISMATCH" in dis_types_post
+
+
+def test_incremental_livestock_admission_certification():
+    """Verify incremental livestock counterfactual check detects missing structure, feed deficit, and cash shortfall."""
+    from strategy.whole_farm_planner import WholeFarmPlanner, ShadowSnapshot
+
+    wfp = WholeFarmPlanner()
+
+    # Case 1: Missing PASTURE structure for COW
+    snapshot_no_pasture = ShadowSnapshot(
+        day=6,
+        hour=0,
+        step=144,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(("buy_animal", "COW"),),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+    )
+    res1 = wfp.evaluate(snapshot_no_pasture)
+    l_dis1 = [d for d in res1.decision.disagreements_with_baseline if d["type"] == "LIVESTOCK_ADMISSION_MISMATCH"]
+    assert len(l_dis1) == 1
+    assert "missing_structure_PASTURE" in l_dis1[0]["metrics"]["reasons"]
+
+    # Case 2: Insufficient cash ($450 < $400 COW + $200 buffer)
+    snapshot_low_cash = ShadowSnapshot(
+        day=6,
+        hour=0,
+        step=144,
+        money=450.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(("buy_animal", "COW"),),
+        active_worker_count=5,
+        tiles_summary=(("PASTURE", 1), ("EMPTY", 99)),
+    )
+    res2 = wfp.evaluate(snapshot_low_cash)
+    l_dis2 = [d for d in res2.decision.disagreements_with_baseline if d["type"] == "LIVESTOCK_ADMISSION_MISMATCH"]
+    assert len(l_dis2) == 1
+    assert "insufficient_cash" in l_dis2[0]["metrics"]["reasons"]
+
+
 

@@ -17,17 +17,19 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 try:
-    from config import get_sw_forward_architecture_mode
+    from config import get_sw_forward_architecture_mode, CROPS, ANIMALS
     from strategy.farm_plan import FarmPlan, StrategicState, get_farm_plan, reset_farm_plan
     from strategy.resource_ledger import ResourceLedger, InflowConfidence
     from strategy.cohort_planner import CohortPlanner, CropCohort, OpportunityCostEvaluation
     from strategy.service_certificate import ServiceCertificate, CertificateResult, ServiceTask, CommitmentTier
+    from state.observation_parser import needs_water_today, crop_produces_today, turns_until_decay
 except ImportError:
-    from config import get_sw_forward_architecture_mode
+    from config import get_sw_forward_architecture_mode, CROPS, ANIMALS
     from farm_plan import FarmPlan, StrategicState, get_farm_plan, reset_farm_plan
     from resource_ledger import ResourceLedger, InflowConfidence
     from cohort_planner import CohortPlanner, CropCohort, OpportunityCostEvaluation
     from service_certificate import ServiceCertificate, CertificateResult, ServiceTask, CommitmentTier
+    from observation_parser import needs_water_today, crop_produces_today, turns_until_decay
 
 
 @dataclass(frozen=True)
@@ -154,6 +156,256 @@ class WholeFarmPlanner:
         self.latest_result: Optional[ShadowResult] = None
         self.last_replan_day: int = -1
 
+    def _build_core_tasks(
+        self,
+        snapshot: ShadowSnapshot,
+        raw_ctx: Optional[Dict[str, Any]] = None,
+        horizon_days: int = 3,
+    ) -> List[ServiceTask]:
+        """Build observation-grounded core NW/NE workload tasks over the rolling horizon."""
+        simulated_tasks: List[ServiceTask] = []
+        plan = get_farm_plan()
+
+        for d_offset in range(horizon_days):
+            eval_day = snapshot.day + d_offset
+            if eval_day >= 30:
+                break
+
+            # 1. Outstanding animal feeding obligations from ledger
+            day_liabs = [l for l in self.ledger.feed_liabilities if l.day == eval_day]
+            for liab in day_liabs:
+                simulated_tasks.append(
+                    ServiceTask(
+                        task_id=f"feed_animal_{liab.animal_pos[0]}_{liab.animal_pos[1]}_d{eval_day}",
+                        op="FEED",
+                        pos=liab.animal_pos,
+                        region="NW" if liab.animal_pos[1] < 5 else "SW",
+                        day=eval_day,
+                        hour_deadline=liab.hour_deadline,
+                        tier=CommitmentTier.HARD,
+                        estimated_duration_actions=1,
+                    )
+                )
+
+            # 2. Existing NW/NE in-ground wheat harvests from ledger
+            for h in self.ledger.in_ground_wheat:
+                if h.earliest_harvest_day == eval_day:
+                    simulated_tasks.append(
+                        ServiceTask(
+                            task_id=f"harvest_wheat_{h.tile_pos[0]}_{h.tile_pos[1]}_d{eval_day}",
+                            op="HARVEST",
+                            pos=h.tile_pos,
+                            region="NW",
+                            day=eval_day,
+                            hour_deadline=20,
+                            tier=CommitmentTier.HARD,
+                            estimated_duration_actions=1,
+                        )
+                    )
+
+            # 3. Grounded core crop maintenance from observed tiles or fallback summary
+            if raw_ctx and "farm" in raw_ctx:
+                farm_obj = raw_ctx["farm"]
+                for t in farm_obj.iter_tiles():
+                    # Core tiles only (exclude SW region tiles x < 5, y >= 5)
+                    is_sw_tile = (t.x < 5 and t.y >= 5)
+                    if is_sw_tile:
+                        continue
+                    if getattr(t, "is_plant", False):
+                        # Water evaluation
+                        needs_w = False
+                        if eval_day == snapshot.day:
+                            if not getattr(t, "watered_today", False):
+                                needs_w = needs_water_today(t, eval_day)
+                        else:
+                            needs_w = needs_water_today(t, eval_day)
+
+                        if needs_w:
+                            is_survival = (eval_day == snapshot.day and (
+                                int(getattr(t, "consecutive_unwatered", 0) or 0) >= 1 or
+                                getattr(t, "planted_day", None) == snapshot.day
+                            ))
+                            deadline = 23 if is_survival else 18
+                            tier = CommitmentTier.HARD if is_survival else CommitmentTier.STRATEGIC
+                            simulated_tasks.append(
+                                ServiceTask(
+                                    task_id=f"core_water_{t.x}_{t.y}_d{eval_day}",
+                                    op="WATER",
+                                    pos=(t.x, t.y),
+                                    region="NW" if t.x < 5 else "NE",
+                                    day=eval_day,
+                                    hour_deadline=deadline,
+                                    tier=tier,
+                                    estimated_duration_actions=1,
+                                )
+                            )
+
+                        # Mature / decay harvest evaluation
+                        if eval_day == snapshot.day and getattr(t, "yield_units", 0) > 0:
+                            crop_name = getattr(t, "crop", None)
+                            cd = CROPS.get(crop_name, {})
+                            age = eval_day - t.planted_day if t.planted_day is not None else 0
+                            is_decay = False
+                            if not cd.get("ongoing", False):
+                                is_decay = (age >= cd.get("max_yield_day", 4))
+                            else:
+                                is_decay = crop_produces_today(t, eval_day)
+
+                            if is_decay:
+                                is_in_ledger = (crop_name == "WHEAT" and any(
+                                    h.tile_pos == (t.x, t.y) and h.earliest_harvest_day == eval_day
+                                    for h in self.ledger.in_ground_wheat
+                                ))
+                                if not is_in_ledger:
+                                    simulated_tasks.append(
+                                        ServiceTask(
+                                            task_id=f"core_harvest_{t.x}_{t.y}_d{eval_day}",
+                                            op="HARVEST",
+                                            pos=(t.x, t.y),
+                                            region="NW" if t.x < 5 else "NE",
+                                            day=eval_day,
+                                            hour_deadline=20,
+                                            tier=CommitmentTier.HARD,
+                                            estimated_duration_actions=1,
+                                        )
+                                    )
+            else:
+                # Fallback from snapshot tile summary
+                planted_count = sum(cnt for k, cnt in snapshot.tiles_summary if k in ("CARROT", "MELON", "WHEAT", "STRAWBERRY", "TOMATO", "PLANT"))
+                if planted_count > 0:
+                    simulated_tasks.append(
+                        ServiceTask(
+                            task_id=f"core_crop_water_summary_d{eval_day}",
+                            op="WATER",
+                            pos=(3, 3),
+                            region="NW",
+                            day=eval_day,
+                            hour_deadline=18,
+                            tier=CommitmentTier.HARD,
+                            estimated_duration_actions=min(12, max(2, planted_count // 3)),
+                        )
+                    )
+
+            # 4. Plant queue obligations from farm plan
+            if eval_day == snapshot.day and plan and getattr(plan, "plant_queue", None):
+                for pq_idx, pq_item in enumerate(plan.plant_queue):
+                    pq_pos = getattr(pq_item, "pos", (1, 1))
+                    if not (pq_pos[0] < 5 and pq_pos[1] >= 5):
+                        simulated_tasks.append(
+                            ServiceTask(
+                                task_id=f"core_plant_queue_{pq_idx}_d{eval_day}",
+                                op="PLANT",
+                                pos=pq_pos,
+                                region="NW" if pq_pos[0] < 5 else "NE",
+                                day=eval_day,
+                                hour_deadline=20,
+                                tier=CommitmentTier.HARD,
+                                estimated_duration_actions=1,
+                            )
+                        )
+
+        return simulated_tasks
+
+    def _build_candidate_sw_tasks(
+        self,
+        portfolio: Dict[str, Any],
+        snapshot: ShadowSnapshot,
+        horizon_days: int = 3,
+    ) -> List[ServiceTask]:
+        """Generate prospective SW service tasks (plant, water, harvest) for candidate portfolio."""
+        sw_tasks: List[ServiceTask] = []
+        for d_offset in range(horizon_days):
+            eval_day = snapshot.day + d_offset
+            if eval_day >= 30:
+                break
+
+            t_idx = 0
+            for crop_name, n_units, tiles in portfolio.get("allocations", []):
+                cd = CROPS.get(crop_name, {})
+                if d_offset == 0:
+                    # Planting day requires PLANT (afternoon) + WATER (evening)
+                    for t_pos in tiles:
+                        plant_h = 12 + (t_idx % 6)
+                        water_h = 18 + (t_idx % 5)
+                        t_idx += 1
+                        sw_tasks.append(
+                            ServiceTask(
+                                task_id=f"sw_plant_{crop_name.lower()}_{t_pos[0]}_{t_pos[1]}_d{eval_day}",
+                                op="PLANT",
+                                pos=t_pos,
+                                region="SW",
+                                day=eval_day,
+                                hour_deadline=plant_h,
+                                tier=CommitmentTier.STRATEGIC,
+                                estimated_duration_actions=1,
+                                cohort_id=f"sw_{crop_name.lower()}",
+                            )
+                        )
+                        sw_tasks.append(
+                            ServiceTask(
+                                task_id=f"sw_water_{crop_name.lower()}_{t_pos[0]}_{t_pos[1]}_d{eval_day}",
+                                op="WATER",
+                                pos=t_pos,
+                                region="SW",
+                                day=eval_day,
+                                hour_deadline=water_h,
+                                tier=CommitmentTier.STRATEGIC,
+                                estimated_duration_actions=1,
+                                cohort_id=f"sw_{crop_name.lower()}",
+                            )
+                        )
+                else:
+                    for t_pos in tiles:
+                        work_h = 14 + (t_idx % 7)
+                        t_idx += 1
+                        if cd.get("ongoing", False):
+                            # Ongoing crop: alternate day watering
+                            if (t_pos[0] + t_pos[1] + eval_day) % 2 == 0:
+                                sw_tasks.append(
+                                    ServiceTask(
+                                        task_id=f"sw_water_{crop_name.lower()}_{t_pos[0]}_{t_pos[1]}_d{eval_day}",
+                                        op="WATER",
+                                        pos=t_pos,
+                                        region="SW",
+                                        day=eval_day,
+                                        hour_deadline=work_h,
+                                        tier=CommitmentTier.STRATEGIC,
+                                        estimated_duration_actions=1,
+                                        cohort_id=f"sw_{crop_name.lower()}",
+                                    )
+                                )
+                        else:
+                            first_yield = cd.get("first_yield_day", 2)
+                            if d_offset >= first_yield:
+                                sw_tasks.append(
+                                    ServiceTask(
+                                        task_id=f"sw_harvest_{crop_name.lower()}_{t_pos[0]}_{t_pos[1]}_d{eval_day}",
+                                        op="HARVEST",
+                                        pos=t_pos,
+                                        region="SW",
+                                        day=eval_day,
+                                        hour_deadline=work_h,
+                                        tier=CommitmentTier.HARD,
+                                        estimated_duration_actions=1,
+                                        cohort_id=f"sw_{crop_name.lower()}",
+                                    )
+                                )
+                            else:
+                                sw_tasks.append(
+                                    ServiceTask(
+                                        task_id=f"sw_water_{crop_name.lower()}_{t_pos[0]}_{t_pos[1]}_d{eval_day}",
+                                        op="WATER",
+                                        pos=t_pos,
+                                        region="SW",
+                                        day=eval_day,
+                                        hour_deadline=work_h,
+                                        tier=CommitmentTier.STRATEGIC,
+                                        estimated_duration_actions=1,
+                                        cohort_id=f"sw_{crop_name.lower()}",
+                                    )
+                                )
+        return sw_tasks
+
     def evaluate(self, snapshot: ShadowSnapshot, raw_ctx: Optional[Dict[str, Any]] = None) -> ShadowResult:
         """Run complete shadow evaluation on the frozen snapshot.
 
@@ -170,6 +422,14 @@ class WholeFarmPlanner:
             self.ledger.day = snapshot.day
             self.ledger.hour = snapshot.hour
             self.ledger.cash_on_hand = snapshot.money
+            plan.day = snapshot.day
+            plan.hour = snapshot.hour
+            if plan.state == StrategicState.SW_NOT_COMMITTED and snapshot.day >= 4:
+                plan.state = StrategicState.SW_PREPARING
+            if plan.state == StrategicState.SW_PREPARING and (
+                snapshot.day >= plan.expansion_target.earliest_feasible_day or snapshot.money >= 2200
+            ):
+                plan.state = StrategicState.SW_READY
 
         # Event-driven replanning detection:
         # Full deep replan triggers on:
@@ -193,16 +453,25 @@ class WholeFarmPlanner:
         storage_status = self.ledger.project_storage_timeline(horizon_hours=72)
 
         market_inv_dict = dict(snapshot.market_inventories)
+
+        # 3. Grounded Core Workload Evaluation
+        core_tasks = self._build_core_tasks(snapshot, raw_ctx, horizon_days=3)
+        core_cert = self.certificate_evaluator.evaluate_multi_day(
+            current_day=snapshot.day,
+            current_hour=snapshot.hour,
+            worker_count=snapshot.active_worker_count,
+            tasks=core_tasks,
+            horizon_hours=72,
+        )
+
         portfolio_evals = []
-        best_portfolio_data = None
-        best_delta = -float("inf")
 
         for port in candidate_portfolios:
             total_delta = 0.0
             cohort_names = []
             sim_market_inv = dict(market_inv_dict)
-            planned_supply_by_crop: Dict[str, int] = {}
 
+            # Sequential Pricing Evaluation (existing_supply=0, sim_market_inv updated per cohort)
             for crop_name, n_units, tiles in port["allocations"]:
                 c_cohort = self.cohort_planner.build_candidate_crop_cohort(
                     cohort_id=f"shadow_{crop_name.lower()}_{snapshot.day}",
@@ -212,124 +481,70 @@ class WholeFarmPlanner:
                     plant_day=snapshot.day,
                     is_discretionary=True,
                 )
-                cur_supply = planned_supply_by_crop.get(crop_name, 0)
                 eval_res = self.cohort_planner.evaluate_opportunity_cost(
                     candidate=c_cohort,
                     displaced_cohorts=[],
                     market_inventory=sim_market_inv,
-                    existing_supply=cur_supply,
+                    existing_supply=0,
                     feed_deficit_risk=not feed_status["is_feed_safe"],
                 )
                 total_delta += eval_res.delta_final_cash
                 cohort_names.append(c_cohort.cohort_id)
-                planned_supply_by_crop[crop_name] = cur_supply + c_cohort.market_supply_units
                 sim_market_inv[crop_name] = sim_market_inv.get(crop_name, 0) + c_cohort.market_supply_units
 
-            portfolio_evals.append((port, total_delta, cohort_names))
-            if total_delta > best_delta:
-                best_delta = total_delta
-                best_portfolio_data = (port, total_delta, cohort_names)
+            # Serviceability Certification for Candidate Portfolio BEFORE Recommending
+            cand_sw_tasks = self._build_candidate_sw_tasks(port, snapshot, horizon_days=3)
+            combined_tasks = list(core_tasks) + cand_sw_tasks
+            cand_cert = self.certificate_evaluator.evaluate_multi_day(
+                current_day=snapshot.day,
+                current_hour=snapshot.hour,
+                worker_count=snapshot.active_worker_count,
+                tasks=combined_tasks,
+                horizon_hours=72,
+            )
 
-        # 3. Forward Service Certificate Evaluation (72-hour horizon with grounded workload evidence)
-        simulated_tasks: List[ServiceTask] = []
-        for d_offset in range(3):
-            eval_day = snapshot.day + d_offset
-            if eval_day >= 30:
-                break
+            portfolio_evals.append({
+                "portfolio": port,
+                "total_delta": total_delta,
+                "cohort_names": cohort_names,
+                "cert": cand_cert,
+                "serviceable": cand_cert.feasible,
+            })
 
-            # 1. Outstanding animal feeding obligations from ledger
-            day_liabs = [l for l in self.ledger.feed_liabilities if l.day == eval_day]
-            if day_liabs:
-                for liab in day_liabs:
-                    simulated_tasks.append(
-                        ServiceTask(
-                            task_id=f"feed_animal_{liab.animal_pos[0]}_{liab.animal_pos[1]}_d{eval_day}",
-                            op="FEED",
-                            pos=liab.animal_pos,
-                            region="NW" if liab.animal_pos[1] < 5 else "SW",
-                            day=eval_day,
-                            hour_deadline=liab.hour_deadline,
-                            tier=CommitmentTier.HARD,
-                            estimated_duration_actions=1,
-                        )
-                    )
-
-            # 2. Existing NW/NE in-ground wheat harvests from ledger
-            for h in self.ledger.in_ground_wheat:
-                if h.earliest_harvest_day == eval_day:
-                    simulated_tasks.append(
-                        ServiceTask(
-                            task_id=f"harvest_wheat_{h.tile_pos[0]}_{h.tile_pos[1]}_d{eval_day}",
-                            op="HARVEST",
-                            pos=h.tile_pos,
-                            region="NW",
-                            day=eval_day,
-                            hour_deadline=20,
-                            tier=CommitmentTier.HARD,
-                            estimated_duration_actions=1,
-                        )
-                    )
-
-            # 3. Core crop maintenance from observed tiles or summary
-            planted_count = 0
-            if raw_ctx and "farm" in raw_ctx:
-                farm_obj = raw_ctx["farm"]
-                for t in farm_obj.iter_tiles():
-                    if getattr(t, "is_plant", False):
-                        planted_count += 1
-            else:
-                planted_count = sum(cnt for k, cnt in snapshot.tiles_summary if k in ("CARROT", "MELON", "WHEAT", "STRAWBERRY", "PLANT"))
-
-            if planted_count > 0:
-                simulated_tasks.append(
-                    ServiceTask(
-                        task_id=f"core_crop_water_d{eval_day}",
-                        op="WATER",
-                        pos=(3, 3),
-                        region="NW",
-                        day=eval_day,
-                        hour_deadline=18,
-                        tier=CommitmentTier.HARD,
-                        estimated_duration_actions=min(12, max(2, planted_count // 3)),
-                    )
-                )
-
-            # 4. Candidate SW commitments if SW active or ramping
-            if best_portfolio_data and ("SW" in snapshot.unlocked_quadrants or plan.state in (StrategicState.SW_RAMPING, StrategicState.THREE_QUADRANT_OPERATION)):
-                sw_actions = sum(len(tiles) for _, _, tiles in best_portfolio_data[0]["allocations"])
-                simulated_tasks.append(
-                    ServiceTask(
-                        task_id=f"sw_service_day_{eval_day}",
-                        op="WATER",
-                        pos=(2, 7),
-                        region="SW",
-                        day=eval_day,
-                        hour_deadline=20,
-                        tier=CommitmentTier.STRATEGIC,
-                        estimated_duration_actions=max(4, min(16, sw_actions)),
-                        cohort_id="sw_tranche_active",
-                    )
-                )
-
-        cert_result = self.certificate_evaluator.evaluate_multi_day(
-            current_day=snapshot.day,
-            current_hour=snapshot.hour,
-            worker_count=snapshot.active_worker_count,
-            tasks=simulated_tasks,
-            horizon_hours=72,
-        )
+        # Select the best SERVICEABLE candidate portfolio
+        serviceable_portfolios = [p for p in portfolio_evals if p["serviceable"]]
+        if serviceable_portfolios:
+            best_entry = max(serviceable_portfolios, key=lambda p: p["total_delta"])
+            best_portfolio_data = (best_entry["portfolio"], best_entry["total_delta"], best_entry["cohort_names"])
+            best_delta = best_entry["total_delta"]
+            cert_result = best_entry["cert"]
+        else:
+            best_entry = max(portfolio_evals, key=lambda p: p["total_delta"]) if portfolio_evals else None
+            best_portfolio_data = None
+            best_delta = best_entry["total_delta"] if best_entry else 0.0
+            cert_result = core_cert
 
         # 4. Decision Compilation & Rich Baseline Disagreement Tracking
         disagreements = []
         baseline_intents_dict = dict(snapshot.baseline_intents)
         baseline_buys_land = bool(baseline_intents_dict.get("buy_land", False))
 
-        # Check SW purchase recommendation
+        # Check SW purchase recommendation (Pre-Purchase Certification)
         sw_recommended = False
+        sw_reject_reason = None
         if "SW" not in snapshot.unlocked_quadrants and 3 not in snapshot.unlocked_quadrants:
-            if plan.state == StrategicState.SW_READY and cert_result.feasible:
-                # Land purchase requires $2,000 cash plus seed/hire reserves
-                if snapshot.money >= 2200 and best_delta > 0:
+            if plan.state == StrategicState.SW_READY:
+                if snapshot.money < 2200:
+                    sw_reject_reason = f"insufficient_cash (${snapshot.money:.1f} < $2,200)"
+                elif not feed_status["is_feed_safe"]:
+                    sw_reject_reason = f"feed_deficit_risk ({'; '.join(feed_status.get('unfed_reasons', []))})"
+                elif best_portfolio_data is None:
+                    sw_reject_reason = f"no_serviceable_candidate_portfolio (core binding={core_cert.binding_resource})"
+                elif best_delta <= 0:
+                    sw_reject_reason = f"non_positive_opportunity_cost (best delta ${best_delta:.1f})"
+                elif not cert_result.feasible:
+                    sw_reject_reason = f"service_certificate_infeasible (binding={cert_result.binding_resource})"
+                else:
                     sw_recommended = True
 
         # Disagreement 1: LAND_PURCHASE_MISMATCH (Policy Disagreement)
@@ -339,11 +554,16 @@ class WholeFarmPlanner:
                 "baseline_decision": baseline_buys_land,
                 "shadow_decision": sw_recommended,
                 "is_policy_disagreement": True,
-                "metrics": {"money": snapshot.money, "best_delta": best_delta, "cert_feasible": cert_result.feasible},
+                "metrics": {
+                    "money": snapshot.money,
+                    "best_delta": best_delta,
+                    "cert_feasible": cert_result.feasible,
+                    "best_portfolio": best_portfolio_data[0]["name"] if best_portfolio_data else None,
+                },
                 "reason": (
                     f"Shadow planner recommends SW purchase on Day {snapshot.day} based on certified 72h forward feasibility and candidate portfolio delta (${best_delta:.1f})"
                     if sw_recommended else
-                    f"Shadow planner rejects land buy: cert_feasible={cert_result.feasible}, money={snapshot.money:.1f}, best_delta={best_delta:.1f}"
+                    f"Shadow planner rejects land buy: {sw_reject_reason or 'unmet prerequisites'}"
                 ),
             })
 
@@ -362,64 +582,111 @@ class WholeFarmPlanner:
             baseline_animals = {baseline_animal_raw: 1}
 
         if baseline_animals:
-            if not cert_result.feasible or not feed_status["is_feed_safe"]:
-                rejected_species = list(baseline_animals.keys())
-                reasons = []
-                if not feed_status["is_feed_safe"]:
-                    reasons.append("feed_deficit_risk")
-                if not cert_result.feasible:
-                    reasons.append(f"cert_binding_{cert_result.binding_resource}")
+            rejected_species = []
+            reasons = []
+            total_animal_cost = 0
+            incremental_daily_feed = 0
+
+            # Structure availability check from tiles
+            tile_summary_dict = dict(snapshot.tiles_summary)
+            farm_obj = raw_ctx.get("farm") if raw_ctx else None
+
+            for sp, count in baseline_animals.items():
+                sp_info = ANIMALS.get(sp.upper(), {})
+                sp_cost = sp_info.get("cost", 400) * count
+                total_animal_cost += sp_cost
+                incremental_daily_feed += count
+                req_struct = sp_info.get("structure")
+                if req_struct:
+                    has_struct = False
+                    if farm_obj:
+                        has_struct = any(getattr(t, "kind", "") == req_struct for t in farm_obj.iter_tiles())
+                    else:
+                        has_struct = tile_summary_dict.get(req_struct, 0) > 0
+                    if not has_struct:
+                        rejected_species.append(sp)
+                        reasons.append(f"missing_structure_{req_struct}")
+
+            # 1. Cash solvency check (cost + $200 buffer)
+            if snapshot.money < (total_animal_cost + 200):
+                if not rejected_species:
+                    rejected_species = list(baseline_animals.keys())
+                reasons.append("insufficient_cash")
+
+            # 2. Feed safety check
+            if not feed_status["is_feed_safe"]:
+                if not rejected_species:
+                    rejected_species = list(baseline_animals.keys())
+                reasons.append("feed_deficit_risk")
+            elif feed_status.get("min_projected_balance", 0) < (incremental_daily_feed * 3):
+                if not rejected_species:
+                    rejected_species = list(baseline_animals.keys())
+                reasons.append("incremental_feed_deficit")
+
+            # 3. Labor / Certificate check with incremental feeding tasks
+            anim_tasks = list(core_tasks)
+            for d_offset in range(3):
+                eval_day = snapshot.day + d_offset
+                if eval_day >= 30:
+                    break
+                for sp, count in baseline_animals.items():
+                    for a_i in range(count):
+                        anim_tasks.append(
+                            ServiceTask(
+                                task_id=f"feed_inc_{sp.lower()}_{a_i}_d{eval_day}",
+                                op="FEED",
+                                pos=(4, 5),
+                                region="NW",
+                                day=eval_day,
+                                hour_deadline=20,
+                                tier=CommitmentTier.HARD,
+                                estimated_duration_actions=1,
+                            )
+                        )
+            anim_cert = self.certificate_evaluator.evaluate_multi_day(
+                current_day=snapshot.day,
+                current_hour=snapshot.hour,
+                worker_count=snapshot.active_worker_count,
+                tasks=anim_tasks,
+                horizon_hours=72,
+            )
+            if not anim_cert.feasible:
+                if not rejected_species:
+                    rejected_species = list(baseline_animals.keys())
+                reasons.append(f"cert_binding_{anim_cert.binding_resource}")
+
+            if rejected_species:
                 disagreements.append({
                     "type": "LIVESTOCK_ADMISSION_MISMATCH",
                     "baseline_decision": baseline_animals,
                     "shadow_decision": {sp: 0 for sp in rejected_species},
                     "is_policy_disagreement": True,
                     "metrics": {
-                        "cert_feasible": cert_result.feasible,
+                        "cert_feasible": anim_cert.feasible,
                         "feed_safe": feed_status["is_feed_safe"],
-                        "unfed_reasons": feed_status.get("unfed_reasons", []),
+                        "min_projected_balance": feed_status.get("min_projected_balance", 0),
+                        "total_animal_cost": total_animal_cost,
+                        "money": snapshot.money,
+                        "reasons": reasons,
                     },
-                    "reason": f"Forward certificate or feed safety rejects animal admission: {', '.join(reasons)}",
+                    "reason": f"Livestock counterfactual evaluation rejects admission: {', '.join(reasons)}",
                 })
 
         # Disagreement 3: CROP_PORTFOLIO_MISMATCH (Policy Disagreement)
-        baseline_seed_raw = baseline_intents_dict.get("buy_seed")
-        baseline_seeds: Dict[str, int] = {}
-        if isinstance(baseline_seed_raw, dict):
-            baseline_seeds = {k: int(v) for k, v in baseline_seed_raw.items() if int(v) > 0}
-        elif isinstance(baseline_seed_raw, (list, tuple)):
-            for item in baseline_seed_raw:
-                if isinstance(item, (list, tuple)) and len(item) == 2:
-                    baseline_seeds[str(item[0])] = int(item[1])
-                elif isinstance(item, str):
-                    baseline_seeds[item] = 1
-        elif isinstance(baseline_seed_raw, str) and baseline_seed_raw:
-            baseline_seeds = {baseline_seed_raw: 1}
-        if not baseline_seeds and baseline_intents_dict.get("plant_crop"):
-            baseline_seeds = {str(baseline_intents_dict.get("plant_crop")): 1}
-
-        if best_portfolio_data:
+        # Production seed purchases for NW/NE must not trigger false CROP_PORTFOLIO_MISMATCH.
+        # Only flag true policy disagreement when SW tile allocations conflict or core commitments prevent admitted SW obligations.
+        sw_active_now = ("SW" in snapshot.unlocked_quadrants or 3 in snapshot.unlocked_quadrants)
+        if sw_active_now and best_portfolio_data:
             port_crops = [alloc[0] for alloc in best_portfolio_data[0]["allocations"]]
-            sw_active_now = ("SW" in snapshot.unlocked_quadrants or 3 in snapshot.unlocked_quadrants)
-            if sw_active_now and baseline_seeds:
-                baseline_sw_conflicts = [c for c in baseline_seeds if c not in port_crops and c in ("STRAWBERRY", "MELON", "CARROT")]
-                if baseline_sw_conflicts:
-                    disagreements.append({
-                        "type": "CROP_PORTFOLIO_MISMATCH",
-                        "baseline_decision": baseline_seeds,
-                        "shadow_decision": port_crops,
-                        "is_policy_disagreement": True,
-                        "metrics": {"portfolio_delta": best_delta, "portfolio_name": best_portfolio_data[0]["name"]},
-                        "reason": f"Shadow candidate portfolio ({best_portfolio_data[0]['name']}) selects {port_crops} (delta ${best_delta:.1f}) instead of baseline {baseline_sw_conflicts}",
-                    })
-            elif not sw_active_now and "plant_crop" in baseline_intents_dict and baseline_intents_dict.get("plant_crop") not in port_crops:
+            baseline_sw_target = baseline_intents_dict.get("sw_plant_crop") or baseline_intents_dict.get("sw_crop")
+            if baseline_sw_target and baseline_sw_target not in port_crops:
                 disagreements.append({
                     "type": "CROP_PORTFOLIO_MISMATCH",
-                    "baseline_decision": baseline_intents_dict.get("plant_crop"),
+                    "baseline_decision": baseline_sw_target,
                     "shadow_decision": port_crops,
                     "is_policy_disagreement": True,
                     "metrics": {"portfolio_delta": best_delta, "portfolio_name": best_portfolio_data[0]["name"]},
-                    "reason": f"Shadow candidate portfolio ({best_portfolio_data[0]['name']}) selects {port_crops} (delta ${best_delta:.1f}) instead of baseline {baseline_intents_dict.get('plant_crop')}",
+                    "reason": f"Shadow candidate portfolio ({best_portfolio_data[0]['name']}) selects {port_crops} (delta ${best_delta:.1f}) instead of baseline SW target {baseline_sw_target}",
                 })
 
         # Disagreement 4: HIRE_SCHEDULE_MISMATCH (Policy Disagreement)

@@ -358,14 +358,10 @@ class ResourceLedger:
         if self.day < wheat_harvest.earliest_harvest_day:
             return False, 999, {"reason": "wheat_not_harvestable_today"}
 
-        candidate_workers = self.workers
-        if worker_id is not None:
-            candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
-
-        candidate_workers = self.workers
-        if worker_id is not None:
-            candidate_workers = [w for w in self.workers if w.worker_id == worker_id]
-
+        candidate_workers = [
+            w for w in self.workers
+            if w.carried_total < 20 and (worker_id is None or w.worker_id == worker_id)
+        ]
         if not candidate_workers:
             return False, 999, {"reason": "no_worker_available"}
 
@@ -413,10 +409,12 @@ class ResourceLedger:
         best_worker = None
 
         for w in candidate_workers:
-            dist_to_shed = min(abs(w.pos[0] - sx) + abs(w.pos[1] - sy) for sx, sy in SHED_ACCESS_TILES)
-            dist_shed_to_animal = min(abs(sx - animal_pos[0]) + abs(sy - animal_pos[1]) for sx, sy in SHED_ACCESS_TILES)
+            min_travel = min(
+                abs(w.pos[0] - sx) + abs(w.pos[1] - sy) + abs(sx - animal_pos[0]) + abs(sy - animal_pos[1])
+                for sx, sy in SHED_ACCESS_TILES
+            )
             # travel to shed + 1 (PICKUP) + travel to animal + 1 (FEED)
-            actions_needed = dist_to_shed + 1 + dist_shed_to_animal + 1
+            actions_needed = min_travel + 1 + 1
             completion = cur_h + actions_needed
             if completion < best_completion:
                 best_completion = completion
@@ -626,6 +624,7 @@ class ResourceLedger:
                 "pos": w.pos,
                 "avail_hour": self.hour,
                 "wheat": max(0, w.inventory.get("WHEAT", 0)),
+                "carried_total": w.carried_total,
             }
             for w in self.workers
         }
@@ -667,33 +666,49 @@ class ResourceLedger:
 
                 # Route 2: Worker uses shed wheat
                 if sim_shed_wheat > 0:
-                    dist_to_shed = min(abs(w_pos[0] - sx) + abs(w_pos[1] - sy) for sx, sy in SHED_ACCESS_TILES)
-                    dist_shed_to_animal = min(abs(sx - a_pos[0]) + abs(sy - a_pos[1]) for sx, sy in SHED_ACCESS_TILES)
-                    comp = w_hour + dist_to_shed + 1 + dist_shed_to_animal + 1  # travel shed + 1 (PICKUP) + travel animal + 1 (FEED)
+                    min_shed_travel = min(
+                        abs(w_pos[0] - sx) + abs(w_pos[1] - sy) + abs(sx - a_pos[0]) + abs(sy - a_pos[1])
+                        for sx, sy in SHED_ACCESS_TILES
+                    )
+                    comp = w_hour + min_shed_travel + 1 + 1  # travel shed + 1 (PICKUP) + travel animal + 1 (FEED)
                     if comp <= deadline and comp < best_completion:
                         best_completion = comp
                         best_route = ("SHED", w_id, None, comp)
 
                 # Route 3: Worker harvests mature in-ground wheat today
-                for h_idx, h_state in enumerate(sim_harvests):
-                    if h_state["remaining_yield"] > 0:
-                        h_pos = h_state["tile_pos"]
-                        dist_to_wheat = abs(w_pos[0] - h_pos[0]) + abs(w_pos[1] - h_pos[1])
-                        dist_wheat_to_animal = abs(h_pos[0] - a_pos[0]) + abs(h_pos[1] - a_pos[1])
-                        comp = w_hour + dist_to_wheat + 1 + dist_wheat_to_animal + 1  # travel wheat + 1 (HARVEST) + travel animal + 1 (FEED)
-                        if comp <= deadline and comp < best_completion:
-                            best_completion = comp
-                            best_route = ("HARVEST", w_id, h_idx, comp)
+                free_space = max(0, 20 - w_state["carried_total"])
+                if free_space > 0:
+                    for h_idx, h_state in enumerate(sim_harvests):
+                        if h_state["remaining_yield"] > 0:
+                            h_pos = h_state["tile_pos"]
+                            dist_to_wheat = abs(w_pos[0] - h_pos[0]) + abs(w_pos[1] - h_pos[1])
+                            dist_wheat_to_animal = abs(h_pos[0] - a_pos[0]) + abs(h_pos[1] - a_pos[1])
+                            comp = w_hour + dist_to_wheat + 1 + dist_wheat_to_animal + 1  # travel wheat + 1 (HARVEST) + travel animal + 1 (FEED)
+                            if comp <= deadline and comp < best_completion:
+                                best_completion = comp
+                                best_route = ("HARVEST", w_id, h_idx, comp)
 
             if best_route is not None:
                 route_type, chosen_w_id, chosen_h_idx, comp = best_route
                 fed_count += 1
                 if route_type == "CARRIED":
                     sim_workers[chosen_w_id]["wheat"] -= 1
+                    sim_workers[chosen_w_id]["carried_total"] = max(0, sim_workers[chosen_w_id]["carried_total"] - 1)
                 elif route_type == "SHED":
                     sim_shed_wheat -= 1
                 elif route_type == "HARVEST":
-                    sim_harvests[chosen_h_idx]["remaining_yield"] -= 1
+                    # Multi-unit wheat harvest respecting worker backpack capacity (max 20 units total)
+                    h_rem = sim_harvests[chosen_h_idx]["remaining_yield"]
+                    free_sp = max(0, 20 - sim_workers[chosen_w_id]["carried_total"])
+                    collected = min(h_rem, free_sp)
+                    if collected >= 1:
+                        sim_harvests[chosen_h_idx]["remaining_yield"] -= collected
+                        # 1 unit consumed for feeding, remaining carried in backpack
+                        retained = collected - 1
+                        sim_workers[chosen_w_id]["wheat"] += retained
+                        sim_workers[chosen_w_id]["carried_total"] += retained
+                    else:
+                        sim_harvests[chosen_h_idx]["remaining_yield"] -= 1
 
                 sim_workers[chosen_w_id]["pos"] = a_pos
                 sim_workers[chosen_w_id]["avail_hour"] = comp
