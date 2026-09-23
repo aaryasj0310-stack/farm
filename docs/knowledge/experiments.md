@@ -335,3 +335,10 @@
   - Final Taxonomy: **Option B (Storage Mechanism Failed, Cash Signal Mostly Incidental / Feed Buffer Arbitrage)**.
   - Action: Keep `P61_PRE_MIDNIGHT_STORAGE_HYGIENE_ENABLED = False`. Do not promote to production.
   - Selected P6.2 Experiment: **Candidate A (Opportunistic Near-Shed Deposit-and-Sell)**.
+
+### SW-first architecture audit (2026-09-23)
+- Type: FACT / AUDIT
+- Source: docs/sw_architecture_deep_audit.md; docs/sw_leader_comparison.md; artifacts/sw_economics/model.json
+- Confidence: HIGH for engine facts and P4.1 cash; MEDIUM for counterfactual sensitivities
+- Details: Verified HEAD is 975da5e1683f1bb57463cb9478344d0acf379d58 and remote branch has no later commit. P4.1 lost $4,819.10/game after reserving two productive core workers for eight SW tiles; core agricultural attempts fell 141.0 to 29.4/game and core watering compliance fell 4.45 points. The old death, starvation, and direct SW-profit decomposition is not transaction-verified. Saved replay census found 132 unique episodes; Crop Dusta acquired NE around D5 and SW D8-9, mixed SW crops, and reached 13 total workers by D12. This is descriptive evidence, not a causal treatment effect. Engine arithmetic gives 96 melon, 32 strawberry, 160 wheat and 9 carrot for a nominal D6 24-tile calendar, but 1,351 planned actions are not route-certified. Whole-farm sensitivity rows for A/B/C/C+ are scenario estimates only: do not add them to P6/P6.1 recoverable ledgers or pool panels.
+- Related: docs/sw_architecture_deep_audit.md; docs/sw_leader_comparison.md; docs/sw_labor_and_capacity_model.md; docs/sw_economic_model.md; docs/sw_architecture_alternatives.md; docs/sw_architecture_recommendation.md; docs/sw_validation_plan.md

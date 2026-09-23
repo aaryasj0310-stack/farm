@@ -1,0 +1,5190 @@
+{
+  "episode": "106754802",
+  "path": "replays\\08_09\\106754802.json",
+  "module_version": "1.32.7",
+  "configuration": {
+    "actTimeout": 1,
+    "boardSize": 10,
+    "episodeSteps": 720,
+    "farmHandCostMult": 1,
+    "marketParams": {},
+    "maxMarketOrdersPerTurn": 10,
+    "runTimeout": 1200,
+    "seed": null,
+    "shedCapacity": 100,
+    "startingMoney": 3000,
+    "townCenterSellInterval": 24,
+    "townShopSellInterval": 4,
+    "townShopUnlockInterval": 3,
+    "turnsPerDay": 24,
+    "weedSpawnChance": 0.005
+  },
+  "players": [
+    {
+      "seat": 0,
+      "name": "Aarya Jadhav",
+      "score": 47627.0,
+      "purchases": {
+        "NE": {
+          "first_observation": [
+            10,
+            1
+          ],
+          "workers_before": 1,
+          "workers_after": 9
+        },
+        "SW": {
+          "first_observation": [
+            11,
+            1
+          ],
+          "workers_before": 1,
+          "workers_after": 7
+        }
+      },
+      "daily": [
+        {
+          "day": 0,
+          "hour": 23,
+          "cash": 1163.0,
+          "workers": 5,
+          "tiles": {
+            "NW:crop:MELON": 11,
+            "NW:crop:WHEAT": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "hour": 23,
+          "cash": 876.0,
+          "workers": 5,
+          "tiles": {
+            "NW:crop:WHEAT": 8,
+            "NW:crop:MELON": 12,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "hour": 23,
+          "cash": 651.0,
+          "workers": 5,
+          "tiles": {
+            "NW:crop:WHEAT": 8,
+            "NW:crop:MELON": 12,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "hour": 23,
+          "cash": 543.0,
+          "workers": 5,
+          "tiles": {
+            "NW:crop:WHEAT": 8,
+            "NW:crop:MELON": 15,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "hour": 23,
+          "cash": 671.0,
+          "workers": 5,
+          "tiles": {
+            "NW:crop:WHEAT": 1,
+            "NW:crop:MELON": 15,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "hour": 23,
+          "cash": 1495.0,
+          "workers": 5,
+          "tiles": {
+            "NW:crop:MELON": 15,
+            "NW:crop:WHEAT": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "hour": 23,
+          "cash": 1668.0,
+          "workers": 9,
+          "tiles": {
+            "NW:crop:WHEAT": 8,
+            "NW:crop:MELON": 15,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "hour": 23,
+          "cash": 1801.0,
+          "workers": 9,
+          "tiles": {
+            "NW:crop:WHEAT": 8,
+            "NW:crop:MELON": 15,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 8,
+          "hour": 23,
+          "cash": 949.0,
+          "workers": 9,
+          "tiles": {
+            "NW:crop:WHEAT": 8,
+            "NW:crop:MELON": 15,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 9,
+          "hour": 23,
+          "cash": 4238.0,
+          "workers": 9,
+          "tiles": {
+            "NW:crop:WHEAT": 1,
+            "NW:crop:MELON": 15,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 10,
+          "hour": 23,
+          "cash": 3833.0,
+          "workers": 11,
+          "tiles": {
+            "NW:crop:WHEAT": 1,
+            "NE:crop:WHEAT": 6,
+            "NW:crop:MELON": 4,
+            "NW:crop:CARROT": 4,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "NE:crop:CARROT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 11,
+          "hour": 23,
+          "cash": 10716.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 4,
+            "NE:crop:WHEAT": 6,
+            "NE:crop:STRAWBERRY": 10,
+            "NW:crop:MELON": 3,
+            "NW:crop:CARROT": 4,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "NE:crop:CARROT": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 9,
+            "SW:crop:CARROT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 12,
+          "hour": 23,
+          "cash": 13608.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 10,
+            "NE:crop:WHEAT": 7,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 5,
+            "NW:crop:CARROT": 4,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "NE:crop:CARROT": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 13,
+            "SW:crop:CARROT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 13,
+          "hour": 23,
+          "cash": 15458.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 10,
+            "NE:crop:WHEAT": 7,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 2,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 13,
+            "SW:crop:CARROT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 14,
+          "hour": 23,
+          "cash": 17371.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 9,
+            "NE:crop:WHEAT": 1,
+            "NE:crop:MELON": 2,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 13
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 15,
+          "hour": 23,
+          "cash": 18910.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 10,
+            "NE:crop:WHEAT": 2,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 6,
+            "SW:crop:CARROT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 16,
+          "hour": 23,
+          "cash": 18677.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 6,
+            "NE:crop:WHEAT": 5,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 2,
+            "SW:crop:CARROT": 9
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 17,
+          "hour": 23,
+          "cash": 20203.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 12,
+            "NE:crop:WHEAT": 6,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 2,
+            "SW:crop:CARROT": 13
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 18,
+          "hour": 23,
+          "cash": 20156.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 12,
+            "NE:crop:WHEAT": 6,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 2,
+            "SW:crop:CARROT": 11
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 19,
+          "hour": 23,
+          "cash": 21587.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 8,
+            "NE:crop:WHEAT": 5,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:WHEAT": 1,
+            "SW:crop:CARROT": 5
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 20,
+          "hour": 23,
+          "cash": 22347.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 10,
+            "NE:crop:WHEAT": 2,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 10,
+            "SW:crop:WHEAT": 1
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 21,
+          "hour": 23,
+          "cash": 24406.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 4,
+            "NE:crop:WHEAT": 6,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 7,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:TOMATO": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 14,
+            "SW:crop:WHEAT": 1
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 22,
+          "hour": 23,
+          "cash": 24889.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 12,
+            "NE:crop:WHEAT": 6,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 6,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 13,
+            "SW:crop:WHEAT": 1
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 23,
+          "hour": 23,
+          "cash": 26236.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 13,
+            "NE:crop:WHEAT": 6,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 6,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 5
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 24,
+          "hour": 23,
+          "cash": 28480.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 9,
+            "NE:crop:WHEAT": 5,
+            "NE:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:crop:MELON": 4,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 9
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 25,
+          "hour": 23,
+          "cash": 32241.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 14,
+            "NE:crop:MELON": 2,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 15
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 26,
+          "hour": 23,
+          "cash": 35449.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 13,
+            "NE:crop:WHEAT": 7,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "NE:crop:MELON": 1,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 14
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 27,
+          "hour": 23,
+          "cash": 37596.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 12,
+            "NE:crop:WHEAT": 7,
+            "NE:crop:STRAWBERRY": 14,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 7
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 28,
+          "hour": 23,
+          "cash": 43137.0,
+          "workers": 13,
+          "tiles": {
+            "NW:crop:WHEAT": 12,
+            "NE:crop:WHEAT": 7,
+            "NE:crop:STRAWBERRY": 4,
+            "NW:crop:STRAWBERRY": 4,
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "SW:structure:PASTURE": 7,
+            "SW:crop:CARROT": 1
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 29,
+          "hour": 23,
+          "cash": 47627.0,
+          "workers": 13,
+          "tiles": {
+            "NW:animal:COW": 2,
+            "NW:structure:PASTURE": 2,
+            "SW:structure:PASTURE": 7
+          },
+          "animal_positions": [
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 1,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        }
+      ],
+      "actions": {
+        "NW:WEST": 550,
+        "NW:BUILD_PASTURE": 2,
+        "NE:NORTH": 354,
+        "SW:NORTH": 516,
+        "SE:NORTH": 63,
+        "NW:NORTH": 863,
+        "NE:WEST": 224,
+        "NW:PICKUP": 30,
+        "NW:PLANT": 93,
+        "NW:WATER": 557,
+        "NW:PLACE": 2,
+        "NW:EAST": 332,
+        "NW:SOUTH": 542,
+        "NW:PASS": 585,
+        "NW:CARE": 39,
+        "NW:COLLECT_FERTILIZER": 56,
+        "NW:FEED": 40,
+        "NW:HARVEST": 117,
+        "NE:SOUTH": 257,
+        "NE:EAST": 350,
+        "NE:PLANT": 47,
+        "NE:WATER": 375,
+        "NE:PASS": 101,
+        "SE:SOUTH": 151,
+        "SW:SOUTH": 260,
+        "SW:WEST": 273,
+        "SE:WEST": 70,
+        "SW:BUILD_PASTURE": 7,
+        "SW:PLANT": 61,
+        "SW:WATER": 228,
+        "SW:EAST": 89,
+        "NE:HARVEST": 54,
+        "SW:HARVEST": 61,
+        "SW:DIG": 1,
+        "SW:PASS": 25,
+        "NE:PICKUP": 2,
+        "NE:DIG": 16,
+        "NW:DIG": 6
+      },
+      "harvest_inventory_increase": {
+        "NW:WHEAT": 194,
+        "NW:MILK": 45,
+        "NW:MELON": 132,
+        "NE:CARROT": 5,
+        "NW:CARROT": 12,
+        "SW:CARROT": 134,
+        "NE:WHEAT": 88,
+        "SW:WHEAT": 64,
+        "NE:TOMATO": 6,
+        "NE:STRAWBERRY": 19,
+        "NW:STRAWBERRY": 14,
+        "NE:MELON": 12
+      },
+      "market_requested_units": {
+        "BUY_PRODUCT:WHEAT": 112,
+        "BUY_SEED:MELON": 26,
+        "BUY_SEED:WHEAT": 110,
+        "BUY_ANIMAL:COW": 2,
+        "SELL:WHEAT": 397,
+        "BUY_SEED:CARROT": 51,
+        "BUY_SEED:TOMATO": 4,
+        "SELL:FERTILIZER": 54,
+        "SELL:MILK": 48,
+        "BUY_SEED:STRAWBERRY": 18,
+        "SELL:MELON": 150,
+        "SELL:CARROT": 142,
+        "SELL:TOMATO": 8,
+        "SELL:STRAWBERRY": 63
+      },
+      "worker_quadrant_hours": {
+        "NW": 3818,
+        "NE": 1784,
+        "SW": 1526,
+        "SE": 284
+      },
+      "crop_tile_hours": {
+        "NW:crop:WHEAT": 5729,
+        "NW:crop:MELON": 5556,
+        "NW:crop:CARROT": 308,
+        "NE:crop:CARROT": 155,
+        "NE:crop:WHEAT": 2327,
+        "NE:crop:TOMATO": 543,
+        "NE:crop:STRAWBERRY": 5603,
+        "SW:crop:WHEAT": 1522,
+        "SW:crop:CARROT": 3181,
+        "NW:crop:STRAWBERRY": 1587,
+        "NE:crop:MELON": 833
+      },
+      "move_distance": 4729,
+      "first_sw_half_cropped": [
+        12,
+        7
+      ]
+    },
+    {
+      "seat": 1,
+      "name": "SundharSteyn",
+      "score": 55135.0,
+      "purchases": {
+        "NE": {
+          "first_observation": [
+            7,
+            9
+          ],
+          "workers_before": 7,
+          "workers_after": 7
+        },
+        "SW": {
+          "first_observation": [
+            10,
+            15
+          ],
+          "workers_before": 10,
+          "workers_after": 10
+        },
+        "SE": {
+          "first_observation": [
+            12,
+            2
+          ],
+          "workers_before": 10,
+          "workers_after": 10
+        }
+      },
+      "daily": [
+        {
+          "day": 0,
+          "hour": 23,
+          "cash": 54.0,
+          "workers": 6,
+          "tiles": {
+            "NW:crop:MELON": 11,
+            "NW:crop:WHEAT": 8,
+            "NW:structure:PASTURE": 4
+          },
+          "animal_positions": [],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "hour": 23,
+          "cash": 42.0,
+          "workers": 6,
+          "tiles": {
+            "NW:crop:WHEAT": 9,
+            "NW:crop:MELON": 11,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "hour": 23,
+          "cash": 22.0,
+          "workers": 7,
+          "tiles": {
+            "NW:crop:WHEAT": 7,
+            "NW:crop:MELON": 11,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "hour": 23,
+          "cash": 257.0,
+          "workers": 3,
+          "tiles": {
+            "NW:crop:WHEAT": 9,
+            "NW:crop:MELON": 11,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "hour": 23,
+          "cash": 76.0,
+          "workers": 8,
+          "tiles": {
+            "NW:crop:WHEAT": 6,
+            "NW:crop:MELON": 14,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "hour": 23,
+          "cash": 105.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:WHEAT": 6,
+            "NW:crop:MELON": 13,
+            "NW:crop:STRAWBERRY": 1,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "hour": 23,
+          "cash": 50.0,
+          "workers": 9,
+          "tiles": {
+            "NW:crop:WHEAT": 5,
+            "NW:crop:MELON": 13,
+            "NW:crop:STRAWBERRY": 3,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "hour": 23,
+          "cash": 406.0,
+          "workers": 7,
+          "tiles": {
+            "NW:crop:WHEAT": 5,
+            "NW:crop:MELON": 13,
+            "NE:crop:WHEAT": 12,
+            "NW:crop:STRAWBERRY": 3,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NE:structure:PASTURE": 3,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 8,
+          "hour": 23,
+          "cash": 566.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:MELON": 13,
+            "NE:crop:WHEAT": 15,
+            "NW:crop:WHEAT": 4,
+            "NW:crop:STRAWBERRY": 3,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 9,
+          "hour": 23,
+          "cash": 117.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:MELON": 13,
+            "NE:crop:STRAWBERRY": 16,
+            "NW:crop:WHEAT": 4,
+            "NW:crop:STRAWBERRY": 3,
+            "NE:crop:WHEAT": 2,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 4,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 10,
+          "hour": 23,
+          "cash": 5299.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:MELON": 3,
+            "NE:crop:STRAWBERRY": 12,
+            "NW:crop:WHEAT": 1,
+            "NW:crop:STRAWBERRY": 5,
+            "NE:crop:WHEAT": 1,
+            "NW:animal:SHEEP": 2,
+            "NW:structure:PASTURE": 5,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:structure:PASTURE": 3
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 11,
+          "hour": 23,
+          "cash": 6964.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 14,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:MELON": 2,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:structure:PASTURE": 4,
+            "SW:crop:STRAWBERRY": 3
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 12,
+          "hour": 23,
+          "cash": 2973.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:MELON": 2,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NE:crop:WHEAT": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 4,
+            "SW:crop:WHEAT": 7,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 3
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 13,
+          "hour": 23,
+          "cash": 5212.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NE:crop:WHEAT": 5,
+            "NW:crop:MELON": 2,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 4,
+            "SW:crop:WHEAT": 6,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 11
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 14,
+          "hour": 23,
+          "cash": 6208.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 5,
+            "NE:crop:WHEAT": 5,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 4,
+            "SW:crop:WHEAT": 8,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 5
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 15,
+          "hour": 23,
+          "cash": 8100.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 4,
+            "NE:crop:WHEAT": 7,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 4,
+            "SW:crop:WHEAT": 6,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 3
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 16,
+          "hour": 23,
+          "cash": 9699.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 5,
+            "NE:crop:WHEAT": 7,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:crop:WHEAT": 3,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 1
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 17,
+          "hour": 23,
+          "cash": 13007.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 5,
+            "NE:crop:WHEAT": 6,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 5
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 18,
+          "hour": 23,
+          "cash": 12863.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 4,
+            "NE:crop:WHEAT": 6,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:crop:WHEAT": 7,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 19,
+          "hour": 23,
+          "cash": 16823.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 4,
+            "NE:crop:WHEAT": 5,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 3,
+            "SW:crop:WHEAT": 1
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 20,
+          "hour": 23,
+          "cash": 19641.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 4,
+            "NE:crop:WHEAT": 5,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:crop:WHEAT": 6,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 21,
+          "hour": 23,
+          "cash": 24025.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 11,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 4,
+            "NE:crop:WHEAT": 7,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 1,
+            "SW:crop:WHEAT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 22,
+          "hour": 23,
+          "cash": 28220.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 10,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 5,
+            "NE:crop:WHEAT": 5,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:structure:PASTURE": 4,
+            "SW:crop:WHEAT": 4
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 23,
+          "hour": 23,
+          "cash": 33020.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 8,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 5,
+            "NE:crop:WHEAT": 8,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:structure:PASTURE": 4
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 24,
+          "hour": 23,
+          "cash": 37055.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 8,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 7,
+            "NE:crop:WHEAT": 6,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:crop:WHEAT": 2,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 25,
+          "hour": 23,
+          "cash": 42018.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 8,
+            "NE:crop:STRAWBERRY": 13,
+            "NW:crop:WHEAT": 8,
+            "NE:crop:WHEAT": 6,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:crop:WHEAT": 1,
+            "SW:structure:PASTURE": 4,
+            "SE:crop:WHEAT": 2
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 26,
+          "hour": 23,
+          "cash": 45324.0,
+          "workers": 10,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 8,
+            "NW:crop:WHEAT": 6,
+            "NE:crop:STRAWBERRY": 1,
+            "NE:crop:WHEAT": 5,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "NE:animal:COW": 1,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:crop:WHEAT": 4,
+            "SW:structure:PASTURE": 4
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 27,
+          "hour": 23,
+          "cash": 51769.0,
+          "workers": 6,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 8,
+            "NE:crop:STRAWBERRY": 1,
+            "NW:crop:WHEAT": 5,
+            "NE:crop:WHEAT": 1,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:animal:COW": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "SW:crop:STRAWBERRY": 3,
+            "SW:crop:WHEAT": 2,
+            "SW:animal:COW": 2,
+            "SW:structure:PASTURE": 4
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 28,
+          "hour": 23,
+          "cash": 52660.0,
+          "workers": 1,
+          "tiles": {
+            "NW:crop:STRAWBERRY": 2,
+            "NW:crop:WHEAT": 5,
+            "NW:structure:PASTURE": 6,
+            "NW:animal:SHEEP": 2,
+            "NE:animal:COW": 2,
+            "NE:structure:PASTURE": 4,
+            "NW:animal:COW": 2,
+            "SW:crop:STRAWBERRY": 2,
+            "SW:animal:COW": 2,
+            "SW:structure:PASTURE": 4,
+            "SW:crop:WHEAT": 1
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        },
+        {
+          "day": 29,
+          "hour": 23,
+          "cash": 55135.0,
+          "workers": 1,
+          "tiles": {
+            "NW:structure:PASTURE": 6,
+            "NW:animal:COW": 4,
+            "NW:animal:SHEEP": 1,
+            "NE:animal:COW": 2,
+            "NE:structure:PASTURE": 4,
+            "SW:animal:COW": 2,
+            "SW:structure:PASTURE": 4
+          },
+          "animal_positions": [
+            {
+              "x": 3,
+              "y": 3,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "animal": "SHEEP"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "animal": "COW"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "animal": "COW"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "animal": "COW"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "animal": "COW"
+            }
+          ],
+          "structures": [
+            {
+              "x": 2,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 5,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 5,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "kind": "PASTURE"
+            },
+            {
+              "x": 4,
+              "y": 6,
+              "kind": "PASTURE"
+            }
+          ]
+        }
+      ],
+      "actions": {
+        "NW:BUILD_PASTURE": 6,
+        "NW:WEST": 509,
+        "NE:NORTH": 373,
+        "SW:NORTH": 107,
+        "SE:NORTH": 62,
+        "NE:WEST": 201,
+        "NW:NORTH": 662,
+        "NW:PLANT": 101,
+        "NW:SOUTH": 606,
+        "NW:WATER": 375,
+        "NW:EAST": 294,
+        "NW:PICKUP": 84,
+        "NE:PICKUP": 36,
+        "SW:PICKUP": 5,
+        "SE:PICKUP": 4,
+        "NW:PLACE": 7,
+        "NW:FEED": 81,
+        "NW:CARE": 81,
+        "NW:PASS": 36,
+        "NW:DIG": 17,
+        "NW:DROP": 39,
+        "NW:COLLECT_FERTILIZER": 96,
+        "NE:DROP": 22,
+        "SW:DROP": 5,
+        "SE:DROP": 2,
+        "NE:SOUTH": 354,
+        "NW:HARVEST": 143,
+        "NE:BUILD_PASTURE": 4,
+        "NE:EAST": 352,
+        "NE:PLANT": 85,
+        "NE:WATER": 248,
+        "NE:HARVEST": 108,
+        "NE:DIG": 20,
+        "NE:PLACE": 2,
+        "NE:COLLECT_FERTILIZER": 18,
+        "NE:FEED": 19,
+        "NE:CARE": 19,
+        "SW:BUILD_PASTURE": 4,
+        "SW:WEST": 117,
+        "SW:SOUTH": 130,
+        "SE:WEST": 36,
+        "SW:PLANT": 53,
+        "SW:EAST": 56,
+        "SW:WATER": 62,
+        "SE:EAST": 43,
+        "SE:PLANT": 37,
+        "SE:WATER": 21,
+        "SW:DIG": 19,
+        "SE:DIG": 17,
+        "SE:SOUTH": 49,
+        "SW:HARVEST": 26,
+        "SE:HARVEST": 10,
+        "SW:PLACE": 2,
+        "SW:COLLECT_FERTILIZER": 2,
+        "SW:FEED": 2,
+        "SW:CARE": 2
+      },
+      "harvest_inventory_increase": {
+        "NW:WHEAT": 107,
+        "NW:WOOL": 39,
+        "NW:MILK": 59,
+        "NE:WHEAT": 98,
+        "NW:MELON": 57,
+        "SW:WHEAT": 32,
+        "SE:WHEAT": 20,
+        "NW:STRAWBERRY": 41,
+        "NE:MILK": 21,
+        "NE:STRAWBERRY": 52,
+        "SW:STRAWBERRY": 10
+      },
+      "market_requested_units": {
+        "BUY_ANIMAL:COW": 9,
+        "BUY_ANIMAL:SHEEP": 5,
+        "BUY_SEED:MELON": 22,
+        "BUY_SEED:WHEAT": 240,
+        "BUY_PRODUCT:WHEAT": 1617,
+        "SELL:FERTILIZER": 116,
+        "BUY_SEED:CARROT": 15,
+        "SELL:WHEAT": 1787,
+        "BUY_SEED:STRAWBERRY": 62,
+        "SELL:WOOL": 39,
+        "SELL:MILK": 80,
+        "SELL:MELON": 57,
+        "SELL:STRAWBERRY": 103
+      },
+      "worker_quadrant_hours": {
+        "NW": 3138,
+        "NE": 1861,
+        "SW": 592,
+        "SE": 281
+      },
+      "crop_tile_hours": {
+        "NW:crop:MELON": 3176,
+        "NW:crop:WHEAT": 2958,
+        "NW:crop:STRAWBERRY": 4394,
+        "NE:crop:WHEAT": 2300,
+        "NE:crop:STRAWBERRY": 5135,
+        "SW:crop:STRAWBERRY": 1300,
+        "SW:crop:WHEAT": 792,
+        "SE:crop:WHEAT": 477
+      },
+      "move_distance": 3768,
+      "first_sw_half_cropped": [
+        14,
+        23
+      ]
+    }
+  ]
+}
