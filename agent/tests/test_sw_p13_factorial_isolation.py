@@ -22,9 +22,13 @@ from state.observation_parser import FarmView, TileView
 @pytest.fixture(autouse=True)
 def clean_config_state():
     """Ensure clean config state before and after each test."""
-    config.set_p13_factorial_arm("Control")
-    yield
-    config.set_p13_factorial_arm("Control")
+    orig_blocks = config.get_quadrant_hard_block()
+    try:
+        config.set_p13_factorial_arm("Control")
+        yield
+    finally:
+        config.set_p13_factorial_arm("Control")
+        config.set_quadrant_hard_block(orig_blocks)
 
 
 def test_default_factorial_configuration():

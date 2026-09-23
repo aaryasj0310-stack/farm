@@ -738,8 +738,8 @@ def test_arm_c_transactional_shadow_state_and_marginal_sequence():
     assert len(armc_notes) > 0, f"Expected ArmC sequence notes in plan.notes: {plan.notes}"
     print(f"\nArm C sequence note: {armc_notes[0]}")
     
-    # Clean reset back to Arm A
-    set_livestock_experiment_arm("ArmA")
+    # Clean reset back to Arm C
+    set_livestock_experiment_arm("ArmC")
     clear_livestock_decision_logs()
 
 
@@ -790,8 +790,8 @@ def test_arm_b_target_shop_economics():
     buy_anim = plan.intents.get("buy_animal", {})
     assert "SHEEP" in buy_anim
     
-    # Clean reset back to Arm A
-    set_livestock_experiment_arm("ArmA")
+    # Clean reset back to Arm C
+    set_livestock_experiment_arm("ArmC")
 
 
 

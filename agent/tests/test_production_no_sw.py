@@ -63,9 +63,12 @@ class MockFarm:
 
 @pytest.fixture(autouse=True)
 def ensure_production_defaults():
+    orig_blocks = config.get_quadrant_hard_block()
+    orig_arm = getattr(config, "SW_EXPERIMENT_ARM", "ArmA")
     config.set_sw_experiment_arm("ArmA")
     yield
-    config.set_sw_experiment_arm("ArmA")
+    config.set_sw_experiment_arm(orig_arm)
+    config.set_quadrant_hard_block(orig_blocks)
 
 
 def test_production_default_hard_block_is_3_and_4():

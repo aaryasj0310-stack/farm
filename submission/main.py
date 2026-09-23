@@ -395,6 +395,21 @@ def reset_agent_state() -> None:
         reset_rotation_manager()
     except Exception:
         pass
+    global _LAST_SHADOW_RESULT
+    _LAST_SHADOW_RESULT = None
+    try:
+        from strategy.whole_farm_planner import reset_whole_farm_planner
+        reset_whole_farm_planner()
+    except Exception:
+        pass
+
+
+_LAST_SHADOW_RESULT = None
+
+
+def get_last_shadow_result():
+    """Return immutable reference to the latest shadow planning result, if any."""
+    return _LAST_SHADOW_RESULT
 
 
 try:
@@ -1225,6 +1240,18 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     }
     if is_strategy_fallback:
         res["_emergency_fallback"] = True
+
+    # 7. SW Forward Architecture (Shadow Mode Hook - 100% decoupled from live action generation)
+    try:
+        from config import get_sw_forward_architecture_mode
+        if get_sw_forward_architecture_mode() == "SHADOW":
+            from strategy.whole_farm_planner import ShadowSnapshot, get_whole_farm_planner
+            global _LAST_SHADOW_RESULT
+            _shadow_snap = ShadowSnapshot.from_live_state(ctx, mem, plan, asg, market)
+            _LAST_SHADOW_RESULT = get_whole_farm_planner().evaluate(_shadow_snap, raw_ctx=ctx)
+    except Exception:
+        pass
+
     return res
 
 

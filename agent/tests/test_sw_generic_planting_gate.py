@@ -273,13 +273,19 @@ def test_flag_off_preserves_original_p12_generic_planting_path(monkeypatch):
 def test_arma_resets_generic_gate_and_loaded_macro_module():
     """H: production ArmA removes P1.3-A treatment state."""
     import strategy.macro_planner as mp
-    config.set_sw_generic_planting_gate(True)
-    assert config.SW_GENERIC_PLANTING_GATE_ENABLED is True
-    assert mp.SW_GENERIC_PLANTING_GATE_ENABLED is True
-    config.set_sw_experiment_arm("ArmA")
-    assert config.SW_GENERIC_PLANTING_GATE_ENABLED is False
-    assert mp.SW_GENERIC_PLANTING_GATE_ENABLED is False
-    assert config.get_sw_generic_planting_gate() is False
+    orig_blocks = config.get_quadrant_hard_block()
+    orig_arm = getattr(config, "SW_EXPERIMENT_ARM", "ArmA")
+    try:
+        config.set_sw_generic_planting_gate(True)
+        assert config.SW_GENERIC_PLANTING_GATE_ENABLED is True
+        assert mp.SW_GENERIC_PLANTING_GATE_ENABLED is True
+        config.set_sw_experiment_arm("ArmA")
+        assert config.SW_GENERIC_PLANTING_GATE_ENABLED is False
+        assert mp.SW_GENERIC_PLANTING_GATE_ENABLED is False
+        assert config.get_sw_generic_planting_gate() is False
+    finally:
+        config.set_sw_experiment_arm(orig_arm)
+        config.set_quadrant_hard_block(orig_blocks)
 
 
 def test_high_global_wheat_target_cannot_refill_occupied_sw_soil_or_pasture(monkeypatch):

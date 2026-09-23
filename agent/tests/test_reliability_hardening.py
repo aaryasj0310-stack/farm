@@ -57,8 +57,15 @@ def _make_minimal_obs(day=0, hour=0, step=0, player=0, money=3000.0, num_hands=0
 # ==============================================================================
 class TestBug1OpponentStateLifecycle:
     def setup_method(self):
+        from config import get_opponent_intelligence_mode, set_opponent_intelligence_mode
+        self._orig_opp_mode = get_opponent_intelligence_mode()
+        set_opponent_intelligence_mode("O1")
         reset_memory(_STATE)
         reset_opponent_model_state()
+
+    def teardown_method(self):
+        from config import set_opponent_intelligence_mode
+        set_opponent_intelligence_mode(getattr(self, "_orig_opp_mode", "O0_SHADOW"))
 
     def test_opponent_state_modified_in_game_a(self):
         """Game A populates opponent snapshot and shed estimate."""

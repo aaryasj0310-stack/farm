@@ -21,7 +21,7 @@ for _sub in ("state", "strategy", "execution", "market"):
     if os.path.exists(_sub_path) and _sub_path not in sys.path:
         sys.path.insert(0, _sub_path)
 
-from agent.main import agent as _agent_entrypoint, reset_agent_state, set_arbitration_mode
+from agent.main import agent as _agent_entrypoint, reset_agent_state, set_arbitration_mode, get_last_shadow_result
 
 
 def agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
