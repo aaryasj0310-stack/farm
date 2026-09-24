@@ -1,0 +1,51 @@
+{
+  "summary": {
+    "empirical_mean_paired_delta": -9360.83,
+    "pair_level_bootstrap_95_ci": [
+      -10573.67,
+      -8190.98
+    ],
+    "seed_clustered_bootstrap_95_ci": [
+      -11162.74,
+      -7650.11
+    ],
+    "worst_observed_paired_loss": -34222.0,
+    "all_20_seeds_strictly_negative": true,
+    "all_5_opponents_strictly_negative": true
+  },
+  "per_seed_mean_paired_delta": {
+    "96501": -15044.2,
+    "96502": -3862.8,
+    "96503": -8578.8,
+    "96504": -11188.6,
+    "96505": -3165.2,
+    "96506": -10106.5,
+    "96507": -11044.1,
+    "96508": -8536.3,
+    "96509": -6893.8,
+    "96510": -9884.5,
+    "96511": -5723.0,
+    "96512": -11963.6,
+    "96513": -10219.5,
+    "96514": -7813.7,
+    "96515": -8558.8,
+    "96516": -4513.1,
+    "96517": -15129.3,
+    "96518": -4265.1,
+    "96519": -18817.3,
+    "96520": -11908.4
+  },
+  "opponent_specific_mean_paired_delta": {
+    "cow_milk_engine": -7543.4,
+    "full_production_agent": -7449.57,
+    "melon_sniper": -11232.6,
+    "pass": -8701.3,
+    "pure_wheat_rush": -11877.27
+  },
+  "methodological_comparison": {
+    "pair_level_assumption": "Assumes all 200 match configurations are independently and identically distributed.",
+    "cluster_level_assumption": "Accounts for intra-cluster correlation across the 10 games sharing identical random seed price curves, town demand schedules, and opponent RNG states.",
+    "variance_expansion_factor": 1.474,
+    "inferential_conclusion": "While the 95% confidence interval widens from ,382.69 under naive pair resampling to ,512.63 under cluster resampling (+47.4% wider), the upper bound remains deeply negative at -,650.11. The finding of statistically significant underperformance is completely robust to seed clustering."
+  }
+}

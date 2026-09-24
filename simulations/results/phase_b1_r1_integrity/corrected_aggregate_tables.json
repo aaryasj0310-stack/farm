@@ -1,0 +1,225 @@
+{
+  "Table_A_Overall_Cash_Distribution": {
+    "control": {
+      "min": 79344.0,
+      "p10": 91579.0,
+      "p25": 98013.0,
+      "median": 102610.0,
+      "p75": 106516.75,
+      "p90": 110628.0,
+      "max": 124325.0,
+      "mean": 102063.425,
+      "std": 7617.96690351766
+    },
+    "treatment": {
+      "min": 61583.0,
+      "p10": 79341.0,
+      "p25": 86307.5,
+      "median": 91042.5,
+      "p75": 100747.5,
+      "p90": 106496.5,
+      "max": 124325.0,
+      "mean": 92702.595,
+      "std": 10754.848871659526
+    },
+    "paired_delta": {
+      "min": -34222.0,
+      "p10": -21391.5,
+      "p25": -15236.0,
+      "median": -9703.5,
+      "p75": 0.0,
+      "p90": 0.0,
+      "max": 7084.0,
+      "mean": -9360.83,
+      "std": 8589.112764512267
+    }
+  },
+  "Table_B_Paired_Outcome_Metrics": {
+    "total_pairs": 200,
+    "mean_paired_delta": -9360.83,
+    "median_paired_delta": -9703.5,
+    "std_paired_delta": 8589.112764512267,
+    "wins": 3,
+    "losses": 140,
+    "ties": 57,
+    "effective_win_rate_pct": 1.5
+  },
+  "Table_C_Purchase_Timing_Distribution": {
+    "control": {
+      "never": 200,
+      "D5": 0,
+      "D6": 0,
+      "D7": 0,
+      "D8": 0,
+      "D9": 0,
+      "D10": 0,
+      "D11": 0,
+      "D12_plus": 0,
+      "total": 200
+    },
+    "treatment": {
+      "never": 66,
+      "D5": 0,
+      "D6": 0,
+      "D7": 0,
+      "D8": 0,
+      "D9": 31,
+      "D10": 54,
+      "D11": 49,
+      "D12_plus": 0,
+      "total": 200
+    }
+  },
+  "Table_D_Tranche_Selection_And_Execution": {
+    "confirmed_purchased_cohort": {
+      "compact_commercial": {
+        "count": 132,
+        "mean_delta": -14046.55303030303,
+        "median_delta": -13611.5
+      },
+      "tranche_1_starter": {
+        "count": 2,
+        "mean_delta": -12537.0,
+        "median_delta": -12537.0
+      },
+      "total_confirmed_purchased": {
+        "count": 134,
+        "mean_delta": -14024.022388059702,
+        "median_delta": -13611.5
+      }
+    },
+    "no_confirmed_purchase_cohort": {
+      "approved_but_order_dropped": {
+        "count": 20,
+        "mean_delta": 352.65,
+        "median_delta": 0.0
+      },
+      "never_approved": {
+        "count": 46,
+        "mean_delta": 0.0,
+        "median_delta": 0.0
+      },
+      "total_no_purchase": {
+        "count": 66,
+        "mean_delta": 106.86363636363636,
+        "median_delta": 0.0
+      }
+    }
+  },
+  "Table_E_Opponent_Breakdown": {
+    "cow_milk_engine": {
+      "all_pairs_count": 40,
+      "control_mean": 103378.725,
+      "treatment_mean": 95835.325,
+      "mean_paired_delta": -7543.4,
+      "median_paired_delta": -3.5,
+      "wins": 1,
+      "losses": 20,
+      "ties": 19,
+      "confirmed_purchases_count": 19,
+      "purchased_mean_delta": -15880.105263157895
+    },
+    "full_production_agent": {
+      "all_pairs_count": 40,
+      "control_mean": 101893.6,
+      "treatment_mean": 94444.025,
+      "mean_paired_delta": -7449.575,
+      "median_paired_delta": -6141.5,
+      "wins": 0,
+      "losses": 23,
+      "ties": 17,
+      "confirmed_purchases_count": 23,
+      "purchased_mean_delta": -12955.782608695652
+    },
+    "melon_sniper": {
+      "all_pairs_count": 40,
+      "control_mean": 99883.775,
+      "treatment_mean": 88651.175,
+      "mean_paired_delta": -11232.6,
+      "median_paired_delta": -11402.0,
+      "wins": 2,
+      "losses": 36,
+      "ties": 2,
+      "confirmed_purchases_count": 31,
+      "purchased_mean_delta": -14721.645161290322
+    },
+    "pass": {
+      "all_pairs_count": 40,
+      "control_mean": 103085.425,
+      "treatment_mean": 94384.125,
+      "mean_paired_delta": -8701.3,
+      "median_paired_delta": -9359.0,
+      "wins": 0,
+      "losses": 25,
+      "ties": 15,
+      "confirmed_purchases_count": 25,
+      "purchased_mean_delta": -13922.08
+    },
+    "pure_wheat_rush": {
+      "all_pairs_count": 40,
+      "control_mean": 102075.6,
+      "treatment_mean": 90198.325,
+      "mean_paired_delta": -11877.275,
+      "median_paired_delta": -11209.0,
+      "wins": 0,
+      "losses": 36,
+      "ties": 4,
+      "confirmed_purchases_count": 36,
+      "purchased_mean_delta": -13196.972222222223
+    }
+  },
+  "Table_F_Utilization_Progression_Confirmed": {
+    "D+0": {
+      "matches_evaluated_confirmed": 134,
+      "admitted_tranche_utilization_pct": 68.2,
+      "whole_quadrant_utilization_pct": 21.8,
+      "invariant_violations": 0
+    },
+    "D+1": {
+      "matches_evaluated_confirmed": 134,
+      "admitted_tranche_utilization_pct": 97.2,
+      "whole_quadrant_utilization_pct": 31.1,
+      "invariant_violations": 0
+    },
+    "D+2": {
+      "matches_evaluated_confirmed": 134,
+      "admitted_tranche_utilization_pct": 100.0,
+      "whole_quadrant_utilization_pct": 32.0,
+      "invariant_violations": 0
+    },
+    "D+3": {
+      "matches_evaluated_confirmed": 134,
+      "admitted_tranche_utilization_pct": 100.0,
+      "whole_quadrant_utilization_pct": 32.0,
+      "invariant_violations": 0
+    },
+    "D+5": {
+      "matches_evaluated_confirmed": 134,
+      "admitted_tranche_utilization_pct": 99.6,
+      "whole_quadrant_utilization_pct": 31.9,
+      "invariant_violations": 0
+    },
+    "D+7": {
+      "matches_evaluated_confirmed": 134,
+      "admitted_tranche_utilization_pct": 100.0,
+      "whole_quadrant_utilization_pct": 32.0,
+      "invariant_violations": 0
+    }
+  },
+  "Table_G_Seat_Breakdown": {
+    "seat_0": {
+      "pairs": 100,
+      "control_mean": 102263.31,
+      "treatment_mean": 92656.61,
+      "mean_delta": -9606.7,
+      "median_delta": -10254.5
+    },
+    "seat_1": {
+      "pairs": 100,
+      "control_mean": 101863.54,
+      "treatment_mean": 92748.58,
+      "mean_delta": -9114.96,
+      "median_delta": -8882.5
+    }
+  }
+}

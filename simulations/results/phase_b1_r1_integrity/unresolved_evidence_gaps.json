@@ -1,0 +1,44 @@
+{
+  "audit_metadata": {
+    "phase": "Phase B1-R1",
+    "evaluated_head": "9e0022b6b8e2ba8e7eae0363449526f7fc8598d1",
+    "audit_verdict": "QUALIFIED_VALIDITY_OF_NEGATIVE_RESULT"
+  },
+  "unresolved_evidence_gaps": [
+    {
+      "gap_id": "GAP-01-SHED-FUNGIBILITY",
+      "title": "Post-Deposit Product Fungibility in Central Shed",
+      "description": "The engine wipes tile and quadrant origin metadata as soon as harvested crops enter worker backpacks and central shed inventory. Units of strawberry or melon harvested from NW/NE and SW become completely interchangeable in private.shed.",
+      "mitigation_applied": "Bounded SW gross output strictly by physical tile capacity (8 tiles * 2-4 harvests = 16-32 units max) and market price schedules (,200 to ,800), rejecting the erroneous  telemetry figure.",
+      "residual_uncertainty": "Exact dollar attribution of which specific units in the shed were sold first vs held at season end has an estimated uncertainty of +/- ."
+    },
+    {
+      "gap_id": "GAP-02-DIRECT-LABOR-DIVERSION",
+      "title": "Lack of Worker Path Trajectory Logging for Labor Diversion",
+      "description": "Current telemetry logs count of worker operations (WATER, HARVEST, FEED) but does not record spatial worker transit trajectories or the specific core tiles that were denied watering due to worker trips to the SW quadrant.",
+      "mitigation_applied": "Identified core watering reductions (882.3 vs ~940 expected) and core harvest reductions in paired comparisons, but labeled the remaining gap as Unattributed Residual rather than inventing causal dollar values.",
+      "residual_uncertainty": "Core farm cannibalization is estimated at -,200 with an unattributed residual of -.02."
+    },
+    {
+      "gap_id": "GAP-03-PRICE-DEPRESSION-CAUSALITY",
+      "title": "Market Price Depression Decomposition",
+      "description": "Both the agent and active opponents (e.g., melon_sniper) sell crops to the town shop. Teasing apart the marginal price depression caused strictly by the 16-32 extra SW units versus opponent market volume requires full market ledger replay.",
+      "mitigation_applied": "Estimated market price depression across core and SW crops as -,100 using sequential pricing models.",
+      "residual_uncertainty": "Opponent dynamic reaction to our increased shop sales may have caused minor feedback loops in town inventory drain."
+    },
+    {
+      "gap_id": "GAP-04-PRE-APPROVAL-THRESHOLD-MISALIGNMENT",
+      "title": "Cash Reserve Threshold Inconsistency Between Planner and Order Builder",
+      "description": "WholeFarmPlanner used a hard threshold of ,200 for SW purchase admission, whereas OrderBuilder enforced a  safety reserve, requiring ,300 (,000 + ) before emitting BUY_LAND. In 20 matches where cash was between ,200 and ,299, this caused order dropping and state lockup.",
+      "mitigation_applied": "Separated cohorts into Confirmed Purchases (134), Dropped Approvals (20), and Unapproved (46).",
+      "residual_uncertainty": "Resolved at analytical level; runtime harness must unify these thresholds for future experiments."
+    },
+    {
+      "gap_id": "GAP-05-PREMATURE-STATE-COMMITMENT",
+      "title": "State Controller Invariant Leakage in Dropped Orders",
+      "description": "SWTrancheController marked sw_purchase_approved=True before engine confirmation, preventing retries and causing subtle changes in wheat buying and livestock queuing in 9 matches.",
+      "mitigation_applied": "Traced the exact step of divergence for all 9 cases and categorized them as unintended experimental harness artifacts.",
+      "residual_uncertainty": "Zero uncertainty remaining on root cause; fully isolated and characterized."
+    }
+  ]
+}

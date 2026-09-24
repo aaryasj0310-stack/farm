@@ -28,7 +28,12 @@ SW_PORT: Tuple[int, int] = (4, 5)
 class SWTrancheState:
     """State of the SW tranche controller for a single match."""
     treatment_active: bool = False
+    sw_purchase_recommended: bool = False
     sw_purchase_approved: bool = False
+    sw_land_order_emitted: bool = False
+    sw_purchase_confirmed: bool = False
+    sw_unlock_observed: bool = False
+    purchase_failed_reason: Optional[str] = None
     sw_purchase_day: Optional[int] = None
     sw_purchase_hour: Optional[int] = None
     selected_portfolio: Optional[Dict[str, Any]] = None
@@ -43,10 +48,16 @@ class SWTrancheState:
     # Economics & operations tracking
     sw_land_cost_paid: float = 0.0
     sw_seed_cost_realized: float = 0.0
+    sw_seed_inventory_consumed: Dict[str, int] = field(default_factory=dict)
+    sw_seed_opportunity_cost: float = 0.0
     sw_crops_planted: Dict[str, int] = field(default_factory=dict)
     sw_crops_harvested: Dict[str, int] = field(default_factory=dict)
     sw_crops_sold: Dict[str, int] = field(default_factory=dict)
     sw_revenue_realized: float = 0.0
+    total_farm_portfolio_sales: Dict[str, int] = field(default_factory=dict)
+    total_farm_portfolio_revenue: float = 0.0
+    estimated_sw_origin_revenue: float = 0.0
+    unattributable_mixed_origin_revenue: float = 0.0
 
     # Utilization checkpoints relative to purchase day: "D+0", "D+1", "D+2", "D+3", "D+5", "D+7"
     checkpoints: Dict[str, Dict[str, Any]] = field(default_factory=dict)
@@ -180,6 +191,7 @@ class SWTrancheController:
         worker_count: int,
     ) -> None:
         """Approve SW purchase and freeze the admitted portfolio tranche."""
+        self.state.sw_purchase_recommended = True
         self.state.sw_purchase_approved = True
         self.state.sw_purchase_day = day
         self.state.sw_purchase_hour = hour
@@ -188,7 +200,6 @@ class SWTrancheController:
         self.state.predicted_delta_fc = float(delta_fc)
         self.state.pre_purchase_cash = float(cash_before)
         self.state.worker_count_at_purchase = int(worker_count)
-        self.state.sw_land_cost_paid = 2000.0
 
         # Freeze admitted coordinates and crop targets
         self.state.admitted_sw_tiles.clear()
@@ -202,6 +213,36 @@ class SWTrancheController:
                     pos_t = (int(pos[0]), int(pos[1]))
                     self.state.admitted_sw_tiles.add(pos_t)
                     self.state.admitted_sw_crop_targets[pos_t] = crop_name
+
+    def confirm_purchase(self, day: int, hour: int) -> None:
+        """Authoritatively confirm SW purchase upon observing unlocked quadrant in engine."""
+        self.state.sw_purchase_confirmed = True
+        self.state.sw_unlock_observed = True
+        self.state.sw_purchase_day = day
+        self.state.sw_purchase_hour = hour
+        self.state.sw_land_cost_paid = 2000.0
+
+    def notify_land_order_failed(self, reason: str) -> None:
+        """Notify controller that emitted BUY_LAND order failed or was dropped."""
+        self.state.sw_land_order_emitted = False
+        self.state.purchase_failed_reason = str(reason)
+
+    def record_seed_consumption(
+        self,
+        crop: str,
+        qty: int = 1,
+        from_inventory: bool = True,
+        cash_spent: float = 0.0,
+    ) -> None:
+        """Record seed consumption distinguishing cash expenditure vs inventory consumption."""
+        if from_inventory:
+            self.state.sw_seed_inventory_consumed[crop] = (
+                self.state.sw_seed_inventory_consumed.get(crop, 0) + qty
+            )
+            unit_val = 100.0 if crop == "STRAWBERRY" else (80.0 if crop == "MELON" else 10.0)
+            self.state.sw_seed_opportunity_cost += (unit_val * qty)
+        if cash_spent > 0:
+            self.state.sw_seed_cost_realized += float(cash_spent)
 
     def filter_macro_plant_queue(
         self,
@@ -262,6 +303,10 @@ class SWTrancheController:
         hour = ctx.get("hour", 0)
         farm = ctx.get("farm")
         private = ctx.get("private")
+        # Check authoritative engine confirmation of SW purchase
+        if farm and hasattr(farm, "unlocked") and "SW" in farm.unlocked:
+            if not self.state.sw_purchase_confirmed:
+                self.confirm_purchase(day, hour)
 
         # Track post-purchase cash
         if self.state.sw_purchase_approved and self.state.sw_purchase_day == day and hour == 1:
@@ -277,19 +322,33 @@ class SWTrancheController:
             if shed_total > self.state.peak_shed_usage:
                 self.state.peak_shed_usage = shed_total
 
-        # Track executed sales of SW crops
+        # Track executed sales of SW crops vs total farm sales
         if market:
             for order in market:
                 if isinstance(order, (list, tuple)) and len(order) >= 3 and order[0] == "SELL":
                     prod = order[1]
                     qty = int(order[2])
-                    # If this product is one of the admitted SW crops, track it
-                    if prod in set(self.state.admitted_sw_crop_targets.values()):
-                        self.state.sw_crops_sold[prod] = self.state.sw_crops_sold.get(prod, 0) + qty
-                        # Estimate revenue with market spot price
+                    admitted_crops = set(self.state.admitted_sw_crop_targets.values())
+                    if prod in admitted_crops:
+                        self.state.total_farm_portfolio_sales[prod] = (
+                            self.state.total_farm_portfolio_sales.get(prod, 0) + qty
+                        )
                         m_obj = ctx.get("market")
                         px = float(getattr(m_obj, "prices", {}).get(prod, 0.0)) if m_obj else 0.0
-                        self.state.sw_revenue_realized += (px * qty)
+                        self.state.total_farm_portfolio_revenue += (px * qty)
+
+                        # Bounded SW-origin attribution (max physical harvest: 16 units per crop type on 4 tiles)
+                        max_sw_units = 16
+                        curr_sw = self.state.sw_crops_sold.get(prod, 0)
+                        rem_cap = max(0, max_sw_units - curr_sw)
+                        sw_qty = min(qty, rem_cap) if self.state.sw_purchase_confirmed else 0
+                        if sw_qty > 0:
+                            self.state.sw_crops_sold[prod] = curr_sw + sw_qty
+                            self.state.estimated_sw_origin_revenue += (px * sw_qty)
+                        excess_qty = qty - sw_qty
+                        if excess_qty > 0:
+                            self.state.unattributable_mixed_origin_revenue += (px * excess_qty)
+                        self.state.sw_revenue_realized = round(self.state.estimated_sw_origin_revenue, 2)
 
         # Track harvest and feed actions from assignment
         if asg and isinstance(asg, dict):
@@ -358,7 +417,12 @@ class SWTrancheController:
         """Return complete structured summary of treatment execution."""
         return {
             "treatment_active": self.state.treatment_active,
+            "sw_purchase_recommended": self.state.sw_purchase_recommended,
             "sw_purchase_approved": self.state.sw_purchase_approved,
+            "sw_land_order_emitted": self.state.sw_land_order_emitted,
+            "sw_purchase_confirmed": self.state.sw_purchase_confirmed,
+            "sw_unlock_observed": self.state.sw_unlock_observed,
+            "purchase_failed_reason": self.state.purchase_failed_reason,
             "sw_purchase_day": self.state.sw_purchase_day,
             "sw_purchase_hour": self.state.sw_purchase_hour,
             "selected_portfolio_name": self.state.selected_portfolio_name,
@@ -370,8 +434,15 @@ class SWTrancheController:
             "post_purchase_cash": round(self.state.post_purchase_cash, 2),
             "worker_count_at_purchase": self.state.worker_count_at_purchase,
             "sw_land_cost_paid": self.state.sw_land_cost_paid,
+            "sw_seed_cost_realized": round(self.state.sw_seed_cost_realized, 2),
+            "sw_seed_inventory_consumed": dict(self.state.sw_seed_inventory_consumed),
+            "sw_seed_opportunity_cost": round(self.state.sw_seed_opportunity_cost, 2),
             "sw_revenue_realized": round(self.state.sw_revenue_realized, 2),
             "sw_crops_sold": dict(self.state.sw_crops_sold),
+            "total_farm_portfolio_sales": dict(self.state.total_farm_portfolio_sales),
+            "total_farm_portfolio_revenue": round(self.state.total_farm_portfolio_revenue, 2),
+            "estimated_sw_origin_revenue": round(self.state.estimated_sw_origin_revenue, 2),
+            "unattributable_mixed_origin_revenue": round(self.state.unattributable_mixed_origin_revenue, 2),
             "checkpoints": dict(self.state.checkpoints),
             "rejection_reasons_by_day": {
                 d: list(reasons) for d, reasons in self.state.rejection_reasons_by_day.items()

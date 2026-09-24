@@ -1868,9 +1868,12 @@ class MacroPlanner:
                                     sw_reason = "treatment_delayed"
                                     sw_info["treatment_decision"] = _sw_ctrl.state.primary_no_purchase_reason or "DELAY"
                             else:
-                                if "SW" not in farm.unlocked and not getattr(_sw_ctrl.state, "sw_land_order_emitted", False):
+                                if "SW" not in farm.unlocked:
                                     buy_land = True
                                     _sw_ctrl.state.sw_land_order_emitted = True
+                                    sw_reason = "treatment_approved_retry"
+                                    sw_info["treatment_decision"] = "PURCHASE"
+                                    sw_info["treatment_portfolio"] = _sw_ctrl.state.selected_portfolio_name
                                 else:
                                     buy_land = False
                     except Exception:
@@ -2233,10 +2236,15 @@ class MacroPlanner:
                                     seed_cost = CROPS[target_crop]["seed"]
                                     if seeds.get(target_crop, 0) > 0:
                                         seeds[target_crop] -= 1
+                                        if hasattr(_treatment_ctrl, "record_seed_consumption"):
+                                            _treatment_ctrl.record_seed_consumption(target_crop, qty=1, from_inventory=True, cash_spent=0.0)
                                     elif remaining_money >= seed_cost:
                                         buy_seed[target_crop] = buy_seed.get(target_crop, 0) + 1
                                         remaining_money -= seed_cost
-                                        _treatment_ctrl.state.sw_seed_cost_realized += seed_cost
+                                        if hasattr(_treatment_ctrl, "record_seed_consumption"):
+                                            _treatment_ctrl.record_seed_consumption(target_crop, qty=1, from_inventory=False, cash_spent=seed_cost)
+                                        else:
+                                            _treatment_ctrl.state.sw_seed_cost_realized += seed_cost
                                     else:
                                         continue
                                     plant_queue.append((pos, target_crop))

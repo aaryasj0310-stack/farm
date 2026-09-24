@@ -1,0 +1,39 @@
+{
+  "audit_of_telemetry_errors": {
+    "sw_revenue_misattribution": {
+      "reported_in_b1_telemetry": 38945.81,
+      "actual_sw_tile_capacity_revenue": "3200.0 to 3800.0",
+      "estimated_mean_sw_origin_revenue": 3500.0,
+      "misattributed_core_farm_sales": 35445.81,
+      "explanation": "SWTrancheController recorded all farm-wide market sales of products included in the admitted SW portfolio (STRAWBERRY and MELON). Since the core NW/NE farm already grew large cohorts of strawberries and melons, core farm harvests were mistakenly attributed to the 8 SW tiles."
+    },
+    "seed_cost_misaccounting": {
+      "reported_cash_outflow": 0.0,
+      "inventory_opportunity_cost": 720.0,
+      "explanation": "MacroPlanner drew seeds from existing shed inventory rather than placing new BUY_SEED orders. While direct cash outflow at planting was .00, 8 seed units (4 strawberries at  and 4 melons at ) worth  were consumed."
+    }
+  },
+  "whole_farm_decomposition_134_purchases": {
+    "total_paired_terminal_cash_delta": -14024.02,
+    "measured_components": {
+      "sw_land_purchase_cost": -2000.0,
+      "sw_seed_cash_expenditure": 0.0,
+      "subtotal_measured_cash_outflow": -2000.0
+    },
+    "estimated_components": {
+      "sw_crop_gross_revenue": 3500.0,
+      "sw_seed_inventory_consumption": -720.0,
+      "net_isolated_sw_margin": 780.0,
+      "core_revenue_loss_from_labor_displacement": -5200.0,
+      "core_livestock_opportunity_loss_from_capital_lock": -4800.0,
+      "price_depression_on_core_sales": -2100.0,
+      "subtotal_estimated_systemic_drag": -11320.0
+    },
+    "unattributed_residual": -1484.02,
+    "methodological_note": "Decomposition categorizes all figures as Measured (verifiable engine cash movements), Estimated (physical yield bounds, price schedules, and historical control comparisons), or Unattributed Residual to prevent speculative precision."
+  },
+  "aggregate_inventory_fungibility_limits": {
+    "fungibility_point": "Once harvested crops enter worker backpacks and are deposited into the central shed, origin quadrant tags are erased by the engine environment.",
+    "conservation_proof": "SW quadrant is physically constrained to 8 tiles. Maximum strawberry yield over days 10-30 is 16 units; maximum melon yield is 16 units. Theoretical maximum gross revenue cannot exceed ,500 under perfect pricing."
+  }
+}

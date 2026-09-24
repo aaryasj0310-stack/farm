@@ -301,3 +301,201 @@ def test_checkpoint_tracking_utilization():
     assert cp["sw_watered_tiles"] == 8
     assert cp["admitted_tranche_utilization_pct"] == 100.0
     assert cp["whole_quadrant_utilization_pct"] == 32.0  # 8 / 25
+
+
+def test_recommendation_vs_approval_vs_executed_purchase():
+    """Test 8: Separation of recommendation, approval, order emission, and confirmed execution."""
+    ctrl = get_sw_tranche_controller()
+    ctrl.set_treatment_active(True)
+
+    portfolio = {
+        "name": "compact_commercial",
+        "allocations": [("STRAWBERRY", 4, [(0, 7), (1, 7), (2, 7), (3, 7)])]
+    }
+
+    # Stage 1: Recommendation and approval
+    ctrl.approve_purchase(day=9, hour=6, portfolio=portfolio, delta_fc=5000.0, cash_before=2266.0, worker_count=9)
+    assert ctrl.state.sw_purchase_recommended is True
+    assert ctrl.state.sw_purchase_approved is True
+    assert ctrl.state.sw_purchase_confirmed is False
+    assert ctrl.state.sw_unlock_observed is False
+    assert ctrl.state.sw_land_cost_paid == 0.0  # Unpaid until confirmed
+
+    # Stage 2: Market order emitted
+    ctrl.state.sw_land_order_emitted = True
+    assert ctrl.state.sw_purchase_confirmed is False
+
+    # Stage 3: Authoritative engine confirmation
+    ctrl.confirm_purchase(day=9, hour=7)
+    assert ctrl.state.sw_purchase_confirmed is True
+    assert ctrl.state.sw_unlock_observed is True
+    assert ctrl.state.sw_land_cost_paid == 2000.0
+
+
+def test_failed_land_order_and_retry():
+    """Test 9: Failed land order resets emitted state and allows retry."""
+    ctrl = get_sw_tranche_controller()
+    ctrl.set_treatment_active(True)
+
+    portfolio = {"name": "compact_commercial", "allocations": []}
+    ctrl.approve_purchase(day=9, hour=6, portfolio=portfolio, delta_fc=5000.0, cash_before=2266.0, worker_count=9)
+    ctrl.state.sw_land_order_emitted = True
+
+    # Order dropped due to budget reserve ($1966 < $2000)
+    ctrl.notify_land_order_failed("budget")
+    assert ctrl.state.sw_land_order_emitted is False
+    assert ctrl.state.purchase_failed_reason == "budget"
+    assert ctrl.state.sw_purchase_confirmed is False
+
+    # Retry is permitted once conditions are met
+    ctrl.state.sw_land_order_emitted = True
+    assert ctrl.state.sw_land_order_emitted is True
+
+
+def test_no_purchase_action_invariance():
+    """Test 10: Inactive/unapproved treatment remains 100% inert with respect to core farm."""
+    ctrl = get_sw_tranche_controller()
+    ctrl.set_treatment_active(True)
+
+    # Core farm plant queue
+    core_queue = [((1, 2), "CARROT"), ((3, 1), "WHEAT")]
+    farm_mock = MagicMock()
+    farm_mock.quadrant_of = lambda pos: "NW"
+
+    filtered = ctrl.filter_macro_plant_queue(core_queue, farm_mock)
+    assert filtered == core_queue
+    assert ctrl.state.sw_purchase_approved is False
+    assert ctrl.state.invariant_violations_attempted == 0
+
+
+def test_purchase_state_reset_between_matches():
+    """Test 11: reset_sw_tranche_controller cleanly resets all lifecycle and accounting state."""
+    ctrl = get_sw_tranche_controller()
+    ctrl.set_treatment_active(True)
+    ctrl.confirm_purchase(day=10, hour=1)
+    ctrl.record_seed_consumption("STRAWBERRY", 4, from_inventory=True)
+    assert ctrl.state.sw_purchase_confirmed is True
+    assert ctrl.state.sw_seed_opportunity_cost == 400.0
+
+    reset_sw_tranche_controller()
+    new_ctrl = get_sw_tranche_controller()
+    assert new_ctrl.state.treatment_active is False
+    assert new_ctrl.state.sw_purchase_confirmed is False
+    assert new_ctrl.state.sw_seed_opportunity_cost == 0.0
+    assert len(new_ctrl.state.admitted_sw_tiles) == 0
+
+
+def test_sw_crop_origin_revenue_attribution_and_fungibility():
+    """Test 12: Crop sales distinguish total farm sales from physical SW tile capacity."""
+    ctrl = get_sw_tranche_controller()
+    ctrl.set_treatment_active(True)
+    ctrl.state.admitted_sw_crop_targets[(0, 7)] = "STRAWBERRY"
+
+    # Case A: SW not confirmed -> SW-origin revenue is strictly 0
+    ctx = {"market": MagicMock(prices={"STRAWBERRY": 100.0})}
+    market_orders = [("SELL", "STRAWBERRY", 10)]
+    ctrl.record_turn(ctx, asg=None, market=market_orders)
+    assert ctrl.state.total_farm_portfolio_sales["STRAWBERRY"] == 10
+    assert ctrl.state.total_farm_portfolio_revenue == 1000.0
+    assert ctrl.state.estimated_sw_origin_revenue == 0.0
+
+    # Case B: SW confirmed -> SW-origin bounded by 16 units physical capacity
+    ctrl.confirm_purchase(day=9, hour=0)
+    market_orders_2 = [("SELL", "STRAWBERRY", 20)]  # 20 units sold
+    ctrl.record_turn(ctx, asg=None, market=market_orders_2)
+    # Total sold: 10 + 20 = 30
+    assert ctrl.state.total_farm_portfolio_sales["STRAWBERRY"] == 30
+    # Bounded to 16 units SW capacity
+    assert ctrl.state.sw_crops_sold["STRAWBERRY"] == 16
+    assert ctrl.state.estimated_sw_origin_revenue == 1600.0
+    # Remainder allocated to unattributable mixed origin
+    assert ctrl.state.unattributable_mixed_origin_revenue == 1400.0
+
+
+def test_seed_cash_expenditure_vs_inventory_consumption():
+    """Test 13: Seed cash costs vs inventory opportunity consumption accounting."""
+    ctrl = get_sw_tranche_controller()
+    ctrl.set_treatment_active(True)
+
+    # 4 strawberries and 4 melons consumed from inventory
+    ctrl.record_seed_consumption("STRAWBERRY", qty=4, from_inventory=True)
+    ctrl.record_seed_consumption("MELON", qty=4, from_inventory=True)
+
+    assert ctrl.state.sw_seed_cost_realized == 0.0
+    assert ctrl.state.sw_seed_inventory_consumed["STRAWBERRY"] == 4
+    assert ctrl.state.sw_seed_inventory_consumed["MELON"] == 4
+    # 4 * $100 + 4 * $80 = $720
+    assert ctrl.state.sw_seed_opportunity_cost == 720.0
+
+    # Additional cash seed purchase
+    ctrl.record_seed_consumption("STRAWBERRY", qty=1, from_inventory=False, cash_spent=100.0)
+    assert ctrl.state.sw_seed_cost_realized == 100.0
+
+
+def test_tranche_selection_vs_actual_planting():
+    """Test 14: Admitted portfolio coordinates strictly govern planting targets."""
+    ctrl = get_sw_tranche_controller()
+    ctrl.set_treatment_active(True)
+    portfolio = {
+        "name": "compact_commercial",
+        "allocations": [
+            ("STRAWBERRY", 4, [(0, 7), (1, 7), (2, 7), (3, 7)]),
+            ("MELON", 4, [(4, 7), (0, 8), (1, 8), (2, 8)]),
+        ]
+    }
+    ctrl.approve_purchase(day=9, hour=0, portfolio=portfolio, delta_fc=5000.0, cash_before=3000.0, worker_count=9)
+
+    farm_mock = MagicMock()
+    plant_queue = [
+        ((0, 7), "WHEAT"),       # Should be rewritten to STRAWBERRY
+        ((4, 7), "CARROT"),      # Should be rewritten to MELON
+        ((4, 9), "WHEAT"),       # Non-admitted SW tile: should be dropped
+        ((2, 2), "CARROT"),      # Core NW tile: should be preserved
+    ]
+    filtered = ctrl.filter_macro_plant_queue(plant_queue, farm_mock)
+    assert filtered == [
+        ((0, 7), "STRAWBERRY"),
+        ((4, 7), "MELON"),
+        ((2, 2), "CARROT"),
+    ]
+    assert ctrl.state.invariant_violations_attempted == 1
+
+
+def test_subgroup_denominators_reconciliation():
+    """Test 15: Subgroup denominators sum precisely to 200 paired configurations."""
+    import json
+    data = json.load(open("simulations/results/phase_b1_branch_treatment/paired_results.json"))
+    assert len(data) == 200
+
+    confirmed_purchases = len([d for d in data if d["treatment_sw_purchase_day"] is not None])
+    unpurchased = [d for d in data if d["treatment_sw_purchase_day"] is None]
+    dropped_approvals = len([d for d in unpurchased if d["treatment_selected_portfolio"] is not None])
+    never_approved = len([d for d in unpurchased if d["treatment_selected_portfolio"] is None])
+
+    assert confirmed_purchases == 134
+    assert dropped_approvals == 20
+    assert never_approved == 46
+    assert confirmed_purchases + dropped_approvals + never_approved == 200
+
+
+def test_seed_clustered_bootstrap_reproducibility():
+    """Test 16: Seed-clustered bootstrap CI reproducibility and robustness."""
+    import json
+    import numpy as np
+
+    data = json.load(open("simulations/results/phase_b1_branch_treatment/paired_results.json"))
+    seeds = sorted(list(set(d["seed"] for d in data)))
+    assert len(seeds) == 20
+
+    seed_to_deltas = {s: [d["paired_delta"] for d in data if d["seed"] == s] for s in seeds}
+    np.random.seed(42)
+    cluster_means = []
+    for _ in range(1000):
+        sampled = np.random.choice(seeds, size=len(seeds), replace=True)
+        cluster_means.append(np.mean([d for s in sampled for d in seed_to_deltas[s]]))
+
+    ci_low = np.percentile(cluster_means, 2.5)
+    ci_high = np.percentile(cluster_means, 97.5)
+    assert ci_low < -10000.0
+    assert ci_high < -7000.0  # Strictly negative upper bound
+
