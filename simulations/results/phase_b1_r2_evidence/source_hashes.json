@@ -1,0 +1,82 @@
+{
+  "head_commit": "8138e49cdc6f531a8be2ff66929dbf5a9c91eab2",
+  "parent_b1_commit": "9e0022b6b8e2ba8e7eae0363449526f7fc8598d1",
+  "files": {
+    "reports/phase_b1_true_branch_treatment_report.md": {
+      "sha256": "764ce700a2b4320d6ffe0e906dd2d8951bf46d164b11bd3830a6e0de717b138f",
+      "size_bytes": 15447
+    },
+    "reports/phase_b1_r1_experimental_integrity_audit.md": {
+      "sha256": "d2bd284bd203ace7838fad1e7f52b4c5a0f447465fb7f690b256d3f7f6cb90f6",
+      "size_bytes": 18035
+    },
+    "simulations/results/phase_b1_branch_treatment/manifest.json": {
+      "sha256": "99e72b4eb6b940d3191a48e924bd14b69eace342c7445d773aa03b8477eb4b65",
+      "size_bytes": 519
+    },
+    "simulations/results/phase_b1_branch_treatment/paired_results.json": {
+      "sha256": "9ef05558b4cbd74629334c20ce851b6631dbb018ecc546178be63d2d7244ad80",
+      "size_bytes": 491383
+    },
+    "simulations/results/phase_b1_branch_treatment/aggregate_tables.json": {
+      "sha256": "d218a111b47d7a26a55ad23a5a1140d2bd4234d71ca8065d8e5ed28878c1e1cf",
+      "size_bytes": 5254
+    },
+    "simulations/results/phase_b1_branch_treatment/purchase_timing.json": {
+      "sha256": "98f6a814ec249fcd591c6f323595a8501763f8ce1eb6d4b12934a35372298d34",
+      "size_bytes": 319
+    },
+    "simulations/results/phase_b1_branch_treatment/utilization.json": {
+      "sha256": "8f3914e0979707f93bda6a4edabdacdb4098929e1227d161b2db1a47b64a6d96",
+      "size_bytes": 693
+    },
+    "simulations/results/phase_b1_branch_treatment/representative_traces.json": {
+      "sha256": "587163019f6b6e1df74e320bd6c248f9c893f4151e016bf34109f45d625805df",
+      "size_bytes": 29319
+    },
+    "simulations/results/phase_b1_r1_integrity/original_results_hashes.json": {
+      "sha256": "a87c464f36aad39f41eb0aa7291d1ab4ed9563d23065de5001e98ba8ae084a19",
+      "size_bytes": 1775
+    },
+    "simulations/results/phase_b1_r1_integrity/purchase_state_reconciliation.json": {
+      "sha256": "44164072056fd5e990361d151982d1362199093bbfa68d3be1335fa9fd02d629",
+      "size_bytes": 13969
+    },
+    "simulations/results/phase_b1_r1_integrity/no_purchase_divergence.json": {
+      "sha256": "fc2ca599312dee454433af48113df6dec9071a44debbab4ebba7caf7971d693f",
+      "size_bytes": 8592
+    },
+    "simulations/results/phase_b1_r1_integrity/economic_attribution.json": {
+      "sha256": "01f128f95719f8b1e71526912ab83841fb037644532cbe0f009da70e2310102a",
+      "size_bytes": 2398
+    },
+    "simulations/results/phase_b1_r1_integrity/corrected_aggregate_tables.json": {
+      "sha256": "150fb1adec72dec755969a2102ee55ba85475f491123cf45127d7a37f9134751",
+      "size_bytes": 5912
+    },
+    "simulations/results/phase_b1_r1_integrity/clustered_bootstrap.json": {
+      "sha256": "d90526b633dcdfcd2d22ef74daf057651f41f2653c4a231134c8f51929baaed5",
+      "size_bytes": 1793
+    },
+    "simulations/results/phase_b1_r1_integrity/unresolved_evidence_gaps.json": {
+      "sha256": "67f4b1151d3e7f2fe88c82eed93ad595339b3e347010e2be92c409bdee622c73",
+      "size_bytes": 3760
+    },
+    "scripts/run_phase_b1_branch_treatment.py": {
+      "sha256": "61687b752738110d2ffcb9d14a7aa05c1cd1f9cf9b4652fb015598fb20cbaf0e",
+      "size_bytes": 22166
+    },
+    "agent/strategy/sw_tranche_controller.py": {
+      "sha256": "93946e47214b4cbdd8f2c013c37eedc5b94af208772278ba819655e012d51129",
+      "size_bytes": 21453
+    },
+    "agent/strategy/macro_planner.py": {
+      "sha256": "2b6a3915d3a633ab6aac789700f3389266b29c408bfb770cb4036bae556a1142",
+      "size_bytes": 166763
+    },
+    "agent/market/order_builder.py": {
+      "sha256": "606a2a635802b9e46e12bbf1ba6639f115b3d5db4c8563eaa756e1fd20c3cf28",
+      "size_bytes": 70307
+    }
+  }
+}

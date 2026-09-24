@@ -1,0 +1,28 @@
+{
+  "target_paired_delta": -14024.02,
+  "cohort": "Purchased SW Tranche (N=134)",
+  "measured_cash_effects": {
+    "sw_land_purchase_cost": -2000.0,
+    "sw_seed_immediate_cash_outflow": 0.0,
+    "subtotal_measured_cash": -2000.0
+  },
+  "estimated_isolated_sw_margin": {
+    "sw_gross_crop_revenue": 3500.0,
+    "sw_seed_inventory_opportunity_cost": -720.0,
+    "sw_operating_contribution_before_land": 2780.0,
+    "sw_land_purchase_cost": -2000.0,
+    "net_isolated_sw_margin": 780.0
+  },
+  "estimated_systemic_core_drag": {
+    "core_labor_displacement": -5200.0,
+    "core_capital_lock_deferred_livestock": -4800.0,
+    "core_produce_price_cannibalization": -2100.0,
+    "subtotal_systemic_drag": -12100.0
+  },
+  "unattributed_residual": -2704.02,
+  "mathematical_reconciliation": {
+    "cash_flow_formula": "Total_Delta = SW_Land_Cost (-2000) + SW_Gross_Rev (+3500) - SW_Seed_Cost (-720) + Core_Drag (-12100) + Residual (-2704.02) = -14024.02",
+    "margin_formula": "Total_Delta = Net_Isolated_SW_Margin (+780) + Core_Drag (-12100) + Residual (-2704.02) = -14024.02",
+    "double_counting_audit": "B1-R1 inadvertently subtracted Land Cost (-2000) in measured outflows while also embedding it in Net Isolated Margin (+780 = 3500 - 720 - 2000), effectively double-counting the 2000 deduction. B1-R2 eliminates this error: Land Cost is counted exactly once."
+  }
+}

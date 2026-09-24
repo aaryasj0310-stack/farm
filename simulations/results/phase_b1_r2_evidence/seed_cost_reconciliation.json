@@ -1,0 +1,31 @@
+{
+  "initial_planting": {
+    "strawberry_seeds": 4,
+    "strawberry_unit_cost": 100.0,
+    "strawberry_subtotal": 400.0,
+    "melon_seeds": 4,
+    "melon_unit_cost": 80.0,
+    "melon_subtotal": 320.0,
+    "total_initial_seeds": 8,
+    "total_initial_seed_cost": 720.0
+  },
+  "replanting_analysis": {
+    "strawberry_replanting": {
+      "attempted": false,
+      "feasible": false,
+      "explanation": "Strawberry is ongoing with 4 yields occurring on days 19..25 (or 21..27). Plant decays on day 26..28. Replanting on day 26 requires 10 days to first yield (day 36), which is past season end (day 29 / step 720)."
+    },
+    "melon_replanting": {
+      "attempted": false,
+      "feasible": false,
+      "explanation": "Melon yields at age 10..12 (day 21..23). Replanting on day 22 requires 10 days to mature (day 32), which is past season end (day 29 / step 720)."
+    },
+    "total_replant_seeds_consumed": 0,
+    "total_replant_seed_cost": 0.0
+  },
+  "cash_outflow_vs_inventory_consumption": {
+    "measured_cash_outflow_at_planting": 0.0,
+    "inventory_opportunity_cost": 720.0,
+    "reconciliation_explanation": "When SW tiles were planted on Day 9/10, MacroPlanner drew existing seed inventory from private['seeds']. No BUY_SEED order was dispatched at planting hour, so immediate cash outflow was $0.00. However, 8 units of seed inventory representing $720 in replacement/opportunity cost were consumed, reducing subsequent core replanting capacity."
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "all_200_pairs": {
+    "n": 200,
+    "control_mean": 102063.43,
+    "treatment_mean": 92702.6,
+    "mean_delta": -9360.83,
+    "std_delta": 8589.11,
+    "se_independent": 607.34,
+    "ci95_independent": [
+      -10551.22,
+      -8170.44
+    ],
+    "n_clusters": 20,
+    "se_clustered": 914.41,
+    "ci95_clustered": [
+      -11274.69,
+      -7446.97
+    ]
+  },
+  "purchased_134_pairs": {
+    "n": 134,
+    "control_mean": 101505.28,
+    "treatment_mean": 87481.25,
+    "mean_delta": -14024.02,
+    "std_delta": 6604.53,
+    "se_independent": 570.54,
+    "ci95_independent": [
+      -15142.29,
+      -12905.76
+    ],
+    "n_clusters": 20,
+    "se_clustered": 730.91,
+    "ci95_clustered": [
+      -15553.82,
+      -12494.23
+    ]
+  },
+  "not_purchased_66_pairs": {
+    "n": 66,
+    "control_mean": 103196.64,
+    "treatment_mean": 103303.5,
+    "mean_delta": 106.86,
+    "std_delta": 872.04,
+    "se_independent": 107.34,
+    "ci95_independent": [
+      -103.52,
+      317.25
+    ],
+    "n_clusters": 18,
+    "se_clustered": 78.71,
+    "ci95_clustered": [
+      -60.86,
+      274.59
+    ]
+  },
+  "unapproved_46_pairs": {
+    "n": 46,
+    "control_mean": 104690.85,
+    "treatment_mean": 104690.85,
+    "mean_delta": 0.0,
+    "std_delta": 0.0,
+    "se_independent": 0.0,
+    "ci95_independent": [
+      0.0,
+      0.0
+    ],
+    "n_clusters": 16,
+    "se_clustered": 0.0,
+    "ci95_clustered": [
+      0.0,
+      0.0
+    ]
+  },
+  "dropped_approval_20_pairs": {
+    "n": 20,
+    "control_mean": 99759.95,
+    "treatment_mean": 100112.6,
+    "mean_delta": 352.65,
+    "std_delta": 1584.4,
+    "se_independent": 354.28,
+    "ci95_independent": [
+      -341.74,
+      1047.04
+    ],
+    "n_clusters": 9,
+    "se_clustered": 196.86,
+    "ci95_clustered": [
+      -92.64,
+      797.94
+    ]
+  }
+}

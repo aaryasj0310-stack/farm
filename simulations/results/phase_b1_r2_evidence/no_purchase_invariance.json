@@ -1,0 +1,24 @@
+{
+  "summary": {
+    "total_evaluated_configurations": 200,
+    "non_purchased_matches": 66,
+    "unapproved_cohort_count": 46,
+    "unapproved_exact_invariance_pct": 100.0,
+    "dropped_approval_cohort_count": 20,
+    "dropped_approval_exact_ties_in_b1": 11,
+    "dropped_approval_divergences_in_b1": 9
+  },
+  "unapproved_cohort_invariance_proof": {
+    "n": 46,
+    "mean_control_cash": 104690.85,
+    "mean_treatment_cash": 104690.85,
+    "mean_paired_delta": 0.0,
+    "delta_variance": 0.0,
+    "action_comparison": "100% identical step-by-step actions (worker movements, market orders, plant waterings, animal cares) between Control and Treatment across all 720 turns."
+  },
+  "dropped_approval_cohort_analysis": {
+    "n": 20,
+    "root_cause_of_b1_divergence": "In original B1, sw_purchase_approved=True was retained even when BUY_LAND was dropped due to the $300 reserve, causing internal MacroPlanner feed holding flags to deviate in 9 configurations.",
+    "corrected_state_machine_behavior": "With the retry mechanism active, configurations where cash exceeds $2,300 on subsequent turns retry and execute SW purchase (e.g. Seed 96502). Configurations where cash never reaches $2,300 remain strictly invariant with zero leaked state."
+  }
+}

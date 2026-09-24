@@ -1,0 +1,70 @@
+{
+  "diagnostic_experiment_summary": {
+    "seed": 96502,
+    "opponent": "pure_wheat_rush",
+    "seat": 0,
+    "state_machine_validation": "CONFIRMED_NON_LOCKING_RETRY"
+  },
+  "trace_events": [
+    {
+      "step": 222,
+      "day": 9,
+      "hour": 6,
+      "event": "APPROVAL_AND_RESERVE_DROP",
+      "cash_balance": 2266.0,
+      "reserve_threshold": 300.0,
+      "discretionary_cash": 1966.0,
+      "land_price": 2000.0,
+      "order_action": "DROPPED",
+      "state_status": "Approval recorded; sw_land_order_emitted reset so retry remains active"
+    },
+    {
+      "step": 223,
+      "day": 9,
+      "hour": 7,
+      "event": "RETRY_EVALUATION",
+      "cash_balance": 2280.0,
+      "discretionary_cash": 1980.0,
+      "order_action": "DEFERRED",
+      "state_status": "Cash below $2,300 threshold; state preserved without error"
+    },
+    {
+      "step": 227,
+      "day": 9,
+      "hour": 11,
+      "event": "RETRY_EXECUTION_SUCCESS",
+      "cash_balance": 2761.0,
+      "discretionary_cash": 2461.0,
+      "land_price": 2000.0,
+      "order_action": "BUY_LAND",
+      "engine_confirmation": "SW unlocked; farm.unlocked_quadrants updated to ['NW', 'NE', 'SW']",
+      "cash_post_purchase": 761.0
+    },
+    {
+      "step": 240,
+      "day": 10,
+      "hour": 0,
+      "event": "TRANCHE_DEPLOYMENT",
+      "deployed_tiles": 8,
+      "crops_planted": {
+        "STRAWBERRY": 4,
+        "MELON": 4
+      },
+      "status": "Tranche successfully operational"
+    },
+    {
+      "step": 719,
+      "day": 29,
+      "hour": 23,
+      "event": "EPISODE_COMPLETION",
+      "final_cash": 100233.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE",
+        "SW"
+      ],
+      "status": "Match completed with zero fatal exceptions, assertion errors, or lockups"
+    }
+  ],
+  "verification_verdict": "The corrected purchase-state machine successfully handles temporary cash shortfalls without state corruption, retries cleanly once liquidity is restored, and achieves full execution invariance on unapproved seeds."
+}

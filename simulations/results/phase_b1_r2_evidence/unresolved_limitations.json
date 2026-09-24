@@ -1,0 +1,22 @@
+{
+  "known_telemetry_and_engine_limitations": [
+    {
+      "limitation": "Post-deposit shed inventory fungibility",
+      "description": "In kaggle_environments kaggriculture.py, crops deposited into the shed lose spatial/quadrant origin tags. Revenue attribution of strawberry and melon sales is therefore bounded by physical tile production limits rather than direct per-unit trade telemetry tags.",
+      "impact": "Requires physical capacity upper-bounding and price schedule modeling rather than exact trade tracking.",
+      "remediation_status": "Bound strictly verified by 40-unit physical limit."
+    },
+    {
+      "limitation": "Labor displacement exact shadow counterfactual",
+      "description": "Determining exact counterfactual labor opportunity cost would require running parallel simulated worker worlds. The -$5,200 core labor displacement figure is estimated by comparing worker attention schedules and missed core watering events.",
+      "impact": "Separation of -$12,100 systemic drag into labor vs livestock is model-estimated.",
+      "remediation_status": "Explicitly categorized as Estimated in economic bridge."
+    },
+    {
+      "limitation": "Tournament execution quarantine",
+      "description": "Protected tournament seeds (98001-98050) remain strictly quarantined and were not touched during B0, B1, B1-R1, or B1-R2.",
+      "impact": "Verification is established exclusively on discovery seeds (96501-96520).",
+      "remediation_status": "Preserves competitive integrity for future official evaluation."
+    }
+  ]
+}
