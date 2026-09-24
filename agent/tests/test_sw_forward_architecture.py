@@ -2199,5 +2199,252 @@ def test_service_certificate_guarantee_declaration():
     assert "not an executable discrete worker-by-worker engine schedule" in cert.guarantee_notes
 
 
+def test_phase_b0_counterfactual_virtual_sw_ownership_and_cash_neutralization():
+    """Verify Phase B0 counterfactual ownership state:
+    1. Baseline unlocked SW on Day 5 (spent $2,000).
+    2. Virtual planner starts unowned (virtual_sw_owned=False) and neutralizes the $2,000 baseline land cost.
+    3. Evaluates SW candidate with sw_land_cost=2000.0 against virtual cash.
+    4. Upon admission, transitions to PURCHASE, sets virtual_sw_owned=True and virtual_sw_purchase_day=Day.
+    5. On next turn, planner recognizes virtual ownership (OWNED) without redundant purchase.
+    """
+    from market.price_math import market_price, MARKET_I0
+    from strategy.farm_plan import reset_farm_plan
+
+    reset_farm_plan()
+    wfp = WholeFarmPlanner()
+
+    inv = MARKET_I0
+    m_prices = tuple(sorted((c, float(market_price(c, inv))) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+    m_invs = tuple(sorted((c, int(inv)) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+
+    # Baseline already unlocked SW and has $500 cash (having spent $2,000 on land)
+    snapshot_day_5 = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=500.0,
+        unlocked_quadrants=("NW", "NE", "SW"),
+        unlocked_shops=(),
+        shed_inventory=(),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+
+    # In virtual world: money is $500 + $2,000 = $2,500.
+    # $2,500 >= $2,200 threshold!
+    # Virtual land cost is $2,000.
+    res_5 = wfp.evaluate(snapshot_day_5)
+    dec_5 = res_5.decision
+
+    assert dec_5.actual_sw_unlocked is True
+    assert dec_5.virtual_cash == 2500.0
+    assert dec_5.sw_land_cost == 2000.0
+    assert dec_5.sw_recommendation_status == "PURCHASE"
+    assert dec_5.sw_purchase_recommended is True
+    assert dec_5.virtual_sw_owned is True
+    assert dec_5.virtual_sw_purchase_day == 5
+
+    # On next turn (e.g. Day 6):
+    snapshot_day_6 = ShadowSnapshot(
+        day=6,
+        hour=0,
+        step=144,
+        money=460.0,
+        unlocked_quadrants=("NW", "NE", "SW"),
+        unlocked_shops=(),
+        shed_inventory=(),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+    res_6 = wfp.evaluate(snapshot_day_6)
+    dec_6 = res_6.decision
+
+    # Virtual planner is now OWNED; no repeated purchase recommendation
+    assert dec_6.virtual_sw_owned is True
+    assert dec_6.virtual_sw_purchase_day == 5
+    assert dec_6.sw_recommendation_status == "OWNED"
+    assert dec_6.sw_purchase_recommended is False
+    assert dec_6.sw_land_cost == 0.0
 
 
+def test_phase_b0_lifecycle_storage_flow_and_genuine_overflow_bounds():
+    """Verify Phase B0 calibrated lifecycle:
+    1. Realistic commercial harvests clear shed headroom via daily market sales without accumulating.
+    2. Genuinely oversized candidate (>100 units on arrival) strictly triggers storage overflow.
+    3. Severe worker deficiency strictly triggers daily labor bound (active_workers * 24).
+    """
+    from market.price_math import market_price, MARKET_I0
+
+    inv = MARKET_I0
+    m_prices = tuple(sorted((c, float(market_price(c, inv))) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+    m_invs = tuple(sorted((c, int(inv)) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+
+    wfp = WholeFarmPlanner()
+
+    # Normal starting state with 5 workers, 0 starting shed
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+
+    # 1. Compact commercial portfolio (4 strawberry, 4 melon) passes lifecycle cleanly
+    compact_port = {
+        "name": "compact_test",
+        "portfolio_id": "compact_test",
+        "tiles_used": 8,
+        "allocations": [
+            ("STRAWBERRY", 4, [(0, 5), (1, 5), (2, 5), (3, 5)]),
+            ("MELON", 4, [(0, 6), (1, 6), (2, 6), (3, 6)]),
+        ],
+    }
+    feas_compact, peak_compact, acts_compact, reason_compact = wfp._evaluate_candidate_lifecycle(
+        compact_port, snapshot
+    )
+    assert feas_compact is True
+    assert peak_compact <= 48
+    assert reason_compact is None
+
+    # 2. Genuinely massive harvest that delivers >100 units simultaneously
+    # 24 tiles of carrots = 24 * 4 = 96 carrots + starting 20 in shed = 116 > 100
+    snapshot_shed_20 = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 20),),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+    massive_port = {
+        "name": "massive_carrot",
+        "portfolio_id": "massive_carrot",
+        "tiles_used": 24,
+        "allocations": [
+            ("CARROT", 24, [(x, y) for y in range(5, 10) for x in range(5) if (x, y) != (4, 5)]),
+        ],
+    }
+    feas_massive, peak_massive, _, reason_massive = wfp._evaluate_candidate_lifecycle(
+        massive_port, snapshot_shed_20
+    )
+    assert feas_massive is False
+    assert "storage_overflow_day_" in reason_massive
+    assert peak_massive > 100
+
+    # 3. Severe worker deficiency: 1 worker has only 24 action envelope per day
+    snapshot_1_worker = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(),
+        active_worker_count=1,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+    feas_labor, _, peak_acts, reason_labor = wfp._evaluate_candidate_lifecycle(
+        compact_port, snapshot_1_worker
+    )
+    # Planting 8 tiles takes 8 * 2 = 16 actions. If ongoing + watering exceeds 24 actions:
+    # 1 worker = 24 action bound. Massive 24-tile port takes 48 actions to plant on Day 5:
+    feas_plant, _, _, reason_plant = wfp._evaluate_candidate_lifecycle(
+        massive_port, snapshot_1_worker
+    )
+    assert feas_plant is False
+    assert "labor_exceeded_day_5_48_gt_24" in reason_plant
+
+
+def test_phase_b0_counterfactual_deterministic_delay_to_purchase_transition():
+    """Verify deterministic timeline progression from DELAY to PURCHASE:
+    - Day 5: Farm cash is low ($100), baseline buys land (or intents to buy).
+      Shadow virtual cash is $100 (or $2,100), below the $2,200 safety threshold -> DELAY.
+    - Day 8: Farm cash increases to $2,400, certificate is feasible, economics positive -> PURCHASE.
+    """
+    from market.price_math import market_price, MARKET_I0
+    from strategy.farm_plan import reset_farm_plan
+
+    reset_farm_plan()
+    wfp = WholeFarmPlanner()
+
+    inv = MARKET_I0
+    m_prices = tuple(sorted((c, float(market_price(c, inv))) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+    m_invs = tuple(sorted((c, int(inv)) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+
+    # Day 5: Insufficient virtual cash ($1,800 < $2,200)
+    snap_d5 = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=1800.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(("buy_land", True),),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+    res_d5 = wfp.evaluate(snap_d5)
+    assert res_d5.decision.sw_recommendation_status == "DELAY"
+    assert res_d5.decision.sw_purchase_recommended is False
+    assert "insufficient_cash" in res_d5.decision.disagreements_with_baseline[0]["reason"]
+
+    # Day 8: Cash reaches $2,500, SW becomes certified and profitable
+    snap_d8 = ShadowSnapshot(
+        day=8,
+        hour=0,
+        step=192,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+    res_d8 = wfp.evaluate(snap_d8)
+    assert res_d8.decision.sw_recommendation_status == "PURCHASE"
+    assert res_d8.decision.sw_purchase_recommended is True
+    assert res_d8.decision.virtual_sw_owned is True
+    assert res_d8.decision.virtual_sw_purchase_day == 8

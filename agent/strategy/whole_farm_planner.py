@@ -165,6 +165,11 @@ class ShadowDecision:
     candidates_rejected_count: int = 0
     verified_service_feasible: bool = True
     economic_uncertainty_flags: List[str] = field(default_factory=list)
+    # Phase B0 counterfactual ownership state
+    virtual_sw_owned: bool = False
+    virtual_sw_purchase_day: Optional[int] = None
+    virtual_cash: float = 0.0
+    actual_sw_unlocked: bool = False
 
 
 @dataclass
@@ -203,6 +208,27 @@ class WholeFarmPlanner:
         self.latencies_ms: List[float] = []
         self.latest_result: Optional[ShadowResult] = None
         self.last_replan_day: int = -1
+
+        # Phase B0 counterfactual state tracking
+        self.virtual_sw_owned: bool = False
+        self.virtual_sw_purchase_day: Optional[int] = None
+        self.virtual_sw_purchase_tranche: Optional[str] = None
+        self.virtual_sw_purchase_tiles: int = 0
+        self.virtual_land_cost_paid: float = 0.0
+
+    def reset(self) -> None:
+        """Reset internal planner state for a new game session."""
+        self.ledger = ResourceLedger()
+        self.cohort_planner = CohortPlanner()
+        self.certificate_evaluator = ServiceCertificate()
+        self.latencies_ms = []
+        self.latest_result = None
+        self.last_replan_day = -1
+        self.virtual_sw_owned = False
+        self.virtual_sw_purchase_day = None
+        self.virtual_sw_purchase_tranche = None
+        self.virtual_sw_purchase_tiles = 0
+        self.virtual_land_cost_paid = 0.0
 
     def _append_daily_animal_tasks(
         self,
@@ -706,7 +732,8 @@ class WholeFarmPlanner:
         peak_daily_actions = 0
 
         daily_actions: Dict[int, int] = {d: 0 for d in range(start_day, end_day)}
-        daily_shed_additions: Dict[int, int] = {d: 0 for d in range(start_day, end_day)}
+        daily_commercial_additions: Dict[int, int] = {d: 0 for d in range(start_day, end_day)}
+        daily_wheat_additions: Dict[int, int] = {d: 0 for d in range(start_day, end_day)}
 
         # 1. Core livestock feed obligations
         num_animals = 0
@@ -755,7 +782,10 @@ class WholeFarmPlanner:
                         days_since_first = age - first_yield
                         if days_since_first >= 0 and (days_since_first % interval == 0) and ((days_since_first // interval) < max_yield_count):
                             daily_actions[d] += 2
-                            daily_shed_additions[d] += yield_per_harvest
+                            if crop_name == "WHEAT":
+                                daily_wheat_additions[d] += yield_per_harvest
+                            else:
+                                daily_commercial_additions[d] += yield_per_harvest
                         else:
                             if (t.x + t.y + d) % 2 == 0:
                                 daily_actions[d] += 1
@@ -763,7 +793,10 @@ class WholeFarmPlanner:
                     harvest_day = planted_day + max_yield_day
                     if start_day <= harvest_day < end_day:
                         daily_actions[harvest_day] += 2
-                        daily_shed_additions[harvest_day] += yield_per_harvest
+                        if crop_name == "WHEAT":
+                            daily_wheat_additions[harvest_day] += yield_per_harvest
+                        else:
+                            daily_commercial_additions[harvest_day] += yield_per_harvest
                     w_start = (max_yield_day + 1) // 2
                     for d in range(start_day, min(end_day, harvest_day)):
                         age = d - planted_day
@@ -803,7 +836,10 @@ class WholeFarmPlanner:
                     days_since_first = age - first_yield
                     if days_since_first >= 0 and (days_since_first % interval == 0) and ((days_since_first // interval) < max_yield_count):
                         daily_actions[d] += (n_tiles * 2)
-                        daily_shed_additions[d] += (n_tiles * yield_per_tile)
+                        if crop_name == "WHEAT":
+                            daily_wheat_additions[d] += (n_tiles * yield_per_tile)
+                        else:
+                            daily_commercial_additions[d] += (n_tiles * yield_per_tile)
                     else:
                         if age % 2 == 1:
                             daily_actions[d] += n_tiles
@@ -813,13 +849,28 @@ class WholeFarmPlanner:
                     age = d - start_day
                     if d == harvest_day:
                         daily_actions[d] += (n_tiles * 2)
-                        daily_shed_additions[d] += (n_tiles * yield_per_tile)
+                        if crop_name == "WHEAT":
+                            daily_wheat_additions[d] += (n_tiles * yield_per_tile)
+                        else:
+                            daily_commercial_additions[d] += (n_tiles * yield_per_tile)
                     elif d < harvest_day:
                         w_start = (max_yield_day + 1) // 2
                         if age >= w_start:
                             daily_actions[d] += n_tiles
 
-        simulated_shed = current_shed_count
+        sim_wheat = sum(cnt for item, cnt in snapshot.shed_inventory if item == "WHEAT")
+        sim_commercial = sum(cnt for item, cnt in snapshot.shed_inventory if item in ("CARROT", "MELON", "STRAWBERRY", "TOMATO"))
+        sim_other = sum(cnt for item, cnt in snapshot.shed_inventory if item not in ("WHEAT", "CARROT", "MELON", "STRAWBERRY", "TOMATO"))
+
+        daily_sale_limit = min(20, active_workers * 10)
+        has_market = False
+        if snapshot.market_prices:
+            has_market = any(p > 0 for _, p in snapshot.market_prices)
+        elif raw_ctx and "market" in raw_ctx and hasattr(raw_ctx["market"], "prices"):
+            has_market = any(p > 0 for p in raw_ctx["market"].prices.values())
+        if not has_market:
+            daily_sale_limit = 0
+
         for d in range(start_day, end_day):
             acts = daily_actions.get(d, 0)
             if acts > peak_daily_actions:
@@ -827,16 +878,33 @@ class WholeFarmPlanner:
             if acts > daily_action_capacity:
                 return False, peak_shed, peak_daily_actions, f"labor_exceeded_day_{d}_{acts}_gt_{daily_action_capacity}"
 
-            # Feasible planned sales clearing headroom before/during harvest
+            # 1. Planned sales from starting inventory
+            rem_limit = daily_sale_limit
             if planned_sales and d in planned_sales:
-                simulated_shed = max(0, simulated_shed - planned_sales[d])
+                p_sale = planned_sales[d]
+                com_sold = min(sim_commercial, p_sale)
+                sim_commercial -= com_sold
+                rem_p = p_sale - com_sold
+                sim_wheat = max(0, sim_wheat - rem_p)
+                rem_limit = max(0, daily_sale_limit - p_sale)
 
-            additions = daily_shed_additions.get(d, 0)
-            simulated_shed += additions
-            if simulated_shed > peak_shed:
-                peak_shed = simulated_shed
-            if simulated_shed > 100:
-                return False, peak_shed, peak_daily_actions, f"storage_overflow_day_{d}_{simulated_shed}_gt_100"
+            # 2. Add incoming harvest additions
+            comm_in = daily_commercial_additions.get(d, 0)
+            wheat_in = daily_wheat_additions.get(d, 0)
+            sim_commercial += comm_in
+            sim_wheat += wheat_in
+
+            # Check peak shed on harvest arrival (must not exceed 100 before/during delivery)
+            current_shed = sim_wheat + sim_commercial + sim_other
+            if current_shed > peak_shed:
+                peak_shed = current_shed
+            if current_shed > 100:
+                return False, peak_shed, peak_daily_actions, f"storage_overflow_day_{d}_{current_shed}_gt_100"
+
+            # 3. Feasible sales of incoming commercial crops
+            if rem_limit > 0 and daily_sale_limit > 0:
+                comm_sell = min(sim_commercial, rem_limit)
+                sim_commercial -= comm_sell
 
         return True, peak_shed, peak_daily_actions, None
 
@@ -944,11 +1012,13 @@ class WholeFarmPlanner:
 
         days_left = max(0, 30 - snapshot.day)
         core_daily_wages_without = snapshot.active_worker_count * 8 * days_left
-        projected_terminal_cash_without = snapshot.money + core_gross_revenue_without - core_daily_wages_without
+        actual_sw_unlocked = ("SW" in snapshot.unlocked_quadrants or 3 in snapshot.unlocked_quadrants)
+        baseline_land_spent = 2000.0 if actual_sw_unlocked else 0.0
+        virtual_money = snapshot.money + baseline_land_spent - self.virtual_land_cost_paid
+        sw_land_cost = 0.0 if self.virtual_sw_owned else 2000.0
+        projected_terminal_cash_without = virtual_money + core_gross_revenue_without - core_daily_wages_without
 
         portfolio_evals = []
-        is_sw_unlocked = ("SW" in snapshot.unlocked_quadrants or 3 in snapshot.unlocked_quadrants)
-        sw_land_cost = 0.0 if is_sw_unlocked else 2000.0
 
         candidates_evaluated_count = len(candidate_portfolios)
         candidates_admitted_count = 0
@@ -1176,10 +1246,14 @@ class WholeFarmPlanner:
         sw_reject_reason = None
         sw_rec_status = "REJECT"
 
-        if not is_sw_unlocked:
-            if plan.state == StrategicState.SW_READY or (plan.state == StrategicState.SW_PREPARING and snapshot.money >= 2200):
-                if snapshot.money < 2200:
-                    sw_reject_reason = f"insufficient_cash (${snapshot.money:.1f} < $2,200)"
+        if self.virtual_sw_owned:
+            sw_rec_status = "OWNED"
+            sw_recommended = False
+            sw_reject_reason = "already_purchased_in_virtual_plan"
+        else:
+            if plan.state == StrategicState.SW_READY or (plan.state == StrategicState.SW_PREPARING and virtual_money >= 2200):
+                if virtual_money < 2200:
+                    sw_reject_reason = f"insufficient_cash (${virtual_money:.1f} < $2,200)"
                     sw_rec_status = "DELAY"
                 elif not feed_status["is_feed_safe"]:
                     sw_reject_reason = f"feed_deficit_risk ({'; '.join(feed_status.get('unfed_reasons', []))})"
@@ -1206,8 +1280,18 @@ class WholeFarmPlanner:
                 else:
                     sw_recommended = True
                     sw_rec_status = "PURCHASE"
+                    self.virtual_sw_owned = True
+                    self.virtual_sw_purchase_day = snapshot.day
+                    self.virtual_land_cost_paid = 2000.0
+                    if best_portfolio_data:
+                        self.virtual_sw_purchase_tranche = best_portfolio_data[0].get("name")
+                        self.virtual_sw_purchase_tiles = best_portfolio_data[0].get("tiles_used", 0)
             else:
                 sw_rec_status = "DELAY" if snapshot.day < 8 else "REJECT"
+                if virtual_money < 2200:
+                    sw_reject_reason = f"insufficient_cash (${virtual_money:.1f} < $2,200)"
+                else:
+                    sw_reject_reason = f"expansion_prerequisites_unmet (state={plan.state.value})"
 
         # Disagreement 1: LAND_PURCHASE_MISMATCH (Policy Disagreement)
         if baseline_buys_land != sw_recommended:
@@ -1527,6 +1611,10 @@ class WholeFarmPlanner:
             candidates_rejected_count=candidates_rejected_count,
             verified_service_feasible=(cert_result.feasible and lifecycle_feasible_best),
             economic_uncertainty_flags=uncertainty_flags,
+            virtual_sw_owned=self.virtual_sw_owned,
+            virtual_sw_purchase_day=self.virtual_sw_purchase_day,
+            virtual_cash=virtual_money,
+            actual_sw_unlocked=actual_sw_unlocked,
         )
 
         elapsed_ms = (time.perf_counter() - start_t) * 1000.0
