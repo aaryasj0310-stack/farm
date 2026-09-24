@@ -1760,6 +1760,11 @@ def test_paired_sw_oversized_rejection_and_compact_admission_same_state():
     wfp = WholeFarmPlanner()
     sw_tiles = [(x, y) for y in range(5, 10) for x in range(0, 5) if (x, y) != (4, 5)]
 
+    from market.price_math import market_price, MARKET_I0
+    inv = MARKET_I0
+    m_prices = tuple(sorted((c, float(market_price(c, inv))) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+    m_invs = tuple(sorted((c, int(inv)) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+
     snapshot = ShadowSnapshot(
         day=5,
         hour=12,
@@ -1769,8 +1774,8 @@ def test_paired_sw_oversized_rejection_and_compact_admission_same_state():
         unlocked_shops=(),
         shed_inventory=(("WHEAT", 40),),
         carried_inventory_units=0,
-        market_prices=(("STRAWBERRY", 80.0), ("MELON", 150.0), ("WHEAT", 20.0)),
-        market_inventories=(("STRAWBERRY", 1000), ("MELON", 1000), ("WHEAT", 1000)),
+        market_prices=m_prices,
+        market_inventories=m_invs,
         baseline_intents=(("buy_land", True),),
         active_worker_count=5,
         tiles_summary=(("EMPTY", 96), ("CARROT", 4)),
@@ -1817,8 +1822,10 @@ def test_paired_sw_oversized_rejection_and_compact_admission_same_state():
     assert dec.sw_purchase_recommended is True
     assert dec.sw_recommendation_status == "PURCHASE"
     assert dec.selected_portfolio is not None
-    assert dec.selected_portfolio["name"] in ("compact_commercial", "tranche_1_starter", "compact_tranche")
+    assert dec.selected_portfolio["name"] == compact_port["name"] == "compact_commercial"
     assert dec.portfolio_delta_fc > 0.0
+    assert dec.combined_cert_feasible is True
+    assert dec.verified_service_feasible is True
     assert dec.candidates_admitted_count >= 1
     assert dec.candidates_downsized_count >= 1 or dec.candidates_delayed_count >= 1
 
@@ -1967,6 +1974,229 @@ def test_one_time_crop_harvested_only_once_in_lifecycle():
     assert feasible is True
     # Shed should peak at exactly 24 units, NOT 24 + 24 on Day 9, 10, etc.
     assert peak_shed == 24
+
+
+def test_future_livestock_workload_accounting_from_pasture_tile():
+    """Regression test: tile.kind = 'PASTURE', tile.animal = 'COW', tile.is_animal = True.
+
+    Ensures cow contributes to daily feeding/labor even without a COW entry in tiles_summary.
+    """
+    wfp = WholeFarmPlanner()
+    cow_tile = MockTile(
+        x=2, y=2,
+        kind="PASTURE",
+        is_animal=True,
+        animal="COW",
+        fed_today=True,
+    )
+    raw_ctx = {
+        "farm": MockFarm(tiles=[cow_tile]),
+        "day": 5,
+        "hour": 0,
+        "step": 120,
+    }
+
+    # Snapshot built from live state must record COW in animals_summary
+    snapshot = ShadowSnapshot.from_live_state(
+        ctx=raw_ctx,
+        mem={},
+        plan=None,
+        asg=None,
+        market=[],
+    )
+    assert dict(snapshot.tiles_summary).get("PASTURE") == 1
+    assert "COW" not in dict(snapshot.tiles_summary)
+    assert dict(snapshot.animals_summary).get("COW") == 1
+
+    # _build_core_tasks must include animal feed tasks on future days
+    tasks = wfp._build_core_tasks(snapshot, raw_ctx=raw_ctx, horizon_days=3)
+    day6_feed = [t for t in tasks if t.day == 6 and t.op == "FEED"]
+    day7_feed = [t for t in tasks if t.day == 7 and t.op == "FEED"]
+    assert len(day6_feed) == 1
+    assert len(day7_feed) == 1
+    assert day6_feed[0].pos == (2, 2)
+
+    # Even without raw_ctx, snapshot.animals_summary provides the cow
+    tasks_no_ctx = wfp._build_core_tasks(snapshot, raw_ctx=None, horizon_days=3)
+    day6_feed_no_ctx = [t for t in tasks_no_ctx if t.day == 6 and t.op == "FEED"]
+    assert len(day6_feed_no_ctx) == 1
+
+
+def test_existing_herd_saturates_labor_capacity_rejecting_sw():
+    """Regression test: existing herd makes an otherwise feasible SW portfolio exceed labor capacity."""
+    wfp = WholeFarmPlanner()
+    # 1 worker = 24 actions/day
+    snapshot_no_herd = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 50),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 120.0),),
+        market_inventories=(("STRAWBERRY", 10000),),
+        baseline_intents=(),
+        active_worker_count=1,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+
+    port = {
+        "name": "sw_4_tiles",
+        "tiles_used": 4,
+        "allocations": [("STRAWBERRY", 4, [(x, 7) for x in range(4)])],
+    }
+
+    # Without herd: 4 tiles strawberry planting = 8 actions <= 24 actions capacity -> feasible
+    feasible_clean, _, peak_clean, _ = wfp._evaluate_candidate_lifecycle(port, snapshot_no_herd)
+    assert feasible_clean is True
+
+    # With 10 cows: 10 cows * 2 actions/day = 20 actions/day of animal obligations
+    # 20 animal actions + 8 planting actions = 28 actions > 24 actions daily capacity!
+    cow_tiles = [
+        MockTile(x=i, y=0, kind="PASTURE", is_animal=True, animal="COW", fed_today=True)
+        for i in range(10)
+    ]
+    raw_ctx = {"farm": MockFarm(tiles=cow_tiles)}
+    snapshot_with_herd = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 50),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 120.0),),
+        market_inventories=(("STRAWBERRY", 10000),),
+        baseline_intents=(),
+        active_worker_count=1,
+        tiles_summary=(("PASTURE", 10), ("EMPTY", 90)),
+        animals_summary=(("COW", 10),),
+    )
+
+    feasible_herd, _, peak_herd, reason = wfp._evaluate_candidate_lifecycle(
+        port, snapshot_with_herd, raw_ctx=raw_ctx
+    )
+    assert feasible_herd is False
+    assert "labor_exceeded_day_5_28_gt_24" in reason
+
+
+def test_storage_admission_cases_a_b_c_through_evaluate():
+    """Verify storage admission cases through actual WholeFarmPlanner.evaluate().
+
+    Case A: Feasible sale of existing commercial shed goods creates headroom, preventing false rejection.
+    Case B: Impossible sale (protected feed, market closed/exhausted) does not create headroom.
+    Case C: Unmitigated overflow fails storage check with specific quantity and deadline.
+    """
+    from market.price_math import market_price, MARKET_I0
+    from strategy.farm_plan import reset_farm_plan
+
+    inv = MARKET_I0
+    m_prices = tuple(sorted((c, float(market_price(c, inv))) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+    m_invs = tuple(sorted((c, int(inv)) for c in ("CARROT", "MELON", "STRAWBERRY", "WHEAT")))
+
+    # --- CASE A: Feasible sale of commercial strawberry prevents false rejection ---
+    reset_farm_plan()
+    wfp_a = WholeFarmPlanner()
+    # Shed has 85 units of STRAWBERRY. SW candidate will harvest 20+ units.
+    # Without sales: 85 + 20 = 105 > 100 overflow.
+    # With feasible sales: strawberry sold on Day 5, headroom cleared, candidate admitted.
+    snapshot_a = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2600.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("STRAWBERRY", 85),),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(("buy_land", True),),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 100),),
+        animals_summary=(),
+    )
+    res_a = wfp_a.evaluate(snapshot_a)
+    assert res_a.decision.lifecycle_workload_feasible is True
+    assert res_a.decision.selected_portfolio is not None
+    assert res_a.decision.candidates_admitted_count >= 1
+
+    # --- CASE B: Impossible sale (wheat is protected feed for animals) does NOT create headroom ---
+    reset_farm_plan()
+    wfp_b = WholeFarmPlanner()
+    # 4 cows with 25 days left requires 4 * 25 = 100 protected wheat.
+    # Shed has 95 wheat: all 95 wheat are protected feed and cannot be sold!
+    cow_tiles = [
+        MockTile(x=i, y=0, kind="PASTURE", is_animal=True, animal="COW", fed_today=True)
+        for i in range(4)
+    ]
+    raw_ctx_b = {"farm": MockFarm(tiles=cow_tiles)}
+    snapshot_b = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2600.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 95),),
+        carried_inventory_units=0,
+        market_prices=m_prices,
+        market_inventories=m_invs,
+        baseline_intents=(("buy_land", True),),
+        active_worker_count=5,
+        tiles_summary=(("PASTURE", 4), ("EMPTY", 96)),
+        animals_summary=(("COW", 4),),
+    )
+    # Feasible sales must be empty because all wheat is protected
+    sw_tiles = [(x, y) for y in range(5, 10) for x in range(0, 5) if (x, y) != (4, 5)]
+    ports = wfp_b.cohort_planner.generate_candidate_portfolios(5, sw_tiles)
+    feasible_sales_b = wfp_b._project_feasible_sales(snapshot_b, {}, ports[0], raw_ctx=raw_ctx_b)
+    assert feasible_sales_b == {}, "Protected feed wheat must never be sold"
+
+    res_b = wfp_b.evaluate(snapshot_b, raw_ctx=raw_ctx_b)
+    # SW harvests overflow the 95 units shed because no wheat could be sold
+    assert res_b.decision.lifecycle_workload_feasible is False
+    assert res_b.decision.candidates_admitted_count == 0
+
+    # --- CASE C: Unmitigated overflow fails with specific quantity and deadline ---
+    assert res_b.decision.storage_loss_penalty > 0.0
+    large_port = [p for p in ports if p.get("tiles_used", 0) >= 8][0]
+    feasible_c, peak_shed_c, _, reason_c = wfp_b._evaluate_candidate_lifecycle(
+        large_port, snapshot_b, raw_ctx=raw_ctx_b, planned_sales={}
+    )
+    assert feasible_c is False
+    assert "storage_overflow_day_" in reason_c
+    assert "_gt_100" in reason_c
+    assert peak_shed_c > 100
+
+
+def test_service_certificate_guarantee_declaration():
+    """Verify ServiceCertificate explicitly declares CONSERVATIVE_CAPACITY_ENVELOPE guarantee."""
+    cert_eval = ServiceCertificate()
+    task = ServiceTask(
+        task_id="test_feed",
+        op="FEED",
+        pos=(2, 2),
+        region="NW",
+        day=5,
+        hour_deadline=20,
+        tier=CommitmentTier.HARD,
+        estimated_duration_actions=1,
+    )
+    cert = cert_eval.evaluate_multi_day(
+        current_day=5,
+        current_hour=10,
+        worker_count=2,
+        tasks=[task],
+        horizon_hours=72,
+    )
+    assert cert.guarantee_type == "CONSERVATIVE_CAPACITY_ENVELOPE"
+    assert "Conservative capacity envelope" in cert.guarantee_notes
+    assert "not an executable discrete worker-by-worker engine schedule" in cert.guarantee_notes
 
 
 

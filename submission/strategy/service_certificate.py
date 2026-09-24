@@ -77,6 +77,11 @@ class CertificateResult:
     hard_tasks_feasible: bool = True
     displaced_core_tasks: List[ServiceTask] = field(default_factory=list)
     uncompleted_sw_tasks: List[ServiceTask] = field(default_factory=list)
+    guarantee_type: str = "CONSERVATIVE_CAPACITY_ENVELOPE"
+    guarantee_notes: str = (
+        "Conservative capacity envelope with spatial travel overhead factors (1.15-1.35x), "
+        "earliest-start bounds, and dependency checks; not an executable discrete worker-by-worker engine schedule."
+    )
 
 
 class ServiceCertificate:

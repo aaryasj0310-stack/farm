@@ -50,6 +50,7 @@ class ShadowSnapshot:
     baseline_intents: Tuple[Tuple[str, Any], ...]
     active_worker_count: int
     tiles_summary: Tuple[Tuple[str, int], ...]
+    animals_summary: Tuple[Tuple[str, int], ...] = ()
 
     @classmethod
     def from_live_state(
@@ -88,11 +89,25 @@ class ShadowSnapshot:
 
         # Count tiles by kind for light representation
         tile_counts: Dict[str, int] = {}
+        # Count animals accurately by observed species/state
+        animal_counts: Dict[str, int] = {}
         if farm:
             for t in farm.iter_tiles():
                 k = getattr(t, "kind", "EMPTY")
                 tile_counts[k] = tile_counts.get(k, 0) + 1
+                is_anim = getattr(t, "is_animal", False) or (getattr(t, "animal", None) is not None)
+                if is_anim:
+                    sp = getattr(t, "animal", None)
+                    if not sp or sp is True or sp not in ANIMALS:
+                        if k in ANIMALS:
+                            sp = k
+                        elif k == "COOP":
+                            sp = "CHICKEN"
+                        else:
+                            sp = "COW"
+                    animal_counts[sp] = animal_counts.get(sp, 0) + 1
         tile_counts_tuple = tuple(sorted(tile_counts.items()))
+        animals_tuple = tuple(sorted(animal_counts.items()))
 
         return cls(
             day=ctx.get("day", 0),
@@ -108,6 +123,7 @@ class ShadowSnapshot:
             baseline_intents=intents_tuple,
             active_worker_count=workers,
             tiles_summary=tile_counts_tuple,
+            animals_summary=animals_tuple,
         )
 
 
@@ -147,6 +163,8 @@ class ShadowDecision:
     candidates_delayed_count: int = 0
     candidates_downsized_count: int = 0
     candidates_rejected_count: int = 0
+    verified_service_feasible: bool = True
+    economic_uncertainty_flags: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -186,6 +204,71 @@ class WholeFarmPlanner:
         self.latest_result: Optional[ShadowResult] = None
         self.last_replan_day: int = -1
 
+    def _append_daily_animal_tasks(
+        self,
+        tasks: List[ServiceTask],
+        snapshot: ShadowSnapshot,
+        raw_ctx: Optional[Dict[str, Any]],
+        eval_day: int,
+    ) -> None:
+        """Schedule daily animal feeding tasks grounded in actual observed animal locations/species."""
+        animal_tiles: List[Tuple[int, int]] = []
+        if raw_ctx and "farm" in raw_ctx:
+            for t in raw_ctx["farm"].iter_tiles():
+                is_anim = getattr(t, "is_animal", False) or (getattr(t, "animal", None) is not None) or getattr(t, "kind", None) in ANIMALS
+                if is_anim:
+                    animal_tiles.append((t.x, t.y))
+
+        if animal_tiles:
+            for ax, ay in animal_tiles:
+                tasks.append(
+                    ServiceTask(
+                        task_id=f"feed_animal_{ax}_{ay}_d{eval_day}",
+                        op="FEED",
+                        pos=(ax, ay),
+                        region="NW" if ay < 5 else "SW",
+                        day=eval_day,
+                        hour_deadline=20,
+                        tier=CommitmentTier.HARD,
+                        estimated_duration_actions=1,
+                    )
+                )
+        elif snapshot.animals_summary:
+            idx = 0
+            for sp, count in snapshot.animals_summary:
+                for _ in range(count):
+                    tasks.append(
+                        ServiceTask(
+                            task_id=f"feed_animal_{sp}_{idx}_d{eval_day}",
+                            op="FEED",
+                            pos=(2, 2),
+                            region="NW",
+                            day=eval_day,
+                            hour_deadline=20,
+                            tier=CommitmentTier.HARD,
+                            estimated_duration_actions=1,
+                        )
+                    )
+                    idx += 1
+        else:
+            idx = 0
+            for sp, count in snapshot.tiles_summary:
+                if sp in ANIMALS:
+                    for _ in range(count):
+                        tasks.append(
+                            ServiceTask(
+                                task_id=f"feed_animal_{sp}_{idx}_d{eval_day}",
+                                op="FEED",
+                                pos=(2, 2),
+                                region="NW",
+                                day=eval_day,
+                                hour_deadline=20,
+                                tier=CommitmentTier.HARD,
+                                estimated_duration_actions=1,
+                            )
+                        )
+                        idx += 1
+
     def _build_core_tasks(
         self,
         snapshot: ShadowSnapshot,
@@ -205,36 +288,24 @@ class WholeFarmPlanner:
             if d_offset == 0:
                 # Outstanding animal feeding liabilities for today from ledger
                 day_liabs = [l for l in self.ledger.feed_liabilities if l.day == eval_day]
-                for liab in day_liabs:
-                    simulated_tasks.append(
-                        ServiceTask(
-                            task_id=f"feed_animal_{liab.animal_pos[0]}_{liab.animal_pos[1]}_d{eval_day}",
-                            op="FEED",
-                            pos=liab.animal_pos,
-                            region="NW" if liab.animal_pos[1] < 5 else "SW",
-                            day=eval_day,
-                            hour_deadline=liab.hour_deadline,
-                            tier=CommitmentTier.HARD,
-                            estimated_duration_actions=1,
-                        )
-                    )
-            else:
-                # Future days: every existing animal requires daily feeding
-                if raw_ctx and "farm" in raw_ctx:
-                    for t in raw_ctx["farm"].iter_tiles():
-                        if getattr(t, "is_animal", False) and getattr(t, "animal", None):
-                            simulated_tasks.append(
-                                ServiceTask(
-                                    task_id=f"feed_animal_{t.x}_{t.y}_d{eval_day}",
-                                    op="FEED",
-                                    pos=(t.x, t.y),
-                                    region="NW" if t.y < 5 else "SW",
-                                    day=eval_day,
-                                    hour_deadline=20,
-                                    tier=CommitmentTier.HARD,
-                                    estimated_duration_actions=1,
-                                )
+                if day_liabs:
+                    for liab in day_liabs:
+                        simulated_tasks.append(
+                            ServiceTask(
+                                task_id=f"feed_animal_{liab.animal_pos[0]}_{liab.animal_pos[1]}_d{eval_day}",
+                                op="FEED",
+                                pos=liab.animal_pos,
+                                region="NW" if liab.animal_pos[1] < 5 else "SW",
+                                day=eval_day,
+                                hour_deadline=liab.hour_deadline,
+                                tier=CommitmentTier.HARD,
+                                estimated_duration_actions=1,
                             )
+                        )
+                else:
+                    self._append_daily_animal_tasks(simulated_tasks, snapshot, raw_ctx, eval_day)
+            else:
+                self._append_daily_animal_tasks(simulated_tasks, snapshot, raw_ctx, eval_day)
 
             # 2. Existing NW/NE in-ground wheat harvests from ledger
             for h in self.ledger.in_ground_wheat:
@@ -510,6 +581,90 @@ class WholeFarmPlanner:
                                 )
         return sw_tasks
 
+    def _project_feasible_sales(
+        self,
+        snapshot: ShadowSnapshot,
+        core_crop_harvests: Dict[str, int],
+        portfolio: Dict[str, Any],
+        raw_ctx: Optional[Dict[str, Any]] = None,
+        horizon_days: Optional[int] = None,
+    ) -> Dict[int, int]:
+        """Project feasible market sales that can realistically clear shed headroom.
+
+        Constraints enforced:
+        1. Stock source: Only goods currently in the shed (or already deposited) can be sold.
+           Backpack items and unharvested future crops cannot be sold from the shed in advance.
+        2. Feed preservation: Wheat reserved for animal feeding (num_animals * days_left) is protected and never sold.
+        3. Market availability: Market must have positive prices and accessible market.
+           If market_prices is explicitly provided and empty, or prices are non-positive, no sales can occur.
+        4. Transport & throughput limits: Sales bounded by worker transport (up to 20 units/day)
+           and market daily order limits (10 units/turn).
+        Returns a dict mapping day -> units sold and removed from shed.
+        """
+        start_day = snapshot.day
+        end_day = 30 if horizon_days is None else min(30, start_day + horizon_days)
+        m_prices = dict(snapshot.market_prices)
+
+        # Verify market price availability
+        if snapshot.market_prices:
+            has_positive_price = any(p > 0 for _, p in snapshot.market_prices)
+            if not has_positive_price:
+                return {}
+        else:
+            market_obj = raw_ctx.get("market") if raw_ctx else None
+            if market_obj and hasattr(market_obj, "prices") and market_obj.prices:
+                m_prices = {str(k): float(v) for k, v in market_obj.prices.items()}
+                if not any(p > 0 for p in m_prices.values()):
+                    return {}
+            else:
+                return {}
+
+        # 1. Livestock feed reservation
+        num_animals = 0
+        if raw_ctx and "farm" in raw_ctx:
+            for t in raw_ctx["farm"].iter_tiles():
+                if getattr(t, "is_animal", False) or (getattr(t, "animal", None) is not None) or getattr(t, "kind", None) in ANIMALS:
+                    num_animals += 1
+        elif snapshot.animals_summary:
+            num_animals = sum(cnt for _, cnt in snapshot.animals_summary)
+        else:
+            num_animals = sum(cnt for k, cnt in snapshot.tiles_summary if k in ANIMALS)
+
+        days_left = max(0, 30 - start_day)
+        protected_feed = num_animals * days_left
+
+        # 2. Count existing sellable goods in shed
+        sellable_shed_stock = 0
+        for item, count in snapshot.shed_inventory:
+            if count <= 0:
+                continue
+            if m_prices.get(item, 0.0) <= 0.0:
+                continue
+            if item == "WHEAT":
+                avail_wheat = max(0, count - protected_feed)
+                sellable_shed_stock += avail_wheat
+            else:
+                sellable_shed_stock += count
+
+        if sellable_shed_stock <= 0:
+            return {}
+
+        # 3. Schedule sales across days up to end_day, subject to daily transport throughput
+        active_workers = max(1, snapshot.active_worker_count)
+        daily_sale_limit = min(20, active_workers * 10)
+
+        planned_sales: Dict[int, int] = {}
+        rem_stock = sellable_shed_stock
+
+        for d in range(start_day, end_day):
+            if rem_stock <= 0:
+                break
+            can_sell = min(rem_stock, daily_sale_limit)
+            planned_sales[d] = can_sell
+            rem_stock -= can_sell
+
+        return planned_sales
+
     def _evaluate_candidate_lifecycle(
         self,
         portfolio: Dict[str, Any],
@@ -542,9 +697,19 @@ class WholeFarmPlanner:
         daily_shed_additions: Dict[int, int] = {d: 0 for d in range(start_day, end_day)}
 
         # 1. Core livestock feed obligations
-        num_animals = sum(cnt for k, cnt in snapshot.tiles_summary if k in ANIMALS)
+        num_animals = 0
+        if raw_ctx and "farm" in raw_ctx:
+            for t in raw_ctx["farm"].iter_tiles():
+                if getattr(t, "is_animal", False) or (getattr(t, "animal", None) is not None) or getattr(t, "kind", None) in ANIMALS:
+                    num_animals += 1
+        elif snapshot.animals_summary:
+            num_animals = sum(cnt for _, cnt in snapshot.animals_summary)
+        else:
+            num_animals = sum(cnt for k, cnt in snapshot.tiles_summary if k in ANIMALS)
+
         for d in range(start_day, end_day):
-            daily_actions[d] += num_animals
+            # Feeding action + feed transport/fetch overhead = 2 actions/day/animal
+            daily_actions[d] += (num_animals * 2)
 
         # 2. Core crop obligations
         if raw_ctx and "farm" in raw_ctx:
@@ -833,16 +998,38 @@ class WholeFarmPlanner:
                 horizon_hours=72,
             )
 
+            # Realistic storage sales projection
+            feasible_sales = self._project_feasible_sales(
+                snapshot, core_crop_harvests, port, raw_ctx=raw_ctx
+            )
+
             # Full economic lifecycle certification through Day 29
             lifecycle_feasible, peak_shed, peak_acts, lc_reason = self._evaluate_candidate_lifecycle(
-                port, snapshot, raw_ctx=raw_ctx
+                port, snapshot, raw_ctx=raw_ctx, planned_sales=feasible_sales
             )
 
             # Displaced core value and incremental labor
             displaced_core_value = 0.0
             if getattr(cand_cert, "displaced_core_tasks", None):
-                displaced_core_value = sum(150.0 for t in cand_cert.displaced_core_tasks if t.op == "HARVEST") + \
-                                       sum(50.0 for t in cand_cert.displaced_core_tasks if t.op != "HARVEST")
+                for t in cand_cert.displaced_core_tasks:
+                    if t.op == "HARVEST":
+                        c_name = "WHEAT"
+                        t_id_lower = t.task_id.lower()
+                        if "carrot" in t_id_lower:
+                            c_name = "CARROT"
+                        elif "melon" in t_id_lower:
+                            c_name = "MELON"
+                        elif "strawberry" in t_id_lower:
+                            c_name = "STRAWBERRY"
+                        elif "tomato" in t_id_lower:
+                            c_name = "TOMATO"
+                        y_mult = 6 if c_name == "WHEAT" else (4 if c_name == "CARROT" else (2 if c_name == "MELON" else 1))
+                        p_val = dict(snapshot.market_prices).get(c_name, 25.0)
+                        displaced_core_value += float(y_mult * p_val)
+                    elif t.op == "FEED":
+                        displaced_core_value += 400.0
+                    else:
+                        displaced_core_value += 35.0
 
             sw_incremental_labor_cost = 0.0
             if not cand_cert.feasible and cand_cert.binding_resource in ("WORKER_HOURS", "LABOR"):
@@ -851,11 +1038,29 @@ class WholeFarmPlanner:
 
             feed_opportunity_cost = 0.0
             if not feed_status["is_feed_safe"]:
-                feed_opportunity_cost = 500.0
+                deficit_units = max(1, feed_status.get("deficit_units", 1) if isinstance(feed_status.get("deficit_units"), (int, float)) else 1)
+                wheat_spot = dict(snapshot.market_prices).get("WHEAT", 25.0)
+                feed_opportunity_cost = float(deficit_units * (wheat_spot * 1.5 + 20.0))
 
             storage_loss_penalty = 0.0
             if not lifecycle_feasible and "storage_overflow" in (lc_reason or ""):
-                storage_loss_penalty = 500.0
+                overflow_units = 10
+                if lc_reason:
+                    parts = lc_reason.split("_")
+                    for idx_p, part in enumerate(parts):
+                        if part == "gt" and idx_p > 0:
+                            try:
+                                peak_val = int(parts[idx_p - 1])
+                                overflow_units = max(1, peak_val - 100)
+                            except (ValueError, IndexError):
+                                pass
+                avg_crop_price = 35.0
+                if port.get("allocations"):
+                    c_names = [a[0] for a in port["allocations"]]
+                    prices = [dict(snapshot.market_prices).get(cn, 35.0) for cn in c_names]
+                    if prices:
+                        avg_crop_price = sum(prices) / len(prices)
+                storage_loss_penalty = float(overflow_units * avg_crop_price)
 
             # Genuine WITH/WITHOUT whole-farm delta:
             delta_fc = (
@@ -1256,6 +1461,25 @@ class WholeFarmPlanner:
             ["SW_TRANCHE_1_WHEAT_STRAWBERRY"] if sw_recommended else []
         )
 
+        # Count observed animals for uncertainty flags
+        num_animals_observed = 0
+        if raw_ctx and "farm" in raw_ctx:
+            for t in raw_ctx["farm"].iter_tiles():
+                if getattr(t, "is_animal", False) or (getattr(t, "animal", None) is not None) or getattr(t, "kind", None) in ANIMALS:
+                    num_animals_observed += 1
+        elif snapshot.animals_summary:
+            num_animals_observed = sum(cnt for _, cnt in snapshot.animals_summary)
+        else:
+            num_animals_observed = sum(cnt for k, cnt in snapshot.tiles_summary if k in ANIMALS)
+
+        uncertainty_flags: List[str] = []
+        if any(dep.get("depression_loss_10_units", 0) > 100 for dep in market_disc):
+            uncertainty_flags.append("PRICE_DEPRESSION_ESTIMATE")
+        if num_animals_observed > 0:
+            uncertainty_flags.append("HERD_FEED_ASSUMPTION")
+        if any(p.get("serviceable") and not p.get("lifecycle_feasible") for p in portfolio_evals):
+            uncertainty_flags.append("STORAGE_FLOW_CONGESTION")
+
         decision = ShadowDecision(
             strategic_state=plan.state.value,
             target_sw_day=plan.expansion_target.target_day,
@@ -1289,6 +1513,8 @@ class WholeFarmPlanner:
             candidates_delayed_count=candidates_delayed_count,
             candidates_downsized_count=candidates_downsized_count,
             candidates_rejected_count=candidates_rejected_count,
+            verified_service_feasible=(cert_result.feasible and lifecycle_feasible_best),
+            economic_uncertainty_flags=uncertainty_flags,
         )
 
         elapsed_ms = (time.perf_counter() - start_t) * 1000.0
