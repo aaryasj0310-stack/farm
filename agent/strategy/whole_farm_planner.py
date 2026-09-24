@@ -23,6 +23,7 @@ try:
     from strategy.cohort_planner import CohortPlanner, CropCohort, OpportunityCostEvaluation
     from strategy.service_certificate import ServiceCertificate, CertificateResult, ServiceTask, CommitmentTier
     from state.observation_parser import needs_water_today, crop_produces_today, turns_until_decay
+    from market.price_math import market_price, total_revenue_estimate
 except ImportError:
     from config import get_sw_forward_architecture_mode, CROPS, ANIMALS
     from farm_plan import FarmPlan, StrategicState, get_farm_plan, reset_farm_plan
@@ -30,6 +31,7 @@ except ImportError:
     from cohort_planner import CohortPlanner, CropCohort, OpportunityCostEvaluation
     from service_certificate import ServiceCertificate, CertificateResult, ServiceTask, CommitmentTier
     from observation_parser import needs_water_today, crop_produces_today, turns_until_decay
+    from price_math import market_price, total_revenue_estimate
 
 
 @dataclass(frozen=True)
@@ -133,6 +135,13 @@ class ShadowDecision:
     sw_land_cost: float = 2000.0
     sw_seed_cost: float = 0.0
     sw_incremental_labor_cost: float = 0.0
+    sw_gross_revenue: float = 0.0
+    core_cannibalization_loss: float = 0.0
+    displaced_core_value: float = 0.0
+    feed_opportunity_cost: float = 0.0
+    storage_loss_penalty: float = 0.0
+    projected_terminal_cash_without: float = 0.0
+    projected_terminal_cash_with: float = 0.0
     candidates_evaluated_count: int = 0
     candidates_admitted_count: int = 0
     candidates_delayed_count: int = 0
@@ -258,6 +267,8 @@ class WholeFarmPlanner:
                         cd = CROPS.get(crop_name, {})
                         planted_day = getattr(t, "planted_day", snapshot.day)
                         is_ongoing = cd.get("ongoing", False)
+                        max_m = cd.get("max_yield_day", 4)
+                        harvest_day = planted_day + max_m
 
                         # --- WATERING FORECAST ---
                         needs_water = False
@@ -280,15 +291,16 @@ class WholeFarmPlanner:
                                             needs_water = ((t.x + t.y + eval_day) % 2 == 0)
                                     else:
                                         age = eval_day - planted_day
-                                        w_start = (cd.get("max_yield_day", 4) + 1) // 2
-                                        w_end = cd.get("max_yield_day", 4)
-                                        if w_start <= age <= w_end:
-                                            needs_water = True
+                                        if eval_day < harvest_day:
+                                            w_start = (max_m + 1) // 2
+                                            if w_start <= age:
+                                                needs_water = True
+                                            else:
+                                                needs_water = ((t.x + t.y + eval_day) % 2 == 0)
                                         else:
-                                            needs_water = ((t.x + t.y + eval_day) % 2 == 0)
+                                            needs_water = False
                         else:
-                            # Future days: do NOT reuse today's watered_today flag!
-                            # Project lifecycle requirements forward
+                            # Future days: project lifecycle forward
                             if is_ongoing:
                                 days_since_first = eval_day - planted_day - cd.get("first_yield_day", 3)
                                 interval = cd.get("interval", 2)
@@ -301,12 +313,14 @@ class WholeFarmPlanner:
                                     needs_water = ((t.x + t.y + eval_day) % 2 == 0)
                             else:
                                 age = eval_day - planted_day
-                                w_start = (cd.get("max_yield_day", 4) + 1) // 2
-                                w_end = cd.get("max_yield_day", 4)
-                                if w_start <= age <= w_end:
-                                    needs_water = True
-                                elif age < w_start:
-                                    needs_water = ((t.x + t.y + eval_day) % 2 == 0)
+                                if eval_day < harvest_day:
+                                    w_start = (max_m + 1) // 2
+                                    if w_start <= age:
+                                        needs_water = True
+                                    else:
+                                        needs_water = ((t.x + t.y + eval_day) % 2 == 0)
+                                else:
+                                    needs_water = False
 
                         if needs_water:
                             simulated_tasks.append(
@@ -316,7 +330,7 @@ class WholeFarmPlanner:
                                     pos=(t.x, t.y),
                                     region="NW" if t.x < 5 else "NE",
                                     day=eval_day,
-                                    hour_deadline=23 if is_survival else 18,
+                                    hour_deadline=23 if is_survival else (18 + ((t.x + t.y) % 5)),
                                     tier=CommitmentTier.HARD if is_survival else CommitmentTier.STRATEGIC,
                                     estimated_duration_actions=1,
                                 )
@@ -336,17 +350,15 @@ class WholeFarmPlanner:
                                         pos=(t.x, t.y),
                                         region="NW" if t.x < 5 else "NE",
                                         day=eval_day,
-                                        hour_deadline=20,
+                                        hour_deadline=18 + ((t.x + t.y) % 5),
                                         tier=CommitmentTier.HARD,
                                         estimated_duration_actions=1,
                                     )
                                 )
                         else:
-                            # One-time crop
+                            # One-time crop: harvested only ONCE upon reaching maturity day
                             age = eval_day - planted_day
-                            max_m = cd.get("max_yield_day", 4)
-                            # Imminent decay or max maturity reached
-                            if age >= max_m:
+                            if (d_offset == 0 and age >= max_m) or (eval_day == harvest_day):
                                 in_ledger = any(h.tile_pos == (t.x, t.y) and h.earliest_harvest_day == eval_day for h in self.ledger.in_ground_wheat)
                                 if not in_ledger:
                                     simulated_tasks.append(
@@ -356,7 +368,7 @@ class WholeFarmPlanner:
                                             pos=(t.x, t.y),
                                             region="NW" if t.x < 5 else "NE",
                                             day=eval_day,
-                                            hour_deadline=20,
+                                            hour_deadline=18 + ((t.x + t.y) % 5),
                                             tier=CommitmentTier.HARD,
                                             estimated_duration_actions=1,
                                         )
@@ -503,11 +515,18 @@ class WholeFarmPlanner:
         portfolio: Dict[str, Any],
         snapshot: ShadowSnapshot,
         horizon_days: Optional[int] = None,
+        raw_ctx: Optional[Dict[str, Any]] = None,
+        planned_sales: Optional[Dict[int, int]] = None,
     ) -> Tuple[bool, int, int, Optional[str]]:
         """Validate downstream actions (PLANT, WATER, HARVEST, TRANSPORT, PLACE) through Day 29.
 
         Tracks labor constraints (daily worker hours envelope = active_workers * 24)
         and storage capacity envelope (shed inventory <= 100 units).
+        Combines core obligations (livestock daily feeding + core crop watering and harvests)
+        and proposed SW tasks.
+        Non-repeated harvests for one-time crops.
+        Defensible harvest quantities: WHEAT (6), MELON (2), CARROT (4), STRAWBERRY (1), TOMATO (1).
+        Storage as a flow with feasible market sales clearing headroom.
         Returns (feasible, peak_shed, peak_daily_actions, failure_reason).
         """
         start_day = snapshot.day
@@ -522,6 +541,65 @@ class WholeFarmPlanner:
         daily_actions: Dict[int, int] = {d: 0 for d in range(start_day, end_day)}
         daily_shed_additions: Dict[int, int] = {d: 0 for d in range(start_day, end_day)}
 
+        # 1. Core livestock feed obligations
+        num_animals = sum(cnt for k, cnt in snapshot.tiles_summary if k in ANIMALS)
+        for d in range(start_day, end_day):
+            daily_actions[d] += num_animals
+
+        # 2. Core crop obligations
+        if raw_ctx and "farm" in raw_ctx:
+            farm_obj = raw_ctx["farm"]
+            for t in farm_obj.iter_tiles():
+                is_sw_tile = (t.x < 5 and t.y >= 5)
+                if is_sw_tile or not getattr(t, "is_plant", False):
+                    continue
+                crop_name = getattr(t, "crop", None)
+                if not crop_name:
+                    continue
+                cd = CROPS.get(crop_name, {})
+                planted_day = getattr(t, "planted_day", snapshot.day)
+                is_ongoing = cd.get("ongoing", False)
+                first_yield = cd.get("first_yield_day", 2)
+                interval = cd.get("interval", 2)
+                max_yield_count = cd.get("max_yield", 6)
+                max_yield_day = cd.get("max_yield_day", 4)
+
+                yield_per_harvest = 1
+                if crop_name == "WHEAT":
+                    yield_per_harvest = 6
+                elif crop_name == "CARROT":
+                    yield_per_harvest = 4
+                elif crop_name == "MELON":
+                    yield_per_harvest = 2
+
+                if is_ongoing:
+                    for d in range(start_day, end_day):
+                        age = d - planted_day
+                        days_since_first = age - first_yield
+                        if days_since_first >= 0 and (days_since_first % interval == 0) and ((days_since_first // interval) < max_yield_count):
+                            daily_actions[d] += 2
+                            daily_shed_additions[d] += yield_per_harvest
+                        else:
+                            if (t.x + t.y + d) % 2 == 0:
+                                daily_actions[d] += 1
+                else:
+                    harvest_day = planted_day + max_yield_day
+                    if start_day <= harvest_day < end_day:
+                        daily_actions[harvest_day] += 2
+                        daily_shed_additions[harvest_day] += yield_per_harvest
+                    w_start = (max_yield_day + 1) // 2
+                    for d in range(start_day, min(end_day, harvest_day)):
+                        age = d - planted_day
+                        if age >= w_start:
+                            daily_actions[d] += 1
+        else:
+            planted_count = sum(cnt for k, cnt in snapshot.tiles_summary if k in ("CARROT", "MELON", "WHEAT", "STRAWBERRY", "TOMATO", "PLANT"))
+            if planted_count > 0:
+                base_core_actions = min(12, max(2, planted_count // 3))
+                for d in range(start_day, end_day):
+                    daily_actions[d] += base_core_actions
+
+        # 3. Prospective SW Candidate obligations
         for crop_name, n_units, tiles in portfolio.get("allocations", []):
             cd = CROPS.get(crop_name, {})
             is_ongoing = cd.get("ongoing", False)
@@ -529,31 +607,40 @@ class WholeFarmPlanner:
             interval = cd.get("interval", 2)
             max_yield_count = cd.get("max_yield", 6) if is_ongoing else 1
             max_yield_day = cd.get("max_yield_day", 4)
-
             n_tiles = len(tiles)
-            daily_actions[start_day] = daily_actions.get(start_day, 0) + (n_tiles * 2)
+
+            yield_per_tile = 1
+            if crop_name == "WHEAT":
+                yield_per_tile = 6
+            elif crop_name == "CARROT":
+                yield_per_tile = 4
+            elif crop_name == "MELON":
+                yield_per_tile = 2
+
+            # Planting day
+            daily_actions[start_day] += (n_tiles * 2)
 
             if is_ongoing:
                 for d in range(start_day + 1, end_day):
                     age = d - start_day
                     days_since_first = age - first_yield
                     if days_since_first >= 0 and (days_since_first % interval == 0) and ((days_since_first // interval) < max_yield_count):
-                        daily_actions[d] = daily_actions.get(d, 0) + (n_tiles * 2)
-                        daily_shed_additions[d] = daily_shed_additions.get(d, 0) + n_tiles
+                        daily_actions[d] += (n_tiles * 2)
+                        daily_shed_additions[d] += (n_tiles * yield_per_tile)
                     else:
                         if age % 2 == 1:
-                            daily_actions[d] = daily_actions.get(d, 0) + n_tiles
+                            daily_actions[d] += n_tiles
             else:
                 harvest_day = start_day + max_yield_day
                 for d in range(start_day + 1, end_day):
                     age = d - start_day
                     if d == harvest_day:
-                        daily_actions[d] = daily_actions.get(d, 0) + (n_tiles * 2)
-                        daily_shed_additions[d] = daily_shed_additions.get(d, 0) + n_tiles
+                        daily_actions[d] += (n_tiles * 2)
+                        daily_shed_additions[d] += (n_tiles * yield_per_tile)
                     elif d < harvest_day:
                         w_start = (max_yield_day + 1) // 2
                         if age >= w_start:
-                            daily_actions[d] = daily_actions.get(d, 0) + n_tiles
+                            daily_actions[d] += n_tiles
 
         simulated_shed = current_shed_count
         for d in range(start_day, end_day):
@@ -563,7 +650,12 @@ class WholeFarmPlanner:
             if acts > daily_action_capacity:
                 return False, peak_shed, peak_daily_actions, f"labor_exceeded_day_{d}_{acts}_gt_{daily_action_capacity}"
 
-            simulated_shed += daily_shed_additions.get(d, 0)
+            # Feasible planned sales clearing headroom before/during harvest
+            if planned_sales and d in planned_sales:
+                simulated_shed = max(0, simulated_shed - planned_sales[d])
+
+            additions = daily_shed_additions.get(d, 0)
+            simulated_shed += additions
             if simulated_shed > peak_shed:
                 peak_shed = simulated_shed
             if simulated_shed > 100:
@@ -582,18 +674,18 @@ class WholeFarmPlanner:
         if raw_ctx is not None:
             plan.update_from_observation(raw_ctx)
             self.ledger.update_from_observation(raw_ctx)
-        else:
-            self.ledger.day = snapshot.day
-            self.ledger.hour = snapshot.hour
-            self.ledger.cash_on_hand = snapshot.money
-            plan.day = snapshot.day
-            plan.hour = snapshot.hour
-            if plan.state == StrategicState.SW_NOT_COMMITTED and snapshot.day >= 4:
-                plan.state = StrategicState.SW_PREPARING
-            if plan.state == StrategicState.SW_PREPARING and (
-                snapshot.day >= plan.expansion_target.earliest_feasible_day or snapshot.money >= 2200
-            ):
-                plan.state = StrategicState.SW_READY
+
+        self.ledger.day = snapshot.day
+        self.ledger.hour = snapshot.hour
+        self.ledger.cash_on_hand = snapshot.money
+        plan.day = snapshot.day
+        plan.hour = snapshot.hour
+        if plan.state == StrategicState.SW_NOT_COMMITTED and snapshot.day >= 4:
+            plan.state = StrategicState.SW_PREPARING
+        if plan.state == StrategicState.SW_PREPARING and (
+            snapshot.day >= plan.expansion_target.earliest_feasible_day or snapshot.money >= 2200
+        ):
+            plan.state = StrategicState.SW_READY
 
         is_event_turn = (
             snapshot.hour == 0 or
@@ -623,6 +715,60 @@ class WholeFarmPlanner:
             horizon_hours=72,
         )
 
+        # Estimate Core baseline harvest units and revenue WITHOUT SW
+        core_crop_harvests: Dict[str, int] = {}
+        if raw_ctx and "farm" in raw_ctx:
+            farm_obj = raw_ctx["farm"]
+            for t in farm_obj.iter_tiles():
+                is_sw_tile = (t.x < 5 and t.y >= 5)
+                if is_sw_tile or not getattr(t, "is_plant", False):
+                    continue
+                crop_name = getattr(t, "crop", None)
+                if not crop_name:
+                    continue
+                cd = CROPS.get(crop_name, {})
+                planted_day = getattr(t, "planted_day", snapshot.day)
+                is_ongoing = cd.get("ongoing", False)
+                first_yield = cd.get("first_yield_day", 2)
+                interval = cd.get("interval", 2)
+                max_yield_count = cd.get("max_yield", 6)
+                max_yield_day = cd.get("max_yield_day", 4)
+
+                yield_per_harvest = 1
+                if crop_name == "WHEAT":
+                    yield_per_harvest = 6
+                elif crop_name == "CARROT":
+                    yield_per_harvest = 4
+                elif crop_name == "MELON":
+                    yield_per_harvest = 2
+
+                if is_ongoing:
+                    for d in range(snapshot.day, 30):
+                        age = d - planted_day
+                        days_since_first = age - first_yield
+                        if days_since_first >= 0 and (days_since_first % interval == 0) and ((days_since_first // interval) < max_yield_count):
+                            core_crop_harvests[crop_name] = core_crop_harvests.get(crop_name, 0) + yield_per_harvest
+                else:
+                    harvest_day = planted_day + max_yield_day
+                    if snapshot.day <= harvest_day < 30:
+                        core_crop_harvests[crop_name] = core_crop_harvests.get(crop_name, 0) + yield_per_harvest
+        else:
+            for crop_name in ("CARROT", "MELON", "WHEAT", "STRAWBERRY", "TOMATO"):
+                cnt = dict(snapshot.tiles_summary).get(crop_name, 0)
+                if cnt > 0:
+                    y_mult = 6 if crop_name == "WHEAT" else (4 if crop_name == "CARROT" else (2 if crop_name == "MELON" else 1))
+                    core_crop_harvests[crop_name] = cnt * y_mult
+
+        core_gross_revenue_without = 0.0
+        for c_name, c_units in core_crop_harvests.items():
+            if c_units > 0:
+                inv = market_inv_dict.get(c_name, 0)
+                core_gross_revenue_without += float(total_revenue_estimate(c_name, inv, c_units))
+
+        days_left = max(0, 30 - snapshot.day)
+        core_daily_wages_without = snapshot.active_worker_count * 8 * days_left
+        projected_terminal_cash_without = snapshot.money + core_gross_revenue_without - core_daily_wages_without
+
         portfolio_evals = []
         is_sw_unlocked = ("SW" in snapshot.unlocked_quadrants or 3 in snapshot.unlocked_quadrants)
         sw_land_cost = 0.0 if is_sw_unlocked else 2000.0
@@ -638,8 +784,10 @@ class WholeFarmPlanner:
             total_seed_cost = 0.0
             cohort_names = []
             sim_market_inv = dict(market_inv_dict)
+            sw_gross_revenue = 0.0
+            sw_units_by_crop: Dict[str, int] = {}
 
-            # Sequential Pricing Evaluation (existing_supply=0, sim_market_inv updated per cohort)
+            # Sequential Pricing Evaluation
             for crop_name, n_units, tiles in port["allocations"]:
                 c_cohort = self.cohort_planner.build_candidate_crop_cohort(
                     cohort_id=f"shadow_{crop_name.lower()}_{snapshot.day}",
@@ -658,11 +806,21 @@ class WholeFarmPlanner:
                 )
                 total_crop_profit += eval_res.delta_final_cash
                 total_seed_cost += c_cohort.seed_cost
+                sw_gross_revenue += eval_res.expected_gross_revenue
+                sw_units_by_crop[crop_name] = sw_units_by_crop.get(crop_name, 0) + c_cohort.market_supply_units
                 cohort_names.append(c_cohort.cohort_id)
                 sim_market_inv[crop_name] = sim_market_inv.get(crop_name, 0) + c_cohort.market_supply_units
 
-            # Genuine WITH/WITHOUT whole-farm delta: Delta FC = Net Crop Margin - SW Land Cost
-            delta_fc = total_crop_profit - sw_land_cost
+            # Core cannibalization loss from price depression
+            core_cannibalization_loss = 0.0
+            for c_name, c_units in core_crop_harvests.items():
+                sw_u = sw_units_by_crop.get(c_name, 0)
+                if c_units > 0 and sw_u > 0:
+                    m_inv = market_inv_dict.get(c_name, 0)
+                    rev_without_sw = float(total_revenue_estimate(c_name, m_inv, c_units))
+                    rev_with_sw = float(total_revenue_estimate(c_name, m_inv + sw_u, c_units))
+                    dep_loss = max(0.0, rev_without_sw - rev_with_sw)
+                    core_cannibalization_loss += dep_loss
 
             # Serviceability Certification for Candidate Portfolio BEFORE Recommending
             cand_sw_tasks = self._build_candidate_sw_tasks(port, snapshot, horizon_days=3)
@@ -677,8 +835,41 @@ class WholeFarmPlanner:
 
             # Full economic lifecycle certification through Day 29
             lifecycle_feasible, peak_shed, peak_acts, lc_reason = self._evaluate_candidate_lifecycle(
-                port, snapshot
+                port, snapshot, raw_ctx=raw_ctx
             )
+
+            # Displaced core value and incremental labor
+            displaced_core_value = 0.0
+            if getattr(cand_cert, "displaced_core_tasks", None):
+                displaced_core_value = sum(150.0 for t in cand_cert.displaced_core_tasks if t.op == "HARVEST") + \
+                                       sum(50.0 for t in cand_cert.displaced_core_tasks if t.op != "HARVEST")
+
+            sw_incremental_labor_cost = 0.0
+            if not cand_cert.feasible and cand_cert.binding_resource in ("WORKER_HOURS", "LABOR"):
+                needed_hires = max(0, (-cand_cert.minimum_slack + 23) // 24)
+                sw_incremental_labor_cost = needed_hires * (100.0 + 8.0 * days_left)
+
+            feed_opportunity_cost = 0.0
+            if not feed_status["is_feed_safe"]:
+                feed_opportunity_cost = 500.0
+
+            storage_loss_penalty = 0.0
+            if not lifecycle_feasible and "storage_overflow" in (lc_reason or ""):
+                storage_loss_penalty = 500.0
+
+            # Genuine WITH/WITHOUT whole-farm delta:
+            delta_fc = (
+                sw_gross_revenue
+                - total_seed_cost
+                - sw_land_cost
+                - core_cannibalization_loss
+                - displaced_core_value
+                - sw_incremental_labor_cost
+                - feed_opportunity_cost
+                - storage_loss_penalty
+            )
+
+            projected_terminal_cash_with = projected_terminal_cash_without + delta_fc
 
             is_serviceable = cand_cert.feasible and lifecycle_feasible
             is_admitted = is_serviceable and (delta_fc > 0)
@@ -700,7 +891,14 @@ class WholeFarmPlanner:
                 "portfolio": port,
                 "total_crop_profit": total_crop_profit,
                 "total_seed_cost": total_seed_cost,
+                "sw_gross_revenue": sw_gross_revenue,
+                "core_cannibalization_loss": core_cannibalization_loss,
+                "displaced_core_value": displaced_core_value,
+                "sw_incremental_labor_cost": sw_incremental_labor_cost,
+                "feed_opportunity_cost": feed_opportunity_cost,
+                "storage_loss_penalty": storage_loss_penalty,
                 "delta_fc": delta_fc,
+                "projected_terminal_cash_with": projected_terminal_cash_with,
                 "cohort_names": cohort_names,
                 "cert": cand_cert,
                 "serviceable": is_serviceable,
@@ -719,6 +917,13 @@ class WholeFarmPlanner:
             best_delta = best_entry["delta_fc"]
             cert_result = best_entry["cert"]
             best_seed_cost = best_entry["total_seed_cost"]
+            best_sw_gross = best_entry["sw_gross_revenue"]
+            best_cannibalization = best_entry["core_cannibalization_loss"]
+            best_displaced_val = best_entry["displaced_core_value"]
+            best_inc_labor = best_entry["sw_incremental_labor_cost"]
+            best_feed_opp = best_entry["feed_opportunity_cost"]
+            best_storage_penalty = best_entry["storage_loss_penalty"]
+            best_terminal_with = best_entry["projected_terminal_cash_with"]
             lifecycle_feasible_best = best_entry["lifecycle_feasible"]
             full_peak_shed = best_entry["peak_shed"]
             full_peak_acts = best_entry["peak_daily_actions"]
@@ -733,6 +938,13 @@ class WholeFarmPlanner:
             best_delta = best_entry["delta_fc"] if best_entry else -sw_land_cost
             cert_result = best_entry["cert"] if (best_entry and not best_entry["serviceable"]) else core_cert
             best_seed_cost = best_entry["total_seed_cost"] if best_entry else 0.0
+            best_sw_gross = best_entry["sw_gross_revenue"] if best_entry else 0.0
+            best_cannibalization = best_entry["core_cannibalization_loss"] if best_entry else 0.0
+            best_displaced_val = best_entry["displaced_core_value"] if best_entry else 0.0
+            best_inc_labor = best_entry["sw_incremental_labor_cost"] if best_entry else 0.0
+            best_feed_opp = best_entry["feed_opportunity_cost"] if best_entry else 0.0
+            best_storage_penalty = best_entry["storage_loss_penalty"] if best_entry else 0.0
+            best_terminal_with = best_entry["projected_terminal_cash_with"] if best_entry else (projected_terminal_cash_without - sw_land_cost)
             lifecycle_feasible_best = best_entry["lifecycle_feasible"] if best_entry else True
             full_peak_shed = best_entry["peak_shed"] if best_entry else storage_status.get("peak_usage", 0)
             full_peak_acts = best_entry["peak_daily_actions"] if best_entry else 0
@@ -1064,7 +1276,14 @@ class WholeFarmPlanner:
             portfolio_delta_fc=best_delta,
             sw_land_cost=sw_land_cost,
             sw_seed_cost=best_seed_cost,
-            sw_incremental_labor_cost=0.0,
+            sw_incremental_labor_cost=best_inc_labor,
+            sw_gross_revenue=best_sw_gross,
+            core_cannibalization_loss=best_cannibalization,
+            displaced_core_value=best_displaced_val,
+            feed_opportunity_cost=best_feed_opp,
+            storage_loss_penalty=best_storage_penalty,
+            projected_terminal_cash_without=projected_terminal_cash_without,
+            projected_terminal_cash_with=best_terminal_with,
             candidates_evaluated_count=candidates_evaluated_count,
             candidates_admitted_count=candidates_admitted_count,
             candidates_delayed_count=candidates_delayed_count,

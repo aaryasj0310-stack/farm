@@ -74,6 +74,9 @@ class CertificateResult:
     failing_tasks: List[ServiceTask] = field(default_factory=list)
     repair_options: List[RepairOption] = field(default_factory=list)
     horizon_hours: int = 72
+    hard_tasks_feasible: bool = True
+    displaced_core_tasks: List[ServiceTask] = field(default_factory=list)
+    uncompleted_sw_tasks: List[ServiceTask] = field(default_factory=list)
 
 
 class ServiceCertificate:
@@ -111,7 +114,9 @@ class ServiceCertificate:
         binding_day = current_day
         binding_hour = current_hour
         binding_res = "WORKER_HOURS"
-        failing_tasks = []
+        failing_tasks: List[ServiceTask] = []
+        displaced_core_tasks: List[ServiceTask] = []
+        uncompleted_sw_tasks: List[ServiceTask] = []
 
         # 1. Verify physical causal dependencies, missing prereqs, cycles, and earliest start constraints
         # Missing prerequisite check
@@ -281,13 +286,26 @@ class ServiceCertificate:
                     binding_res = "WORKER_HOURS"
 
             if slack < 0:
-                # Capacity deficit! Hard tasks fail
-                for t in due_tasks:
-                    if t.tier == CommitmentTier.HARD:
+                # Capacity deficit: prioritize HARD core survival first, then STRATEGIC, then DISCRETIONARY
+                rem_budget = hourly_action_budget
+                tier_prio = {CommitmentTier.HARD: 0, CommitmentTier.STRATEGIC: 1, CommitmentTier.DISCRETIONARY: 2}
+                ordered_due = sorted(due_tasks, key=lambda t: (tier_prio.get(t.tier, 1), 0 if t.region != "SW" else 1))
+                for t in ordered_due:
+                    cost = min(1, t.estimated_duration_actions) if day == current_day else t.estimated_duration_actions
+                    if rem_budget >= cost:
+                        rem_budget -= cost
+                    else:
                         if t not in failing_tasks:
                             failing_tasks.append(t)
+                        if t.tier == CommitmentTier.HARD or t.region in ("NW", "NE"):
+                            if t not in displaced_core_tasks:
+                                displaced_core_tasks.append(t)
+                        else:
+                            if t not in uncompleted_sw_tasks:
+                                uncompleted_sw_tasks.append(t)
 
         feasible = (min_slack >= 0) and (len(failing_tasks) == 0)
+        hard_feasible = len([t for t in failing_tasks if t.tier == CommitmentTier.HARD]) == 0
 
         # Generate structured repair options if infeasible or tight
         repairs = []
@@ -304,6 +322,9 @@ class ServiceCertificate:
             failing_tasks=failing_tasks,
             repair_options=repairs,
             horizon_hours=horizon_hours,
+            hard_tasks_feasible=hard_feasible,
+            displaced_core_tasks=displaced_core_tasks,
+            uncompleted_sw_tasks=uncompleted_sw_tasks,
         )
 
     def _generate_structured_repairs(

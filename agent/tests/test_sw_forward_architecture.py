@@ -1747,5 +1747,227 @@ def test_livestock_housing_capacity_constraint():
     assert "insufficient_housing_PASTURE" in l_dis[0]["metrics"]["reasons"]
 
 
+def test_paired_sw_oversized_rejection_and_compact_admission_same_state():
+    """Verify paired counterfactual test on the EXACT SAME farm state.
+
+    Baseline: 5 workers, Day 5 Hour 12, locked SW, $2,600 cash, 4 core carrots in NW.
+    1. WITHOUT SW: core only -> FEASIBLE, delta_fc = $0
+    2. WITH oversized SW (24 tiles): INFEASIBLE (binding WORKER_HOURS), rejected/downsized
+    3. WITH compact commercial SW (8 tiles: 4 Strawberry + 4 Melon): FEASIBLE, delta_fc > 0, PURCHASE recommended
+    """
+    from strategy.farm_plan import reset_farm_plan
+    reset_farm_plan()
+    wfp = WholeFarmPlanner()
+    sw_tiles = [(x, y) for y in range(5, 10) for x in range(0, 5) if (x, y) != (4, 5)]
+
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=12,
+        step=132,
+        money=2600.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 40),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 80.0), ("MELON", 150.0), ("WHEAT", 20.0)),
+        market_inventories=(("STRAWBERRY", 1000), ("MELON", 1000), ("WHEAT", 1000)),
+        baseline_intents=(("buy_land", True),),
+        active_worker_count=5,
+        tiles_summary=(("EMPTY", 96), ("CARROT", 4)),
+    )
+
+    core_tiles = [
+        MockTile(x=1, y=i, kind="CARROT", is_plant=True, crop="CARROT", planted_day=2, watered_today=False)
+        for i in range(4)
+    ]
+    raw_ctx = {"farm": MockFarm(tiles=core_tiles)}
+
+    # 1. WITHOUT SW: Core-only workload
+    core_tasks = wfp._build_core_tasks(snapshot, raw_ctx=raw_ctx, horizon_days=3)
+    core_cert = wfp.certificate_evaluator.evaluate_multi_day(
+        current_day=5, current_hour=12, worker_count=5, tasks=core_tasks, horizon_hours=72
+    )
+    assert core_cert.feasible is True, "Core-only workload must be feasible"
+    assert core_cert.minimum_slack >= 0
+
+    # 2. WITH Oversized SW (24 tiles: balanced_commercial)
+    portfolios = wfp.cohort_planner.generate_candidate_portfolios(5, sw_tiles)
+    oversized_port = [p for p in portfolios if p.get("tiles_used", 0) == 24][0]
+    oversized_tasks = list(core_tasks) + wfp._build_candidate_sw_tasks(oversized_port, snapshot, horizon_days=3)
+    oversized_cert = wfp.certificate_evaluator.evaluate_multi_day(
+        current_day=5, current_hour=12, worker_count=5, tasks=oversized_tasks, horizon_hours=72
+    )
+    assert oversized_cert.feasible is False, "Oversized SW portfolio must fail labor certification"
+    assert oversized_cert.binding_resource in ("WORKER_HOURS", "LABOR")
+
+    # 3. WITH Compact Commercial SW (8 tiles: 4 Strawberry + 4 Melon)
+    compact_port = [p for p in portfolios if p["name"] == "compact_commercial"][0]
+    compact_tasks = list(core_tasks) + wfp._build_candidate_sw_tasks(compact_port, snapshot, horizon_days=3)
+    compact_cert = wfp.certificate_evaluator.evaluate_multi_day(
+        current_day=5, current_hour=12, worker_count=5, tasks=compact_tasks, horizon_hours=72
+    )
+    assert compact_cert.feasible is True, "Compact commercial SW portfolio must pass labor certification"
+    assert compact_cert.minimum_slack >= 0
+
+    # 4. Shadow Whole-Farm Evaluation on the same state
+    res = wfp.evaluate(snapshot, raw_ctx=raw_ctx)
+    dec = res.decision
+
+    assert dec.core_only_cert_feasible is True
+    assert dec.sw_purchase_recommended is True
+    assert dec.sw_recommendation_status == "PURCHASE"
+    assert dec.selected_portfolio is not None
+    assert dec.selected_portfolio["name"] in ("compact_commercial", "tranche_1_starter", "compact_tranche")
+    assert dec.portfolio_delta_fc > 0.0
+    assert dec.candidates_admitted_count >= 1
+    assert dec.candidates_downsized_count >= 1 or dec.candidates_delayed_count >= 1
+
+    # Print diagnostic measurement table
+    print("\n=== PAIRED COUNTERFACTUAL MEASUREMENT TABLE (SAME FARM STATE) ===")
+    print(f"{'Option':<22} | {'Tiles':<5} | {'Cert Feasible':<13} | {'Min Slack':<9} | {'Binding Resource':<16} | {'Delta FC':<10} | {'Status'}")
+    print("-" * 95)
+    print(f"{'WITHOUT SW (Core Only)':<22} | {'0':<5} | {str(core_cert.feasible):<13} | {core_cert.minimum_slack:<9} | {str(core_cert.binding_resource):<16} | {'$0.0':<10} | {'FEASIBLE'}")
+    print(f"{oversized_port['name']:<22} | {oversized_port['tiles_used']:<5} | {str(oversized_cert.feasible):<13} | {oversized_cert.minimum_slack:<9} | {str(oversized_cert.binding_resource):<16} | {'N/A':<10} | {'REJECT/DOWNSIZE'}")
+    print(f"{compact_port['name']:<22} | {compact_port['tiles_used']:<5} | {str(compact_cert.feasible):<13} | {compact_cert.minimum_slack:<9} | {str(compact_cert.binding_resource):<16} | {f'${dec.portfolio_delta_fc:.1f}':<10} | {'PURCHASE'}")
+    print("=" * 95)
+
+
+def test_positive_crop_margin_negative_incremental_cash_after_land_cost():
+    """Verify that candidate with positive crop margin but negative incremental cash after $2,000 land cost is rejected."""
+    wfp = WholeFarmPlanner()
+    snapshot = ShadowSnapshot(
+        day=26,
+        hour=0,
+        step=624,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 80.0), ("WHEAT", 20.0)),
+        market_inventories=(("STRAWBERRY", 10000), ("WHEAT", 10000)),
+        baseline_intents=(),
+        active_worker_count=6,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    res = wfp.evaluate(snapshot)
+    dec = res.decision
+    assert dec.sw_purchase_recommended is False
+    assert dec.portfolio_delta_fc <= 0.0
+    assert dec.sw_recommendation_status == "REJECT"
+
+
+def test_combined_core_plus_sw_labor_deadline_failure_in_later_lifecycle():
+    """Verify that combined core+SW workload exceeding capacity in later lifecycle fails certification."""
+    cert = ServiceCertificate()
+    heavy_tasks = [
+        ServiceTask("core_harvest_d7", "HARVEST", (1, 1), "NW", day=7, hour_deadline=10, tier=CommitmentTier.HARD, estimated_duration_actions=15),
+        ServiceTask("sw_harvest_d7", "HARVEST", (2, 7), "SW", day=7, hour_deadline=10, tier=CommitmentTier.STRATEGIC, estimated_duration_actions=15),
+    ]
+    res = cert.evaluate_multi_day(current_day=7, current_hour=0, worker_count=2, tasks=heavy_tasks, horizon_hours=24)
+    assert res.feasible is False
+    assert res.binding_day == 7
+    assert res.binding_resource in ("WORKER_HOURS", "LABOR")
+
+
+def test_multi_unit_wheat_harvest_storage_overflow():
+    """Verify that multi-unit harvest (Wheat 6 units/tile) triggers storage overflow when shed space is insufficient."""
+    wfp = WholeFarmPlanner()
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 50),),  # 50 in shed
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(),
+        active_worker_count=4,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    # 10 tiles of wheat mature on Day 9: 10 * 6 = 60 units. 50 + 60 = 110 > 100!
+    port = {
+        "name": "wheat_10_tiles",
+        "tiles_used": 10,
+        "allocations": [("WHEAT", 10, [(x, 7) for x in range(10)])],
+    }
+
+    feasible, peak_shed, peak_acts, reason = wfp._evaluate_candidate_lifecycle(port, snapshot)
+    assert feasible is False
+    assert peak_shed >= 110
+    assert "storage_overflow" in reason
+
+
+def test_feasible_sale_creates_headroom_preventing_overflow():
+    """Verify that a planned market sale before harvest creates headroom and prevents false overflow."""
+    wfp = WholeFarmPlanner()
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 50),),  # 50 in shed
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(),
+        active_worker_count=4,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    port = {
+        "name": "wheat_10_tiles",
+        "tiles_used": 10,
+        "allocations": [("WHEAT", 10, [(x, 7) for x in range(10)])],
+    }
+
+    # Planned sale of 25 units on Day 8 clears shed before Day 9 harvest: 50 - 25 + 60 = 85 <= 100
+    feasible, peak_shed, peak_acts, reason = wfp._evaluate_candidate_lifecycle(
+        port, snapshot, planned_sales={8: 25}
+    )
+    assert feasible is True
+    assert peak_shed <= 100
+    assert reason is None
+
+
+def test_one_time_crop_harvested_only_once_in_lifecycle():
+    """Verify that a one-time crop (e.g. Wheat) is harvested only once and does not duplicate harvests."""
+    wfp = WholeFarmPlanner()
+    snapshot = ShadowSnapshot(
+        day=4,
+        hour=0,
+        step=96,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(),
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(),
+        active_worker_count=4,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    # 4 tiles of wheat: matures on Day 8 (plant Day 4 + 4 days maturity), yield = 4 * 6 = 24 units
+    port = {
+        "name": "wheat_4_tiles",
+        "tiles_used": 4,
+        "allocations": [("WHEAT", 4, [(x, 7) for x in range(4)])],
+    }
+
+    feasible, peak_shed, peak_acts, reason = wfp._evaluate_candidate_lifecycle(port, snapshot)
+    assert feasible is True
+    # Shed should peak at exactly 24 units, NOT 24 + 24 on Day 9, 10, etc.
+    assert peak_shed == 24
+
+
 
 

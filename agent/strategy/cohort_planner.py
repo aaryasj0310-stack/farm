@@ -315,7 +315,8 @@ class CohortPlanner:
                     ("WHEAT", 10, available_tiles[:10]),
                     ("STRAWBERRY", 10, available_tiles[10:20]),
                     ("MELON", min(4, n_tiles - 20), available_tiles[20:24]),
-                ]
+                ],
+                "tiles_used": min(24, n_tiles),
             })
 
         # Candidate 2: Feed & High-Margin Strawberry (14 Wheat + 10 Strawberry)
@@ -325,26 +326,41 @@ class CohortPlanner:
                 "allocations": [
                     ("WHEAT", min(14, n_tiles // 2), available_tiles[:min(14, n_tiles // 2)]),
                     ("STRAWBERRY", min(10, n_tiles - min(14, n_tiles // 2)), available_tiles[min(14, n_tiles // 2):]),
-                ]
+                ],
+                "tiles_used": min(24, n_tiles),
             })
 
-        # Candidate 3: Rapid Tranche 1 (First 8 tiles: 4 Wheat + 4 Strawberry)
+        # Candidate 3: Compact Commercial Tranche (8 tiles: 4 Strawberry + 4 Melon)
+        # Highly productive compact tranche with positive whole-farm Delta FC and reduced labor load
+        if n_tiles >= 8:
+            portfolios.append({
+                "name": "compact_commercial",
+                "allocations": [
+                    ("STRAWBERRY", 4, available_tiles[:4]),
+                    ("MELON", 4, available_tiles[4:8]),
+                ],
+                "tiles_used": 8,
+            })
+
+        # Candidate 4: Rapid Tranche 1 (First 8 tiles: 4 Wheat + 4 Strawberry)
         if n_tiles >= 8:
             portfolios.append({
                 "name": "tranche_1_starter",
                 "allocations": [
                     ("WHEAT", 4, available_tiles[:4]),
                     ("STRAWBERRY", 4, available_tiles[4:8]),
-                ]
+                ],
+                "tiles_used": 8,
             })
 
-        # Candidate 4: Compact Tranche (4 tiles: 2 Wheat + 2 Strawberry)
+        # Candidate 5: Compact Tranche (4 tiles: 2 Wheat + 2 Strawberry)
         portfolios.append({
             "name": "compact_tranche",
             "allocations": [
                 ("WHEAT", 2, available_tiles[:2]),
                 ("STRAWBERRY", 2, available_tiles[2:4]),
-            ]
+            ],
+            "tiles_used": 4,
         })
 
         return portfolios

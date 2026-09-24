@@ -149,6 +149,8 @@ def main():
         assert len(res_off["actions"]) == len(res_shad["actions"]) == res_off["step_count"], f"Seed {seed} action length mismatch"
         assert res_off["error_count"] == 0, f"Seed {seed} OFF errors {res_off['error_count']} != 0"
         assert res_shad["error_count"] == 0, f"Seed {seed} SHADOW errors {res_shad['error_count']} != 0"
+        assert len(res_shad["shadow_results"]) > 0, f"Seed {seed} SHADOW results count {len(res_shad['shadow_results'])} must be > 0"
+        assert candidate_stats["evaluated"] > 0, f"Seed {seed} candidate evaluated count {candidate_stats['evaluated']} must be > 0"
 
         diffs = compare_action_trajectories(res_off["actions"], res_shad["actions"])
         total_action_diffs += len(diffs)
