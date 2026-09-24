@@ -1,0 +1,46 @@
+{
+  "experiment": "Phase C0: Soft Worker Locality Controlled Experiment",
+  "commit_sha": "beb6fd02c6bfeb2ea62b5af4bcf7220dd6d7b57c",
+  "timestamp": "2026-09-24 21:12:09 UTC",
+  "configuration": {
+    "control": {
+      "SOFT_WORKER_LOCALITY_MODE": "OFF",
+      "SW_FORWARD_ARCHITECTURE_MODE": "OFF"
+    },
+    "treatment": {
+      "SOFT_WORKER_LOCALITY_MODE": "ON",
+      "SW_FORWARD_ARCHITECTURE_MODE": "OFF"
+    },
+    "seeds": [
+      96501,
+      96502,
+      96503,
+      96504,
+      96505,
+      96506,
+      96507,
+      96508,
+      96509,
+      96510
+    ],
+    "opponents": [
+      "pass",
+      "pure_wheat_rush",
+      "cow_milk_engine",
+      "melon_sniper",
+      "full_production_agent"
+    ],
+    "seats": [
+      0,
+      1
+    ],
+    "total_paired_configurations": 100,
+    "total_matches_executed": 200
+  },
+  "environment": {
+    "python_version": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "cpu_count": 8
+  },
+  "elapsed_seconds": 1240.75
+}

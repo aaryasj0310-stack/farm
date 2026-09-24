@@ -62,6 +62,7 @@ try:
     from strategy.central_planner import CentralPlanner, legacy_compose_market
     from execution.task_scheduler import (
         assign_tasks, build_tasks, get_daily_log, reset_daily_log,
+        reset_sticky_missions, reset_blocked_task_tracker,
         get_sw_tile_breakdown, get_sw_season_summary,
     )
     from execution.pathfinding import bfs_first_step
@@ -88,6 +89,7 @@ except ImportError:
     from central_planner import CentralPlanner, legacy_compose_market
     from task_scheduler import (
         assign_tasks, build_tasks, get_daily_log, reset_daily_log,
+        reset_sticky_missions, reset_blocked_task_tracker,
         get_sw_tile_breakdown, get_sw_season_summary,
     )
     from pathfinding import bfs_first_step
@@ -388,6 +390,8 @@ def reset_agent_state() -> None:
             pass
     try:
         reset_daily_log()
+        reset_sticky_missions()
+        reset_blocked_task_tracker()
     except Exception:
         pass
     try:
@@ -857,6 +861,8 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     if ctx["day"] == 0 and ctx["hour"] == 0:
         try:
             reset_daily_log()
+            reset_sticky_missions()
+            reset_blocked_task_tracker()
             reset_opponent_model_state()
             from strategy.two_cycle_rotation_manager import reset_rotation_manager
             reset_rotation_manager()

@@ -235,7 +235,35 @@ def set_sw_forward_architecture_mode(mode: str) -> None:
                 pass
 
 
+# Kaggriculture Phase C0: Soft Worker Locality Experiment
+# Supported modes: "OFF" (production baseline), "ON" (treatment)
+SOFT_WORKER_LOCALITY_MODE: str = "OFF"
+
+def get_soft_worker_locality_mode() -> str:
+    """Return the active soft worker locality mode ('OFF', 'ON')."""
+    return str(SOFT_WORKER_LOCALITY_MODE).strip().upper()
+
+def set_soft_worker_locality_mode(mode: str) -> None:
+    """Configure soft worker locality mode ('OFF', 'ON')."""
+    mode_str = str(mode).strip().upper()
+    if mode_str not in ("OFF", "ON"):
+        raise ValueError(f"Invalid soft worker locality mode '{mode}'. Must be one of ('OFF', 'ON').")
+    global SOFT_WORKER_LOCALITY_MODE
+    SOFT_WORKER_LOCALITY_MODE = mode_str
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "SOFT_WORKER_LOCALITY_MODE", mode_str)
+            except Exception:
+                pass
+
+
 # Phase knobs
+
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)
 PHASE1_MELON_TILES_NW = 12        # NW melons for day-10 cash surge (Leader springboard)
 PHASE1_GEESE_DAY0_2 = 0            # Zero Geese policy: geese produce low-margin down, zero fertilizer

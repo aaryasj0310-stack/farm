@@ -1551,6 +1551,12 @@ def assign_tasks(tasks, ctx, extra_units=()):
     pos_by_idx = dict(units)
     n_units = len(units)
 
+    try:
+        from config import get_soft_worker_locality_mode
+        soft_locality_on = (get_soft_worker_locality_mode() == "ON")
+    except Exception:
+        soft_locality_on = False
+
     # Holder map for PLACE tasks: engine PLACE requires the ACTING unit to
     # hold the animal, so dispatch must prefer/require holding units.
     holders = {}
@@ -1771,35 +1777,82 @@ def assign_tasks(tasks, ctx, extra_units=()):
             target_quad = farm.quadrant_of(target)
             prio = task.get("priority", 0)
 
-            # C2 Zonal Eligibility
-            home_cands = [u for u in cands if home_quads[u] == target_quad]
-            if home_cands:
-                eval_cands = [(u, False) for u in home_cands]
+            if not soft_locality_on:
+                # C2 Zonal Eligibility (Baseline)
+                home_cands = [u for u in cands if home_quads[u] == target_quad]
+                if home_cands:
+                    eval_cands = [(u, False) for u in home_cands]
+                else:
+                    eval_cands = []
+                    for u in cands:
+                        u_home = home_quads[u]
+                        free_in_home = sum(1 for fu in free_units if home_quads[fu] == u_home)
+                        rem_tasks_home = unassigned_home_tasks.get(u_home, 0)
+                        if rem_tasks_home < free_in_home:
+                            if not ((u_home == "SW" and target_quad == "NE") or (u_home == "NE" and target_quad == "SW")):
+                                d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
+                                if d <= C2_MAX_SPILLOVER_DIST and prio >= C2_SPILLOVER_PRIORITY_FLOOR:
+                                    eval_cands.append((u, True))
+
+                for u, is_spillover in eval_cands:
+                    d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
+                    cluster_bonus = 0
+                    if d <= C6_CLUSTER_RADIUS:
+                        cluster_bonus += C6_CLUSTER_BONUS
+                    if d == 0:
+                        cluster_bonus += C6_CLUSTER_BONUS
+                    spill_penalty = 10 if is_spillover else 0
+                    effective_score = -prio + spill_penalty + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
+
+                    match_key = (effective_score, d, target, u)
+                    if best_match is None or match_key < best_match[0]:
+                        best_match = (match_key, u, task, target_quad)
             else:
-                eval_cands = []
+                # Soft, Workload-Aware Worker Locality (Phase C0 Treatment)
+                is_urgent = (
+                    prio >= PRIORITY_URGENT_SURVIVAL
+                    or task.get("kind") in ("feed_rescue", "harvest_decay", "feed_prod", "pickup_wheat")
+                    or (task.get("op") == "PLACE" and (task.get("args") or [None])[0] in ANIMALS)
+                )
+
+                free_in_target = sum(1 for fu in free_units if farm.quadrant_of(pos_by_idx[fu]) == target_quad)
+                rem_target_tasks = unassigned_home_tasks.get(target_quad, 0)
+                target_needs_assistance = (rem_target_tasks > free_in_target)
+
                 for u in cands:
-                    u_home = home_quads[u]
-                    free_in_home = sum(1 for fu in free_units if home_quads[fu] == u_home)
-                    rem_tasks_home = unassigned_home_tasks.get(u_home, 0)
-                    if rem_tasks_home < free_in_home:
-                        if not ((u_home == "SW" and target_quad == "NE") or (u_home == "NE" and target_quad == "SW")):
-                            d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
-                            if d <= C2_MAX_SPILLOVER_DIST and prio >= C2_SPILLOVER_PRIORITY_FLOOR:
-                                eval_cands.append((u, True))
+                    u_pos = pos_by_idx[u]
+                    u_phys_quad = farm.quadrant_of(u_pos)
 
-            for u, is_spillover in eval_cands:
-                d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
-                cluster_bonus = 0
-                if d <= C6_CLUSTER_RADIUS:
-                    cluster_bonus += C6_CLUSTER_BONUS
-                if d == 0:
-                    cluster_bonus += C6_CLUSTER_BONUS
-                spill_penalty = 10 if is_spillover else 0
-                effective_score = -prio + spill_penalty + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
+                    is_local = (u_phys_quad == target_quad) or (target in SHED_ACCESS_TILES)
+                    if is_local:
+                        locality_penalty = 0.0
+                    else:
+                        rem_local_tasks = unassigned_home_tasks.get(u_phys_quad, 0)
+                        if is_urgent or rem_local_tasks <= 0:
+                            locality_penalty = 0.0
+                        elif target_needs_assistance:
+                            locality_penalty = 3.0
+                        else:
+                            locality_penalty = 10.0
 
-                match_key = (effective_score, d, target, u)
-                if best_match is None or match_key < best_match[0]:
-                    best_match = (match_key, u, task, target_quad)
+                    continuity_bonus = 0.0
+                    if u in _ACTIVE_MISSIONS:
+                        m = _ACTIVE_MISSIONS[u]
+                        if tuple(m.get("target", (-1, -1))) == tuple(target) and m.get("op") == task.get("op"):
+                            continuity_bonus = 6.0
+
+                    d = abs(u_pos[0] - target[0]) + abs(u_pos[1] - target[1])
+                    cluster_bonus = 0
+                    if d <= C6_CLUSTER_RADIUS:
+                        cluster_bonus += C6_CLUSTER_BONUS
+                    if d == 0:
+                        cluster_bonus += C6_CLUSTER_BONUS
+
+                    effective_score = -prio + locality_penalty - continuity_bonus + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
+
+                    match_key = (effective_score, d, target, u)
+                    if best_match is None or match_key < best_match[0]:
+                        best_match = (match_key, u, task, target_quad)
 
         if best_match is None:
             for t in band_tasks:
@@ -1951,7 +2004,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 break
             if t.is_animal and t.fertilizer_available and tuple(t.pos) not in targeted_positions:
                 t_quad = farm.quadrant_of(t.pos)
-                pref = [u for u in unassigned_units if home_quads[u] == t_quad]
+                pref = [u for u in unassigned_units if (farm.quadrant_of(pos_by_idx[u]) if soft_locality_on else home_quads[u]) == t_quad]
                 cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
                 if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
@@ -1967,7 +2020,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 break
             if t.is_plant and not t.watered_today and tuple(t.pos) not in targeted_positions:
                 t_quad = farm.quadrant_of(t.pos)
-                pref = [u for u in unassigned_units if home_quads[u] == t_quad]
+                pref = [u for u in unassigned_units if (farm.quadrant_of(pos_by_idx[u]) if soft_locality_on else home_quads[u]) == t_quad]
                 cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
                 if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
@@ -1983,7 +2036,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 break
             if t.kind == "WEED" and farm.quadrant_of(t.pos) in farm.unlocked and tuple(t.pos) not in targeted_positions:
                 t_quad = farm.quadrant_of(t.pos)
-                pref = [u for u in unassigned_units if home_quads[u] == t_quad]
+                pref = [u for u in unassigned_units if (farm.quadrant_of(pos_by_idx[u]) if soft_locality_on else home_quads[u]) == t_quad]
                 cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
                 if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
