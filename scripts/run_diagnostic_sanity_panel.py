@@ -80,6 +80,7 @@ def run_single_seed_match(seed: int, mode: str) -> Dict[str, Any]:
         "p0_status": p0_status,
         "error_count": len(errors),
         "latency_stats": latency_stats,
+        "shadow_results": shadow_results,
         "shadow_results_count": len(shadow_results),
     }
 
@@ -99,7 +100,7 @@ def compare_action_trajectories(off_actions: List[Dict[str, Any]], shadow_action
 
 def main():
     print("=" * 80)
-    print("Kaggriculture SW-Forward Architecture Phase A-R4 Diagnostic Sanity Panel")
+    print("Kaggriculture SW-Forward Architecture Phase A-R5 Diagnostic Sanity Panel")
     print(f"Seeds: {SANITY_SEEDS} (Strictly excluding protected 98001-98050)")
     print("=" * 80)
 
@@ -112,15 +113,43 @@ def main():
 
         # 1. Run OFF mode
         res_off = run_single_seed_match(seed, "OFF")
-        print(f"  [OFF Mode]    P0: ${res_off['final_money_p0']:,.2f} | Status: {res_off['p0_status']} | Steps: {res_off['step_count']}")
+        print(f"  [OFF Mode]    P0: ${res_off['final_money_p0']:,.2f} | Status: {res_off['p0_status']} | Steps: {res_off['step_count']} | Errors: {res_off['error_count']}")
 
         # 2. Run SHADOW mode
         res_shad = run_single_seed_match(seed, "SHADOW")
         lat = res_shad["latency_stats"]
-        print(f"  [SHADOW Mode] P0: ${res_shad['final_money_p0']:,.2f} | Status: {res_shad['p0_status']} | Steps: {res_shad['step_count']}")
+        print(f"  [SHADOW Mode] P0: ${res_shad['final_money_p0']:,.2f} | Status: {res_shad['p0_status']} | Steps: {res_shad['step_count']} | Errors: {res_shad['error_count']}")
         print(f"                Latency: p50={lat.get('p50_ms', 0):.2f}ms, p95={lat.get('p95_ms', 0):.2f}ms, max={lat.get('max_ms', 0):.2f}ms (evals: {lat.get('count', 0)})")
 
-        # 3. Compare action trajectories
+        # 3. Telemetry inspection from SHADOW run
+        disagreements_by_cat = {"GENUINE_POLICY_DISAGREEMENT": 0, "SHADOW_DIAGNOSTIC_WARNING": 0, "UNRESOLVED_COMPARISON": 0}
+        candidate_stats = {"evaluated": 0, "admitted": 0, "delayed": 0, "downsized": 0, "rejected": 0}
+        recommendation_counts = {}
+
+        for s_res in res_shad.get("shadow_results", []):
+            dec = s_res.decision
+            st = getattr(dec, "sw_recommendation_status", "REJECT")
+            recommendation_counts[st] = recommendation_counts.get(st, 0) + 1
+            candidate_stats["evaluated"] += getattr(dec, "candidates_evaluated_count", 0)
+            candidate_stats["admitted"] += getattr(dec, "candidates_admitted_count", 0)
+            candidate_stats["delayed"] += getattr(dec, "candidates_delayed_count", 0)
+            candidate_stats["downsized"] += getattr(dec, "candidates_downsized_count", 0)
+            candidate_stats["rejected"] += getattr(dec, "candidates_rejected_count", 0)
+
+            for dis in dec.disagreements_with_baseline:
+                cat = dis.get("category", "GENUINE_POLICY_DISAGREEMENT" if dis.get("is_policy_disagreement") else "SHADOW_DIAGNOSTIC_WARNING")
+                disagreements_by_cat[cat] = disagreements_by_cat.get(cat, 0) + 1
+
+        print(f"                Shadow Telemetry: Disagreements={disagreements_by_cat}")
+        print(f"                Candidate Portfolios: {candidate_stats} | Rec Statuses: {recommendation_counts}")
+
+        # 4. Strict assertions
+        assert res_off["step_count"] == res_shad["step_count"], f"Seed {seed} step count mismatch: OFF={res_off['step_count']} vs SHADOW={res_shad['step_count']}"
+        assert res_off["step_count"] >= 719, f"Seed {seed} step count {res_off['step_count']} < 719"
+        assert len(res_off["actions"]) == len(res_shad["actions"]) == res_off["step_count"], f"Seed {seed} action length mismatch"
+        assert res_off["error_count"] == 0, f"Seed {seed} OFF errors {res_off['error_count']} != 0"
+        assert res_shad["error_count"] == 0, f"Seed {seed} SHADOW errors {res_shad['error_count']} != 0"
+
         diffs = compare_action_trajectories(res_off["actions"], res_shad["actions"])
         total_action_diffs += len(diffs)
         cash_diff = abs(res_off["final_money_p0"] - res_shad["final_money_p0"])
@@ -138,6 +167,7 @@ def main():
             "latency_p50_ms": lat.get("p50_ms", 0),
             "latency_p95_ms": lat.get("p95_ms", 0),
             "latency_max_ms": lat.get("max_ms", 0),
+            "disagreements": disagreements_by_cat,
             "duration_s": round(time.time() - t0, 1),
         })
 

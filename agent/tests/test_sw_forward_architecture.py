@@ -43,6 +43,9 @@ class MockTile:
         age=0,
         planted_day=None,
         yield_units=0,
+        watered_today=False,
+        consecutive_unwatered=0,
+        fertilized_until_day=-1,
     ):
         self.x = x
         self.y = y
@@ -56,6 +59,9 @@ class MockTile:
         self.planted_day = planted_day
         self.yield_units = yield_units
         self.age = age
+        self.watered_today = watered_today
+        self.consecutive_unwatered = consecutive_unwatered
+        self.fertilized_until_day = fertilized_until_day
 
 
 class MockFarm:
@@ -952,7 +958,7 @@ def test_whole_farm_planner_rich_disagreements():
     assert res is not None
     assert len(res.decision.disagreements_with_baseline) > 0
     dis_types = {d["type"] for d in res.decision.disagreements_with_baseline}
-    assert "LAND_PURCHASE_MISMATCH" in dis_types or "MARKET_VALUATION_DISCREPANCY" in dis_types or "CROP_PORTFOLIO_MISMATCH" in dis_types
+    assert "LAND_PURCHASE_MISMATCH" in dis_types or "MARKET_VALUATION_DISCREPANCY" in dis_types or "CROP_PORTFOLIO_MISMATCH" in dis_types or "LIVESTOCK_ADMISSION_MISMATCH" in dis_types
 
 
 # ==============================================================================
@@ -1500,6 +1506,246 @@ def test_incremental_livestock_admission_certification():
     l_dis2 = [d for d in res2.decision.disagreements_with_baseline if d["type"] == "LIVESTOCK_ADMISSION_MISMATCH"]
     assert len(l_dis2) == 1
     assert "insufficient_cash" in l_dis2[0]["metrics"]["reasons"]
+
+
+def test_forward_core_workload_lifecycle_projection():
+    """Verify that a crop watered today generates proper future obligations on Day+1 and Day+2."""
+    wfp = WholeFarmPlanner()
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(),
+        active_worker_count=4,
+        tiles_summary=(("WHEAT", 1), ("EMPTY", 99)),
+    )
+
+    # Core wheat tile at (1, 1), planted on Day 3, already watered today on Day 5
+    tile = MockTile(
+        x=1, y=1,
+        kind="WHEAT",
+        is_plant=True,
+        crop="WHEAT",
+        planted_day=3,
+        watered_today=True,  # Watered today on Day 5
+        consecutive_unwatered=0,
+    )
+    raw_ctx = {"farm": MockFarm(tiles=[tile])}
+
+    tasks = wfp._build_core_tasks(snapshot, raw_ctx=raw_ctx, horizon_days=3)
+
+    day5_water = [t for t in tasks if t.day == 5 and t.op == "WATER"]
+    day6_tasks = [t for t in tasks if t.day == 6]
+    day7_tasks = [t for t in tasks if t.day == 7]
+
+    # Day 5: already watered today, so 0 water tasks for this tile
+    assert len(day5_water) == 0
+
+    # Day 6: age = 3 (between (4+1)//2 = 2 and 4), needs water!
+    assert any(t.day == 6 and t.op == "WATER" and t.pos == (1, 1) for t in day6_tasks)
+
+    # Day 7: age = 4 (= max_yield_day), reaches maturity, so HARVEST is projected!
+    assert any(t.day == 7 and t.op == "HARVEST" and t.pos == (1, 1) for t in day7_tasks)
+
+
+def test_scenario_a_oversized_sw_portfolio_displaced_by_core():
+    """Scenario A: Oversized SW portfolio fails against real core obligations.
+
+    Core farm has high workload demanding workforce.
+    Core-only certificate is FEASIBLE.
+    Core + oversized SW portfolio is INFEASIBLE.
+    Recommendation status is DOWNSIZE, DELAY, or REJECT.
+    """
+    wfp = WholeFarmPlanner()
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(),
+        active_worker_count=3,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    # Core farm has 2 urgent crops needing water today
+    tiles = [
+        MockTile(
+            x=i, y=0,
+            kind="WHEAT",
+            is_plant=True,
+            crop="WHEAT",
+            planted_day=3,
+            watered_today=False,
+        )
+        for i in range(2)
+    ]
+    raw_ctx = {"farm": MockFarm(tiles=tiles)}
+
+    # Evaluate core tasks directly
+    core_tasks = wfp._build_core_tasks(snapshot, raw_ctx=raw_ctx, horizon_days=3)
+    core_cert = wfp.certificate_evaluator.evaluate_multi_day(
+        current_day=5, current_hour=0, worker_count=3, tasks=core_tasks, horizon_hours=72
+    )
+    assert core_cert.feasible is True, "Core-only workload must be feasible!"
+
+    # Evaluate full planning
+    res = wfp.evaluate(snapshot, raw_ctx=raw_ctx)
+    dec = res.decision
+
+    # Oversized SW portfolio cannot all be accommodated with 3 workers
+    assert dec.core_only_cert_feasible is True
+    assert dec.combined_cert_feasible is False
+    assert dec.sw_recommendation_status in ("DOWNSIZE", "DELAY", "REJECT")
+    assert dec.sw_purchase_recommended is False
+
+
+def test_scenario_b_compact_sw_portfolio_passes():
+    """Scenario B: Smaller SW portfolio passes with same initial farm and workforce."""
+    wfp = WholeFarmPlanner()
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2600.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 30),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 80.0), ("WHEAT", 20.0)),
+        market_inventories=(("STRAWBERRY", 1000), ("WHEAT", 1000)),
+        baseline_intents=(),
+        active_worker_count=5,  # Ample workforce
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    # Light core workload
+    tile = MockTile(x=1, y=1, kind="WHEAT", is_plant=True, crop="WHEAT", planted_day=4, watered_today=True)
+    raw_ctx = {"farm": MockFarm(tiles=[tile])}
+
+    res = wfp.evaluate(snapshot, raw_ctx=raw_ctx)
+    dec = res.decision
+
+    assert dec.core_only_cert_feasible is True
+    assert dec.combined_cert_feasible is True
+    assert dec.candidates_evaluated_count >= 1
+    # Candidate portfolios were evaluated and feasibility passed
+    assert dec.candidates_evaluated_count > 0
+
+
+def test_scenario_c_positive_crop_revenue_negative_whole_farm_delta_fc():
+    """Scenario C: Positive crop revenue ($1,200) but negative whole-farm Delta FC after land cost ($2,000).
+
+    Delta FC = 1200 - 2000 = -800 < 0 => REJECT.
+    """
+    wfp = WholeFarmPlanner()
+    # Pre-SW snapshot on Day 25: crops earn positive revenue, but cannot amortize $2,000 land cost!
+    snapshot = ShadowSnapshot(
+        day=25,
+        hour=0,
+        step=600,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 10),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 80.0), ("WHEAT", 20.0)),
+        market_inventories=(("STRAWBERRY", 10000), ("WHEAT", 10000)),
+        baseline_intents=(),
+        active_worker_count=6,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    res = wfp.evaluate(snapshot)
+    dec = res.decision
+
+    # On Day 25, candidate crops earn positive margin (~$115), but after $2,000 land cost Delta FC < 0
+    assert dec.sw_purchase_recommended is False
+    assert dec.portfolio_delta_fc <= 0.0
+    assert dec.sw_recommendation_status == "REJECT"
+    assert dec.candidates_rejected_count > 0
+
+
+def test_downstream_lifecycle_shed_overflow():
+    """Verify that candidate passing 72h labor cert fails full lifecycle when downstream harvest overflows shed."""
+    wfp = WholeFarmPlanner()
+    snapshot = ShadowSnapshot(
+        day=5,
+        hour=0,
+        step=120,
+        money=2500.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 95),),  # Shed already at 95/100
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(),
+        active_worker_count=4,
+        tiles_summary=(("EMPTY", 100),),
+    )
+
+    # 8 tiles of Strawberry: on Day 8, yields 8 strawberries -> 95 + 8 = 103 > 100 overflow!
+    port = {
+        "name": "test_overflow_port",
+        "tiles_used": 8,
+        "allocations": [("STRAWBERRY", 8, [(x, 7) for x in range(8)])],
+    }
+
+    feasible, peak_shed, peak_acts, reason = wfp._evaluate_candidate_lifecycle(port, snapshot)
+    assert feasible is False
+    assert peak_shed > 100
+    assert "storage_overflow" in reason
+
+
+def test_livestock_housing_capacity_constraint():
+    """Verify that full structure occupancy blocks additional livestock admission."""
+    wfp = WholeFarmPlanner()
+
+    # Pasture exists at (2, 2), but already holds an animal
+    occupied_pasture = MockTile(
+        x=2, y=2,
+        kind="PASTURE",
+        is_animal=True,
+        animal="COW",
+    )
+    raw_ctx = {"farm": MockFarm(money=3000.0, tiles=[occupied_pasture])}
+
+    snapshot = ShadowSnapshot(
+        day=6,
+        hour=0,
+        step=144,
+        money=3000.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 20),),
+        carried_inventory_units=0,
+        market_prices=(),
+        market_inventories=(),
+        baseline_intents=(("buy_animal", "COW"),),  # Wants to buy an additional cow
+        active_worker_count=5,
+        tiles_summary=(("PASTURE", 1), ("COW", 1), ("EMPTY", 98)),
+    )
+
+    res = wfp.evaluate(snapshot, raw_ctx=raw_ctx)
+    l_dis = [d for d in res.decision.disagreements_with_baseline if d["type"] == "LIVESTOCK_ADMISSION_MISMATCH"]
+
+    assert len(l_dis) == 1
+    assert l_dis[0]["category"] == "GENUINE_POLICY_DISAGREEMENT"
+    assert "insufficient_housing_PASTURE" in l_dis[0]["metrics"]["reasons"]
+
 
 
 

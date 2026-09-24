@@ -302,7 +302,7 @@ class CohortPlanner:
         Candidates are NOT hardcoded constants; multiple combinations are generated.
         """
         n_tiles = len(available_tiles)
-        if n_tiles < 8:
+        if n_tiles < 4:
             return []
 
         portfolios = []
@@ -329,11 +329,21 @@ class CohortPlanner:
             })
 
         # Candidate 3: Rapid Tranche 1 (First 8 tiles: 4 Wheat + 4 Strawberry)
+        if n_tiles >= 8:
+            portfolios.append({
+                "name": "tranche_1_starter",
+                "allocations": [
+                    ("WHEAT", 4, available_tiles[:4]),
+                    ("STRAWBERRY", 4, available_tiles[4:8]),
+                ]
+            })
+
+        # Candidate 4: Compact Tranche (4 tiles: 2 Wheat + 2 Strawberry)
         portfolios.append({
-            "name": "tranche_1_starter",
+            "name": "compact_tranche",
             "allocations": [
-                ("WHEAT", 4, available_tiles[:4]),
-                ("STRAWBERRY", 4, available_tiles[4:8]),
+                ("WHEAT", 2, available_tiles[:2]),
+                ("STRAWBERRY", 2, available_tiles[2:4]),
             ]
         })
 
