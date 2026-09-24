@@ -1,0 +1,26 @@
+{
+  "diagnostic_script": "scripts/verify_sw_purchase_retry_engine.py",
+  "command": "python scripts/verify_sw_purchase_retry_engine.py",
+  "commit_sha": "709c6def9d8052a7598be0fbd375e6faf25b4913",
+  "engine_version": "1.32.7",
+  "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "configuration": {
+    "seed": 96502,
+    "opponent": "pure_wheat_rush",
+    "seat": 0,
+    "architecture_mode": "TREATMENT",
+    "episode_steps": 720
+  },
+  "outcome": {
+    "final_cash": 100233.0,
+    "unlocked_quadrants": [
+      "NW",
+      "NE",
+      "SW"
+    ],
+    "sw_unlocked": true,
+    "total_recorded_steps": 719,
+    "purchase_attempts_logged": 5
+  }
+}

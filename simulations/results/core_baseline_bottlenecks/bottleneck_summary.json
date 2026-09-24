@@ -1,0 +1,71 @@
+{
+  "baseline_performance": {
+    "mean_final_cash": 99444.45,
+    "sample_size": 20,
+    "target_cash": 130000.0,
+    "target_gap": 30555.55
+  },
+  "ranked_bottlenecks": [
+    {
+      "rank": 1,
+      "bottleneck": "CORE_TILE_IDLE",
+      "category": "Land Utilization",
+      "evidence_level": "Observed",
+      "matches_affected": 20,
+      "mean_turns_affected": 4034.2,
+      "observed_defect": "Core NW+NE tiles sit empty for an average of 4034.2 tile-turns per match (equivalent to ~5-8 productive tiles idle every day).",
+      "estimated_opportunity_cost": 5042.81,
+      "economic_tradeoff": "Immediate continuous replanting vs cash preservation for NE purchase and livestock.",
+      "subsystem": "CentralPlanner / CropAccounting / MacroPlanner"
+    },
+    {
+      "rank": 2,
+      "bottleneck": "ENDGAME_UNSOLD_INVENTORY",
+      "category": "Market & Liquidation",
+      "evidence_level": "Observed",
+      "matches_affected": 0,
+      "mean_turns_affected": 24,
+      "observed_defect": "An average of $0.00 in finished produce and animal products remains stranded in the shed at Step 720.",
+      "directly_measured_loss": 0.0,
+      "economic_tradeoff": "Liquidation selling earlier vs market order slot caps and price floors.",
+      "subsystem": "EndgameLiquidator / OrderBuilder / MarketBrain"
+    },
+    {
+      "rank": 3,
+      "bottleneck": "WORKER_TRAVEL_OVERHEAD",
+      "category": "Worker Dispatch",
+      "evidence_level": "Observed",
+      "matches_affected": 20,
+      "mean_turns_affected": 4782.0,
+      "observed_defect": "Movement actions consume 64.8% of all worker turns (4782.0 worker-turns/match), with 689.2 quadrant crossing events per match.",
+      "estimated_opportunity_cost": 11955.0,
+      "economic_tradeoff": "Localized zonal dispatch vs centralized task priority hopping.",
+      "subsystem": "AdaptiveZonalDispatch / WorkerManager"
+    },
+    {
+      "rank": 4,
+      "bottleneck": "CAPITAL_ALLOCATION_DELAY",
+      "category": "Capital Efficiency",
+      "evidence_level": "Estimated",
+      "matches_affected": 20,
+      "mean_turns_affected": 439.6,
+      "observed_defect": "Agent holds >= $2,000 cash for an average of 439.6 turns while idle tiles or housing expansion slots exist.",
+      "estimated_opportunity_cost": 2197.75,
+      "economic_tradeoff": "Safety reserve for survival feed vs aggressive capital compounding.",
+      "subsystem": "PreNECapitalPolicy / LivestockReinvestment"
+    },
+    {
+      "rank": 5,
+      "bottleneck": "MARKET_ORDER_DROPPED",
+      "category": "Market Order Execution",
+      "evidence_level": "Observed",
+      "matches_affected": 20,
+      "mean_turns_affected": 71.0,
+      "observed_defect": "An average of 71.0 market orders are dropped per match due to order budget trimming or slot contention.",
+      "estimated_opportunity_cost": 1064.25,
+      "economic_tradeoff": "Prioritizing high-margin sales vs low-value buffer purchases.",
+      "subsystem": "OrderBuilder / ResourceLedger"
+    }
+  ],
+  "methodology": "Observed metrics are derived from authoritative step-by-step engine states across 20 baseline matches. Estimated costs represent potential revenue under empirical market prices. Hypothesized mechanisms are candidates for subsequent controlled experiments."
+}

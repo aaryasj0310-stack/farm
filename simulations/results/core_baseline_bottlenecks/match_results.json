@@ -1,0 +1,257 @@
+{
+  "manifest": {
+    "audit_phase": "Phase B1-R3",
+    "description": "Core-Only Production Baseline Bottleneck Audit",
+    "commit_sha": "709c6def9d8052a7598be0fbd375e6faf25b4913",
+    "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "baseline_mode": "OFF",
+    "total_configurations": 20,
+    "discovery_seeds": [
+      96501,
+      96502
+    ],
+    "benchmark_opponents": [
+      "pass",
+      "pure_wheat_rush",
+      "cow_milk_engine",
+      "melon_sniper",
+      "full_production_agent"
+    ],
+    "seats": [
+      0,
+      1
+    ],
+    "execution_date": "2026-09-25 01:45:50"
+  },
+  "summary": {
+    "total_matches": 20,
+    "mean_final_cash": 99444.45,
+    "std_final_cash": 7489.54,
+    "min_final_cash": 87357.0,
+    "max_final_cash": 111271.0,
+    "elapsed_seconds": 100.28
+  },
+  "matches": [
+    {
+      "seed": 96501,
+      "opp_name": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 87357.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 87357.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 103519.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "pass",
+      "seat": 1,
+      "final_cash": 97956.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 103519.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "melon_sniper",
+      "seat": 1,
+      "final_cash": 102277.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "pass",
+      "seat": 0,
+      "final_cash": 97956.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "melon_sniper",
+      "seat": 0,
+      "final_cash": 102277.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "full_production_agent",
+      "seat": 0,
+      "final_cash": 90013.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "pass",
+      "seat": 0,
+      "final_cash": 99840.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96501,
+      "opp_name": "full_production_agent",
+      "seat": 1,
+      "final_cash": 90013.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 111271.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 110456.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "pass",
+      "seat": 1,
+      "final_cash": 99628.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 87873.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 109217.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "melon_sniper",
+      "seat": 0,
+      "final_cash": 99607.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "melon_sniper",
+      "seat": 1,
+      "final_cash": 103852.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "full_production_agent",
+      "seat": 1,
+      "final_cash": 99830.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    },
+    {
+      "seed": 96502,
+      "opp_name": "full_production_agent",
+      "seat": 0,
+      "final_cash": 105071.0,
+      "unlocked_quadrants": [
+        "NW",
+        "NE"
+      ],
+      "unsold_inventory_value": 0
+    }
+  ]
+}

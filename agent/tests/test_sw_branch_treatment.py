@@ -499,3 +499,50 @@ def test_seed_clustered_bootstrap_reproducibility():
     assert ci_low < -10000.0
     assert ci_high < -7000.0  # Strictly negative upper bound
 
+
+def test_sw_purchase_retry_lifecycle_verification():
+    """Test 17: Authoritative verification of SW purchase retry lifecycle from real engine diagnostic."""
+    import json
+    import os
+
+    summary_path = os.path.join("simulations", "results", "phase_b1_r3_retry", "derived_event_summary.json")
+    assert os.path.exists(summary_path), f"Summary file missing: {summary_path}"
+
+    with open(summary_path, "r") as f:
+        summary = json.load(f)
+
+    assert summary["lifecycle_sequence_verified"] is True
+    # Event 1: Drop due to budget ($300 reserve)
+    e1 = summary["event_1_approval_and_drop"]
+    assert e1["step"] == 222
+    assert e1["day"] == 9
+    assert e1["hour"] == 6
+    assert e1["cash_before"] == 2266.0
+    assert e1["discretionary_cash"] == 1966.0
+    assert e1["failure_or_drop_reason"] == "budget"
+    assert e1["controller_approval"] is True
+    assert e1["order_in_final_action"] is False
+
+    # Event 2: Retry and emission once cash reaches $3,261
+    e2 = summary["event_2_retry_and_execution"]
+    assert e2["step"] == 226
+    assert e2["day"] == 9
+    assert e2["hour"] == 10
+    assert e2["cash_before"] == 3261.0
+    assert e2["discretionary_cash"] == 2961.0
+    assert e2["order_in_final_action"] is True
+    assert e2["retry_count"] >= 1
+
+    # Event 3: Engine confirmation
+    e3 = summary["event_3_engine_confirmation"]
+    assert e3["step"] == 226
+    assert e3["sw_unlocked_before"] is False
+    assert e3["sw_unlocked_after"] is True
+    assert e3["purchase_confirmed"] is True
+
+    # Event 4: Tranche becomes operational post-confirmation
+    e4 = summary["event_4_tranche_operational"]
+    assert e4["first_planted_step"] is not None
+    assert e4["first_planted_step"] > e3["step"]
+
+
