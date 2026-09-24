@@ -1,0 +1,922 @@
+[
+  {
+    "seed": 96501,
+    "opp_name": "cow_milk_engine",
+    "seat": 0,
+    "control_cash": 103519.0,
+    "treatment_cash": 88105.0,
+    "paired_delta": -15414.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 11,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 5610.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Projected peak storage 93/100 exceeds safe threshold (85) or midnight overflow 0 units detected",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 7,
+        "sw_watered_tiles": 7,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 18,
+        "whole_quadrant_utilization_pct": 28.0,
+        "admitted_tranche_utilization_pct": 87.5
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 5,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 207,
+      "core_watered_count": 853,
+      "core_harvest_count": 242,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 75,
+      "STRAWBERRY": 85
+    },
+    "sw_revenue_realized": 39086.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96501,
+    "opp_name": "cow_milk_engine",
+    "seat": 1,
+    "control_cash": 103519.0,
+    "treatment_cash": 89079.0,
+    "paired_delta": -14440.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 11,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 5610.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Projected peak storage 93/100 exceeds safe threshold (85) or midnight overflow 0 units detected",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 7,
+        "sw_watered_tiles": 7,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 18,
+        "whole_quadrant_utilization_pct": 28.0,
+        "admitted_tranche_utilization_pct": 87.5
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 5,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 205,
+      "core_watered_count": 846,
+      "core_harvest_count": 236,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 79,
+      "STRAWBERRY": 72
+    },
+    "sw_revenue_realized": 37302.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96501,
+    "opp_name": "pure_wheat_rush",
+    "seat": 1,
+    "control_cash": 87357.0,
+    "treatment_cash": 79809.0,
+    "paired_delta": -7548.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 11,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 5727.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 7,
+        "sw_watered_tiles": 7,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 18,
+        "whole_quadrant_utilization_pct": 28.0,
+        "admitted_tranche_utilization_pct": 87.5
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 246,
+      "core_watered_count": 786,
+      "core_harvest_count": 240,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 77,
+      "STRAWBERRY": 51
+    },
+    "sw_revenue_realized": 31987.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96501,
+    "opp_name": "pure_wheat_rush",
+    "seat": 0,
+    "control_cash": 87357.0,
+    "treatment_cash": 78914.0,
+    "paired_delta": -8443.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 11,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 5727.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 7,
+        "sw_watered_tiles": 7,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 18,
+        "whole_quadrant_utilization_pct": 28.0,
+        "admitted_tranche_utilization_pct": 87.5
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 247,
+      "core_watered_count": 792,
+      "core_harvest_count": 239,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 77,
+      "STRAWBERRY": 45
+    },
+    "sw_revenue_realized": 30381.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96501,
+    "opp_name": "pass",
+    "seat": 1,
+    "control_cash": 97956.0,
+    "treatment_cash": 90212.0,
+    "paired_delta": -7744.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 9,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 5373.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 0,
+        "sw_watered_tiles": 0,
+        "sw_harvestable_tiles": 0,
+        "sw_idle_tiles": 25,
+        "whole_quadrant_utilization_pct": 0.0,
+        "admitted_tranche_utilization_pct": 0.0
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 6,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 19,
+        "whole_quadrant_utilization_pct": 24.0,
+        "admitted_tranche_utilization_pct": 75.0
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 200,
+      "core_watered_count": 908,
+      "core_harvest_count": 242,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 96,
+      "STRAWBERRY": 81
+    },
+    "sw_revenue_realized": 43311.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96501,
+    "opp_name": "pass",
+    "seat": 0,
+    "control_cash": 97956.0,
+    "treatment_cash": 86474.0,
+    "paired_delta": -11482.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 9,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 5373.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 0,
+        "sw_watered_tiles": 0,
+        "sw_harvestable_tiles": 0,
+        "sw_idle_tiles": 25,
+        "whole_quadrant_utilization_pct": 0.0,
+        "admitted_tranche_utilization_pct": 0.0
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 6,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 19,
+        "whole_quadrant_utilization_pct": 24.0,
+        "admitted_tranche_utilization_pct": 75.0
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 200,
+      "core_watered_count": 887,
+      "core_harvest_count": 235,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 94,
+      "STRAWBERRY": 71
+    },
+    "sw_revenue_realized": 39718.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96501,
+    "opp_name": "melon_sniper",
+    "seat": 1,
+    "control_cash": 102277.0,
+    "treatment_cash": 78498.0,
+    "paired_delta": -23779.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 10,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 4660.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 7,
+        "sw_watered_tiles": 7,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 18,
+        "whole_quadrant_utilization_pct": 28.0,
+        "admitted_tranche_utilization_pct": 87.5
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 184,
+      "core_watered_count": 868,
+      "core_harvest_count": 230,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 84,
+      "STRAWBERRY": 79
+    },
+    "sw_revenue_realized": 40047.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96501,
+    "opp_name": "melon_sniper",
+    "seat": 0,
+    "control_cash": 102277.0,
+    "treatment_cash": 82176.0,
+    "paired_delta": -20101.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 10,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 4660.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 7,
+        "sw_watered_tiles": 7,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 18,
+        "whole_quadrant_utilization_pct": 28.0,
+        "admitted_tranche_utilization_pct": 87.5
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 190,
+      "core_watered_count": 871,
+      "core_harvest_count": 223,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 84,
+      "STRAWBERRY": 71
+    },
+    "sw_revenue_realized": 38136.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96502,
+    "opp_name": "pass",
+    "seat": 0,
+    "control_cash": 99840.0,
+    "treatment_cash": 86696.0,
+    "paired_delta": -13144.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 9,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 5708.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 1,
+        "sw_watered_tiles": 1,
+        "sw_harvestable_tiles": 0,
+        "sw_idle_tiles": 24,
+        "whole_quadrant_utilization_pct": 4.0,
+        "admitted_tranche_utilization_pct": 12.5
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 7,
+        "sw_watered_tiles": 7,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 18,
+        "whole_quadrant_utilization_pct": 28.0,
+        "admitted_tranche_utilization_pct": 87.5
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 5,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 16,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 177,
+      "core_watered_count": 901,
+      "core_harvest_count": 234,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 96,
+      "STRAWBERRY": 83
+    },
+    "sw_revenue_realized": 41294.0,
+    "sw_seed_cost_realized": 0.0
+  },
+  {
+    "seed": 96502,
+    "opp_name": "pass",
+    "seat": 1,
+    "control_cash": 99628.0,
+    "treatment_cash": 86469.0,
+    "paired_delta": -13159.0,
+    "control_sw_purchase_day": null,
+    "treatment_sw_purchase_day": 9,
+    "control_sw_planted_max": 0,
+    "treatment_sw_planted_max": 8,
+    "treatment_selected_portfolio": "compact_commercial",
+    "treatment_admitted_tiles_count": 8,
+    "treatment_predicted_delta_fc": 5708.0,
+    "treatment_invariant_violations": 0,
+    "treatment_no_purchase_reason": "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0",
+    "checkpoints": {
+      "D+0": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 0,
+        "sw_watered_tiles": 0,
+        "sw_harvestable_tiles": 0,
+        "sw_idle_tiles": 25,
+        "whole_quadrant_utilization_pct": 0.0,
+        "admitted_tranche_utilization_pct": 0.0
+      },
+      "D+1": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 7,
+        "sw_watered_tiles": 7,
+        "sw_harvestable_tiles": 3,
+        "sw_idle_tiles": 18,
+        "whole_quadrant_utilization_pct": 28.0,
+        "admitted_tranche_utilization_pct": 87.5
+      },
+      "D+2": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 5,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+3": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+5": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 4,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      },
+      "D+7": {
+        "sw_owned_tiles": 25,
+        "sw_admitted_tiles": 8,
+        "sw_planted_tiles": 8,
+        "sw_watered_tiles": 6,
+        "sw_harvestable_tiles": 4,
+        "sw_idle_tiles": 17,
+        "whole_quadrant_utilization_pct": 32.0,
+        "admitted_tranche_utilization_pct": 100.0
+      }
+    },
+    "core_safety": {
+      "animals_fed_total": 187,
+      "core_watered_count": 884,
+      "core_harvest_count": 234,
+      "min_feed_wheat_balance": 0,
+      "peak_shed_usage": 100
+    },
+    "sw_crops_sold": {
+      "MELON": 96,
+      "STRAWBERRY": 71
+    },
+    "sw_revenue_realized": 41452.0,
+    "sw_seed_cost_realized": 0.0
+  }
+]

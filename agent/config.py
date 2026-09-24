@@ -207,24 +207,25 @@ def set_p61_pre_midnight_storage_hygiene_enabled(enabled: bool) -> None:
                 pass
 
 
-# Kaggriculture SW-First Forward Architecture Redesign (Phase A)
-# Supported modes: "OFF" (production baseline), "SHADOW" (evaluates & logs without altering live actions), "LIVE" (future)
+# Kaggriculture SW-First Forward Architecture Redesign (Phase A & B1)
+# Supported modes: "OFF" (production baseline), "SHADOW" (evaluates & logs without altering live actions), "LIVE" (future), "TREATMENT" (Phase B1 branch execution)
 SW_FORWARD_ARCHITECTURE_MODE: str = "OFF"
 
 def get_sw_forward_architecture_mode() -> str:
-    """Return the active forward architecture mode ('OFF', 'SHADOW', 'LIVE')."""
+    """Return the active forward architecture mode ('OFF', 'SHADOW', 'LIVE', 'TREATMENT')."""
     return str(SW_FORWARD_ARCHITECTURE_MODE).strip().upper()
 
 def set_sw_forward_architecture_mode(mode: str) -> None:
-    """Configure forward architecture mode ('OFF', 'SHADOW', 'LIVE')."""
+    """Configure forward architecture mode ('OFF', 'SHADOW', 'LIVE', 'TREATMENT')."""
     mode_str = str(mode).strip().upper()
-    if mode_str not in ("OFF", "SHADOW", "LIVE"):
-        raise ValueError(f"Invalid forward architecture mode '{mode}'. Must be one of ('OFF', 'SHADOW', 'LIVE').")
+    if mode_str not in ("OFF", "SHADOW", "LIVE", "TREATMENT"):
+        raise ValueError(f"Invalid forward architecture mode '{mode}'. Must be one of ('OFF', 'SHADOW', 'LIVE', 'TREATMENT').")
     global SW_FORWARD_ARCHITECTURE_MODE
     SW_FORWARD_ARCHITECTURE_MODE = mode_str
     for mod_name in (
         "agent.main", "main", "agent.config", "config",
         "agent.strategy.whole_farm_planner", "strategy.whole_farm_planner", "whole_farm_planner",
+        "agent.strategy.sw_tranche_controller", "strategy.sw_tranche_controller", "sw_tranche_controller",
     ):
         if mod_name in sys.modules:
             try:

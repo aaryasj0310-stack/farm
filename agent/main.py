@@ -402,6 +402,11 @@ def reset_agent_state() -> None:
         reset_whole_farm_planner()
     except Exception:
         pass
+    try:
+        from strategy.sw_tranche_controller import reset_sw_tranche_controller
+        reset_sw_tranche_controller()
+    except Exception:
+        pass
 
 
 _LAST_SHADOW_RESULT = None
@@ -855,6 +860,8 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             reset_opponent_model_state()
             from strategy.two_cycle_rotation_manager import reset_rotation_manager
             reset_rotation_manager()
+            from strategy.sw_tranche_controller import reset_sw_tranche_controller
+            reset_sw_tranche_controller()
         except Exception:
             pass
 
@@ -1241,10 +1248,11 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
     if is_strategy_fallback:
         res["_emergency_fallback"] = True
 
-    # 7. SW Forward Architecture (Shadow Mode Hook - 100% decoupled from live action generation)
+    # 7. SW Forward Architecture (Shadow & Treatment Evaluation Hooks)
     try:
         from config import get_sw_forward_architecture_mode
-        if get_sw_forward_architecture_mode() == "SHADOW":
+        arch_mode = get_sw_forward_architecture_mode()
+        if arch_mode in ("SHADOW", "TREATMENT"):
             from strategy.whole_farm_planner import ShadowSnapshot, get_whole_farm_planner
             global _LAST_SHADOW_RESULT
             _shadow_snap = ShadowSnapshot.from_live_state(ctx, mem, plan, asg, market)
@@ -1252,6 +1260,9 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             for mod_name in ("agent.main", "main", "submission.main"):
                 if mod_name in sys.modules:
                     setattr(sys.modules[mod_name], "_LAST_SHADOW_RESULT", _LAST_SHADOW_RESULT)
+            if arch_mode == "TREATMENT":
+                from strategy.sw_tranche_controller import get_sw_tranche_controller
+                get_sw_tranche_controller().record_turn(ctx, asg, market, _LAST_TURN_TELEMETRY)
     except Exception:
         pass
 

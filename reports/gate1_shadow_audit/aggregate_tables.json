@@ -1,0 +1,246 @@
+{
+  "provenance": {
+    "audit_name": "Kaggriculture Formal Gate 1: 100-Game SHADOW Divergence Audit",
+    "evaluated_commit_sha": "0ee1c6acac994254c01b83f5b1e055f7a176b82e",
+    "engine_version": "1.32.7",
+    "python_version": "3.12.10",
+    "seeds": [
+      96501,
+      96502,
+      96503,
+      96504,
+      96505,
+      96506,
+      96507,
+      96508,
+      96509,
+      96510
+    ],
+    "total_pairs": 100,
+    "total_matches": 200,
+    "elapsed_seconds": 1430.73
+  },
+  "isolation_and_invariance": {
+    "total_pairs": 100,
+    "passed_invariance": 100,
+    "invariance_pass_rate_pct": 100.0,
+    "actions_matched_count": 100,
+    "cash_matched_count": 100,
+    "error_free_count": 100,
+    "engine_exceptions_off": 0,
+    "engine_exceptions_shadow": 0,
+    "latency_p50_distribution": {
+      "min": 11.059,
+      "p25": 28.709,
+      "p50": 29.406,
+      "p75": 30.387,
+      "p90": 31.081,
+      "p95": 31.335,
+      "p99": 32.761,
+      "max": 32.761,
+      "mean": 28.73
+    },
+    "latency_p95_distribution": {
+      "min": 23.632,
+      "p25": 56.692,
+      "p50": 66.693,
+      "p75": 82.381,
+      "p90": 100.945,
+      "p95": 105.432,
+      "p99": 117.684,
+      "max": 117.684,
+      "mean": 70.643
+    },
+    "latency_max_distribution": {
+      "min": 102.593,
+      "p25": 254.393,
+      "p50": 293.861,
+      "p75": 405.189,
+      "p90": 539.816,
+      "p95": 614.387,
+      "p99": 741.78,
+      "max": 741.78,
+      "mean": 333.799
+    }
+  },
+  "decision_divergence": {
+    "sw_recommended_pairs": 0,
+    "sw_recommended_rate_pct": 0.0,
+    "baseline_sw_bought_pairs": 100,
+    "baseline_sw_bought_rate_pct": 100.0,
+    "recommended_day_percentiles": {
+      "min": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.0,
+      "p90": 0.0,
+      "p95": 0.0,
+      "p99": 0.0,
+      "max": 0.0,
+      "mean": 0.0
+    },
+    "baseline_day_percentiles": {
+      "min": 5,
+      "p25": 5,
+      "p50": 5,
+      "p75": 5,
+      "p90": 6,
+      "p95": 6,
+      "p99": 6,
+      "max": 6,
+      "mean": 5.2
+    },
+    "status_turn_counts": {
+      "PURCHASE": 0,
+      "DELAY": 28334,
+      "DOWNSIZE": 3742,
+      "REJECT": 39824
+    },
+    "candidate_eval_totals": {
+      "evaluated": 309200,
+      "admitted": 600,
+      "delayed": 30057,
+      "downsized": 36659,
+      "rejected": 241884
+    }
+  },
+  "feasibility_and_constraints": {
+    "core_cert_pass_rate": 0.0377,
+    "combined_cert_pass_rate": 0.0293,
+    "lifecycle_workload_pass_rate": 0.0583,
+    "binding_resources_frequency": {
+      "WORKER_HOURS": 71900
+    },
+    "economic_uncertainty_flags_frequency": {
+      "PRICE_DEPRESSION_ESTIMATE": 22938,
+      "HERD_FEED_ASSUMPTION": 71300
+    }
+  },
+  "breakdown_by_opponent": {
+    "pass": {
+      "pairs": 20,
+      "invariance_passed": 20,
+      "sw_recommended_pairs": 0,
+      "sw_recommended_pct": 0.0,
+      "baseline_sw_bought_pairs": 20,
+      "baseline_sw_bought_pct": 100.0,
+      "mean_our_cash": 102018.1,
+      "mean_opp_cash": 3000.0,
+      "rec_days_summary": {
+        "min": 0.0,
+        "p25": 0.0,
+        "p50": 0.0,
+        "p75": 0.0,
+        "p90": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "pure_wheat_rush": {
+      "pairs": 20,
+      "invariance_passed": 20,
+      "sw_recommended_pairs": 0,
+      "sw_recommended_pct": 0.0,
+      "baseline_sw_bought_pairs": 20,
+      "baseline_sw_bought_pct": 100.0,
+      "mean_our_cash": 99703.3,
+      "mean_opp_cash": 11780.4,
+      "rec_days_summary": {
+        "min": 0.0,
+        "p25": 0.0,
+        "p50": 0.0,
+        "p75": 0.0,
+        "p90": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "cow_milk_engine": {
+      "pairs": 20,
+      "invariance_passed": 20,
+      "sw_recommended_pairs": 0,
+      "sw_recommended_pct": 0.0,
+      "baseline_sw_bought_pairs": 20,
+      "baseline_sw_bought_pct": 100.0,
+      "mean_our_cash": 102164.4,
+      "mean_opp_cash": 1657.2,
+      "rec_days_summary": {
+        "min": 0.0,
+        "p25": 0.0,
+        "p50": 0.0,
+        "p75": 0.0,
+        "p90": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "melon_sniper": {
+      "pairs": 20,
+      "invariance_passed": 20,
+      "sw_recommended_pairs": 0,
+      "sw_recommended_pct": 0.0,
+      "baseline_sw_bought_pairs": 20,
+      "baseline_sw_bought_pct": 100.0,
+      "mean_our_cash": 99103.9,
+      "mean_opp_cash": 1535.0,
+      "rec_days_summary": {
+        "min": 0.0,
+        "p25": 0.0,
+        "p50": 0.0,
+        "p75": 0.0,
+        "p90": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "full_production_agent": {
+      "pairs": 20,
+      "invariance_passed": 20,
+      "sw_recommended_pairs": 0,
+      "sw_recommended_pct": 0.0,
+      "baseline_sw_bought_pairs": 20,
+      "baseline_sw_bought_pct": 100.0,
+      "mean_our_cash": 99195.4,
+      "mean_opp_cash": 9563.8,
+      "rec_days_summary": {
+        "min": 0.0,
+        "p25": 0.0,
+        "p50": 0.0,
+        "p75": 0.0,
+        "p90": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    }
+  },
+  "breakdown_by_seat": {
+    "seat_0": {
+      "pairs": 50,
+      "invariance_passed": 50,
+      "sw_recommended_pairs": 0,
+      "sw_recommended_pct": 0.0,
+      "baseline_sw_bought_pairs": 50,
+      "baseline_sw_bought_pct": 100.0,
+      "mean_our_cash": 100289.0
+    },
+    "seat_1": {
+      "pairs": 50,
+      "invariance_passed": 50,
+      "sw_recommended_pairs": 0,
+      "sw_recommended_pct": 0.0,
+      "baseline_sw_bought_pairs": 50,
+      "baseline_sw_bought_pct": 100.0,
+      "mean_our_cash": 100585.0
+    }
+  }
+}

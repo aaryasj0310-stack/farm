@@ -1850,6 +1850,32 @@ class MacroPlanner:
                     private=private,
                     hour=hour,
                 )
+                if next_quadrant == 3:
+                    try:
+                        from strategy.sw_tranche_controller import get_sw_tranche_controller
+                        _sw_ctrl = get_sw_tranche_controller()
+                        if _sw_ctrl.is_treatment_active():
+                            if not _sw_ctrl.state.sw_purchase_approved:
+                                _approved, _port_info = _sw_ctrl.evaluate_and_check_sw_purchase(ctx, plan)
+                                if _approved:
+                                    buy_land = True
+                                    _sw_ctrl.state.sw_land_order_emitted = True
+                                    sw_reason = "treatment_approved"
+                                    sw_info["treatment_decision"] = "PURCHASE"
+                                    sw_info["treatment_portfolio"] = _sw_ctrl.state.selected_portfolio_name
+                                else:
+                                    buy_land = False
+                                    sw_reason = "treatment_delayed"
+                                    sw_info["treatment_decision"] = _sw_ctrl.state.primary_no_purchase_reason or "DELAY"
+                            else:
+                                if "SW" not in farm.unlocked and not getattr(_sw_ctrl.state, "sw_land_order_emitted", False):
+                                    buy_land = True
+                                    _sw_ctrl.state.sw_land_order_emitted = True
+                                else:
+                                    buy_land = False
+                    except Exception:
+                        pass
+
                 if buy_land:
                     land_cost = LAND_PRICES[n_extra_unlocked]
                     land_capital_protection_active = False
@@ -2182,39 +2208,77 @@ class MacroPlanner:
                                 continue
                     else:
                         # Discrete or Production SW activation
-                        sw_soil_empty = [p for p in empty_tiles if p in SW_SOIL_TILES]
                         try:
-                            from config import SW_GENERIC_PLANTING_GATE_ENABLED
-                            generic_sw_gate = bool(SW_GENERIC_PLANTING_GATE_ENABLED)
-                        except ImportError:
-                            generic_sw_gate = False
+                            from strategy.sw_tranche_controller import get_sw_tranche_controller
+                            _treatment_ctrl = get_sw_tranche_controller()
+                            _is_treatment = _treatment_ctrl.is_treatment_active()
+                        except Exception:
+                            _is_treatment = False
+                            _treatment_ctrl = None
 
-                        if generic_sw_gate:
-                            # P1.3-A: the dedicated SW controller has exclusive
-                            # authority to authorize NEW planting anywhere in SW.
-                            # Reserve its soil candidates above, then exclude all
-                            # SW positions from every subsequent generic planting
-                            # loop (especially the continuous wheat replant loop).
-                            # Do not change crop care or existing SW assets.
-                            generic_sw_tiles = [
-                                p for p in empty_tiles
-                                if farm.quadrant_of(p) == "SW"
-                            ]
-                            empty_tiles = [
-                                p for p in empty_tiles
-                                if farm.quadrant_of(p) != "SW"
-                            ]
-                            plan.diagnostics["sw_generic_planting_gate"] = {
-                                "enabled": True,
-                                "excluded_sw_empty_tiles": len(generic_sw_tiles),
-                                "excluded_sw_pasture_empty_tiles": sum(
-                                    p in SW_PASTURE_TILES for p in generic_sw_tiles
-                                ),
-                                "authorized_sw_soil_candidates": len(sw_soil_empty),
-                            }
+                        if _is_treatment and _treatment_ctrl is not None:
+                            # Treatment SW Tranche Enforcement:
+                            # 1. Exclude ALL SW tiles from subsequent generic planting loops
+                            empty_tiles = [p for p in empty_tiles if farm.quadrant_of(p) != "SW"]
+                            sw_soil_empty = []
+                            # 2. Only plant admitted SW tiles
+                            admitted_tiles = _treatment_ctrl.state.admitted_sw_tiles
+                            admitted_crops = _treatment_ctrl.state.admitted_sw_crop_targets
+                            for pos in sorted(list(admitted_tiles)):
+                                t_obj = farm.tile_at(pos) if hasattr(farm, "tile_at") else None
+                                is_empty = (t_obj is not None and getattr(t_obj, "kind", "") == "EMPTY")
+                                is_plant = (t_obj is not None and getattr(t_obj, "is_plant", False))
+                                if is_empty and not is_plant:
+                                    target_crop = admitted_crops.get(pos, "WHEAT")
+                                    seed_cost = CROPS[target_crop]["seed"]
+                                    if seeds.get(target_crop, 0) > 0:
+                                        seeds[target_crop] -= 1
+                                    elif remaining_money >= seed_cost:
+                                        buy_seed[target_crop] = buy_seed.get(target_crop, 0) + 1
+                                        remaining_money -= seed_cost
+                                        _treatment_ctrl.state.sw_seed_cost_realized += seed_cost
+                                    else:
+                                        continue
+                                    plant_queue.append((pos, target_crop))
+                                    planned[target_crop] = planned.get(target_crop, 0) + 1
+                                    committed_counts[target_crop] = committed_counts.get(target_crop, 0) + 1
+                                    _treatment_ctrl.state.sw_crops_planted[target_crop] = (
+                                        _treatment_ctrl.state.sw_crops_planted.get(target_crop, 0) + 1
+                                    )
                         else:
-                            # Exact P1.2 behavior with P1.3-A disabled.
-                            empty_tiles = [p for p in empty_tiles if p not in SW_SOIL_TILES]
+                            sw_soil_empty = [p for p in empty_tiles if p in SW_SOIL_TILES]
+                            try:
+                                from config import SW_GENERIC_PLANTING_GATE_ENABLED
+                                generic_sw_gate = bool(SW_GENERIC_PLANTING_GATE_ENABLED)
+                            except ImportError:
+                                generic_sw_gate = False
+
+                            if generic_sw_gate:
+                                # P1.3-A: the dedicated SW controller has exclusive
+                                # authority to authorize NEW planting anywhere in SW.
+                                # Reserve its soil candidates above, then exclude all
+                                # SW positions from every subsequent generic planting
+                                # loop (especially the continuous wheat replant loop).
+                                # Do not change crop care or existing SW assets.
+                                generic_sw_tiles = [
+                                    p for p in empty_tiles
+                                    if farm.quadrant_of(p) == "SW"
+                                ]
+                                empty_tiles = [
+                                    p for p in empty_tiles
+                                    if farm.quadrant_of(p) != "SW"
+                                ]
+                                plan.diagnostics["sw_generic_planting_gate"] = {
+                                    "enabled": True,
+                                    "excluded_sw_empty_tiles": len(generic_sw_tiles),
+                                    "excluded_sw_pasture_empty_tiles": sum(
+                                        p in SW_PASTURE_TILES for p in generic_sw_tiles
+                                    ),
+                                    "authorized_sw_soil_candidates": len(sw_soil_empty),
+                                }
+                            else:
+                                # Exact P1.2 behavior with P1.3-A disabled.
+                                empty_tiles = [p for p in empty_tiles if p not in SW_SOIL_TILES]
                         if sw_soil_empty:
                             from strategy.land_serviceability_model import (
                                 get_sorted_sw_soil_tiles,
@@ -2762,6 +2826,14 @@ class MacroPlanner:
         plant_tiles_set = {pos for pos, _ in plan.plant_queue}
         assert not (structure_tiles_set & plant_tiles_set), \
             f"Structure tiles {structure_tiles_set} and plant tiles {plant_tiles_set} must be mutually exclusive!"
+
+        try:
+            from strategy.sw_tranche_controller import get_sw_tranche_controller
+            _filter_ctrl = get_sw_tranche_controller()
+            if _filter_ctrl.is_treatment_active():
+                plant_queue = _filter_ctrl.filter_macro_plant_queue(plant_queue, farm)
+        except Exception:
+            pass
 
         plan.plant_queue = plant_queue
         plan.water_budget_exceeded = water_budget_exceeded

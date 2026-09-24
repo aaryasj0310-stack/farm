@@ -1,0 +1,237 @@
+{
+  "metadata": {
+    "is_smoke": false,
+    "seeds": [
+      96501,
+      96502,
+      96503,
+      96504,
+      96505,
+      96506,
+      96507,
+      96508,
+      96509,
+      96510,
+      96511,
+      96512,
+      96513,
+      96514,
+      96515,
+      96516,
+      96517,
+      96518,
+      96519,
+      96520
+    ],
+    "opponents": [
+      "pass",
+      "pure_wheat_rush",
+      "cow_milk_engine",
+      "melon_sniper",
+      "full_production_agent"
+    ],
+    "seats": [
+      0,
+      1
+    ],
+    "total_pairs": 200,
+    "total_matches": 400,
+    "execution_duration_seconds": 2858.14,
+    "invariant_violations_total": 0
+  },
+  "table_a_overall": {
+    "control": {
+      "min": 79344.0,
+      "p10": 91592.0,
+      "p25": 98018.0,
+      "p50": 102626.0,
+      "p75": 106618.0,
+      "p90": 110628.0,
+      "max": 124325.0,
+      "mean": 102063.43,
+      "std": 7598.9
+    },
+    "treatment": {
+      "min": 61583.0,
+      "p10": 79341.0,
+      "p25": 86469.0,
+      "p50": 91045.0,
+      "p75": 100923.0,
+      "p90": 106618.0,
+      "max": 124325.0,
+      "mean": 92702.6,
+      "std": 10727.93
+    },
+    "paired_delta": {
+      "min": -34222.0,
+      "p10": -21387.0,
+      "p25": -15188.0,
+      "p50": -9701.0,
+      "p75": 0.0,
+      "p90": 0.0,
+      "max": 7084.0,
+      "mean": -9360.83,
+      "std": 8567.61
+    }
+  },
+  "table_b_paired_outcome": {
+    "mean_paired_delta": -9360.83,
+    "median_paired_delta": -9701.0,
+    "std_paired_delta": 8567.61,
+    "bootstrap_ci_95": [
+      -10548.71,
+      -8194.18
+    ],
+    "positive_pairs": 3,
+    "negative_pairs": 140,
+    "ties": 57,
+    "win_rate_pct": 1.5
+  },
+  "table_c_purchase_timing": {
+    "treatment": {
+      "never": 66,
+      "D5": 0,
+      "D6": 0,
+      "D7": 0,
+      "D8": 0,
+      "D9": 31,
+      "D10": 54,
+      "D11": 49,
+      "D12+": 0
+    },
+    "control": {
+      "never": 200,
+      "D5": 0,
+      "D6": 0,
+      "D7": 0,
+      "D8": 0,
+      "D9": 0,
+      "D10": 0,
+      "D11": 0,
+      "D12+": 0
+    }
+  },
+  "table_d_first_tranche": {
+    "compact_commercial": {
+      "count": 151,
+      "mean_delta": -12232.4,
+      "median_delta": -12302.0
+    },
+    "no_purchase": {
+      "count": 46,
+      "mean_delta": 0.0,
+      "median_delta": 0.0
+    },
+    "tranche_1_starter": {
+      "count": 3,
+      "mean_delta": -8358.0,
+      "median_delta": -8949.0
+    }
+  },
+  "table_e_opponents": {
+    "pass": {
+      "count": 40,
+      "control_mean": 103085.43,
+      "treatment_mean": 94384.12,
+      "mean_delta": -8701.3,
+      "median_delta": -8828.0,
+      "treatment_wins": 0,
+      "win_rate_pct": 0.0
+    },
+    "pure_wheat_rush": {
+      "count": 40,
+      "control_mean": 102075.6,
+      "treatment_mean": 90198.32,
+      "mean_delta": -11877.27,
+      "median_delta": -11116.0,
+      "treatment_wins": 0,
+      "win_rate_pct": 0.0
+    },
+    "cow_milk_engine": {
+      "count": 40,
+      "control_mean": 103378.73,
+      "treatment_mean": 95835.32,
+      "mean_delta": -7543.4,
+      "median_delta": 0.0,
+      "treatment_wins": 1,
+      "win_rate_pct": 2.5
+    },
+    "melon_sniper": {
+      "count": 40,
+      "control_mean": 99883.77,
+      "treatment_mean": 88651.18,
+      "mean_delta": -11232.6,
+      "median_delta": -11399.0,
+      "treatment_wins": 2,
+      "win_rate_pct": 5.0
+    },
+    "full_production_agent": {
+      "count": 40,
+      "control_mean": 101893.6,
+      "treatment_mean": 94444.02,
+      "mean_delta": -7449.57,
+      "median_delta": -5850.0,
+      "treatment_wins": 0,
+      "win_rate_pct": 0.0
+    }
+  },
+  "table_f_utilization": {
+    "D+0": {
+      "count": 154,
+      "mean_whole_quadrant_util_pct": 19.0,
+      "mean_tranche_util_pct": 59.3
+    },
+    "D+1": {
+      "count": 154,
+      "mean_whole_quadrant_util_pct": 27.1,
+      "mean_tranche_util_pct": 84.6
+    },
+    "D+2": {
+      "count": 154,
+      "mean_whole_quadrant_util_pct": 27.8,
+      "mean_tranche_util_pct": 87.0
+    },
+    "D+3": {
+      "count": 154,
+      "mean_whole_quadrant_util_pct": 27.8,
+      "mean_tranche_util_pct": 87.0
+    },
+    "D+5": {
+      "count": 154,
+      "mean_whole_quadrant_util_pct": 27.7,
+      "mean_tranche_util_pct": 86.7
+    },
+    "D+7": {
+      "count": 154,
+      "mean_whole_quadrant_util_pct": 27.8,
+      "mean_tranche_util_pct": 87.0
+    }
+  },
+  "seat_breakdown": {
+    "0": {
+      "count": 100,
+      "control_mean": 102263.31,
+      "treatment_mean": 92656.61,
+      "mean_delta": -9606.7,
+      "median_delta": -10083.0
+    },
+    "1": {
+      "count": 100,
+      "control_mean": 101863.54,
+      "treatment_mean": 92748.58,
+      "mean_delta": -9114.96,
+      "median_delta": -8847.0
+    }
+  },
+  "no_purchase_analysis": {
+    "count": 66,
+    "reasons": {
+      "Labor certificate binding=WORKER_HOURS, feasible=False, shadow recommends 1 hires vs baseline 0": 54,
+      "Significant price depression detected on: ['MILK']": 2,
+      "DELAY": 10
+    },
+    "mean_control_cash": 103196.64,
+    "mean_treatment_cash": 103303.5,
+    "mean_paired_delta": 106.86
+  }
+}

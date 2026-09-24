@@ -1101,6 +1101,14 @@ def build_tasks(ctx, macro):
             prio = PRIORITY_WEED_DIG + 15 if t.pos in blocked else PRIORITY_WEED_DIG
             add(prio, "DIG", t.pos, kind="dig")
 
+    try:
+        from strategy.sw_tranche_controller import get_sw_tranche_controller
+        _treatment_ctrl = get_sw_tranche_controller()
+        if _treatment_ctrl.is_treatment_active():
+            tasks = _treatment_ctrl.filter_task_scheduler_tasks(tasks, ctx.get("farm"))
+    except Exception:
+        pass
+
     return tasks
 
 
