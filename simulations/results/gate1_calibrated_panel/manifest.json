@@ -1,0 +1,642 @@
+{
+  "panel_name": "Kaggriculture Calibrated Diagnostic Panel (100 Configurations)",
+  "evaluated_branch": "experiment/sw-forward-architecture-phase-a",
+  "engine_name": "kaggriculture",
+  "engine_version": "1.32.7",
+  "python_version": "3.12.10",
+  "default_architecture_mode": "OFF",
+  "evaluation_modes": [
+    "OFF",
+    "SHADOW"
+  ],
+  "total_pairs": 100,
+  "total_matches": 200,
+  "episode_steps": 720,
+  "seeds": [
+    96511,
+    96512,
+    96513,
+    96514,
+    96515,
+    96516,
+    96517,
+    96518,
+    96519,
+    96520
+  ],
+  "seed_provenance": "10 fresh non-protected seeds (96511-96520) verified unreferenced and unexecuted",
+  "protected_seeds_quarantined": "98001-98050 (strictly untouched)",
+  "opponents": [
+    "pass",
+    "pure_wheat_rush",
+    "cow_milk_engine",
+    "melon_sniper",
+    "full_production_agent"
+  ],
+  "seats": [
+    0,
+    1
+  ],
+  "configurations": [
+    {
+      "pair_id": 0,
+      "seed": 96511,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 1,
+      "seed": 96511,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 2,
+      "seed": 96511,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 3,
+      "seed": 96511,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 4,
+      "seed": 96511,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 5,
+      "seed": 96511,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 6,
+      "seed": 96511,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 7,
+      "seed": 96511,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 8,
+      "seed": 96511,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 9,
+      "seed": 96511,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 10,
+      "seed": 96512,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 11,
+      "seed": 96512,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 12,
+      "seed": 96512,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 13,
+      "seed": 96512,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 14,
+      "seed": 96512,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 15,
+      "seed": 96512,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 16,
+      "seed": 96512,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 17,
+      "seed": 96512,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 18,
+      "seed": 96512,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 19,
+      "seed": 96512,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 20,
+      "seed": 96513,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 21,
+      "seed": 96513,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 22,
+      "seed": 96513,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 23,
+      "seed": 96513,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 24,
+      "seed": 96513,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 25,
+      "seed": 96513,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 26,
+      "seed": 96513,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 27,
+      "seed": 96513,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 28,
+      "seed": 96513,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 29,
+      "seed": 96513,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 30,
+      "seed": 96514,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 31,
+      "seed": 96514,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 32,
+      "seed": 96514,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 33,
+      "seed": 96514,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 34,
+      "seed": 96514,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 35,
+      "seed": 96514,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 36,
+      "seed": 96514,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 37,
+      "seed": 96514,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 38,
+      "seed": 96514,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 39,
+      "seed": 96514,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 40,
+      "seed": 96515,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 41,
+      "seed": 96515,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 42,
+      "seed": 96515,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 43,
+      "seed": 96515,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 44,
+      "seed": 96515,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 45,
+      "seed": 96515,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 46,
+      "seed": 96515,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 47,
+      "seed": 96515,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 48,
+      "seed": 96515,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 49,
+      "seed": 96515,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 50,
+      "seed": 96516,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 51,
+      "seed": 96516,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 52,
+      "seed": 96516,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 53,
+      "seed": 96516,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 54,
+      "seed": 96516,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 55,
+      "seed": 96516,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 56,
+      "seed": 96516,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 57,
+      "seed": 96516,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 58,
+      "seed": 96516,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 59,
+      "seed": 96516,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 60,
+      "seed": 96517,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 61,
+      "seed": 96517,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 62,
+      "seed": 96517,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 63,
+      "seed": 96517,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 64,
+      "seed": 96517,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 65,
+      "seed": 96517,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 66,
+      "seed": 96517,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 67,
+      "seed": 96517,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 68,
+      "seed": 96517,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 69,
+      "seed": 96517,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 70,
+      "seed": 96518,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 71,
+      "seed": 96518,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 72,
+      "seed": 96518,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 73,
+      "seed": 96518,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 74,
+      "seed": 96518,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 75,
+      "seed": 96518,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 76,
+      "seed": 96518,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 77,
+      "seed": 96518,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 78,
+      "seed": 96518,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 79,
+      "seed": 96518,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 80,
+      "seed": 96519,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 81,
+      "seed": 96519,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 82,
+      "seed": 96519,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 83,
+      "seed": 96519,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 84,
+      "seed": 96519,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 85,
+      "seed": 96519,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 86,
+      "seed": 96519,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 87,
+      "seed": 96519,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 88,
+      "seed": 96519,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 89,
+      "seed": 96519,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    {
+      "pair_id": 90,
+      "seed": 96520,
+      "opponent": "pass",
+      "seat": 0
+    },
+    {
+      "pair_id": 91,
+      "seed": 96520,
+      "opponent": "pass",
+      "seat": 1
+    },
+    {
+      "pair_id": 92,
+      "seed": 96520,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    {
+      "pair_id": 93,
+      "seed": 96520,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    {
+      "pair_id": 94,
+      "seed": 96520,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    {
+      "pair_id": 95,
+      "seed": 96520,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    {
+      "pair_id": 96,
+      "seed": 96520,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    {
+      "pair_id": 97,
+      "seed": 96520,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    {
+      "pair_id": 98,
+      "seed": 96520,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    {
+      "pair_id": 99,
+      "seed": 96520,
+      "opponent": "full_production_agent",
+      "seat": 1
+    }
+  ]
+}

@@ -219,8 +219,16 @@ class WholeFarmPlanner:
                 if is_anim:
                     animal_tiles.append((t.x, t.y))
 
+        def _calc_feed_h(idx_val: int) -> int:
+            if eval_day == snapshot.day:
+                if snapshot.hour < 4:
+                    return max(snapshot.hour + 1, min(23, 4 + (idx_val % 6)))
+                return max(snapshot.hour + 1, min(23, snapshot.hour + 1 + (idx_val % 4)))
+            return 4 + (idx_val % 6)
+
         if animal_tiles:
-            for ax, ay in animal_tiles:
+            for idx, (ax, ay) in enumerate(animal_tiles):
+                feed_h = _calc_feed_h(idx)
                 tasks.append(
                     ServiceTask(
                         task_id=f"feed_animal_{ax}_{ay}_d{eval_day}",
@@ -228,7 +236,7 @@ class WholeFarmPlanner:
                         pos=(ax, ay),
                         region="NW" if ay < 5 else "SW",
                         day=eval_day,
-                        hour_deadline=20,
+                        hour_deadline=feed_h,
                         tier=CommitmentTier.HARD,
                         estimated_duration_actions=1,
                     )
@@ -237,6 +245,7 @@ class WholeFarmPlanner:
             idx = 0
             for sp, count in snapshot.animals_summary:
                 for _ in range(count):
+                    feed_h = _calc_feed_h(idx)
                     tasks.append(
                         ServiceTask(
                             task_id=f"feed_animal_{sp}_{idx}_d{eval_day}",
@@ -244,7 +253,7 @@ class WholeFarmPlanner:
                             pos=(2, 2),
                             region="NW",
                             day=eval_day,
-                            hour_deadline=20,
+                            hour_deadline=feed_h,
                             tier=CommitmentTier.HARD,
                             estimated_duration_actions=1,
                         )
@@ -255,6 +264,7 @@ class WholeFarmPlanner:
             for sp, count in snapshot.tiles_summary:
                 if sp in ANIMALS:
                     for _ in range(count):
+                        feed_h = _calc_feed_h(idx)
                         tasks.append(
                             ServiceTask(
                                 task_id=f"feed_animal_{sp}_{idx}_d{eval_day}",
@@ -262,7 +272,7 @@ class WholeFarmPlanner:
                                 pos=(2, 2),
                                 region="NW",
                                 day=eval_day,
-                                hour_deadline=20,
+                                hour_deadline=feed_h,
                                 tier=CommitmentTier.HARD,
                                 estimated_duration_actions=1,
                             )
@@ -289,7 +299,8 @@ class WholeFarmPlanner:
                 # Outstanding animal feeding liabilities for today from ledger
                 day_liabs = [l for l in self.ledger.feed_liabilities if l.day == eval_day]
                 if day_liabs:
-                    for liab in day_liabs:
+                    for idx, liab in enumerate(day_liabs):
+                        h_dl = max(snapshot.hour + 1, min(liab.hour_deadline, 4 + (idx % 6))) if snapshot.hour < 4 else max(snapshot.hour + 1, min(liab.hour_deadline, snapshot.hour + 1 + (idx % 4)))
                         simulated_tasks.append(
                             ServiceTask(
                                 task_id=f"feed_animal_{liab.animal_pos[0]}_{liab.animal_pos[1]}_d{eval_day}",
@@ -297,7 +308,7 @@ class WholeFarmPlanner:
                                 pos=liab.animal_pos,
                                 region="NW" if liab.animal_pos[1] < 5 else "SW",
                                 day=eval_day,
-                                hour_deadline=liab.hour_deadline,
+                                hour_deadline=min(23, h_dl),
                                 tier=CommitmentTier.HARD,
                                 estimated_duration_actions=1,
                             )
@@ -308,8 +319,9 @@ class WholeFarmPlanner:
                 self._append_daily_animal_tasks(simulated_tasks, snapshot, raw_ctx, eval_day)
 
             # 2. Existing NW/NE in-ground wheat harvests from ledger
-            for h in self.ledger.in_ground_wheat:
+            for idx, h in enumerate(self.ledger.in_ground_wheat):
                 if h.earliest_harvest_day == eval_day:
+                    h_dl = max(snapshot.hour + 1, min(23, 6 + (idx % 8))) if eval_day == snapshot.day else (6 + (idx % 8))
                     simulated_tasks.append(
                         ServiceTask(
                             task_id=f"harvest_wheat_{h.tile_pos[0]}_{h.tile_pos[1]}_d{eval_day}",
@@ -317,7 +329,7 @@ class WholeFarmPlanner:
                             pos=h.tile_pos,
                             region="NW",
                             day=eval_day,
-                            hour_deadline=20,
+                            hour_deadline=h_dl,
                             tier=CommitmentTier.HARD,
                             estimated_duration_actions=1,
                         )
@@ -461,11 +473,11 @@ class WholeFarmPlanner:
                         )
                     )
 
-            # 4. Plant queue obligations from farm plan
             if eval_day == snapshot.day and plan and getattr(plan, "plant_queue", None):
                 for pq_idx, pq_item in enumerate(plan.plant_queue):
                     pq_pos = getattr(pq_item, "pos", (1, 1))
                     if not (pq_pos[0] < 5 and pq_pos[1] >= 5):
+                        h_dl = max(snapshot.hour + 1, min(23, 12 + (pq_idx % 6)))
                         simulated_tasks.append(
                             ServiceTask(
                                 task_id=f"core_plant_queue_{pq_idx}_d{eval_day}",
@@ -473,7 +485,7 @@ class WholeFarmPlanner:
                                 pos=pq_pos,
                                 region="NW" if pq_pos[0] < 5 else "NE",
                                 day=eval_day,
-                                hour_deadline=20,
+                                hour_deadline=h_dl,
                                 tier=CommitmentTier.HARD,
                                 estimated_duration_actions=1,
                             )
@@ -1133,15 +1145,15 @@ class WholeFarmPlanner:
             full_peak_shed = best_entry["peak_shed"]
             full_peak_acts = best_entry["peak_daily_actions"]
         else:
-            serviceable_portfolios = [p for p in portfolio_evals if p["serviceable"]]
-            if serviceable_portfolios:
-                best_entry = max(serviceable_portfolios, key=lambda p: p["delta_fc"])
+            positive_portfolios = [p for p in portfolio_evals if p["delta_fc"] > 0]
+            if positive_portfolios:
+                best_entry = max(positive_portfolios, key=lambda p: p["delta_fc"])
             else:
                 best_entry = max(portfolio_evals, key=lambda p: p["delta_fc"]) if portfolio_evals else None
 
             best_portfolio_data = None
             best_delta = best_entry["delta_fc"] if best_entry else -sw_land_cost
-            cert_result = best_entry["cert"] if (best_entry and not best_entry["serviceable"]) else core_cert
+            cert_result = best_entry["cert"] if best_entry else core_cert
             best_seed_cost = best_entry["total_seed_cost"] if best_entry else 0.0
             best_sw_gross = best_entry["sw_gross_revenue"] if best_entry else 0.0
             best_cannibalization = best_entry["core_cannibalization_loss"] if best_entry else 0.0

@@ -1,0 +1,83 @@
+{
+  "provenance": {
+    "panel_name": "Kaggriculture Calibrated Diagnostic Panel (100 Configurations)",
+    "evaluated_branch": "experiment/sw-forward-architecture-phase-a",
+    "seeds": [
+      96511,
+      96512,
+      96513,
+      96514,
+      96515,
+      96516,
+      96517,
+      96518,
+      96519,
+      96520
+    ],
+    "total_pairs": 100,
+    "total_matches": 200,
+    "elapsed_seconds": 1420.67
+  },
+  "invariance": {
+    "total_pairs": 100,
+    "passed_invariance": 100,
+    "invariance_pct": 100.0,
+    "latency_p50": {
+      "min": 14.716,
+      "p25": 25.894,
+      "p50": 26.856,
+      "p75": 27.626,
+      "p90": 28.834,
+      "p95": 30.615,
+      "p99": 32.374,
+      "max": 32.374,
+      "mean": 26.668
+    },
+    "latency_p95": {
+      "min": 35.705,
+      "p25": 49.468,
+      "p50": 56.778,
+      "p75": 63.316,
+      "p90": 67.388,
+      "p95": 70.219,
+      "p99": 75.546,
+      "max": 75.546,
+      "mean": 56.067
+    },
+    "latency_max": {
+      "min": 132.418,
+      "p25": 213.021,
+      "p50": 245.358,
+      "p75": 300.239,
+      "p90": 329.996,
+      "p95": 352.41,
+      "p99": 389.688,
+      "max": 389.688,
+      "mean": 255.493
+    }
+  },
+  "feasibility": {
+    "mean_core_cert_pass_rate": 0.6319,
+    "mean_combined_cert_pass_rate": 0.2964,
+    "mean_lifecycle_pass_rate": 0.0653,
+    "status_distribution": {
+      "PURCHASE": 0,
+      "DELAY": 27458,
+      "DOWNSIZE": 3625,
+      "REJECT": 40817
+    },
+    "tier_distribution": {
+      "CERTIFIED_SAFE": 6334,
+      "TIGHT_BUT_SERVICEABLE": 14979,
+      "INFEASIBLE": 50587,
+      "UNCERTAIN": 0
+    },
+    "binding_resources": {
+      "WORKER_HOURS": 71900
+    },
+    "uncertainty_flags": {
+      "PRICE_DEPRESSION_ESTIMATE": 20029,
+      "HERD_FEED_ASSUMPTION": 71300
+    }
+  }
+}

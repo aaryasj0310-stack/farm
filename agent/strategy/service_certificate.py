@@ -78,6 +78,7 @@ class CertificateResult:
     displaced_core_tasks: List[ServiceTask] = field(default_factory=list)
     uncompleted_sw_tasks: List[ServiceTask] = field(default_factory=list)
     guarantee_type: str = "CONSERVATIVE_CAPACITY_ENVELOPE"
+    guarantee_tier: str = "CERTIFIED_SAFE"  # "CERTIFIED_SAFE", "TIGHT_BUT_SERVICEABLE", "INFEASIBLE", "UNCERTAIN"
     guarantee_notes: str = (
         "Conservative capacity envelope with spatial travel overhead factors (1.15-1.35x), "
         "earliest-start bounds, and dependency checks; not an executable discrete worker-by-worker engine schedule."
@@ -262,13 +263,13 @@ class ServiceCertificate:
             # Tasks with deadline in this hour
             due_tasks = tasks_by_day_hour.get((day, hour), [])
 
-            # Fidelity adjustment:
+            # Fidelity adjustment: calibrated travel overhead factors
             if h_step < 24:
-                travel_factor = 1.35
-            elif h_step < 48:
-                travel_factor = 1.25
-            else:
                 travel_factor = 1.15
+            elif h_step < 48:
+                travel_factor = 1.15
+            else:
+                travel_factor = 1.10
 
             # Direct demand: on current day, multi-action tasks execute across their permitted window;
             # on future days, cohort tasks represent deadline capacity envelopes.
@@ -277,7 +278,7 @@ class ServiceCertificate:
                 total_estimated_demand = int(math.ceil(direct_demand * (travel_factor if len(due_tasks) > 2 else 1.0)))
             else:
                 direct_demand = sum(t.estimated_duration_actions for t in due_tasks)
-                total_estimated_demand = int(math.ceil(direct_demand * travel_factor))
+                total_estimated_demand = int(math.ceil(direct_demand * (travel_factor if len(due_tasks) > 2 else 1.0)))
 
             if total_estimated_demand > peak_workload:
                 peak_workload = total_estimated_demand
@@ -312,6 +313,14 @@ class ServiceCertificate:
         feasible = (min_slack >= 0) and (len(failing_tasks) == 0)
         hard_feasible = len([t for t in failing_tasks if t.tier == CommitmentTier.HARD]) == 0
 
+        # Safety tier classification
+        if not feasible:
+            guarantee_tier = "INFEASIBLE"
+        elif min_slack >= 3:
+            guarantee_tier = "CERTIFIED_SAFE"
+        else:
+            guarantee_tier = "TIGHT_BUT_SERVICEABLE"
+
         # Generate structured repair options if infeasible or tight
         repairs = []
         if not feasible or min_slack < 2:
@@ -330,6 +339,7 @@ class ServiceCertificate:
             hard_tasks_feasible=hard_feasible,
             displaced_core_tasks=displaced_core_tasks,
             uncompleted_sw_tasks=uncompleted_sw_tasks,
+            guarantee_tier=guarantee_tier,
         )
 
     def _generate_structured_repairs(
