@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "mean_final_cash": 99444.45,
+    "mean_hire_spend_per_match": 7545.0,
+    "mean_seed_spend_per_match": 3999.5,
+    "mean_animal_spend_per_match": 10710.0,
+    "mean_land_spend_per_match": 1000.0,
+    "total_orders_emitted": 14723,
+    "total_orders_executed": 7720,
+    "total_orders_dropped": 7003,
+    "mean_orders_dropped_per_match": 350.1,
+    "mean_liquid_cash_idle_turns_per_match": 431.8,
+    "total_feeding_obligations_due": 4398,
+    "total_feeding_executed": 4243,
+    "total_animal_escapes": 0
+  },
+  "capital_accounting_notes": {
+    "hire_cost_correction": "Corrected from $100 flat to exact fib(n) progression ($1-$21), reducing reported hire costs by >85%.",
+    "seed_cost_correction": "Corrected from product selling base price ($25-$250) to actual seed catalog prices ($10-$100).",
+    "liquid_cash_correction": "Subtracted mandatory feed obligations and hire budgets from gross cash before classifying idle turns."
+  }
+}

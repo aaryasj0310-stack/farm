@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "total_worker_turns": 147557,
+    "mean_worker_turns_per_match": 7377.9,
+    "emitted_moves": 95640,
+    "emitted_moves_pct": 64.82,
+    "executed_moves": 92771,
+    "executed_moves_pct": 62.87,
+    "failed_moves": 2869,
+    "failed_moves_pct": 1.94,
+    "productive_moves": 85757,
+    "productive_moves_pct": 58.12,
+    "moves_to_shared_facilities": 7014,
+    "moves_to_shared_facilities_pct": 4.75,
+    "executed_productive_ops": 42946,
+    "executed_productive_ops_pct": 29.1,
+    "failed_productive_ops": 469,
+    "idle_turns": 8502,
+    "idle_turns_pct": 5.76,
+    "mean_quadrant_crossings_per_match": 475.2,
+    "mean_repeated_crossings_per_match": 70.7
+  },
+  "movement_classification": {
+    "necessary_transit_to_tasks": 85757,
+    "necessary_transit_to_shed": 7014,
+    "failed_or_blocked_movement": 2869,
+    "repeated_quadrant_oscillation": 1414,
+    "potentially_avoidable_travel_turns_per_match": 70.7
+  }
+}

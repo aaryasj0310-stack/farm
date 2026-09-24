@@ -1,0 +1,33 @@
+{
+  "phase": "C0-A",
+  "title": "Authoritative Core-Farm Bottleneck Telemetry Audit",
+  "commit_sha": "a87a308d6fae7a563184fe97195c28c60c9427a0",
+  "timestamp": "2026-09-24 20:36:39 UTC",
+  "configuration": {
+    "SW_FORWARD_ARCHITECTURE_MODE": "OFF",
+    "SOFT_WORKER_LOCALITY_MODE": "OFF",
+    "discovery_seeds": [
+      96501,
+      96502
+    ],
+    "benchmark_opponents": [
+      "pass",
+      "pure_wheat_rush",
+      "cow_milk_engine",
+      "melon_sniper",
+      "full_production_agent"
+    ],
+    "seats": [
+      0,
+      1
+    ],
+    "total_matches": 20,
+    "episodes_per_match": 720
+  },
+  "environment": {
+    "python_version": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "cpu_count": 8
+  },
+  "execution_time_seconds": 92.0
+}

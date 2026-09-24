@@ -1,0 +1,15 @@
+{
+  "summary": {
+    "total_completed_crop_cycles": 3747,
+    "mean_completed_cycles_per_match": 187.3,
+    "total_unharvested_at_end": 253,
+    "mean_unharvested_at_end_per_match": 12.7,
+    "mean_harvest_delay_hours": 47.74,
+    "mean_in_season_replant_delay_hours": 6.55,
+    "missed_watering_crop_loss": 0,
+    "total_crop_decays": 0
+  },
+  "interpretation": {
+    "b1_r3_distortion_explanation": "B1-R3 polled unharvested and unwatered tiles every hour (24 times/day), inflating numbers to 8,968 harvest delays and 4,754 missed waterings. Authoritative per-obligation tracking reveals crops waited an average of only 47.7 hours for harvest, zero crops decayed, and zero crops died."
+  }
+}

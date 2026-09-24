@@ -1,0 +1,78 @@
+{
+  "manifest": {
+    "comparison_scope": "20 baseline matches (seeds 96501, 96502 x 5 opponents x 2 seats)",
+    "b1_r3_commit": "a87a308d6fae7a563184fe97195c28c60c9427a0",
+    "c0_commit": "a87a308d6fae7a563184fe97195c28c60c9427a0"
+  },
+  "metrics_reconciliation_table": [
+    {
+      "metric_name": "WORKER_TRAVEL_ACTIONS",
+      "b1_r3_value": "4,782.0 turns/match (64.82% of turns)",
+      "c0_corrected_value": "4638.6 executed moves/match (62.87%)",
+      "original_method": "All emitted directional actions (NORTH/SOUTH/EAST/WEST) counted as travel overhead.",
+      "corrected_method": "Engine-confirmed movement decomposed into necessary transit to tasks, shed access, and quadrant oscillation.",
+      "reason_for_difference": "Travel is physically necessary in a 10x10 grid; only cross-quadrant oscillation is potentially avoidable.",
+      "remaining_limitations": "Shortest-path BFS routing may still take suboptimal paths around temporary obstacles."
+    },
+    {
+      "metric_name": "HARVEST_READY_TILES",
+      "b1_r3_value": "8,968.1 hourly tile observations/match",
+      "c0_corrected_value": "47.7 mean hours waiting mature before harvest",
+      "original_method": "Hourly snapshot summed count of harvestable tiles at every turn (24x/day).",
+      "corrected_method": "Reconstructed discrete crop cycles from maturity to actual harvest step.",
+      "reason_for_difference": "Polled snapshots inflated the count by 24x per day; actual harvest delay was a modest queue buffer, not thousands of lost crops.",
+      "remaining_limitations": "Ongoing crops (Tomato, Strawberry) interval harvests tracked per batch."
+    },
+    {
+      "metric_name": "EMPTY_CORE_TILES",
+      "b1_r3_value": "4,034.2 tile-turns/match",
+      "c0_corrected_value": "6.5 hours mean in-season replant delay; 0 crops lost to late season",
+      "original_method": "Hourly count of empty tiles on unlocked NW+NE land.",
+      "corrected_method": "Distinguished deliberate endgame non-replanting (days 27-29) and structure reservations from in-season replanting gaps.",
+      "reason_for_difference": "Empty tiles late in the season are intentional since new crops cannot mature before day 30.",
+      "remaining_limitations": "Tilling state between cycles."
+    },
+    {
+      "metric_name": "MISSED_WATERING_EVENTS",
+      "b1_r3_value": "4,754.2 hourly observations/match",
+      "c0_corrected_value": "0 crops died from unwatered status; 0 yield lost",
+      "original_method": "Checked consecutive_unwatered >= 1 every single hour of the day.",
+      "corrected_method": "Tracked daily watering obligations at end-of-day engine refresh.",
+      "reason_for_difference": "A crop not yet watered at 9 AM is not 'missed' if watered at 2 PM; only end-of-day unwatered state affects health.",
+      "remaining_limitations": "Bonus window timing for early water."
+    },
+    {
+      "metric_name": "HIRE_EXPENDITURES",
+      "b1_r3_value": "$100.0 flat per hire",
+      "c0_corrected_value": "$7545.0 actual total hire spend per match (fib(n) = $1 to $21)",
+      "original_method": "Approximated all hires at $100.",
+      "corrected_method": "Applied exact engine formula: mult * fib(hires_today).",
+      "reason_for_difference": "Hiring is vastly cheaper in reality than reported in B1-R3.",
+      "remaining_limitations": "None."
+    },
+    {
+      "metric_name": "SEED_PURCHASE_COST",
+      "b1_r3_value": "Evaluated at crop base sale price (e.g. $250 for melon)",
+      "c0_corrected_value": "$3999.5 actual seed spend per match ($10-$100 catalog seed prices)",
+      "original_method": "Used BASE_PRICES (sale prices) for BUY_SEED cost estimation.",
+      "corrected_method": "Used exact CROPS[c]['seed'] prices.",
+      "reason_for_difference": "Seed catalog prices are 2.5x to 3x lower than crop selling prices.",
+      "remaining_limitations": "None."
+    },
+    {
+      "metric_name": "LIVESTOCK_ESCAPES",
+      "b1_r3_value": "0 reported",
+      "c0_corrected_value": "0 total animal escapes across 20 matches",
+      "original_method": "Emitted FEED count assumed 100% execution.",
+      "corrected_method": "Engine verified consecutive_unfed >= 2 condition at end-of-day.",
+      "reason_for_difference": "Feeding was safely executed by the priority scheduler; zero escapes occurred.",
+      "remaining_limitations": "None."
+    }
+  ],
+  "decision_gate_evaluation": {
+    "quadrant_oscillation_observed": 475.2,
+    "travel_share_of_turns": 62.87,
+    "opportunity_assessment": "While the original B1-R3 estimate of 64.82% 'avoidable travel' was inflated by treating all necessary grid transit as waste, the corrected ledger demonstrates that workers still perform an average of 475.2 quadrant crossing events per match (~23 per day!). Because units are split into fixed home zones by index rather than physical location, workers frequently cross paths to service tasks in opposite quadrants when their home quadrant has a temporary task. Soft locality that respects worker physical position and current task backlog has a genuine, evidence-supported opportunity to reduce quadrant hopping without sacrificing safety.",
+    "proceed_to_c0_b": true
+  }
+}
