@@ -1,0 +1,22 @@
+{
+  "phase": "Phase M0-A Engine Verification",
+  "commit_sha": "4f84bcd4ba86dc21630add79b381e210fba6ac95",
+  "timestamp": "2026-09-25 06:35:05 UTC",
+  "environment": {
+    "python_version": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "summary": {
+    "canonical_order_successful": true,
+    "non_canonical_permutations_failed": true,
+    "one_time_crops_supported": [
+      "WHEAT",
+      "CARROT",
+      "MELON"
+    ],
+    "ongoing_crops_correctly_rejected": [
+      "TOMATO",
+      "STRAWBERRY"
+    ]
+  }
+}

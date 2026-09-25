@@ -105,7 +105,10 @@ def test_zip_clean_environment_isolation_and_import(repo_paths):
 
     with tempfile.TemporaryDirectory() as temp_dir:
         with zipfile.ZipFile(zip_path, "r") as z:
-            z.extractall(temp_dir)
+            for member in z.infolist():
+                target_path = os.path.realpath(os.path.join(temp_dir, member.filename))
+                if os.path.commonpath([os.path.realpath(temp_dir), target_path]) == os.path.realpath(temp_dir):
+                    z.extract(member, temp_dir)
 
         # Remove repo_root and agent_dir from sys.path to simulate a pure isolated environment
         repo_root = repo_paths["repo_root"]
@@ -155,7 +158,10 @@ def test_zip_extracted_720_turn_live_match(repo_paths):
 
     with tempfile.TemporaryDirectory() as temp_dir:
         with zipfile.ZipFile(zip_path, "r") as z:
-            z.extractall(temp_dir)
+            for member in z.infolist():
+                target_path = os.path.realpath(os.path.join(temp_dir, member.filename))
+                if os.path.commonpath([os.path.realpath(temp_dir), target_path]) == os.path.realpath(temp_dir):
+                    z.extract(member, temp_dir)
 
         extracted_main = os.path.join(temp_dir, "main.py")
 

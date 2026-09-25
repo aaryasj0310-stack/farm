@@ -1,0 +1,53 @@
+{
+  "phase": "Phase M0-A: Engine Mechanics Exploitation \u2014 Same-Turn Crop Pipeline",
+  "commit_sha": "4f84bcd4ba86dc21630add79b381e210fba6ac95",
+  "timestamp": "2026-09-25 07:31:45 UTC",
+  "configuration": {
+    "control": {
+      "SAME_TURN_CROP_PIPELINE_MODE": "OFF",
+      "SOFT_WORKER_LOCALITY_MODE": "OFF",
+      "SW_FORWARD_ARCHITECTURE_MODE": "OFF"
+    },
+    "treatment": {
+      "SAME_TURN_CROP_PIPELINE_MODE": "ON",
+      "SOFT_WORKER_LOCALITY_MODE": "OFF",
+      "SW_FORWARD_ARCHITECTURE_MODE": "OFF"
+    },
+    "seeds": [
+      96501,
+      96502,
+      96503,
+      96504,
+      96505,
+      96506,
+      96507,
+      96508,
+      96509,
+      96510
+    ],
+    "opponents": [
+      "pass",
+      "pure_wheat_rush",
+      "cow_milk_engine",
+      "melon_sniper",
+      "full_production_agent"
+    ],
+    "seats": [
+      0,
+      1
+    ],
+    "total_paired_configurations": 100,
+    "total_matches_executed": 200
+  },
+  "environment": {
+    "python_version": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "source_hashes": {
+      "agent/config.py": "65a8a0e50328279200eb87d0eac8bed6a5c9040e2e5f3b6056705fb014ae480c",
+      "agent/main.py": "44190da94bfde80434693837e73c7fea80659137ea1384060af1c042802df80c",
+      "agent/execution/task_scheduler.py": "a3af6307237d06bfa6a675e71e687e6eb4cd263a6f0da9167d66df01dfa571d4",
+      "agent/execution/crop_pipeline_controller.py": "d56b7be2de75156a2df1198a1573aa83166011aec90cfa914ec5294a0d8af969"
+    }
+  },
+  "elapsed_seconds": 1506.98
+}

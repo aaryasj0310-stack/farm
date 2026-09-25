@@ -411,6 +411,27 @@ def reset_agent_state() -> None:
         reset_sw_tranche_controller()
     except Exception:
         pass
+    try:
+        from execution.crop_pipeline_controller import reset_crop_pipeline_telemetry
+        reset_crop_pipeline_telemetry()
+    except Exception:
+        pass
+
+
+def get_crop_pipeline_telemetry():
+    try:
+        from execution.crop_pipeline_controller import get_crop_pipeline_telemetry as _gcpt
+        return _gcpt()
+    except Exception:
+        return []
+
+
+def verify_post_turn_pipelines(obs_post, player_id=0):
+    try:
+        from execution.crop_pipeline_controller import verify_post_turn_pipelines as _vptp
+        _vptp(obs_post, player_id)
+    except Exception:
+        pass
 
 
 _LAST_SHADOW_RESULT = None

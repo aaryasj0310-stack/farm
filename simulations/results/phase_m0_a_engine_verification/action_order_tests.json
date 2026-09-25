@@ -1,0 +1,165 @@
+{
+  "HARVEST_PLANT_WATER": {
+    "permutation_name": "HARVEST_PLANT_WATER",
+    "actions": [
+      [
+        "HARVEST"
+      ],
+      [
+        "PLANT",
+        "WHEAT"
+      ],
+      [
+        "WATER"
+      ]
+    ],
+    "crop_initial": "WHEAT",
+    "replant_crop": "WHEAT",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": 720,
+      "fertilized_until_day": -1
+    },
+    "tile_post": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 2,
+      "watered_today": true,
+      "consecutive_unwatered": 1,
+      "yield_units": 1,
+      "max_lifespan_step": 168,
+      "fertilized_until_day": -1
+    },
+    "harvest_success": true,
+    "plant_success": true,
+    "water_success": true,
+    "pipeline_success": true,
+    "harvest_worker_inv": 2,
+    "seeds_delta": -1
+  },
+  "PLANT_HARVEST_WATER": {
+    "permutation_name": "PLANT_HARVEST_WATER",
+    "actions": [
+      [
+        "PLANT",
+        "WHEAT"
+      ],
+      [
+        "HARVEST"
+      ],
+      [
+        "WATER"
+      ]
+    ],
+    "crop_initial": "WHEAT",
+    "replant_crop": "WHEAT",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": 720,
+      "fertilized_until_day": -1
+    },
+    "tile_post": null,
+    "harvest_success": true,
+    "plant_success": false,
+    "water_success": false,
+    "pipeline_success": false,
+    "harvest_worker_inv": 0,
+    "seeds_delta": 0
+  },
+  "HARVEST_WATER_PLANT": {
+    "permutation_name": "HARVEST_WATER_PLANT",
+    "actions": [
+      [
+        "HARVEST"
+      ],
+      [
+        "WATER"
+      ],
+      [
+        "PLANT",
+        "WHEAT"
+      ]
+    ],
+    "crop_initial": "WHEAT",
+    "replant_crop": "WHEAT",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": 720,
+      "fertilized_until_day": -1
+    },
+    "tile_post": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 2,
+      "watered_today": false,
+      "consecutive_unwatered": 1,
+      "yield_units": 1,
+      "max_lifespan_step": 168,
+      "fertilized_until_day": -1
+    },
+    "harvest_success": true,
+    "plant_success": true,
+    "water_success": false,
+    "pipeline_success": false,
+    "harvest_worker_inv": 2,
+    "seeds_delta": -1
+  },
+  "WATER_HARVEST_PLANT": {
+    "permutation_name": "WATER_HARVEST_PLANT",
+    "actions": [
+      [
+        "WATER"
+      ],
+      [
+        "HARVEST"
+      ],
+      [
+        "PLANT",
+        "WHEAT"
+      ]
+    ],
+    "crop_initial": "WHEAT",
+    "replant_crop": "WHEAT",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": 720,
+      "fertilized_until_day": -1
+    },
+    "tile_post": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 2,
+      "watered_today": false,
+      "consecutive_unwatered": 1,
+      "yield_units": 1,
+      "max_lifespan_step": 168,
+      "fertilized_until_day": -1
+    },
+    "harvest_success": true,
+    "plant_success": true,
+    "water_success": false,
+    "pipeline_success": false,
+    "harvest_worker_inv": 0,
+    "seeds_delta": -1
+  }
+}

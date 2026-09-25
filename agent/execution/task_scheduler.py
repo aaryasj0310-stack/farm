@@ -1732,7 +1732,35 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 "steps_active": 0,
             }
 
-    # 1b. Re-assign surviving active missions to their sticky workers
+    # 1b. Kaggriculture Phase M0-A: Same-Turn Crop Pipeline (HARVEST -> PLANT -> WATER)
+    try:
+        from execution.crop_pipeline_controller import evaluate_and_assign_pipelines, is_pipeline_enabled
+    except ImportError:
+        try:
+            from agent.execution.crop_pipeline_controller import evaluate_and_assign_pipelines, is_pipeline_enabled
+        except ImportError:
+            is_pipeline_enabled = lambda: False
+
+    if is_pipeline_enabled():
+        free_cands = {u[0] for u in units if u[0] not in busy}
+        if len(free_cands) >= 3:
+            reserved_seeds = {}
+            for t in assignment.values():
+                if t.get("op") == "PLANT" and t.get("args"):
+                    c = t["args"][0]
+                    reserved_seeds[c] = reserved_seeds.get(c, 0) + 1
+
+            macro = ctx.get("plan") or ctx.get("macro")
+            p_asg, p_busy, p_removed = evaluate_and_assign_pipelines(
+                ctx, farm, pos_by_idx, free_cands, regular_tasks, macro, reserved_seeds
+            )
+            for u, t in p_asg.items():
+                assignment[u] = t
+                busy.add(u)
+                if u in _ACTIVE_MISSIONS:
+                    del _ACTIVE_MISSIONS[u]
+
+    # 1c. Re-assign surviving active missions to their sticky workers
     for u in list(_ACTIVE_MISSIONS.keys()):
         if u not in busy:
             m = _ACTIVE_MISSIONS[u]

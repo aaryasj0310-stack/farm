@@ -262,6 +262,34 @@ def set_soft_worker_locality_mode(mode: str) -> None:
                 pass
 
 
+# Kaggriculture Phase M0-A: Engine Mechanics Exploitation — Same-Turn Crop Pipeline
+# Supported modes: "OFF" (production baseline), "ON" (treatment)
+SAME_TURN_CROP_PIPELINE_MODE: str = "OFF"
+
+def get_same_turn_crop_pipeline_mode() -> str:
+    """Return the active same-turn crop pipeline mode ('OFF', 'ON')."""
+    return str(SAME_TURN_CROP_PIPELINE_MODE).strip().upper()
+
+def set_same_turn_crop_pipeline_mode(mode: str) -> None:
+    """Configure same-turn crop pipeline mode ('OFF', 'ON')."""
+    mode_str = str(mode).strip().upper()
+    if mode_str not in ("OFF", "ON"):
+        raise ValueError(f"Invalid same-turn crop pipeline mode '{mode}'. Must be one of ('OFF', 'ON').")
+    global SAME_TURN_CROP_PIPELINE_MODE
+    SAME_TURN_CROP_PIPELINE_MODE = mode_str
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.execution.crop_pipeline_controller", "execution.crop_pipeline_controller", "crop_pipeline_controller",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "SAME_TURN_CROP_PIPELINE_MODE", mode_str)
+            except Exception:
+                pass
+
+
 # Phase knobs
 
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)

@@ -1,0 +1,221 @@
+{
+  "WHEAT": {
+    "permutation_name": "PIPELINE_WHEAT",
+    "actions": [
+      [
+        "HARVEST"
+      ],
+      [
+        "PLANT",
+        "WHEAT"
+      ],
+      [
+        "WATER"
+      ]
+    ],
+    "crop_initial": "WHEAT",
+    "replant_crop": "WHEAT",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": 720,
+      "fertilized_until_day": -1
+    },
+    "tile_post": {
+      "kind": "PLANT",
+      "crop": "WHEAT",
+      "planted_day": 2,
+      "watered_today": true,
+      "consecutive_unwatered": 1,
+      "yield_units": 1,
+      "max_lifespan_step": 168,
+      "fertilized_until_day": -1
+    },
+    "harvest_success": true,
+    "plant_success": true,
+    "water_success": true,
+    "pipeline_success": true,
+    "harvest_worker_inv": 2,
+    "seeds_delta": -1
+  },
+  "CARROT": {
+    "permutation_name": "PIPELINE_CARROT",
+    "actions": [
+      [
+        "HARVEST"
+      ],
+      [
+        "PLANT",
+        "CARROT"
+      ],
+      [
+        "WATER"
+      ]
+    ],
+    "crop_initial": "CARROT",
+    "replant_crop": "CARROT",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "CARROT",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": 720,
+      "fertilized_until_day": -1
+    },
+    "tile_post": {
+      "kind": "PLANT",
+      "crop": "CARROT",
+      "planted_day": 2,
+      "watered_today": true,
+      "consecutive_unwatered": 1,
+      "yield_units": 1,
+      "max_lifespan_step": 144,
+      "fertilized_until_day": -1
+    },
+    "harvest_success": true,
+    "plant_success": true,
+    "water_success": true,
+    "pipeline_success": true,
+    "harvest_worker_inv": 2,
+    "seeds_delta": -1
+  },
+  "MELON": {
+    "permutation_name": "PIPELINE_MELON",
+    "actions": [
+      [
+        "HARVEST"
+      ],
+      [
+        "PLANT",
+        "MELON"
+      ],
+      [
+        "WATER"
+      ]
+    ],
+    "crop_initial": "MELON",
+    "replant_crop": "MELON",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "MELON",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": 720,
+      "fertilized_until_day": -1
+    },
+    "tile_post": {
+      "kind": "PLANT",
+      "crop": "MELON",
+      "planted_day": 10,
+      "watered_today": true,
+      "consecutive_unwatered": 1,
+      "yield_units": 1,
+      "max_lifespan_step": 552,
+      "fertilized_until_day": -1
+    },
+    "harvest_success": true,
+    "plant_success": true,
+    "water_success": true,
+    "pipeline_success": true,
+    "harvest_worker_inv": 2,
+    "seeds_delta": -1
+  },
+  "TOMATO": {
+    "permutation_name": "PIPELINE_TOMATO",
+    "actions": [
+      [
+        "HARVEST"
+      ],
+      [
+        "PLANT",
+        "TOMATO"
+      ],
+      [
+        "WATER"
+      ]
+    ],
+    "crop_initial": "TOMATO",
+    "replant_crop": "TOMATO",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "TOMATO",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": -1,
+      "fertilized_until_day": -1,
+      "harvest_count": 1
+    },
+    "tile_post": {
+      "kind": "PLANT",
+      "crop": "TOMATO",
+      "planted_day": 0,
+      "watered_today": true,
+      "consecutive_unwatered": 0,
+      "yield_units": 0,
+      "max_lifespan_step": -1,
+      "fertilized_until_day": -1,
+      "harvest_count": 1
+    },
+    "harvest_success": true,
+    "plant_success": false,
+    "water_success": true,
+    "pipeline_success": false,
+    "harvest_worker_inv": 2,
+    "seeds_delta": 0
+  },
+  "STRAWBERRY": {
+    "permutation_name": "PIPELINE_STRAWBERRY",
+    "actions": [
+      [
+        "HARVEST"
+      ],
+      [
+        "PLANT",
+        "STRAWBERRY"
+      ],
+      [
+        "WATER"
+      ]
+    ],
+    "crop_initial": "STRAWBERRY",
+    "replant_crop": "STRAWBERRY",
+    "tile_pre": {
+      "kind": "PLANT",
+      "crop": "STRAWBERRY",
+      "planted_day": 0,
+      "watered_today": false,
+      "consecutive_unwatered": 0,
+      "yield_units": 2,
+      "max_lifespan_step": -1,
+      "fertilized_until_day": -1,
+      "harvest_count": 1
+    },
+    "tile_post": {
+      "kind": "PLANT",
+      "crop": "STRAWBERRY",
+      "planted_day": 0,
+      "watered_today": true,
+      "consecutive_unwatered": 0,
+      "yield_units": 0,
+      "max_lifespan_step": -1,
+      "fertilized_until_day": -1,
+      "harvest_count": 1
+    },
+    "harvest_success": true,
+    "plant_success": false,
+    "water_success": true,
+    "pipeline_success": false,
+    "harvest_worker_inv": 2,
+    "seeds_delta": 0
+  }
+}
