@@ -232,6 +232,15 @@ def reset_agent_state():
     _LIQUIDATOR = None
     _CENTRAL_PLANNER = None
     reset_opponent_model_state()
+    try:
+        from execution.midnight_storage_controller import reset_midnight_storage_telemetry
+        reset_midnight_storage_telemetry()
+    except Exception:
+        try:
+            from agent.execution.midnight_storage_controller import reset_midnight_storage_telemetry
+            reset_midnight_storage_telemetry()
+        except Exception:
+            pass
 
 
 try:
@@ -1164,6 +1173,17 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
 
     if p22a_main_enabled and ctx.get("day") == 28:
         market = reconcile_day28_wheat_market_orders(market, ctx)
+
+    # Phase M0-D: Proactive End-of-Day Storage Rescue
+    try:
+        from execution.midnight_storage_controller import apply_midnight_storage_rescue
+        market = apply_midnight_storage_rescue(market, ctx)
+    except Exception:
+        try:
+            from agent.execution.midnight_storage_controller import apply_midnight_storage_rescue
+            market = apply_midnight_storage_rescue(market, ctx)
+        except Exception:
+            pass
 
     for order in market:
         if order[0] == "SELL":

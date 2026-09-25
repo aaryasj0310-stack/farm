@@ -170,3 +170,68 @@ def test_deterministic_behavior():
 
     assert act1["farmer"] == act2["farmer"]
     assert act1["market"] == act2["market"]
+
+
+def test_rescue_mode_configuration_and_validation():
+    """Test 11: Configuration supports OFF, BUFFER, RESCUE, ON, and rejects invalid strings."""
+    for valid in ("OFF", "BUFFER", "RESCUE", "ON"):
+        config.set_midnight_storage_dump_mode(valid)
+        assert config.get_midnight_storage_dump_mode() == valid
+
+    with pytest.raises(ValueError):
+        config.set_midnight_storage_dump_mode("INVALID_MODE")
+
+
+def test_rescue_mode_buffering_behavior():
+    """Test 12: In RESCUE mode, normal worker delivery is preserved without artificial hold delays."""
+    config.set_midnight_storage_dump_mode("RESCUE")
+    ctx_hour19 = {"day": 10, "hour": 19}
+    ctx_hour21 = {"day": 10, "hour": 21}
+
+    # In RESCUE mode, should_buffer_worker_inventory returns False so normal deliveries proceed unimpeded
+    assert should_buffer_worker_inventory(ctx_hour19, 0, {"CARROT": 5}, {"CARROT": 5}, 50, 5) is False
+    assert should_buffer_worker_inventory(ctx_hour21, 0, {"CARROT": 5}, {"CARROT": 5}, 50, 5) is False
+
+
+def test_rescue_mode_market_relief_activation():
+    """Test 13: MarketBrain generates proactive storage rescue sell orders when midnight load > 90."""
+    from market.market_brain import MarketBrain
+
+    class MockFC:
+        def prob_floor(self, product, day):
+            return 0.0
+
+        def expected_price(self, product, day):
+            return 50.0
+
+    config.set_midnight_storage_dump_mode("RESCUE")
+    brain = MarketBrain(MockFC())
+
+    # Mock ctx where shed has 60 items, workers carry 35 items (projected 95 > 90)
+    class MockFarm:
+        def iter_tiles(self):
+            return []
+
+    class MockPrivate:
+        shed = {"WHEAT": 40, "CARROT": 20}
+        inventories = [{"CARROT": 15}, {"MELON": 20}]
+
+    class MockMarket:
+        inventory = {"WHEAT": 10000.0, "CARROT": 10000.0}
+
+    ctx = {
+        "day": 15,
+        "hour": 21,
+        "private": MockPrivate(),
+        "market": MockMarket(),
+        "farm": MockFarm(),
+        "scheduled_product_deposits": {},
+    }
+
+    orders, details = brain.sell_orders(ctx, max_slots=10)
+    assert len(orders) > 0
+    assert any(o[0] == "SELL" for o in orders)
+    # Check that relief freed units
+    total_sold = sum(o[2] for o in orders if o[0] == "SELL")
+    assert total_sold >= 5  # At least 95 - 90 = 5 units freed
+

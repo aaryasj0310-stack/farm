@@ -290,19 +290,19 @@ def set_same_turn_crop_pipeline_mode(mode: str) -> None:
                 pass
 
 
-# Kaggriculture Phase M0-B: Engine Mechanics Exploitation — Midnight Storage Dump Logistics
-# Supported modes: "OFF" (production baseline), "ON" (treatment)
+# Kaggriculture Phase M0-D: Engine Mechanics Exploitation — Midnight Storage Dump & Rescue
+# Supported modes: "OFF" (production baseline), "BUFFER" / "ON" (M0-B buffered riding), "RESCUE" (M0-D end-of-day storage rescue)
 MIDNIGHT_STORAGE_DUMP_MODE: str = "OFF"
 
 def get_midnight_storage_dump_mode() -> str:
-    """Return active midnight storage dump mode ('OFF', 'ON')."""
+    """Return active midnight storage dump mode ('OFF', 'ON', 'BUFFER', 'RESCUE')."""
     return str(MIDNIGHT_STORAGE_DUMP_MODE).strip().upper()
 
 def set_midnight_storage_dump_mode(mode: str) -> None:
-    """Configure midnight storage dump mode ('OFF', 'ON')."""
+    """Configure midnight storage dump mode ('OFF', 'ON', 'BUFFER', 'RESCUE')."""
     mode_str = str(mode).strip().upper()
-    if mode_str not in ("OFF", "ON"):
-        raise ValueError(f"Invalid midnight storage dump mode '{mode}'. Must be one of ('OFF', 'ON').")
+    if mode_str not in ("OFF", "ON", "BUFFER", "RESCUE"):
+        raise ValueError(f"Invalid midnight storage dump mode '{mode}'. Must be one of ('OFF', 'ON', 'BUFFER', 'RESCUE').")
     global MIDNIGHT_STORAGE_DUMP_MODE
     MIDNIGHT_STORAGE_DUMP_MODE = mode_str
     for mod_name in (

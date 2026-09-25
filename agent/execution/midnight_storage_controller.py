@@ -27,6 +27,10 @@ _TELEMETRY: Dict[str, Any] = {
     "shed_turns_ge_95": 0,
     "shed_turns_at_capacity": 0,
     "peak_shed_occupancy": 0,
+    "rescue_events": 0,
+    "rescue_units_sold": 0,
+    "rescue_orders_emitted": 0,
+    "rescue_products_sold": {},
     "events": [],
 }
 
@@ -49,6 +53,10 @@ def reset_midnight_storage_telemetry() -> None:
         "shed_turns_ge_95": 0,
         "shed_turns_at_capacity": 0,
         "peak_shed_occupancy": 0,
+        "rescue_events": 0,
+        "rescue_units_sold": 0,
+        "rescue_orders_emitted": 0,
+        "rescue_products_sold": {},
         "events": [],
     }
 
@@ -58,16 +66,33 @@ def get_midnight_storage_telemetry() -> Dict[str, Any]:
     return copy.deepcopy(_TELEMETRY)
 
 
-def is_midnight_storage_dump_enabled() -> bool:
+def get_midnight_mode() -> str:
     try:
         from config import get_midnight_storage_dump_mode
-        return get_midnight_storage_dump_mode() == "ON"
+        return get_midnight_storage_dump_mode()
     except Exception:
         try:
             from agent.config import get_midnight_storage_dump_mode
-            return get_midnight_storage_dump_mode() == "ON"
+            return get_midnight_storage_dump_mode()
         except Exception:
-            return False
+            return "OFF"
+
+
+def is_midnight_storage_dump_enabled() -> bool:
+    return get_midnight_mode() in ("ON", "BUFFER", "RESCUE")
+
+
+def is_storage_rescue_enabled() -> bool:
+    return get_midnight_mode() == "RESCUE"
+
+
+def record_rescue_sale(prod: str, qty: int) -> None:
+    """Record an emergency storage rescue sale order."""
+    global _TELEMETRY
+    _TELEMETRY["rescue_events"] += 1
+    _TELEMETRY["rescue_units_sold"] += qty
+    _TELEMETRY["rescue_orders_emitted"] += 1
+    _TELEMETRY.setdefault("rescue_products_sold", {})[prod] = _TELEMETRY.setdefault("rescue_products_sold", {}).get(prod, 0) + qty
 
 
 def should_buffer_worker_inventory(
@@ -82,8 +107,8 @@ def should_buffer_worker_inventory(
     """Evaluate whether worker u_idx should defer product deposit and ride until midnight.
 
     Safety & Eligibility gates:
-    1. Feature flag ON.
-    2. Late-day timing: hour >= 18 and day < 29.
+    1. Feature flag ON, BUFFER, or RESCUE.
+    2. Late-day timing: hour >= 18 (or >= 20 for RESCUE) and day < 29.
     3. Product safety: only standard crops, no animal products, no animals, no fertilizer,
        and no wheat if feeding is due today.
     4. Headroom guarantee: shed_load + carried_total <= MAX_SAFE_SHED_HEADROOM (95).
@@ -94,6 +119,11 @@ def should_buffer_worker_inventory(
 
     day = ctx.get("day", 0)
     hour = ctx.get("hour", 0)
+
+    # In Phase M0-D RESCUE mode: worker delivery mechanics operate normally without artificial hold delays.
+    # Midnight overflow rescue is executed via proactive Hour 23 shed relief in MarketBrain.
+    if is_storage_rescue_enabled():
+        return False
 
     # Gate 1: Non-endgame late-day only
     if day >= 29 or hour < 18:
@@ -171,3 +201,49 @@ def record_step_telemetry(shed_occupancy: int, is_midnight_step: bool = False, d
         _TELEMETRY["peak_shed_occupancy"] = shed_occupancy
     if is_midnight_step and dumped_qty > 0:
         _TELEMETRY["automatic_midnight_dumps"] += 1
+
+
+def apply_midnight_storage_rescue(market: List[List[Any]], ctx: Dict[str, Any]) -> List[List[Any]]:
+    """Phase M0-D: Proactive marginal Hour 23 shed relief to prevent midnight overflow discard.
+
+    Only active when MIDNIGHT_STORAGE_DUMP_MODE == 'RESCUE', at Hour 23, Day < 29.
+    Checks projected midnight load (shed + carried). If > 98:
+      Sells only the marginal excess (projected - 98) from available shed wheat
+      beyond the 2-day safe feed reserve (max(10, animals * 2)).
+    Consumes at most 1 market order slot within the 10-order cap.
+    """
+    if not is_storage_rescue_enabled():
+        return market
+
+    day = ctx.get("day", 0)
+    hour = ctx.get("hour", 0)
+    if day >= 29 or hour != 23:
+        return market
+
+    private = ctx.get("private")
+    farm = ctx.get("farm")
+    if not private or not farm or not hasattr(private, "shed") or not hasattr(private, "inventories"):
+        return market
+
+    shed = private.shed
+    inventories = private.inventories
+    shed_c = sum(shed.values())
+    carried_c = sum(sum(i.values()) for i in inventories)
+    projected = shed_c + carried_c
+
+    if projected <= 98:
+        return market
+
+    needed = projected - 98
+    w_stock = shed.get("WHEAT", 0)
+    anim_cnt = sum(1 for t in farm.iter_tiles() if getattr(t, "is_animal", False))
+    safe_w = max(10, anim_cnt * 2)
+    can_sell_w = max(0, w_stock - safe_w)
+
+    sell_qty = min(can_sell_w, needed)
+    if sell_qty > 0 and len(market) < 10:
+        market.append(["SELL", "WHEAT", int(sell_qty)])
+        record_rescue_sale("WHEAT", int(sell_qty))
+
+    return market
+

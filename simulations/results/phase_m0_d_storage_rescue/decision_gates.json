@@ -1,0 +1,22 @@
+{
+  "gate_b_storage_preservation": {
+    "required_discard_reduction_pct": 50.0,
+    "observed_discard_reduction_pct": 92.42259641499186,
+    "required_spot_value_preserved": 1000.0,
+    "observed_spot_value_preserved": 2938.45,
+    "passed": true
+  },
+  "gate_c_financial_viability": {
+    "required_mean_cash_delta": "> 0",
+    "observed_mean_cash_delta": 5056.89,
+    "required_median_cash_delta": "> 0",
+    "observed_median_cash_delta": 5012.0,
+    "ci_95": [
+      2504.4275050871333,
+      7609.352494912868
+    ],
+    "win_rate": 0.84,
+    "passed": true
+  },
+  "overall_recommendation": "PROCEED"
+}
