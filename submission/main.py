@@ -118,6 +118,15 @@ def _predict_same_turn_product_deposits(ctx, asg):
     Shed capacity is consumed in engine unit order so sell orders never rely on
     product that would fail to deposit.
     """
+    try:
+        from execution.same_turn_deposit_controller import predict_same_turn_deposits
+        return predict_same_turn_deposits(ctx, asg)
+    except Exception:
+        try:
+            from agent.execution.same_turn_deposit_controller import predict_same_turn_deposits
+            return predict_same_turn_deposits(ctx, asg)
+        except Exception:
+            pass
     if not isinstance(asg, dict):
         return {}
     assignment = asg.get("assignment", {}) or {}
@@ -239,6 +248,15 @@ def reset_agent_state():
         try:
             from agent.execution.midnight_storage_controller import reset_midnight_storage_telemetry
             reset_midnight_storage_telemetry()
+        except Exception:
+            pass
+    try:
+        from execution.same_turn_deposit_controller import reset_same_turn_deposit_telemetry
+        reset_same_turn_deposit_telemetry()
+    except Exception:
+        try:
+            from agent.execution.same_turn_deposit_controller import reset_same_turn_deposit_telemetry
+            reset_same_turn_deposit_telemetry()
         except Exception:
             pass
 

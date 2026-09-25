@@ -320,6 +320,35 @@ def set_midnight_storage_dump_mode(mode: str) -> None:
                 pass
 
 
+# Kaggriculture Phase M0-E: Engine Mechanics Exploitation — Same-Turn Deposit-to-Market Exploit
+# Supported modes: "OFF" (production baseline), "SHADOW" (telemetry only), "LIVE" (treatment)
+SAME_TURN_DEPOSIT_SELL_MODE: str = "OFF"
+
+def get_same_turn_deposit_sell_mode() -> str:
+    """Return active same-turn deposit-to-market sell mode ('OFF', 'SHADOW', 'LIVE')."""
+    return str(SAME_TURN_DEPOSIT_SELL_MODE).strip().upper()
+
+def set_same_turn_deposit_sell_mode(mode: str) -> None:
+    """Configure same-turn deposit-to-market sell mode ('OFF', 'SHADOW', or 'LIVE')."""
+    mode_str = str(mode).strip().upper()
+    if mode_str not in ("OFF", "SHADOW", "LIVE"):
+        raise ValueError(f"Invalid same-turn deposit sell mode '{mode}'. Must be one of ('OFF', 'SHADOW', 'LIVE').")
+    global SAME_TURN_DEPOSIT_SELL_MODE
+    SAME_TURN_DEPOSIT_SELL_MODE = mode_str
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.market.market_brain", "market.market_brain", "market_brain",
+        "agent.execution.same_turn_deposit_controller", "execution.same_turn_deposit_controller", "same_turn_deposit_controller",
+        "submission.main", "submission.config", "submission.market.market_brain", "submission.execution.same_turn_deposit_controller",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "SAME_TURN_DEPOSIT_SELL_MODE", mode_str)
+            except Exception:
+                pass
+
+
 # Phase knobs
 
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)

@@ -1,0 +1,111 @@
+{
+  "c0_cash_summary": {
+    "mean": 102190.69,
+    "std": 7846.969245337511,
+    "median": 103017.0,
+    "p10": 93868.8,
+    "p25": 95848.0,
+    "p50": 103017.0,
+    "p75": 106339.25,
+    "p90": 110806.7
+  },
+  "c1_cash_summary": {
+    "mean": 104009.28,
+    "std": 8817.531766093083,
+    "median": 103433.5,
+    "p10": 92969.9,
+    "p25": 98444.0,
+    "p50": 103433.5,
+    "p75": 109114.25,
+    "p90": 115526.3
+  },
+  "delta_cash_summary": {
+    "mean": 1818.59,
+    "std": 4608.667035087589,
+    "median": 1437.5,
+    "p10": -654.1999999999999,
+    "p25": 609.5,
+    "p50": 1437.5,
+    "p75": 2941.0,
+    "p90": 6781.20000000001
+  },
+  "record": {
+    "total_pairs": 100,
+    "wins": 87,
+    "ties": 0,
+    "losses": 13,
+    "win_rate": 0.87,
+    "best_delta": 13757.0,
+    "worst_delta": -20285.0,
+    "losses_lt_2500": 6,
+    "losses_lt_5000": 4,
+    "losses_lt_10000": 2
+  },
+  "by_opponent": {
+    "pass": {
+      "c0_mean_cash": 103466.1,
+      "c1_mean_cash": 106398.3,
+      "mean_delta": 2932.2,
+      "median_delta": 1571.0,
+      "wins": 18,
+      "ties": 0,
+      "losses": 2
+    },
+    "pure_wheat_rush": {
+      "c0_mean_cash": 104270.1,
+      "c1_mean_cash": 104401.7,
+      "mean_delta": 131.6,
+      "median_delta": 1122.5,
+      "wins": 16,
+      "ties": 0,
+      "losses": 4
+    },
+    "cow_milk_engine": {
+      "c0_mean_cash": 100107.0,
+      "c1_mean_cash": 103605.3,
+      "mean_delta": 3498.3,
+      "median_delta": 2723.0,
+      "wins": 18,
+      "ties": 0,
+      "losses": 2
+    },
+    "melon_sniper": {
+      "c0_mean_cash": 97880.55,
+      "c1_mean_cash": 98296.05,
+      "mean_delta": 415.5,
+      "median_delta": 1020.0,
+      "wins": 15,
+      "ties": 0,
+      "losses": 5
+    },
+    "full_production_agent": {
+      "c0_mean_cash": 105229.7,
+      "c1_mean_cash": 107345.05,
+      "mean_delta": 2115.35,
+      "median_delta": 1388.0,
+      "wins": 20,
+      "ties": 0,
+      "losses": 0
+    }
+  },
+  "by_seat": {
+    "seat_0": {
+      "c0_mean_cash": 102050.96,
+      "c1_mean_cash": 104065.44,
+      "mean_delta": 2014.48,
+      "median_delta": 1507.0,
+      "wins": 43,
+      "ties": 0,
+      "losses": 7
+    },
+    "seat_1": {
+      "c0_mean_cash": 102330.42,
+      "c1_mean_cash": 103953.12,
+      "mean_delta": 1622.7,
+      "median_delta": 1237.5,
+      "wins": 44,
+      "ties": 0,
+      "losses": 6
+    }
+  }
+}

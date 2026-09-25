@@ -373,11 +373,16 @@ def test_same_turn_drop_prediction_handles_multiple_products():
 
 
 def test_market_can_sell_scheduler_confirmed_same_turn_deposit():
-    ctx = market_ctx(day=29, hour=10, shed={}, workers=[{"CARROT": 3}])
-    ctx["scheduled_product_deposits"] = {"CARROT": 3}
-    orders, details = MarketBrain(FakeFC()).sell_orders(ctx)
-    assert ["SELL", "CARROT", 3] in orders
-    assert details["scheduled_product_deposits"] == {"CARROT": 3}
+    from config import set_same_turn_deposit_sell_mode
+    set_same_turn_deposit_sell_mode("LIVE")
+    try:
+        ctx = market_ctx(day=29, hour=10, shed={}, workers=[{"CARROT": 3}])
+        ctx["scheduled_product_deposits"] = {"CARROT": 3}
+        orders, details = MarketBrain(FakeFC()).sell_orders(ctx)
+        assert ["SELL", "CARROT", 3] in orders
+        assert details["scheduled_product_deposits"] == {"CARROT": 3}
+    finally:
+        set_same_turn_deposit_sell_mode("OFF")
 
 
 def test_normal_carried_inventory_does_not_create_early_pressure():

@@ -294,14 +294,64 @@ class MarketBrain:
         else:
             batch_target = 4   # sell 3-5 units
 
+        try:
+            from execution.same_turn_deposit_controller import (
+                get_same_turn_deposit_sell_mode,
+                record_same_turn_sale,
+                record_shadow_event,
+            )
+        except Exception:
+            try:
+                from agent.execution.same_turn_deposit_controller import (
+                    get_same_turn_deposit_sell_mode,
+                    record_same_turn_sale,
+                    record_shadow_event,
+                )
+            except Exception:
+                get_same_turn_deposit_sell_mode = lambda: "OFF"
+                record_same_turn_sale = None
+                record_shadow_event = None
+
+        m0e_mode = get_same_turn_deposit_sell_mode()
+
         # Available stock per product respecting reserves, caps, and floor-hold rules
         available_stock = {}
+        deposit_stock = {}
         for prod in SELLABLE:
             if prod in delay_set and not endgame and urgency < 2:
                 continue
-            # A scheduler-confirmed deposit executes before market processing,
-            # so that quantity is valid same-turn sellable stock.
-            stock = int(shed.get(prod, 0)) + int(scheduled_deposits.get(prod, 0))
+            shed_pre_prod = int(shed.get(prod, 0))
+            pred_dep_prod = int(scheduled_deposits.get(prod, 0))
+
+            if m0e_mode == "LIVE":
+                stock = shed_pre_prod + pred_dep_prod
+            else:
+                stock = shed_pre_prod
+
+            # Shadow mode telemetry check
+            if m0e_mode == "SHADOW" and pred_dep_prod > 0 and record_shadow_event is not None:
+                shadow_stock = shed_pre_prod + pred_dep_prod
+                res_w = (max(reserved_wheat, max(15, int(math.ceil(animals * 2.0)))) if p61_hygiene_active else reserved_wheat) if prod == "WHEAT" else 0
+                shadow_net = max(0, shadow_stock - res_w)
+                baseline_net = max(0, shed_pre_prod - res_w)
+                spot_p = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000.0)))
+                would_ex = (urgency >= 0) and (not (prod in HOLD_AT_FLOOR_PRODUCTS and not is_floor_exception and spot_p <= 1))
+                reason = "eligible_in_sell_window" if would_ex else ("off_window" if urgency < 0 else "floor_hold")
+                record_shadow_event(
+                    step=ctx.get("step", day * 24 + hour),
+                    day=day,
+                    hour=hour,
+                    product=prod,
+                    shed_pre=shed_pre_prod,
+                    predicted_deposit=pred_dep_prod,
+                    incremental_sellable=max(0, shadow_net - baseline_net),
+                    spot_price=float(spot_p),
+                    market_inv=float(inv.get(prod, 10000.0)),
+                    urgency=urgency,
+                    would_execute=would_ex,
+                    reason=reason,
+                )
+
             if stock <= 0:
                 continue
             if prod == "WHEAT":
@@ -332,6 +382,8 @@ class MarketBrain:
 
             if stock > 0:
                 available_stock[prod] = stock
+                if m0e_mode == "LIVE":
+                    deposit_stock[prod] = pred_dep_prod
 
         if not available_stock:
             diag = self._build_melon_diagnostics(ctx, melon_market_inv_init, shed, season_melons_sold, 0,
@@ -485,6 +537,31 @@ class MarketBrain:
         diag = self._build_melon_diagnostics(ctx, melon_market_inv_init, shed, season_melons_sold, melon_sold_this_turn,
                                              is_floor_exception, melon_turn_drip_budget,
                                              delay_set=delay_set)
+
+        # Telemetry tracking for LIVE mode same-turn sales
+        if m0e_mode == "LIVE" and record_same_turn_sale is not None:
+            sold_by_prod = {}
+            for o in orders:
+                if len(o) >= 3 and o[0] == "SELL":
+                    sold_by_prod[o[1]] = sold_by_prod.get(o[1], 0) + int(o[2])
+            for prod, total_sold in sold_by_prod.items():
+                dep_qty = deposit_stock.get(prod, 0)
+                if dep_qty > 0:
+                    shed_pre_q = int(shed.get(prod, 0))
+                    res_w = (max(reserved_wheat, max(15, int(math.ceil(animals * 2.0)))) if p61_hygiene_active else reserved_wheat) if prod == "WHEAT" else 0
+                    net_pre = max(0, shed_pre_q - res_w)
+                    from_deposit = min(max(0, total_sold - net_pre), dep_qty)
+                    if from_deposit > 0:
+                        px = spot_init_map.get(prod, market_price(prod, inv.get(prod, 10000.0)))
+                        record_same_turn_sale(
+                            prod=prod,
+                            units=from_deposit,
+                            price=float(px),
+                            step=ctx.get("step", day * 24 + hour),
+                            day=day,
+                            hour=hour,
+                        )
+
         return orders, {"candidates": candidates, "days_left": days_left,
                         "endgame": endgame, "pressure": pressure, "urgency": urgency,
                         "shed_occupancy": shed_occupancy,

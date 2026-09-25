@@ -1,0 +1,43 @@
+{
+  "phase": "M0-E",
+  "description": "Same-Turn Deposit-to-Market Exploit Controlled Discovery Experiment",
+  "timestamp": "2026-09-25 15:00:49 UTC",
+  "git_commit": "f6f9333d0fe25ae4dc8cb1240696a749ad930104",
+  "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "seeds": [
+    97013,
+    97014,
+    97015,
+    97016,
+    97017,
+    97018,
+    97019,
+    97020,
+    97021,
+    97022
+  ],
+  "opponents": [
+    "pass",
+    "pure_wheat_rush",
+    "cow_milk_engine",
+    "melon_sniper",
+    "full_production_agent"
+  ],
+  "seats": [
+    0,
+    1
+  ],
+  "arms": {
+    "C0": "SAME_TURN_DEPOSIT_SELL_MODE = OFF",
+    "C1": "SAME_TURN_DEPOSIT_SELL_MODE = LIVE"
+  },
+  "fixed_settings": {
+    "MIDNIGHT_STORAGE_DUMP_MODE": "OFF",
+    "SAME_TURN_CROP_PIPELINE_MODE": "OFF",
+    "SOFT_WORKER_LOCALITY_MODE": "OFF",
+    "SW_FORWARD_ARCHITECTURE_MODE": "OFF"
+  },
+  "total_cells": 100,
+  "total_matches": 200,
+  "elapsed_seconds": 788.4192759990692
+}
