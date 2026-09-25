@@ -1,0 +1,20 @@
+{
+  "total_rescue_opportunities": 659,
+  "total_rescue_orders_requested": 659,
+  "total_rescue_orders_emitted": 659,
+  "total_rescue_orders_admitted": 659,
+  "total_rescue_orders_blocked_by_order_cap": 0,
+  "total_rescue_orders_executed": 659,
+  "execution_success_rate": 1.0,
+  "total_wheat_sold_by_rescue": 6323,
+  "mean_wheat_sold_per_match": 63.23,
+  "mean_wheat_sold_per_order": 9.5948406676783,
+  "mean_rescue_orders_per_match": 6.59,
+  "lifecycle_verification": {
+    "requested_vs_emitted_parity": true,
+    "cap_headroom_available_all_events": true,
+    "shed_stock_sufficient_all_events": true,
+    "engine_market_execution_rate": 1.0,
+    "notes": "At Hour 23, apply_midnight_storage_rescue emits ['SELL', 'WHEAT', qty] within the 10-order limit (cap headroom was available in 659/659 events). The engine's _process_market executes every valid SELL order with sufficient stock, deducting wheat and crediting cash. At midnight, _drop_inventories_to_shed allows carried worker inventory to enter the vacated space. 100% of emitted rescue orders executed successfully."
+  }
+}
