@@ -28,7 +28,7 @@ Phase C0-R1 executed a clean, unpolluted rerun of all 100 paired configurations 
 | **Median Paired Cash Delta** | **+$2,039.50** | **+$2,039.50** | Exact ($0.00 diff) |
 | **Win Rate** | 67 / 100 (67.0%) | 67 / 100 (67.0%) | Exact |
 | **Loss Rate** | 33 / 100 (33.0%) | 33 / 100 (33.0%) | Exact |
-| **Seed-Clustered 95% CI** | [+$1,455.51, +$4,151.57] | [+$1,455.51, +$4,151.57] | Exact |
+| **Seed-Clustered 95% CI** | [+$654.07, +$4,953.01] | [+$654.07, +$4,953.01] | Exact |
 
 **Verdict:** **REPRODUCED**. The experimental results of Phase C0 are 100% deterministic, authentic, and reproducible under commit `9c544a3433dc5feef719c5c09b40f2c885e980bc`.
 
@@ -101,6 +101,10 @@ Why did the 9 large losers lose an average of **-$9,321.67** despite saving **-2
 | **Wool Sales Delta (units)** | +7.04 | +3.00 | **+15.24** | **+24.22** |
 | **Animal Spending Delta** | +$226.00 | +$174.63 | +$330.30 | **+$322.22** |
 
+> [!NOTE]
+> **Qualification on Product Sales vs Net Inventory Reductions:**
+> The reported product sales quantities are derived from inventory decreases during cash-gain turns. For dedicated market goods (Carrot, Tomato, Strawberry, Melon, Milk, Wool, Egg), inventory reductions reliably track market sales. However, for products with internal operational uses—principally **WHEAT** (consumed internally via `FEED`) and **FERTILIZER** (consumed via `FERTILIZE`)—inventory decreases reflect a combination of verified market sales and internal operational usage. Therefore, Wheat sales deltas should be interpreted as net utilization and sales rather than pure external sales volume.
+
 ### The Causal Mechanism Unveiled:
 1. **Move Reduction $\neq$ Revenue Generation:**
    Large losers saved *more* movement (-271 moves) than winners (-223 moves). However, they spent those saved moves on **low-value operations** (planting wheat, caring for sheep, tilling carrots).
@@ -138,17 +142,22 @@ The movement reduction hypothesis is **empirically disproven as an isolated obje
 
 ## 6. Safety & Operational Integrity Audit
 
-Beyond terminal cash, all safety and infrastructure constraints were audited:
+Beyond terminal cash, all safety and infrastructure constraints were audited against the committed telemetry (`safety_comparison.json`):
 
 | Safety Dimension | Control Baseline | Treatment (Locality ON) | Regression Detected? |
 | :--- | :---: | :---: | :---: |
 | **Animal Escapes** | **0** | **0** | **No** (100% escape-free) |
-| **Max Consecutive Unfed Days** | **0** | **0** | **No** (100% feed compliance) |
-| **Mean Peak Shed Occupancy** | 94.8 units | 94.7 units | **No** (Shed capacity respected) |
-| **Shed Full Turns Total** | **0** | **0** | **No** (Zero shed blockages) |
-| **Dropped Market Orders** | **0** | **0** | **No** (100% market execution) |
+| **Max Consecutive Unfed Days** | **1** | **1** | **No** (Safe: 2 days triggers escape) |
+| **Mean Peak Shed Occupancy** | **100.0** units | **100.0** units | **No** (Identical peak capacity reached) |
+| **Shed Full Turns Total (>=95)** | **974** turns | **1,147** turns | **Yes** (+173 turns near capacity) |
+| **Market Orders Dropped** | *Invalid / Unresolved* | *Invalid / Unresolved* | **Unresolved Telemetry** |
 
-Treatment is **operationally safe** with respect to catastrophic failures (zero escapes, zero starve events). Its only failure mode is **economic opportunity cost due to suboptimal task selection across quadrants**.
+### Telemetry Notes & Clarifications:
+1. **Animal Safety:** No animal escapes occurred in any match (0 in Control, 0 in Treatment). The maximum consecutive unfed duration observed was 1 day (engine rules require 2 consecutive unfed days at 23:00 to trigger an escape), confirming 100% feed compliance.
+2. **Shed Congestion:** Both arms reach peak shed capacity (100.0 units). Treatment spent slightly more time in high congestion (1,147 turns >= 95 units vs 974 turns in Control), likely due to workers holding harvested produce longer before cycling back to the shed.
+3. **Market Order Drops Telemetry:** The script metric for dropped market orders (`orders_emitted - orders_executed`) is **invalid / unresolved** as a measure of engine drops because `orders_executed` only tracked unit hiring and animal purchases, omitting batch sell execution events. Neither zero drops nor the generated arithmetic difference should be interpreted as actual engine order rejections.
+
+Treatment is **operationally safe** with respect to catastrophic failures (zero escapes, zero starve events). Its primary failure mode is **economic opportunity cost due to suboptimal task selection across quadrants**.
 
 ---
 
@@ -200,7 +209,7 @@ To validate any future refinement without data leakage, we propose a fresh, non-
 ## 9. Answers to Phase C0-R1 Forensic Prompts
 
 1. **Did the exact committed code reproduce the C0 headline result?**  
-   **Yes, 100.0% exact reproduction.** Across all 100 paired configurations, every single Control cash, Treatment cash, and delta matched the original run to the exact dollar ($0.00 difference). Mean delta: +$2,803.54, 67% win rate, 95% CI: [+$1,455.51, +$4,151.57].
+   **Yes, 100.0% exact reproduction.** Across all 100 paired configurations, every single Control cash, Treatment cash, and delta matched the original run to the exact dollar ($0.00 difference). Mean delta: +$2,803.54, 67% win rate, 95% CI: [+$654.07, +$4,953.01].
 
 2. **How many paired configurations underperformed Control?**  
    **33 out of 100 configurations underperformed Control** (12 small losses, 12 medium losses, 9 large losses < -$6k).
@@ -215,7 +224,7 @@ To validate any future refinement without data leakage, we propose a fresh, non-
    **Crop composition distortion:** Treatment lost high-value sales (Melons: -6.61 units, Strawberries: -1.09 units, Milk: -4.44 units in large losses) while gaining low-value sales (Wheat: +70.15 units, Wool: +15.24 units).
 
 6. **Were there any safety regressions (animal escapes, starved livestock)?**  
-   **Zero escapes, zero starved animals, zero dropped market orders.** Both Control and Treatment achieved 100% safety compliance.
+   **Zero animal escapes occurred in either arm.** Max consecutive unfed was 1 day (escapes require 2 consecutive unfed days). Shed high-occupancy (>=95) was slightly higher in Treatment (1,147 turns vs 974 in Control). Market order drop telemetry is classified as invalid/unresolved.
 
 7. **Why did the scoring formula penalize high-value tasks?**  
    The `locality_penalty = 10.0` is crop-agnostic and too large relative to task priority differences (3–10 points), overpowering the economic priority of high-value crops on the opposite side of the farm.
