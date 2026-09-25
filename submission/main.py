@@ -259,6 +259,15 @@ def reset_agent_state():
             reset_same_turn_deposit_telemetry()
         except Exception:
             pass
+    try:
+        from strategy.animal_service_economics import reset_animal_service_telemetry
+        reset_animal_service_telemetry()
+    except Exception:
+        try:
+            from agent.strategy.animal_service_economics import reset_animal_service_telemetry
+            reset_animal_service_telemetry()
+        except Exception:
+            pass
 
 
 try:

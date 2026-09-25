@@ -363,6 +363,35 @@ def set_same_turn_deposit_sell_mode(mode: str) -> None:
                 pass
 
 
+# Kaggriculture Phase M0-F: Adaptive Animal CARE & Feed-Bank Economics
+# Supported modes: "OFF" (historical baseline: daily feed/care), "SHADOW" (evaluates & logs without altering actions), "LIVE" (adaptive service economics)
+ANIMAL_SERVICE_ECONOMICS_MODE: str = "OFF"
+
+def get_animal_service_economics_mode() -> str:
+    """Return active animal service economics mode ('OFF', 'SHADOW', 'LIVE')."""
+    return str(ANIMAL_SERVICE_ECONOMICS_MODE).strip().upper()
+
+def set_animal_service_economics_mode(mode: str) -> None:
+    """Configure animal service economics mode ('OFF', 'SHADOW', or 'LIVE')."""
+    mode_str = str(mode).strip().upper()
+    if mode_str not in ("OFF", "SHADOW", "LIVE"):
+        raise ValueError(f"Invalid animal service economics mode '{mode}'. Must be one of ('OFF', 'SHADOW', 'LIVE').")
+    global ANIMAL_SERVICE_ECONOMICS_MODE
+    ANIMAL_SERVICE_ECONOMICS_MODE = mode_str
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.strategy.animal_service_economics", "strategy.animal_service_economics", "animal_service_economics",
+        "submission.main", "submission.config", "submission.execution.task_scheduler", "submission.strategy.animal_service_economics",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "ANIMAL_SERVICE_ECONOMICS_MODE", mode_str)
+            except Exception:
+                pass
+
+
 # Phase knobs
 
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)

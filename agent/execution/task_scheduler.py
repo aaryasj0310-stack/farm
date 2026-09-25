@@ -912,9 +912,49 @@ def build_tasks(ctx, macro):
     # ---------------- animals ----------------
     feeds_due = 0
     max_feed_prio = 0
+    m0f_mode = "OFF"
+    try:
+        from config import get_animal_service_economics_mode
+        m0f_mode = get_animal_service_economics_mode()
+    except Exception:
+        try:
+            from agent.config import get_animal_service_economics_mode
+            m0f_mode = get_animal_service_economics_mode()
+        except Exception:
+            pass
+
     for t in ctx["farm"].iter_tiles():
         if not t.is_animal:
             continue
+
+        want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
+        adaptive_feed = True
+        adaptive_care = True
+        if m0f_mode in ("SHADOW", "LIVE"):
+            try:
+                from strategy.animal_service_economics import evaluate_animal_service_opportunity, record_animal_service_audit
+                eval_res = evaluate_animal_service_opportunity(t, ctx)
+                adaptive_feed = eval_res["should_feed"]
+                adaptive_care = eval_res["should_care"]
+                if hour == 0:
+                    record_animal_service_audit(
+                        species=t.animal,
+                        day=day,
+                        hour=hour,
+                        prod_today=produces_today(t, day),
+                        baseline_feed=True,
+                        adaptive_feed=adaptive_feed,
+                        feed_reason=eval_res["feed_reason"],
+                        baseline_care=want_care,
+                        adaptive_care=adaptive_care,
+                        care_reason=eval_res["care_reason"],
+                        yield_before=t.yield_units,
+                        bank_before=getattr(t, "pending_care_bonus", 0),
+                        consecutive_unfed=t.consecutive_unfed,
+                    )
+            except Exception:
+                pass
+
         feed_now = False
         feed_prio = 0
         if t.consecutive_unfed >= 1 and not t.fed_today and hour < 24:
@@ -932,14 +972,15 @@ def build_tasks(ctx, macro):
             feed_now = True
         elif not t.fed_today and hour < 24 and macro.feeding_enabled:
             # Off-day feeding: keep animals fed daily to prevent consecutive unfed days
-            if hour >= 18:
-                feed_prio = PRIORITY_URGENT_SURVIVAL + 1  # 101
-            elif hour >= 14:
-                feed_prio = PRIORITY_URGENT_SURVIVAL      # 100 (escalates above SW crop care)
-            else:
-                feed_prio = PRIORITY_CARE_ANIMAL - 5      # 60
-            add(feed_prio, "FEED", t.pos, kind="feed_off", meta={"wheat": 1})
-            feed_now = True
+            if m0f_mode != "LIVE" or adaptive_feed:
+                if hour >= 18:
+                    feed_prio = PRIORITY_URGENT_SURVIVAL + 1  # 101
+                elif hour >= 14:
+                    feed_prio = PRIORITY_URGENT_SURVIVAL      # 100 (escalates above SW crop care)
+                else:
+                    feed_prio = PRIORITY_CARE_ANIMAL - 5      # 60
+                add(feed_prio, "FEED", t.pos, kind="feed_off", meta={"wheat": 1})
+                feed_now = True
 
         if feed_now:
             feeds_due += 1
@@ -951,9 +992,9 @@ def build_tasks(ctx, macro):
                 add(PRIORITY_STANDARD_HARVEST + 5, "HARVEST", t.pos, kind="harvest_animal")
         if t.fertilizer_available:
             add(PRIORITY_FERT_COLLECT, "COLLECT_FERTILIZER", t.pos, kind="fert")
-        want_care = macro.feeding_enabled and (CARE_GEESE or t.animal != "GOOSE")
         if want_care and not t.cared_today and hour < 21:
-            add(PRIORITY_CARE_ANIMAL, "CARE", t.pos, kind="care")
+            if m0f_mode != "LIVE" or adaptive_care:
+                add(PRIORITY_CARE_ANIMAL, "CARE", t.pos, kind="care")
 
     # WHEAT STAGING: engine FEED consumes the UNIT's inventory (never the
     # shed), so staged PICKUP tasks must run before any FEED can succeed.
