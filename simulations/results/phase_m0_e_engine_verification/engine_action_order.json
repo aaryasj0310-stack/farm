@@ -1,0 +1,15 @@
+{
+  "engine_action_execution_order": [
+    "1. Player 0 Farmer unit action (_apply_unit_action)",
+    "2. Player 0 Hands unit actions sequentially (_apply_unit_action)",
+    "3. Player 1 Farmer unit action (_apply_unit_action)",
+    "4. Player 1 Hands unit actions sequentially (_apply_unit_action)",
+    "5. Market processing (_process_market) for both players in lockstep",
+    "6. Town shop consumption (_town_consume)",
+    "7. Plant decay (_decay_plants)",
+    "8. End of day processing (_end_of_day) if step % turns_per_day == turns_per_day - 1"
+  ],
+  "implication": "Because unit actions (DROP / PLACE-to-shed) resolve during steps 1-4, any deposited items are present in private['shed'] BEFORE step 5 begins. Market SELL orders executed in step 5 see and successfully consume newly deposited items.",
+  "drop_overflow_behavior": "In _apply_unit_action for DROP: room = max(0, shed_capacity - sum(shed.values())); take = min(n, room); shed[item] += take; del inv[item]. Any inventory exceeding available shed room is permanently DELETED upon DROP.",
+  "place_overflow_behavior": "In _apply_unit_action for PLACE to shed: n = min(n, room); inv[item] -= n. Unlike DROP, PLACE only removes the deposited quantity from worker inventory, leaving the remaining units in the worker's hands."
+}

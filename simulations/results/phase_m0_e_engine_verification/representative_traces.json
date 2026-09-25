@@ -1,0 +1,31 @@
+{
+  "test_1_trace": {
+    "step_actions": {
+      "farmer": [
+        "DROP"
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ]
+      ]
+    },
+    "pre_state": {
+      "farmer_inv": {
+        "STRAWBERRY": 10
+      },
+      "shed": {}
+    },
+    "post_state": {
+      "farmer_inv": {},
+      "shed": {
+        "STRAWBERRY": 0
+      },
+      "money": 2113.0,
+      "market_strawberry_inv": 10009
+    }
+  }
+}

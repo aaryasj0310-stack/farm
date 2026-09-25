@@ -1,0 +1,241 @@
+{
+  "test_1_drop_then_sell_same_turn": {
+    "description": "Worker drops 10 STRAWBERRY to shed; same action packet sells 10 STRAWBERRY.",
+    "pre": {
+      "farmer_inventory": 10,
+      "shed_strawberry": 0,
+      "money": 1000.0,
+      "market_inventory": 10000,
+      "market_price": 120
+    },
+    "action": {
+      "farmer": [
+        "DROP"
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ]
+      ]
+    },
+    "post": {
+      "farmer_inventory": 0,
+      "shed_strawberry": 0,
+      "money": 2113.0,
+      "revenue": 1113.0,
+      "market_inventory": 10009,
+      "market_price": 103
+    },
+    "success": true
+  },
+  "test_2_place_to_shed_then_sell_same_turn": {
+    "description": "Worker executes PLACE STRAWBERRY 10 while shed-adjacent; same action packet sells 10 STRAWBERRY.",
+    "pre": {
+      "farmer_inventory": 10,
+      "shed_strawberry": 0,
+      "money": 1000.0,
+      "market_inventory": 10000
+    },
+    "action": {
+      "farmer": [
+        "PLACE",
+        "STRAWBERRY",
+        10
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ]
+      ]
+    },
+    "post": {
+      "farmer_inventory": 0,
+      "shed_strawberry": 0,
+      "money": 2113.0,
+      "revenue": 1113.0,
+      "market_inventory": 10009
+    },
+    "success": true
+  },
+  "test_3a_partial_deposit_shortfall": {
+    "description": "SELL 10 requested, but DROP deposits only 6. Market should sell only 6 and stop gracefully.",
+    "pre": {
+      "farmer_inventory": 6,
+      "shed_strawberry": 0,
+      "money": 1000.0
+    },
+    "action": {
+      "farmer": [
+        "DROP"
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ]
+      ]
+    },
+    "post": {
+      "farmer_inventory": 0,
+      "shed_strawberry": 0,
+      "money": 1690.0,
+      "units_sold": 6
+    },
+    "success": true
+  },
+  "test_3b_non_adjacent_drop_no_op": {
+    "description": "Worker is at (0, 0) (not shed adjacent). DROP fails silently. Shed remains 0. SELL fails with 0 sold.",
+    "pre": {
+      "farmer_pos": [
+        0,
+        0
+      ],
+      "farmer_inventory": 10,
+      "shed_strawberry": 0
+    },
+    "action": {
+      "farmer": [
+        "DROP"
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ]
+      ]
+    },
+    "post": {
+      "farmer_inventory": 10,
+      "shed_strawberry": 0,
+      "money": 1000.0,
+      "units_sold": 0
+    },
+    "success": true
+  },
+  "test_3c_shed_capacity_overflow_behavior": {
+    "description": "Shed at 95/100. Worker drops 10 STRAWBERRY. Exactly 5 fit; 5 overflow are deleted. Market sells 5.",
+    "pre": {
+      "shed_wheat": 95,
+      "farmer_inventory": 10,
+      "room_before_drop": 5
+    },
+    "action": {
+      "farmer": [
+        "DROP"
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ]
+      ]
+    },
+    "post": {
+      "farmer_inventory": 0,
+      "shed_wheat": 95,
+      "shed_strawberry": 0,
+      "money": 1580.0,
+      "units_sold": 5,
+      "items_discarded_by_drop_overflow": 5
+    },
+    "success": true
+  },
+  "test_3d_multi_worker_same_product": {
+    "description": "Farmer drops 5, Hand drops 5. Shed receives 10. Market sells all 10 in same turn.",
+    "pre": {
+      "farmer_strawberry": 5,
+      "hand_strawberry": 5,
+      "shed_strawberry": 0
+    },
+    "action": {
+      "farmer": [
+        "DROP"
+      ],
+      "hands": [
+        [
+          "DROP"
+        ]
+      ],
+      "market": [
+        [
+          "SELL",
+          "STRAWBERRY",
+          10
+        ]
+      ]
+    },
+    "post": {
+      "farmer_strawberry": 0,
+      "hand_strawberry": 0,
+      "shed_strawberry": 0,
+      "money": 2113.0,
+      "units_sold": 10
+    },
+    "success": true
+  },
+  "test_3e_multi_product_deposits": {
+    "description": "Farmer drops 5 STRAWBERRY and 5 TOMATO. Both sold in same turn.",
+    "pre": {
+      "farmer_inventory": {
+        "STRAWBERRY": 5,
+        "TOMATO": 5
+      },
+      "shed": {}
+    },
+    "action": {
+      "farmer": [
+        "DROP"
+      ],
+      "hands": [],
+      "market": [
+        [
+          "SELL",
+          "STRAWBERRY",
+          5
+        ],
+        [
+          "SELL",
+          "TOMATO",
+          5
+        ]
+      ]
+    },
+    "post": {
+      "farmer_inventory": {},
+      "shed_strawberry": 0,
+      "shed_tomato": 0,
+      "strawberries_sold": 5,
+      "tomatoes_sold": 5,
+      "money": 1864.0
+    },
+    "success": true
+  },
+  "test_3f_market_order_cap_truncation": {
+    "description": "Submit 10 BUY_SEED orders, with SELL STRAWBERRY 10 as 11th order. Engine caps market orders to 10. The 11th order must be discarded, so STRAWBERRY remains in shed.",
+    "pre": {
+      "submitted_market_orders_count": 11,
+      "max_market_orders": 10
+    },
+    "action": {
+      "market_len": 11
+    },
+    "post": {
+      "farmer_inventory": 0,
+      "shed_strawberry": 10,
+      "strawberries_sold": 0
+    },
+    "success": true
+  }
+}

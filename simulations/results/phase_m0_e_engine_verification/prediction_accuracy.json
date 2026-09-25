@@ -1,0 +1,14 @@
+{
+  "all_microtests_passed": true,
+  "microtest_count": 8,
+  "passed_count": 8,
+  "failed_count": 0,
+  "exact_prediction_confirmed": true,
+  "capacity_modeling_rules": {
+    "rule_1_worker_precedence": "Farmer executes before Hand 0, Hand 0 executes before Hand 1, etc.",
+    "rule_2_remaining_room": "room_i = max(0, capacity - sum(shed_pre) - sum(deposits_from_prior_workers_this_turn))",
+    "rule_3_drop_deposit": "deposit_i = min(worker_inv_i[item], room_i)",
+    "rule_4_place_deposit": "deposit_i = min(action_n, worker_inv_i[item], room_i)",
+    "rule_5_non_adjacent": "If worker not on shed access tile, deposit is 0"
+  }
+}
