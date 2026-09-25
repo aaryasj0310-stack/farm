@@ -1,0 +1,50 @@
+[
+  {
+    "metric": "fertilizer_sold",
+    "original_method": "Emitted SELL order quantities",
+    "corrected_method": "Exact executed sales in engine",
+    "original_value": 188.97,
+    "corrected_value": 180.5,
+    "difference": -8.469999999999999
+  },
+  {
+    "metric": "fertilizer_realized_revenue",
+    "original_method": "Quantity x observed final price",
+    "corrected_method": "Sum of exact sequential unit prices",
+    "original_value": 11784.63,
+    "corrected_value": 14838.96,
+    "difference": 3054.33
+  },
+  {
+    "metric": "average_sale_price",
+    "original_method": "Final spot price proxy",
+    "corrected_method": "Exact mean of executed unit prices",
+    "original_value": 62.36,
+    "corrected_value": 82.21030470914127,
+    "difference": 19.85030470914127
+  },
+  {
+    "metric": "fertilizer_discarded",
+    "original_method": "Residual unallocated volume",
+    "corrected_method": "Direct drop_inventories_to_shed destruction",
+    "original_value": 3.2,
+    "corrected_value": 4.56,
+    "difference": 1.3599999999999994
+  },
+  {
+    "metric": "zero_cost_collection_rate",
+    "original_method": "100% assumed zero travel",
+    "corrected_method": "Colocated + Shared animal service path",
+    "original_value": 100.0,
+    "corrected_value": 100.0,
+    "difference": 0.0
+  },
+  {
+    "metric": "useful_fraction",
+    "original_method": "(applied + sold) / collected",
+    "corrected_method": "Authoritative executed (applied + sold) / collected",
+    "original_value": 97.75,
+    "corrected_value": 93.853591160221,
+    "difference": -3.8964088397789993
+  }
+]
