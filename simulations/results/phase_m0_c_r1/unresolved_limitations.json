@@ -1,0 +1,8 @@
+{
+  "unresolved_limitations": [
+    "Heuristic gate score uses fixed dollars estimate rather than dynamic recursive counterfactual valuation.",
+    "Market timing gate uses static 60% threshold rather than complete town-demand drain schedule.",
+    "Storage dump exposure models worst-case midnight auto-dump but does not simulate intra-day DROP optimization.",
+    "Sample size of 100 scenario cells leaves confidence intervals with substantial uncertainty around zero."
+  ]
+}
