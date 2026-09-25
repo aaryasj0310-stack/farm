@@ -1,0 +1,18 @@
+{
+  "harvest_delay_on_high_value_crops": {
+    "description": "Locality penalty deferred cross-quadrant harvesting on high-value crops (Tomato/Melon), increasing harvest delay and reducing total harvest yield cycles.",
+    "affected_pairs_count": 10
+  },
+  "quadrant_workload_starvation": {
+    "description": "Locality penalty discouraged idle worker in one quadrant from moving to assist a flooded quadrant until backlog became critical.",
+    "affected_pairs_count": 13
+  },
+  "shed_logistics_or_inventory_lag": {
+    "description": "Workers avoided traveling to shed access tiles or cross-quadrant delivery when local low-priority tasks were available.",
+    "affected_pairs_count": 30
+  },
+  "delayed_replanting": {
+    "description": "Replanting delayed due to workers finishing tasks in home quadrant before cycling back to planting.",
+    "affected_pairs_count": 12
+  }
+}
