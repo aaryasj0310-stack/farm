@@ -1,0 +1,67 @@
+{
+  "test_name": "shed_capacity_interactions",
+  "results": [
+    {
+      "scenario": "mostly_empty_shed",
+      "shed_start": 20,
+      "worker_items_in": 10,
+      "total_shed_after": 30,
+      "expected_shed_after": 30,
+      "actual_discard": 0,
+      "expected_discard": 0,
+      "worker_inventory_empty_after": true,
+      "overflow_behavior": "STORED",
+      "passed": true
+    },
+    {
+      "scenario": "nearly_full_shed_fits",
+      "shed_start": 90,
+      "worker_items_in": 10,
+      "total_shed_after": 100,
+      "expected_shed_after": 100,
+      "actual_discard": 0,
+      "expected_discard": 0,
+      "worker_inventory_empty_after": true,
+      "overflow_behavior": "STORED",
+      "passed": true
+    },
+    {
+      "scenario": "exactly_full_shed",
+      "shed_start": 100,
+      "worker_items_in": 10,
+      "total_shed_after": 100,
+      "expected_shed_after": 100,
+      "actual_discard": 10,
+      "expected_discard": 10,
+      "worker_inventory_empty_after": true,
+      "overflow_behavior": "SILENT_DISCARD",
+      "passed": true
+    },
+    {
+      "scenario": "overflow_partial_fit",
+      "shed_start": 95,
+      "worker_items_in": 10,
+      "total_shed_after": 100,
+      "expected_shed_after": 100,
+      "actual_discard": 5,
+      "expected_discard": 5,
+      "worker_inventory_empty_after": true,
+      "overflow_behavior": "SILENT_DISCARD",
+      "passed": true
+    },
+    {
+      "scenario": "multi_worker_dump_overflow",
+      "shed_start": 85,
+      "worker_items_in": 20,
+      "total_shed_after": 100,
+      "expected_shed_after": 100,
+      "actual_discard": 5,
+      "expected_discard": 5,
+      "worker_inventory_empty_after": true,
+      "overflow_behavior": "SILENT_DISCARD",
+      "passed": true
+    }
+  ],
+  "critical_finding": "Excess inventory beyond shed capacity (100) is SILENTLY DISCARDED at midnight without warning or exception.",
+  "verdict": "SUCCESS"
+}

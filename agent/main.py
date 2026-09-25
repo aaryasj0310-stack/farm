@@ -416,6 +416,11 @@ def reset_agent_state() -> None:
         reset_crop_pipeline_telemetry()
     except Exception:
         pass
+    try:
+        from execution.midnight_storage_controller import reset_midnight_storage_telemetry
+        reset_midnight_storage_telemetry()
+    except Exception:
+        pass
 
 
 def get_crop_pipeline_telemetry():
@@ -424,6 +429,14 @@ def get_crop_pipeline_telemetry():
         return _gcpt()
     except Exception:
         return []
+
+
+def get_midnight_storage_telemetry():
+    try:
+        from execution.midnight_storage_controller import get_midnight_storage_telemetry as _gmst
+        return _gmst()
+    except Exception:
+        return {}
 
 
 def verify_post_turn_pipelines(obs_post, player_id=0):

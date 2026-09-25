@@ -1021,6 +1021,20 @@ def build_tasks(ctx, macro):
                 day == 29
                 or (hour >= 22 and overflow_risk)
             )
+
+            # Check Midnight Storage Dump Controller
+            try:
+                from execution.midnight_storage_controller import should_buffer_worker_inventory
+                if should_buffer_worker_inventory(ctx, u_idx, inv, deliverable, shed_load, carried_sellable_total, feeds_due):
+                    should_deliver = False
+            except Exception:
+                try:
+                    from agent.execution.midnight_storage_controller import should_buffer_worker_inventory
+                    if should_buffer_worker_inventory(ctx, u_idx, inv, deliverable, shed_load, carried_sellable_total, feeds_due):
+                        should_deliver = False
+                except Exception:
+                    pass
+
             if not should_deliver:
                 continue
 

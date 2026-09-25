@@ -1,0 +1,22 @@
+{
+  "worker_concurrency": {
+    "test_name": "worker_carry_limits_and_concurrency",
+    "has_carry_weight_limit": false,
+    "move_while_carrying_100": true,
+    "plant_while_carrying_100": true,
+    "water_while_carrying_100": true,
+    "harvest_while_carrying_100": true,
+    "verdict": "SUCCESS"
+  },
+  "market_semantics": {
+    "test_name": "market_and_accounting_semantics",
+    "sell_order_emitted": 5,
+    "worker_inventory_before": 10,
+    "shed_inventory_before": 0,
+    "money_delta": 0.0,
+    "worker_inventory_after": 10,
+    "shed_inventory_after": 0,
+    "rule_confirmed": "Market SELL orders can ONLY fulfill from shed inventory; worker-held inventory is NOT accessible for market sale until deposited.",
+    "verdict": "SUCCESS"
+  }
+}

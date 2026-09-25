@@ -290,6 +290,36 @@ def set_same_turn_crop_pipeline_mode(mode: str) -> None:
                 pass
 
 
+# Kaggriculture Phase M0-B: Engine Mechanics Exploitation — Midnight Storage Dump Logistics
+# Supported modes: "OFF" (production baseline), "ON" (treatment)
+MIDNIGHT_STORAGE_DUMP_MODE: str = "OFF"
+
+def get_midnight_storage_dump_mode() -> str:
+    """Return active midnight storage dump mode ('OFF', 'ON')."""
+    return str(MIDNIGHT_STORAGE_DUMP_MODE).strip().upper()
+
+def set_midnight_storage_dump_mode(mode: str) -> None:
+    """Configure midnight storage dump mode ('OFF', 'ON')."""
+    mode_str = str(mode).strip().upper()
+    if mode_str not in ("OFF", "ON"):
+        raise ValueError(f"Invalid midnight storage dump mode '{mode}'. Must be one of ('OFF', 'ON').")
+    global MIDNIGHT_STORAGE_DUMP_MODE
+    MIDNIGHT_STORAGE_DUMP_MODE = mode_str
+    for mod_name in (
+        "agent.main", "main", "agent.config", "config",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.execution.midnight_storage_controller", "execution.midnight_storage_controller", "midnight_storage_controller",
+        "agent.market.order_builder", "market.order_builder", "order_builder",
+        "agent.market.market_brain", "market.market_brain", "market_brain",
+    ):
+        if mod_name in sys.modules:
+            try:
+                mod = sys.modules[mod_name]
+                setattr(mod, "MIDNIGHT_STORAGE_DUMP_MODE", mode_str)
+            except Exception:
+                pass
+
+
 # Phase knobs
 
 PHASE1_WHEAT_TILES = 8            # NW wheat for day-4 cash + animal feed (Leader heuristic)

@@ -207,13 +207,24 @@ class MarketBrain:
         except Exception:
             p61_enabled = False
 
+        try:
+            from execution.midnight_storage_controller import is_midnight_storage_dump_enabled
+            m0b_enabled = is_midnight_storage_dump_enabled()
+        except Exception:
+            try:
+                from agent.execution.midnight_storage_controller import is_midnight_storage_dump_enabled
+                m0b_enabled = is_midnight_storage_dump_enabled()
+            except Exception:
+                m0b_enabled = False
+
         p61_hygiene_active = False
         p61_needed_relief = 0
-        if p61_enabled and (hour in (20, 21, 22)):
+        if (p61_enabled and (hour in (20, 21, 22))) or (m0b_enabled and (hour in (18, 19, 20, 21, 22))):
             projected_midnight_load = pending_occupancy
-            if projected_midnight_load > 75:
+            target_load = 75
+            if projected_midnight_load > target_load:
                 p61_hygiene_active = True
-                p61_needed_relief = max(0, projected_midnight_load - 75)
+                p61_needed_relief = max(0, projected_midnight_load - target_load)
 
         # Two-tier urgency:
         # 2 = midnight hard-guard, 1 = emergency relief, 0 = normal post-drain window
