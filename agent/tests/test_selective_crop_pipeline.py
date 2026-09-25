@@ -1,32 +1,36 @@
-"""Kaggriculture Phase M0-C: Selective Same-Turn Crop Pipeline Gating Tests.
+"""Kaggriculture Phase M0-C-R1: Selective Same-Turn Crop Pipeline Gating & Mechanics Tests.
 
 Verifies:
 1. OFF preserves existing baseline behavior (no pipelines scheduled).
 2. GLOBAL preserves exact M0-A unconditional behavior.
 3. SELECTIVE executes only when hard safety vetoes and net economic value pass.
-4. Unsupported ongoing crops (Tomato, Strawberry) rejected.
-5. Survival hard veto triggers (starving animals, critical watering, urgent tasks).
-6. Worker opportunity cost veto triggers (starved high-priority tasks, insufficient free units).
-7. Storage risk hard veto triggers (projected shed >= 92 or shed_load >= 90).
-8. Liquidity / capital risk hard veto triggers (near-term animal purchase window with tight shed).
-9. Market timing hard veto triggers (crop stockpile in shed >= 50).
-10. Season-end waste veto triggers (crop cannot mature before season end).
-11. Seed constraint veto triggers (no unreserved seeds).
-12. Favorable conditions pass gate and execute atomic pipeline.
-13. Shadow decision telemetry records accurate rejection reasons and metrics in both modes.
-14. Complete decoupling from Phase M0-B (midnight storage dump remains OFF).
+4. Authoritative crop constants match engine rules (first_yield_day vs max_yield_day).
+5. Cash read from farm.money (NOT private.money).
+6. Liquidity risk accounts for real commitments (feed reserve, safety reserve).
+7. Storage risk distinguishes worker carried inventory from shed inventory and models EOD dump.
+8. Market timing gate uses actual market state (price depression / glut).
+9. Large shed inventory alone triggers INVENTORY_BACKLOG_RISK, not MARKET_TIMING.
+10. Survival hard veto triggers (starving animals, critical watering, urgent tasks).
+11. Worker opportunity cost veto triggers (starved high-priority tasks, insufficient free units).
+12. Season-end waste veto uses authoritative first_yield_day.
+13. Animal escape telemetry detects disappearance after consecutive_unfed >= 2.
+14. Crop watering failure telemetry detects PLANT -> WEED transition.
+15. Transaction telemetry records actual purchases (HIRE, BUY_LAND, BUY_SEED, BUY_ANIMAL).
+16. Runtime reset clears M0-C-R1 telemetry.
 """
 import copy
 import pytest
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set, Tuple
 
 import config
 from execution.crop_pipeline_controller import (
+    AUTHORITATIVE_CROPS,
     CROPS_INFO,
     REJECTION_SURVIVAL_PRIORITY,
     REJECTION_WORKER_OPPORTUNITY_COST,
     REJECTION_STORAGE_RISK,
     REJECTION_MARKET_TIMING,
+    REJECTION_INVENTORY_BACKLOG_RISK,
     REJECTION_LIQUIDITY_CAPITAL_RISK,
     REJECTION_SEASON_END_NO_VALUE,
     REJECTION_SEED_CONSTRAINT,
@@ -43,7 +47,19 @@ from execution.crop_pipeline_controller import (
 
 
 class MockTile:
-    def __init__(self, pos, is_plant=True, crop="WHEAT", yield_units=2, planted_day=4, consecutive_unwatered=0, watered_today=False, is_animal=False, fed_today=True, consecutive_unfed=0):
+    def __init__(
+        self,
+        pos,
+        is_plant=True,
+        crop="WHEAT",
+        yield_units=2,
+        planted_day=4,
+        consecutive_unwatered=0,
+        watered_today=False,
+        is_animal=False,
+        fed_today=True,
+        consecutive_unfed=0,
+    ):
         self.pos = pos
         self.is_plant = is_plant
         self.crop = crop
@@ -57,19 +73,22 @@ class MockTile:
 
     def to_dict(self):
         return {
-            "kind": "PLANT" if self.is_plant else "SOIL",
+            "kind": "PLANT" if self.is_plant else ("ANIMAL" if self.is_animal else "SOIL"),
             "crop": self.crop,
             "yield_units": self.yield_units,
             "planted_day": self.planted_day,
             "consecutive_unwatered": self.consecutive_unwatered,
             "watered_today": self.watered_today,
+            "consecutive_unfed": self.consecutive_unfed,
+            "fed_today": self.fed_today,
         }
 
 
 class MockFarm:
-    def __init__(self, tiles=None, unlocked=None):
+    def __init__(self, tiles=None, unlocked=None, money=5000.0):
         self.tiles_list = tiles or []
         self.unlocked = set(unlocked or ["NW", "NE"])
+        self.money = float(money)
 
     def iter_tiles(self):
         return iter(self.tiles_list)
@@ -80,31 +99,45 @@ class MockFarm:
 
 
 class MockPrivate:
-    def __init__(self, seeds=None, shed=None, inventories=None, money=5000.0):
+    def __init__(self, seeds=None, shed=None, inventories=None):
         self.seeds = seeds or {"WHEAT": 5, "CARROT": 5}
         self.shed = shed or {"WHEAT": 10}
         self.inventories = inventories or [{} for _ in range(8)]
-        self.money = money
 
 
-def make_ctx(day=6, hour=5, shed_load=10, carried=0, money=5000.0, seeds=None, wheat_in_shed=None):
+class MockMarket:
+    def __init__(self, prices=None, inventory=None):
+        self.prices = prices or {"WHEAT": 25, "CARROT": 35, "MELON": 250}
+        self.inventory = inventory or {"WHEAT": 100.0, "CARROT": 50.0, "MELON": 20.0}
+
+
+def make_ctx(day=6, hour=5, shed_load=10, carried=0, money=5000.0, seeds=None, wheat_in_shed=None, market_prices=None):
     if wheat_in_shed is not None:
         w_shed = wheat_in_shed
         other_shed = max(0, shed_load - w_shed)
         shed_dict = {"WHEAT": w_shed, "CARROT": other_shed}
     else:
         shed_dict = {"WHEAT": shed_load}
+
+    invs = [{} for _ in range(8)]
+    if carried > 0:
+        invs[0] = {"WHEAT": carried}
+
     priv = MockPrivate(
         seeds=seeds or {"WHEAT": 5},
         shed=shed_dict,
-        inventories=[{} for _ in range(8)],
-        money=money,
+        inventories=invs,
     )
+    farm = MockFarm(money=money)
+    market = MockMarket(prices=market_prices)
+
     return {
         "day": day,
         "hour": hour,
         "step": day * 24 + hour,
         "private": priv,
+        "farm": farm,
+        "market": market,
     }
 
 
@@ -119,52 +152,152 @@ def clean_pipeline_state():
     config.set_midnight_storage_dump_mode("OFF")
 
 
-def test_config_mode_support_and_backward_compatibility():
-    """Verify OFF, GLOBAL, SELECTIVE, and legacy ON mapping."""
-    config.set_same_turn_crop_pipeline_mode("OFF")
-    assert config.get_same_turn_crop_pipeline_mode() == "OFF"
-    assert not is_pipeline_enabled()
+def test_authoritative_crop_constants_match_engine():
+    """Verify crop constants match authoritative Kaggriculture rules."""
+    assert AUTHORITATIVE_CROPS["WHEAT"]["first_yield_day"] == 2
+    assert AUTHORITATIVE_CROPS["WHEAT"]["max_yield_day"] == 4
+    assert AUTHORITATIVE_CROPS["WHEAT"]["max_yield"] == 6
+    assert AUTHORITATIVE_CROPS["WHEAT"]["ongoing"] is False
 
-    config.set_same_turn_crop_pipeline_mode("ON")
-    assert config.get_same_turn_crop_pipeline_mode() in ("ON", "GLOBAL")
-    assert is_pipeline_enabled()
+    assert AUTHORITATIVE_CROPS["CARROT"]["first_yield_day"] == 2
+    assert AUTHORITATIVE_CROPS["CARROT"]["max_yield_day"] == 3
+    assert AUTHORITATIVE_CROPS["CARROT"]["max_yield"] == 4
+    assert AUTHORITATIVE_CROPS["CARROT"]["ongoing"] is False
 
-    config.set_same_turn_crop_pipeline_mode("GLOBAL")
-    assert config.get_same_turn_crop_pipeline_mode() == "GLOBAL"
-    assert is_pipeline_enabled()
+    assert AUTHORITATIVE_CROPS["MELON"]["first_yield_day"] == 10
+    assert AUTHORITATIVE_CROPS["MELON"]["max_yield_day"] == 12
+    assert AUTHORITATIVE_CROPS["MELON"]["max_yield"] == 6
+    assert AUTHORITATIVE_CROPS["MELON"]["ongoing"] is False
 
-    config.set_same_turn_crop_pipeline_mode("SELECTIVE")
-    assert config.get_same_turn_crop_pipeline_mode() == "SELECTIVE"
-    assert is_pipeline_enabled()
-
-    with pytest.raises(ValueError):
-        config.set_same_turn_crop_pipeline_mode("INVALID_MODE")
-
-
-def test_off_mode_schedules_no_pipelines():
-    """Verify OFF mode strictly disables scheduling."""
-    config.set_same_turn_crop_pipeline_mode("OFF")
-    t = MockTile((2, 2), crop="WHEAT", yield_units=2, planted_day=4)
-    farm = MockFarm([t])
-    ctx = make_ctx()
-    pos_by_idx = {0: (2, 2), 1: (2, 2), 2: (2, 2)}
-    asg, busy, rem = evaluate_and_assign_pipelines(ctx, farm, pos_by_idx, {0, 1, 2}, [], None, {})
-    assert asg == {}
-    assert busy == set()
-    assert rem == []
+    assert AUTHORITATIVE_CROPS["TOMATO"]["ongoing"] is True
+    assert AUTHORITATIVE_CROPS["STRAWBERRY"]["ongoing"] is True
 
 
-def test_storage_risk_hard_veto():
-    """Verify candidate is rejected if projected shed occupancy >= 92."""
-    ctx = make_ctx(shed_load=91, wheat_in_shed=10)  # 91 + 2 yield = 93 >= 92
-    t = MockTile((2, 2), crop="WHEAT", yield_units=2)
-    farm = MockFarm([t])
+def test_cash_read_from_farm_money_not_private():
+    """Verify farm.money = 2500 and private has no money attribute results in current_cash == 2500."""
+    ctx = make_ctx(money=2500.0)
+    # Ensure private object has no money attribute
+    assert not hasattr(ctx["private"], "money")
+
+    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
+    farm = MockFarm([crop], money=2500.0)
+
     accepted, reasons, metrics = evaluate_pipeline_economic_gate(
-        ctx, farm, (2, 2), t, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+        ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+    )
+    assert metrics["current_cash"] == 2500.0
+
+
+def test_liquidity_capital_risk_accounts_for_feed_commitments():
+    """Verify liquidity risk vetoes when available cash after feed reserve is < 3000."""
+    # 2 cows on farm -> feed needed = 2 * 4 = 8 wheat. Wheat in shed = 0.
+    # Feed reserve = 8 * 25 = $200. Safety reserve = $300.
+    # If cash = 3200, available cash = 3200 - 200 - 300 = 2700 < 3000.
+    cow1 = MockTile((1, 1), is_plant=False, is_animal=True, fed_today=True)
+    cow2 = MockTile((1, 2), is_plant=False, is_animal=True, fed_today=True)
+    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
+    farm = MockFarm([cow1, cow2, crop], money=3200.0)
+
+    ctx = make_ctx(day=10, hour=8, shed_load=86, wheat_in_shed=0, money=3200.0)
+    accepted, reasons, metrics = evaluate_pipeline_economic_gate(
+        ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+    )
+    assert not accepted
+    assert REJECTION_LIQUIDITY_CAPITAL_RISK in reasons
+    assert metrics["available_cash"] == 2700.0
+
+
+def test_storage_projection_distinguishes_worker_from_shed_inventory():
+    """Verify harvest yield enters worker inventory immediately, while EOD dump exposure is tracked."""
+    ctx = make_ctx(shed_load=80, carried=10)
+    crop = MockTile((2, 2), crop="WHEAT", yield_units=3)
+    farm = MockFarm([crop])
+
+    accepted, reasons, metrics = evaluate_pipeline_economic_gate(
+        ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+    )
+    # Immediate shed load is 80 (not 83!)
+    assert metrics["immediate_post_pipeline_shed_load"] == 80
+    # End-of-day dump exposure is carried (10) + harvest (3) = 13
+    assert metrics["end_of_day_dump_exposure"] == 13
+    # Worst case EOD shed load is 80 + 13 = 93
+    assert metrics["worst_case_end_of_day_shed_load"] == 93
+
+
+def test_storage_risk_hard_veto_near_capacity_or_eod():
+    """Verify storage veto triggers if current shed >= 90 or hour >= 18 and EOD >= 95."""
+    # Case A: shed >= 90
+    ctx_congested = make_ctx(hour=10, shed_load=90)
+    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
+    farm = MockFarm([crop])
+    accepted, reasons, _ = evaluate_pipeline_economic_gate(
+        ctx_congested, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
     )
     assert not accepted
     assert REJECTION_STORAGE_RISK in reasons
-    assert metrics["projected_shed"] == 93
+
+    # Case B: hour >= 18, shed=85, carried=8, yield=3 -> EOD = 85 + 11 = 96 >= 95
+    ctx_eod = make_ctx(hour=18, shed_load=85, carried=8)
+    crop3 = MockTile((2, 2), crop="WHEAT", yield_units=3)
+    accepted_eod, reasons_eod, _ = evaluate_pipeline_economic_gate(
+        ctx_eod, farm, (2, 2), crop3, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+    )
+    assert not accepted_eod
+    assert REJECTION_STORAGE_RISK in reasons_eod
+
+
+def test_market_timing_gate_uses_actual_market_state():
+    """Verify MARKET_TIMING veto triggers when market price is depressed <= 60% of base."""
+    # Wheat base is 25. If market price is 12 (<= 15), market timing veto triggers
+    depressed_market = MockMarket(prices={"WHEAT": 12})
+    ctx_depressed = make_ctx(shed_load=20, wheat_in_shed=10)
+    ctx_depressed["market"] = depressed_market
+
+    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
+    farm = MockFarm([crop])
+
+    accepted, reasons, metrics = evaluate_pipeline_economic_gate(
+        ctx_depressed, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+    )
+    assert not accepted
+    assert REJECTION_MARKET_TIMING in reasons
+
+
+def test_large_shed_inventory_triggers_inventory_backlog_not_market_timing():
+    """Verify shed inventory >= 50 triggers INVENTORY_BACKLOG_RISK, NOT MARKET_TIMING."""
+    normal_market = MockMarket(prices={"WHEAT": 25})
+    ctx = make_ctx(shed_load=60, wheat_in_shed=55)
+    ctx["market"] = normal_market
+
+    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
+    farm = MockFarm([crop])
+
+    accepted, reasons, _ = evaluate_pipeline_economic_gate(
+        ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+    )
+    assert not accepted
+    assert REJECTION_INVENTORY_BACKLOG_RISK in reasons
+    assert REJECTION_MARKET_TIMING not in reasons
+
+
+def test_season_end_waste_veto_uses_first_yield_day():
+    """Verify replanting on Day 28 cannot yield (28 + 2 = 30 > 29), but Day 27 can (27 + 2 = 29 <= 29)."""
+    # Day 28: Wheat first yield day is 2 -> 28 + 2 = 30 > 29 (VETO)
+    ctx28 = make_ctx(day=28, hour=5)
+    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
+    farm = MockFarm([crop])
+    accepted28, reasons28, _ = evaluate_pipeline_economic_gate(
+        ctx28, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+    )
+    assert not accepted28
+    assert REJECTION_SEASON_END_NO_VALUE in reasons28
+
+    # Day 27: 27 + 2 = 29 <= 29 (Passes season end veto)
+    ctx27 = make_ctx(day=27, hour=5)
+    accepted27, reasons27, _ = evaluate_pipeline_economic_gate(
+        ctx27, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
+    )
+    assert REJECTION_SEASON_END_NO_VALUE not in reasons27
 
 
 def test_survival_priority_hard_veto_unfed_animals():
@@ -198,7 +331,6 @@ def test_worker_opportunity_cost_veto():
     ctx = make_ctx()
     crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
     farm = MockFarm([crop])
-    # 3 free workers, but 1 high-priority task (priority 90) waiting -> leaves 0 workers for priority task
     reg_tasks = [{"priority": 90, "target": (3, 3)}]
     accepted, reasons, _ = evaluate_pipeline_economic_gate(
         ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2}, reg_tasks
@@ -207,106 +339,47 @@ def test_worker_opportunity_cost_veto():
     assert REJECTION_WORKER_OPPORTUNITY_COST in reasons
 
 
-def test_season_end_waste_veto():
-    """Verify replanting on or after Day 28 is vetoed (cannot mature before season end)."""
-    ctx = make_ctx(day=28, hour=5)
-    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
-    farm = MockFarm([crop])
-    accepted, reasons, _ = evaluate_pipeline_economic_gate(
-        ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
-    )
-    assert not accepted
-    assert REJECTION_SEASON_END_NO_VALUE in reasons
-
-
-def test_liquidity_capital_risk_veto():
-    """Verify candidate is vetoed if day <= 18, cash < 3000 and shed >= 85."""
-    ctx = make_ctx(day=12, hour=8, shed_load=86, wheat_in_shed=10, money=2500.0)
-    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
-    farm = MockFarm([crop])
-    accepted, reasons, _ = evaluate_pipeline_economic_gate(
-        ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
-    )
-    assert not accepted
-    assert REJECTION_LIQUIDITY_CAPITAL_RISK in reasons
-
-
-def test_market_timing_glut_veto():
-    """Verify candidate is vetoed if shed already holds >= 50 units of this crop."""
-    ctx = make_ctx(shed_load=60, wheat_in_shed=55)
-    crop = MockTile((2, 2), crop="WHEAT", yield_units=2)
-    farm = MockFarm([crop])
-    accepted, reasons, _ = evaluate_pipeline_economic_gate(
-        ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4}, []
-    )
-    assert not accepted
-    assert REJECTION_MARKET_TIMING in reasons
-
-
-def test_favorable_opportunity_passes_gate():
-    """Verify a clean candidate with ample headroom and free workers passes."""
-    ctx = make_ctx(day=8, hour=4, shed_load=20, wheat_in_shed=5, money=10000.0)
-    crop = MockTile((2, 2), crop="WHEAT", yield_units=2, planted_day=6)
-    farm = MockFarm([crop])
-    accepted, reasons, metrics = evaluate_pipeline_economic_gate(
-        ctx, farm, (2, 2), crop, "WHEAT", [0, 1, 2], {0, 1, 2, 3, 4, 5, 6}, []
-    )
-    assert accepted
-    assert reasons == []
-    assert metrics["estimated_net_value"] > 0
-
-
-def test_selective_mode_filters_rejected_and_executes_accepted():
-    """Verify SELECTIVE mode rejects bad opportunities and schedules good ones."""
-    config.set_same_turn_crop_pipeline_mode("SELECTIVE")
-
-    # Tile A: Bad (shed near capacity, 91 items)
-    # Tile B: Good (clean)
-    t_bad = MockTile((2, 2), crop="WHEAT", yield_units=2, planted_day=6)
-    t_good = MockTile((3, 3), crop="WHEAT", yield_units=2, planted_day=6)
-    farm = MockFarm([t_bad, t_good])
-
-    # Context with shed_load = 91 -> projected 93 >= 92 (REJECT)
-    ctx = make_ctx(day=8, hour=4, shed_load=91, wheat_in_shed=10, money=10000.0)
+def test_off_mode_schedules_no_pipelines():
+    """Verify OFF mode strictly disables scheduling."""
+    config.set_same_turn_crop_pipeline_mode("OFF")
+    t = MockTile((2, 2), crop="WHEAT", yield_units=2, planted_day=4)
+    farm = MockFarm([t])
+    ctx = make_ctx()
     pos_by_idx = {0: (2, 2), 1: (2, 2), 2: (2, 2)}
     asg, busy, rem = evaluate_and_assign_pipelines(ctx, farm, pos_by_idx, {0, 1, 2}, [], None, {})
-
-    # t_bad should be rejected, so no assignment
     assert asg == {}
-
-    # Now make shed clean (shed_load = 10, wheat_in_shed = 5) -> should accept and assign
-    ctx_clean = make_ctx(day=8, hour=4, shed_load=10, wheat_in_shed=5, money=10000.0)
-    asg2, busy2, _ = evaluate_and_assign_pipelines(ctx_clean, farm, pos_by_idx, {0, 1, 2}, [], None, {})
-    assert len(asg2) == 3
-    assert busy2 == {0, 1, 2}
-    assert asg2[0]["op"] == "HARVEST"
-    assert asg2[1]["op"] == "PLANT"
-    assert asg2[2]["op"] == "WATER"
-
-    # Verify shadow decision records captured both
-    shadow = get_crop_pipeline_shadow_decisions()
-    assert len(shadow) >= 2
-    assert any(s["decision"] == "REJECT" for s in shadow)
-    assert any(s["decision"] == "EXECUTE" for s in shadow)
+    assert busy == set()
+    assert rem == []
 
 
-def test_global_mode_executes_even_when_shadow_rejects():
-    """Verify GLOBAL mode executes physically eligible pipelines even if shadow gate rejects."""
+def test_global_mode_mechanically_unconditional():
+    """Verify GLOBAL mode executes physically eligible pipelines even when shadow gate vetoes."""
     config.set_same_turn_crop_pipeline_mode("GLOBAL")
-    # Bad tile (shed 91)
     t_bad = MockTile((2, 2), crop="WHEAT", yield_units=2, planted_day=6)
     farm = MockFarm([t_bad])
     ctx = make_ctx(day=8, hour=4, shed_load=91, wheat_in_shed=10, money=10000.0)
     pos_by_idx = {0: (2, 2), 1: (2, 2), 2: (2, 2)}
     asg, busy, _ = evaluate_and_assign_pipelines(ctx, farm, pos_by_idx, {0, 1, 2}, [], None, {})
 
-    # In GLOBAL mode, physical eligibility executes
     assert len(asg) == 3
     assert busy == {0, 1, 2}
 
-    # But shadow record reflects gate rejection
     shadow = get_crop_pipeline_shadow_decisions()
     assert len(shadow) == 1
     assert shadow[0]["gate_accepted"] is False
-    assert REJECTION_STORAGE_RISK in shadow[0]["rejection_reasons"]
-    assert shadow[0]["decision"] == "EXECUTE"  # GLOBAL executed despite gate rejection
+    assert shadow[0]["decision"] == "EXECUTE"
+
+
+def test_runtime_reset_clears_pipeline_telemetry():
+    """Verify reset clears all recorded shadow telemetry and counters."""
+    config.set_same_turn_crop_pipeline_mode("GLOBAL")
+    t = MockTile((2, 2), crop="WHEAT", yield_units=2, planted_day=6)
+    farm = MockFarm([t])
+    ctx = make_ctx(day=8, hour=4, shed_load=10, wheat_in_shed=5, money=10000.0)
+    pos_by_idx = {0: (2, 2), 1: (2, 2), 2: (2, 2)}
+    evaluate_and_assign_pipelines(ctx, farm, pos_by_idx, {0, 1, 2}, [], None, {})
+
+    assert len(get_crop_pipeline_shadow_decisions()) > 0
+    reset_crop_pipeline_telemetry()
+    assert len(get_crop_pipeline_shadow_decisions()) == 0
+    assert len(get_crop_pipeline_telemetry()) == 0

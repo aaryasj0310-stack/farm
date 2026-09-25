@@ -15,19 +15,22 @@ from __future__ import annotations
 import copy
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-CROPS_INFO = {
-    "WHEAT": {"seed": 10, "max_yield": 3, "max_yield_day": 2, "first_yield_day": 2, "ongoing": False},
-    "CARROT": {"seed": 20, "max_yield": 4, "max_yield_day": 2, "first_yield_day": 2, "ongoing": False},
-    "TOMATO": {"seed": 50, "max_yield": 4, "max_yield_day": 8, "first_yield_day": 8, "ongoing": True},
-    "STRAWBERRY": {"seed": 100, "max_yield": 4, "max_yield_day": 10, "first_yield_day": 10, "ongoing": True},
-    "MELON": {"seed": 80, "max_yield": 2, "max_yield_day": 10, "first_yield_day": 10, "ongoing": False},
+AUTHORITATIVE_CROPS = {
+    "WHEAT": {"seed": 10, "first_yield_day": 2, "max_yield_day": 4, "max_yield": 6, "ongoing": False},
+    "CARROT": {"seed": 20, "first_yield_day": 2, "max_yield_day": 3, "max_yield": 4, "ongoing": False},
+    "TOMATO": {"seed": 50, "first_yield_day": 8, "max_yield_day": 8, "max_yield": 4, "ongoing": True},
+    "STRAWBERRY": {"seed": 100, "first_yield_day": 10, "max_yield_day": 10, "max_yield": 4, "ongoing": True},
+    "MELON": {"seed": 80, "first_yield_day": 10, "max_yield_day": 12, "max_yield": 6, "ongoing": False},
 }
+# Backward-compatibility alias
+CROPS_INFO = AUTHORITATIVE_CROPS
 
-# Rejection Reason Taxonomy (Part I)
+# Rejection Reason Taxonomy (Part I & D)
 REJECTION_SURVIVAL_PRIORITY = "SURVIVAL_PRIORITY"
 REJECTION_WORKER_OPPORTUNITY_COST = "WORKER_OPPORTUNITY_COST"
 REJECTION_STORAGE_RISK = "STORAGE_RISK"
 REJECTION_MARKET_TIMING = "MARKET_TIMING"
+REJECTION_INVENTORY_BACKLOG_RISK = "INVENTORY_BACKLOG_RISK"
 REJECTION_LIQUIDITY_CAPITAL_RISK = "LIQUIDITY_CAPITAL_RISK"
 REJECTION_SEASON_END_NO_VALUE = "SEASON_END_NO_VALUE"
 REJECTION_SEED_CONSTRAINT = "SEED_CONSTRAINT"
@@ -102,18 +105,18 @@ def evaluate_pipeline_economic_gate(
     hour = ctx.get("hour", 0)
     step = ctx.get("step", day * 24 + hour)
     private = ctx.get("private")
-    rep_info = CROPS_INFO.get(replant_crop, {})
-    mat_day = rep_info.get("max_yield_day", 2)
+    market = ctx.get("market")
+    rep_info = AUTHORITATIVE_CROPS.get(replant_crop, {})
+    first_yield_day = rep_info.get("first_yield_day", 2)
+    max_yield_day = rep_info.get("max_yield_day", 4)
 
-    # 1. Season-End Waste Veto
-    # Crops planted on or after Day 28 cannot mature before match end (Day 29 Hour 23)
-    if day + mat_day > 29:
-        reasons.append(REJECTION_SEASON_END_NO_VALUE)
-    elif replant_crop == "MELON" and day > 19:
+    # 1. Season-End Waste Veto (Part B)
+    # Uses authoritative first_yield_day (earliest possible harvest).
+    # Crops planted when day + first_yield_day > 29 cannot yield before match end (Day 29 Hour 23).
+    if day + first_yield_day > 29:
         reasons.append(REJECTION_SEASON_END_NO_VALUE)
 
     # 2. Survival Priority Hard Veto
-    # Only veto if an animal is in genuine starvation risk (consecutive_unfed >= 2 or hour >= 18 and >= 1)
     starving_animals = False
     for t_anim in farm.iter_tiles():
         if getattr(t_anim, "is_animal", False):
@@ -124,7 +127,7 @@ def evaluate_pipeline_economic_gate(
     if starving_animals:
         reasons.append(REJECTION_SURVIVAL_PRIORITY)
 
-    # Critical watering check (crops at genuine risk of decay, consecutive_unwatered >= 2 or hour >= 18 and >= 1)
+    # Critical watering check (consecutive_unwatered >= 2 or hour >= 18 and >= 1)
     critical_water_needed = False
     for t_plant in farm.iter_tiles():
         if getattr(t_plant, "is_plant", False):
@@ -143,24 +146,42 @@ def evaluate_pipeline_economic_gate(
     if urgent_pending:
         reasons.append(REJECTION_SURVIVAL_PRIORITY)
 
-    # 3. Storage Risk Hard Veto
-    shed_load = sum(private.shed.values()) if private and hasattr(private, "shed") else 0
-    carried_load = (
+    # 3. Storage Risk Hard Veto (Part E)
+    # In engine mechanics, HARVEST yield enters worker carried inventory, NOT the shed directly.
+    # Shed load increases only via explicit DROP / PLACE or end-of-day auto-dump.
+    shed_load_now = sum(private.shed.values()) if private and hasattr(private, "shed") else 0
+    carried_inventory_now = (
         sum(sum(inv.values()) for inv in private.inventories)
         if private and hasattr(private, "inventories")
         else 0
     )
     harvest_yield = getattr(tile, "yield_units", 1)
-    projected_shed = shed_load + harvest_yield
+    immediate_post_pipeline_shed_load = shed_load_now
+    end_of_day_dump_exposure = carried_inventory_now + harvest_yield
+    worst_case_end_of_day_shed_load = shed_load_now + end_of_day_dump_exposure
 
-    # If shed is already at or near critical congestion (>= 92 projected or >= 90 current)
-    if projected_shed >= 92 or shed_load >= 90:
+    # Storage veto triggers on plausible overflow:
+    # (a) shed is already congested (>= 90) with minimal headroom, OR
+    # (b) approaching end-of-day (hour >= 18) and worst-case EOD dump exposure will overflow shed (>= 95)
+    if shed_load_now >= 90 or (hour >= 18 and worst_case_end_of_day_shed_load >= 95):
         reasons.append(REJECTION_STORAGE_RISK)
 
-    # 4. Liquidity / Capital Risk Hard Veto
-    current_cash = getattr(private, "money", 0) if private else 0
-    # In days 0–18, if shed is high (>= 85) and cash is tight (< 3000), avoid locking shed capacity
-    if day <= 18 and current_cash < 3000 and shed_load >= 85:
+    # 4. Liquidity / Capital Risk Hard Veto (Part C)
+    # Authoritative cash from farm.money (NOT private.money)
+    current_cash = float(getattr(farm, "money", 0.0))
+
+    # Available cash considers existing commitments in runtime:
+    # (a) Committed feed reserve: animals * 4 days of feed wheat ($25/unit) minus wheat in shed
+    animal_count = sum(1 for t_anim in farm.iter_tiles() if getattr(t_anim, "is_animal", False))
+    wheat_in_shed = private.shed.get("WHEAT", 0) if private and hasattr(private, "shed") else 0
+    feed_needed = max(0, animal_count * 4 - wheat_in_shed)
+    committed_feed_reserve = 25.0 * feed_needed
+    # (b) Safety reserve: $300 if livestock are active
+    safety_reserve = 300.0 if animal_count > 0 else 0.0
+    available_cash = max(0.0, current_cash - committed_feed_reserve - safety_reserve)
+
+    # In days 0–18, if shed is high (>= 85) and available cash is tight (< 3000), avoid locking capacity
+    if day <= 18 and available_cash < 3000 and shed_load_now >= 85:
         reasons.append(REJECTION_LIQUIDITY_CAPITAL_RISK)
 
     # 5. Worker Opportunity Cost Hard Veto
@@ -171,35 +192,58 @@ def evaluate_pipeline_economic_gate(
         if len(high_prio_regular) > max(0, len(free_units) - 3):
             reasons.append(REJECTION_WORKER_OPPORTUNITY_COST)
 
-    # 6. Market Timing / Severe Own-Supply Glut Hard Veto
-    crop_in_shed = private.shed.get(tile.crop, 0) if private and hasattr(private, "shed") else 0
-    if crop_in_shed >= 50:
+    # 6. Market Timing Gate (Part D)
+    # Uses actual market state from observation: market inventory & current price
+    market_inv = market.inventory.get(replant_crop, 0.0) if market and hasattr(market, "inventory") else 0.0
+    market_price = market.prices.get(replant_crop, 0) if market and hasattr(market, "prices") else 0
+    base_price = 25
+    try:
+        import config
+        base_price = config.MARKET_PARAMS.get(replant_crop, {}).get("base", 25)
+    except Exception:
+        pass
+
+    # Reject if market price is severely depressed (<= 60% of base) indicating market glut
+    if market_price > 0 and market_price <= 0.60 * base_price:
         reasons.append(REJECTION_MARKET_TIMING)
 
-    # 7. Net Economic Value Model
+    # 7. Own-Inventory Backlog Risk (Part D - separated from market timing)
+    crop_in_shed = private.shed.get(replant_crop, 0) if private and hasattr(private, "shed") else 0
+    if crop_in_shed >= 50:
+        reasons.append(REJECTION_INVENTORY_BACKLOG_RISK)
+
+    # 8. Heuristic Gate Score (Part H - renamed from NEV to clearly convey heuristic score)
     base_benefit = 100.0
-    extra_cycle_possible = (29 - day) % mat_day == 0
+    extra_cycle_possible = (29 - day) % first_yield_day == 0
     extra_cycle_value = 150.0 if extra_cycle_possible else 0.0
     gross_gain = base_benefit + extra_cycle_value
 
     worker_penalty = 15.0 * max(0, 4 - len(free_units))
-    storage_penalty = 10.0 * max(0, projected_shed - 80)
+    storage_penalty = 10.0 * max(0, worst_case_end_of_day_shed_load - 80)
     glut_penalty = 1.5 * max(0, crop_in_shed - 30)
-    net_value = gross_gain - worker_penalty - storage_penalty - glut_penalty
+    gate_score = gross_gain - worker_penalty - storage_penalty - glut_penalty
 
-    if net_value <= 0:
+    if gate_score <= 0:
         reasons.append(REJECTION_NEGATIVE_NET_VALUE)
 
     accepted = (len(reasons) == 0)
     gate_metrics = {
-        "current_shed": shed_load,
-        "projected_shed": projected_shed,
-        "carried_load": carried_load,
+        "shed_load_now": shed_load_now,
+        "carried_inventory_now": carried_inventory_now,
+        "immediate_post_pipeline_shed_load": immediate_post_pipeline_shed_load,
+        "end_of_day_dump_exposure": end_of_day_dump_exposure,
+        "worst_case_end_of_day_shed_load": worst_case_end_of_day_shed_load,
+        "current_shed": shed_load_now,  # backward compatibility alias
+        "projected_shed": worst_case_end_of_day_shed_load,  # backward compatibility alias
         "current_cash": current_cash,
-        "free_worker_count": len(free_units),
+        "available_cash": available_cash,
+        "market_price": market_price,
+        "market_inventory": market_inv,
         "crop_in_shed": crop_in_shed,
+        "free_worker_count": len(free_units),
         "extra_cycle_possible": extra_cycle_possible,
-        "estimated_net_value": round(net_value, 2),
+        "gate_score_dollars_estimate": round(gate_score, 2),
+        "estimated_net_value": round(gate_score, 2),  # backward compatibility alias
     }
 
     return accepted, reasons, gate_metrics
@@ -262,9 +306,9 @@ def evaluate_and_assign_pipelines(
             continue
 
         # Condition 1 & 2 & 3: Plant check and ongoing crop exclusion
-        if not (t.is_plant and t.crop in CROPS_INFO):
+        if not (t.is_plant and t.crop in AUTHORITATIVE_CROPS):
             continue
-        c_info = CROPS_INFO[t.crop]
+        c_info = AUTHORITATIVE_CROPS[t.crop]
         if c_info["ongoing"]:
             continue  # ongoing crops (Tomato, Strawberry) do NOT clear tile on harvest
         if t.yield_units <= 0:
@@ -276,7 +320,7 @@ def evaluate_and_assign_pipelines(
 
         # Condition 4: Replacement crop selection from macro plan
         replant_crop = plant_queue_map.get(pos, t.crop)
-        if replant_crop not in CROPS_INFO:
+        if replant_crop not in AUTHORITATIVE_CROPS:
             replant_crop = t.crop
 
         # Condition 5 & 8: Replacement seed owned and reserved

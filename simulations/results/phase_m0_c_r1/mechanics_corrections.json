@@ -1,0 +1,28 @@
+{
+  "corrections": [
+    {
+      "issue": "Authoritative Crop Constants",
+      "fix": "Replaced stale CROPS_INFO with authoritative values matching kaggriculture.py; separated first_yield_day from max_yield_day."
+    },
+    {
+      "issue": "Liquidity / Cash State Reading",
+      "fix": "Corrected cash read from farm.money instead of private.money; derived available cash after feed reserve."
+    },
+    {
+      "issue": "MARKET_TIMING vs Shed Inventory",
+      "fix": "Separated market price depression (market.prices <= 0.60 * base) from own shed inventory (INVENTORY_BACKLOG_RISK)."
+    },
+    {
+      "issue": "Storage Load vs Carried Inventory",
+      "fix": "HARVEST yield deposits into worker inventory, not shed directly; modeled end-of-day dump exposure."
+    },
+    {
+      "issue": "Authoritative Safety Instrumentation",
+      "fix": "Implemented state-transition tracking for animal escapes, consecutive_unfed, and plant deaths to WEED."
+    },
+    {
+      "issue": "Transaction Telemetry",
+      "fix": "Implemented tracking of actual market orders executed and cash changes across arms."
+    }
+  ]
+}
