@@ -323,7 +323,7 @@ class MarketBrain:
             shed_pre_prod = int(shed.get(prod, 0))
             pred_dep_prod = int(scheduled_deposits.get(prod, 0))
 
-            if m0e_mode == "LIVE":
+            if m0e_mode in ("BASELINE", "LIVE", "SHADOW"):
                 stock = shed_pre_prod + pred_dep_prod
             else:
                 stock = shed_pre_prod
@@ -382,7 +382,7 @@ class MarketBrain:
 
             if stock > 0:
                 available_stock[prod] = stock
-                if m0e_mode == "LIVE":
+                if m0e_mode in ("BASELINE", "LIVE", "SHADOW"):
                     deposit_stock[prod] = pred_dep_prod
 
         if not available_stock:
@@ -538,8 +538,8 @@ class MarketBrain:
                                              is_floor_exception, melon_turn_drip_budget,
                                              delay_set=delay_set)
 
-        # Telemetry tracking for LIVE mode same-turn sales
-        if m0e_mode == "LIVE" and record_same_turn_sale is not None:
+        # Telemetry tracking for BASELINE/LIVE mode same-turn sales
+        if m0e_mode in ("BASELINE", "LIVE", "SHADOW") and record_same_turn_sale is not None:
             sold_by_prod = {}
             for o in orders:
                 if len(o) >= 3 and o[0] == "SELL":

@@ -261,7 +261,7 @@ def test_10_shared_10_order_cap_respected():
 def test_11_existing_sell_policy_still_decides():
     # Hour 2 is NOT a sell window (SELL_WINDOWS are 1, 5, 9, 13, 17, 21), and no urgency
     ctx = make_test_ctx(day=10, hour=2, shed={"CARROT": 5}, inventories=[{"TOMATO": 5}], farmer=(4, 4))
-    set_same_turn_deposit_sell_mode("LIVE")
+    set_same_turn_deposit_sell_mode("BASELINE")
     try:
         ctx["scheduled_product_deposits"] = {"TOMATO": 5}
         brain = MarketBrain(FakeFC())
@@ -269,7 +269,7 @@ def test_11_existing_sell_policy_still_decides():
         # Should be empty because hour 2 is off-window and shed is not overflowing
         assert orders == []
     finally:
-        set_same_turn_deposit_sell_mode("OFF")
+        set_same_turn_deposit_sell_mode("BASELINE")
 
 
 # 12. $1 floor strategy unchanged
@@ -277,7 +277,7 @@ def test_12_price_floor_hold_unchanged():
     ctx = make_test_ctx(day=10, hour=1, shed={}, inventories=[{"MELON": 10}], farmer=(4, 4))
     # Force MELON market inventory very high so spot price = $1
     ctx["market"].inventory["MELON"] = 50000.0
-    set_same_turn_deposit_sell_mode("LIVE")
+    set_same_turn_deposit_sell_mode("BASELINE")
     try:
         ctx["scheduled_product_deposits"] = {"MELON": 10}
         brain = MarketBrain(FakeFC())
@@ -285,52 +285,52 @@ def test_12_price_floor_hold_unchanged():
         melon_orders = [o for o in orders if o[0] == "SELL" and o[1] == "MELON"]
         assert melon_orders == []
     finally:
-        set_same_turn_deposit_sell_mode("OFF")
+        set_same_turn_deposit_sell_mode("BASELINE")
 
 
-# 13. OFF mode reproduces baseline
-def test_13_off_mode_reproduces_baseline():
+# 13. ABLATE mode removes scheduled deposits (experimental control)
+def test_13_ablate_mode_removes_scheduled_deposits():
     ctx = make_test_ctx(day=10, hour=1, shed={"CARROT": 3}, inventories=[{"CARROT": 5}], farmer=(4, 4))
     ctx["scheduled_product_deposits"] = {"CARROT": 5}
-    set_same_turn_deposit_sell_mode("OFF")
-    brain = MarketBrain(FakeFC())
-    orders, details = brain.sell_orders(ctx)
-    carrot_sold = sum(o[2] for o in orders if o[0] == "SELL" and o[1] == "CARROT")
-    assert carrot_sold <= 3  # uses only shed_pre (3)
+    set_same_turn_deposit_sell_mode("ABLATE")
+    try:
+        brain = MarketBrain(FakeFC())
+        orders, details = brain.sell_orders(ctx)
+        carrot_sold = sum(o[2] for o in orders if o[0] == "SELL" and o[1] == "CARROT")
+        assert carrot_sold <= 3  # uses only shed_pre (3), ignores scheduled deposits
+    finally:
+        set_same_turn_deposit_sell_mode("BASELINE")
 
 
-# 14. SHADOW emits no changed actions
-def test_14_shadow_mode_emits_no_changed_actions():
+# 14. SHADOW mode preserves baseline actions
+def test_14_shadow_mode_preserves_baseline_actions():
     ctx = make_test_ctx(day=10, hour=1, shed={"CARROT": 3}, inventories=[{"CARROT": 5}], farmer=(4, 4))
     ctx["scheduled_product_deposits"] = {"CARROT": 5}
 
-    set_same_turn_deposit_sell_mode("OFF")
+    set_same_turn_deposit_sell_mode("BASELINE")
     brain = MarketBrain(FakeFC())
-    orders_off, _ = brain.sell_orders(ctx)
+    orders_base, _ = brain.sell_orders(ctx)
 
     set_same_turn_deposit_sell_mode("SHADOW")
     orders_shadow, _ = brain.sell_orders(ctx)
-    set_same_turn_deposit_sell_mode("OFF")
+    set_same_turn_deposit_sell_mode("BASELINE")
 
-    assert orders_off == orders_shadow
+    assert orders_base == orders_shadow
 
 
-# 15. LIVE uses predicted deposit only after worker actions are finalized
-def test_15_live_uses_predicted_deposit_after_actions():
+# 15. BASELINE uses predicted deposit only after worker actions are finalized
+def test_15_baseline_uses_predicted_deposit_after_actions():
     ctx = make_test_ctx(day=10, hour=1, shed={}, inventories=[{"CARROT": 5}], farmer=(4, 4))
     asg = {"actions": {0: ["DROP"]}}
     predicted = predict_same_turn_deposits(ctx, asg)
     assert predicted == {"CARROT": 5}
 
-    set_same_turn_deposit_sell_mode("LIVE")
-    try:
-        ctx["scheduled_product_deposits"] = predicted
-        brain = MarketBrain(FakeFC())
-        orders, details = brain.sell_orders(ctx)
-        carrot_sold = sum(o[2] for o in orders if o[0] == "SELL" and o[1] == "CARROT")
-        assert carrot_sold > 0
-    finally:
-        set_same_turn_deposit_sell_mode("OFF")
+    set_same_turn_deposit_sell_mode("BASELINE")
+    ctx["scheduled_product_deposits"] = predicted
+    brain = MarketBrain(FakeFC())
+    orders, details = brain.sell_orders(ctx)
+    carrot_sold = sum(o[2] for o in orders if o[0] == "SELL" and o[1] == "CARROT")
+    assert carrot_sold > 0
 
 
 # 16. Reset clears prediction state

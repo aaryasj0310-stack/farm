@@ -321,20 +321,34 @@ def set_midnight_storage_dump_mode(mode: str) -> None:
 
 
 # Kaggriculture Phase M0-E: Engine Mechanics Exploitation — Same-Turn Deposit-to-Market Exploit
-# Supported modes: "OFF" (production baseline), "SHADOW" (telemetry only), "LIVE" (treatment)
-SAME_TURN_DEPOSIT_SELL_MODE: str = "OFF"
+# Supported modes: "BASELINE" (historical production behavior), "ABLATE" (experimental control disabling deposits), "SHADOW" (baseline + shadow telemetry)
+# Backward-compatibility aliases: "LIVE" -> "BASELINE", "OFF" -> "ABLATE"
+SAME_TURN_DEPOSIT_SELL_MODE: str = "BASELINE"
 
 def get_same_turn_deposit_sell_mode() -> str:
-    """Return active same-turn deposit-to-market sell mode ('OFF', 'SHADOW', 'LIVE')."""
-    return str(SAME_TURN_DEPOSIT_SELL_MODE).strip().upper()
+    """Return active same-turn deposit-to-market sell mode ('BASELINE', 'ABLATE', 'SHADOW')."""
+    raw = str(SAME_TURN_DEPOSIT_SELL_MODE).strip().upper()
+    if raw in ("BASELINE", "LIVE"):
+        return "BASELINE"
+    if raw in ("ABLATE", "OFF"):
+        return "ABLATE"
+    if raw == "SHADOW":
+        return "SHADOW"
+    return "BASELINE"
 
 def set_same_turn_deposit_sell_mode(mode: str) -> None:
-    """Configure same-turn deposit-to-market sell mode ('OFF', 'SHADOW', or 'LIVE')."""
+    """Configure same-turn deposit-to-market sell mode ('BASELINE', 'ABLATE', 'SHADOW', 'LIVE', 'OFF')."""
     mode_str = str(mode).strip().upper()
-    if mode_str not in ("OFF", "SHADOW", "LIVE"):
-        raise ValueError(f"Invalid same-turn deposit sell mode '{mode}'. Must be one of ('OFF', 'SHADOW', 'LIVE').")
+    if mode_str in ("BASELINE", "LIVE"):
+        canonical = "BASELINE"
+    elif mode_str in ("ABLATE", "OFF"):
+        canonical = "ABLATE"
+    elif mode_str == "SHADOW":
+        canonical = "SHADOW"
+    else:
+        raise ValueError(f"Invalid same-turn deposit sell mode '{mode}'. Must be one of ('BASELINE', 'ABLATE', 'SHADOW').")
     global SAME_TURN_DEPOSIT_SELL_MODE
-    SAME_TURN_DEPOSIT_SELL_MODE = mode_str
+    SAME_TURN_DEPOSIT_SELL_MODE = canonical
     for mod_name in (
         "agent.main", "main", "agent.config", "config",
         "agent.market.market_brain", "market.market_brain", "market_brain",
@@ -344,7 +358,7 @@ def set_same_turn_deposit_sell_mode(mode: str) -> None:
         if mod_name in sys.modules:
             try:
                 mod = sys.modules[mod_name]
-                setattr(mod, "SAME_TURN_DEPOSIT_SELL_MODE", mode_str)
+                setattr(mod, "SAME_TURN_DEPOSIT_SELL_MODE", canonical)
             except Exception:
                 pass
 

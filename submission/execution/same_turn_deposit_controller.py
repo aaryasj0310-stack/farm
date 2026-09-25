@@ -37,6 +37,7 @@ _TELEMETRY: Dict[str, Any] = {
     "same_turn_revenue": 0.0,
     "products_sold": {p: 0 for p in PRODUCTS},
     "products_revenue": {p: 0.0 for p in PRODUCTS},
+    "actual_products_deposited": {p: 0 for p in PRODUCTS},
     "latency_avoided_turns": [],
     "cash_accelerated_events": [],
     "shadow_events": [],
@@ -61,6 +62,7 @@ def reset_same_turn_deposit_telemetry() -> None:
         "same_turn_revenue": 0.0,
         "products_sold": {p: 0 for p in PRODUCTS},
         "products_revenue": {p: 0.0 for p in PRODUCTS},
+        "actual_products_deposited": {p: 0 for p in PRODUCTS},
         "latency_avoided_turns": [],
         "cash_accelerated_events": [],
         "shadow_events": [],
@@ -74,8 +76,8 @@ def get_same_turn_deposit_telemetry() -> Dict[str, Any]:
     # Expose standard aliases for experiment and reporting scripts
     res["deposit_units_predicted"] = res.get("total_predicted_units", 0)
     res["same_turn_deposit_opportunities"] = res.get("opportunities_detected", 0)
-    res["deposit_units_actual"] = res.get("total_predicted_units", 0)
-    res["deposit_products_actual"] = dict(res.get("products_sold", {}))
+    res["deposit_units_actual"] = res.get("total_actual_units", 0)
+    res["deposit_products_actual"] = dict(res.get("actual_products_deposited", {}))
     res["same_turn_products_sold"] = dict(res.get("products_sold", {}))
     res["same_turn_revenue_by_product"] = dict(res.get("products_revenue", {}))
     res["cash_acceleration_est"] = float(res.get("same_turn_revenue", 0.0))
@@ -92,11 +94,11 @@ def get_same_turn_deposit_sell_mode() -> str:
             from agent.config import get_same_turn_deposit_sell_mode as _cfg_mode
             return _cfg_mode()
         except Exception:
-            return "OFF"
+            return "BASELINE"
 
 
 def is_same_turn_deposit_sell_enabled() -> bool:
-    return get_same_turn_deposit_sell_mode() == "LIVE"
+    return get_same_turn_deposit_sell_mode() in ("BASELINE", "LIVE", "SHADOW")
 
 
 def is_shadow_mode() -> bool:
@@ -241,6 +243,11 @@ def record_post_step_reconciliation(
         pred_p = predicted.get(p, 0)
         # Net inflow into shed this step
         inflow = max(0, actual_shed_post.get(p, 0) - actual_shed_pre.get(p, 0) + sold_units.get(p, 0))
+        if inflow > 0:
+            _TELEMETRY["total_actual_units"] += inflow
+            if "actual_products_deposited" not in _TELEMETRY:
+                _TELEMETRY["actual_products_deposited"] = {pr: 0 for pr in PRODUCTS}
+            _TELEMETRY["actual_products_deposited"][p] = _TELEMETRY["actual_products_deposited"].get(p, 0) + inflow
         if pred_p != inflow:
             is_exact = False
             if pred_p > inflow:

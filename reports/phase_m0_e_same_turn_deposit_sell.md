@@ -9,6 +9,22 @@
 
 ---
 
+## Post-Experiment Interpretation Correction (Phase M0-F Context)
+
+> [!IMPORTANT]
+> **Interpretation Correction:** Phase M0-E was an **ablation study** of an already-existing runtime mechanic, rather than the discovery of a new additive capability.
+>
+> Prior to Phase M0-E, `main.py` and `market_brain.py` already incorporated `scheduled_product_deposits` into the available sell stock (`stock = shed + scheduled_deposits`).
+> Consequently, the M0-E discovery experiment actually compared:
+> - **Arm C0 (CONTROL / ABLATE):** Existing historical same-turn deposit behavior **removed** (mean cash: \$102,190.69).
+> - **Arm C1 (TREATMENT / BASELINE):** Historical pre-M0-E same-turn behavior **retained** (mean cash: \$104,009.28).
+>
+> The observed paired gain of **+\$1,818.59** ($95\%$ CI $[+\$271.00, +\$3,366.18]$) represents the authoritative economic value of **retaining** same-turn deposit selling versus disabling/ablating it. It does not represent an incremental +\$1,818 gain on top of the pre-M0-E agent, as M0-E LIVE (\$104,009.28) matched the pre-M0-E historical baseline (\$104,009.28).
+> 
+> Therefore, no M0-D $\times$ M0-E factorial is needed, as Phase M0-D Storage Rescue (mean final cash ~\$109,066) was already evaluated on top of the historical same-turn deposit selling baseline.
+
+---
+
 ## Executive Summary & Verdict
 
 Phase M0-E investigates and exploits the causal execution ordering within the official Kaggriculture simulation engine: **worker unit operations (`DROP` and `PLACE-to-shed`) execute strictly prior to market order processing within the exact same hourly step.**
