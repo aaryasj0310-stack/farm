@@ -431,6 +431,14 @@ def get_crop_pipeline_telemetry():
         return []
 
 
+def get_crop_pipeline_shadow_decisions():
+    try:
+        from execution.crop_pipeline_controller import get_crop_pipeline_shadow_decisions as _gcpsd
+        return _gcpsd()
+    except Exception:
+        return []
+
+
 def get_midnight_storage_telemetry():
     try:
         from execution.midnight_storage_controller import get_midnight_storage_telemetry as _gmst

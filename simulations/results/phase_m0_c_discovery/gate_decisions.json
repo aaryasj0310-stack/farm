@@ -1,0 +1,43 @@
+{
+  "total_opportunities": 843,
+  "accepted_count": 737,
+  "rejected_count": 106,
+  "acceptance_rate_pct": 87.43,
+  "crop_breakdown": {
+    "CARROT": {
+      "total": 124,
+      "accepted": 108,
+      "rejected": 16,
+      "acceptance_rate_pct": 87.1
+    },
+    "WHEAT": {
+      "total": 710,
+      "accepted": 629,
+      "rejected": 81,
+      "acceptance_rate_pct": 88.59
+    },
+    "MELON": {
+      "total": 9,
+      "accepted": 0,
+      "rejected": 9,
+      "acceptance_rate_pct": 0.0
+    }
+  },
+  "rejection_reason_counts": {
+    "MARKET_TIMING": 39,
+    "SEASON_END_NO_VALUE": 63,
+    "WORKER_OPPORTUNITY_COST": 14,
+    "LIQUIDITY_CAPITAL_RISK": 2,
+    "NEGATIVE_NET_VALUE": 2
+  },
+  "accepted_net_economic_value": {
+    "mean": 148.51,
+    "min": 71.5,
+    "max": 250.0
+  },
+  "rejected_net_economic_value": {
+    "mean": 108.26,
+    "min": -66.5,
+    "max": 250.0
+  }
+}

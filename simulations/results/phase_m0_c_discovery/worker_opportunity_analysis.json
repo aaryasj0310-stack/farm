@@ -1,0 +1,33 @@
+{
+  "average_actions_per_match": {
+    "C0": {
+      "total_worker_turns": 7377.0,
+      "emitted_moves": 4757.9,
+      "harvest_actions": 257.2,
+      "plant_actions": 162.3,
+      "water_actions": 936.7
+    },
+    "C1": {
+      "total_worker_turns": 7376.9,
+      "emitted_moves": 4750.8,
+      "harvest_actions": 261.6,
+      "plant_actions": 166.1,
+      "water_actions": 937.5
+    },
+    "C2": {
+      "total_worker_turns": 7376.9,
+      "emitted_moves": 4753.7,
+      "harvest_actions": 261.1,
+      "plant_actions": 164.9,
+      "water_actions": 935.4
+    }
+  },
+  "worker_opportunity_cost_vetoes_triggered": 14,
+  "worker_mobility_impact": {
+    "c0_avg_moves": 4757.9,
+    "c1_avg_moves": 4750.8,
+    "c2_avg_moves": 4753.7,
+    "delta_moves_c2_vs_c1": 2.9
+  },
+  "conclusion": "SELECTIVE mode frees up workers when high-priority tasks (watering/feeding) are queued, avoiding worker starvation."
+}

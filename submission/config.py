@@ -267,14 +267,14 @@ def set_soft_worker_locality_mode(mode: str) -> None:
 SAME_TURN_CROP_PIPELINE_MODE: str = "OFF"
 
 def get_same_turn_crop_pipeline_mode() -> str:
-    """Return the active same-turn crop pipeline mode ('OFF', 'ON')."""
+    """Return the active same-turn crop pipeline mode ('OFF', 'GLOBAL', 'SELECTIVE', 'ON')."""
     return str(SAME_TURN_CROP_PIPELINE_MODE).strip().upper()
 
 def set_same_turn_crop_pipeline_mode(mode: str) -> None:
-    """Configure same-turn crop pipeline mode ('OFF', 'ON')."""
+    """Configure same-turn crop pipeline mode ('OFF', 'GLOBAL', 'SELECTIVE', or 'ON')."""
     mode_str = str(mode).strip().upper()
-    if mode_str not in ("OFF", "ON"):
-        raise ValueError(f"Invalid same-turn crop pipeline mode '{mode}'. Must be one of ('OFF', 'ON').")
+    if mode_str not in ("OFF", "GLOBAL", "SELECTIVE", "ON"):
+        raise ValueError(f"Invalid same-turn crop pipeline mode '{mode}'. Must be one of ('OFF', 'GLOBAL', 'SELECTIVE', 'ON').")
     global SAME_TURN_CROP_PIPELINE_MODE
     SAME_TURN_CROP_PIPELINE_MODE = mode_str
     for mod_name in (
