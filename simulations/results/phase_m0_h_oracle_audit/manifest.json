@@ -1,0 +1,35 @@
+{
+  "phase": "M0-H",
+  "description": "Authoritative Oracle Market Slot Sequencing Audit",
+  "total_matches": 100,
+  "seeds": [
+    96501,
+    96502,
+    96503,
+    96504,
+    96505,
+    96506,
+    96507,
+    96508,
+    96509,
+    96510
+  ],
+  "opponents": [
+    "pass",
+    "pure_wheat_rush",
+    "cow_milk_engine",
+    "melon_sniper",
+    "full_production_agent"
+  ],
+  "seats": [
+    0,
+    1
+  ],
+  "mean_oracle_regret": 0.12,
+  "median_oracle_regret": 0.0,
+  "max_oracle_regret": 3.0,
+  "gate_a_threshold": 250.0,
+  "gate_a_passed": false,
+  "gate_a_judgment_needed": false,
+  "decision": "CLOSE_M0_H_INSUFFICIENT_VALUE"
+}
