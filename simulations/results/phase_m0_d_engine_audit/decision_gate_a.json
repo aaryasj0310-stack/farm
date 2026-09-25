@@ -1,0 +1,19 @@
+{
+  "gate_name": "DECISION_GATE_A",
+  "question": "Does the Kaggriculture engine genuinely discard worker inventory at midnight when shed capacity is exceeded, and is the loss economically meaningful?",
+  "passed": true,
+  "mean_discard_units_per_match": 40.379999999999995,
+  "ci95_discard_units": [
+    34.82410967264471,
+    45.93589032735528
+  ],
+  "mean_spot_value_lost_per_match": 3823.35,
+  "ci95_spot_value_lost": [
+    3260.14091795454,
+    4386.55908204546
+  ],
+  "matches_with_discard_gt_0": 100,
+  "percent_matches_with_discard": 100.0,
+  "verdict": "PROCEED TO RESCUE",
+  "rationale": "True engine discard observed: mean 40.38 units/match ($3,823.35/match lost). 100/100 matches suffered discard. Engine midnight overflow is active, destructive, and economically meaningful."
+}

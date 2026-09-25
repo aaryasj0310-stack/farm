@@ -1,0 +1,3246 @@
+{
+  "summary": {
+    "match_count": 100,
+    "seeds": [
+      96501,
+      96502,
+      96503,
+      96504,
+      96505,
+      96506,
+      96507,
+      96508,
+      96509,
+      96510
+    ],
+    "cash_stats": {
+      "mean": 100437.04,
+      "std": 7726.947087389244,
+      "median": 102021.5,
+      "p10": 89949.7,
+      "p25": 97364.25,
+      "p50": 102021.5,
+      "p75": 105698.0,
+      "p90": 109282.3
+    },
+    "discard_units_stats": {
+      "mean": 40.38,
+      "std": 26.261228478731176,
+      "median": 33.0,
+      "p10": 10.700000000000001,
+      "p25": 22.75,
+      "p50": 33.0,
+      "p75": 56.25,
+      "p90": 67.0
+    },
+    "carried_units_stats": {
+      "mean": 1037.87,
+      "std": 22.38490427484423,
+      "median": 1035.5,
+      "p10": 1011.0,
+      "p25": 1023.25,
+      "p50": 1035.5,
+      "p75": 1051.5,
+      "p90": 1067.1
+    },
+    "deposited_units_stats": {
+      "mean": 997.49,
+      "std": 26.389275063628375,
+      "median": 1001.0,
+      "p10": 964.0,
+      "p25": 982.0,
+      "p50": 1001.0,
+      "p75": 1017.0,
+      "p90": 1027.0
+    },
+    "spot_value_lost_stats": {
+      "mean": 3823.35,
+      "std": 3002.786421043634,
+      "median": 3647.5,
+      "p10": 1008.0000000000001,
+      "p25": 1585.0,
+      "p50": 3647.5,
+      "p75": 5140.0,
+      "p90": 6729.000000000001
+    },
+    "overflow_days_stats": {
+      "mean": 4.53,
+      "std": 1.9972455780373874,
+      "median": 4.0,
+      "p10": 2.0,
+      "p25": 3.0,
+      "p50": 4.0,
+      "p75": 6.0,
+      "p90": 7.0
+    },
+    "peak_shed_stats": {
+      "mean": 100.0,
+      "std": 0.0,
+      "median": 100.0,
+      "p10": 100.0,
+      "p25": 100.0,
+      "p50": 100.0,
+      "p75": 100.0,
+      "p90": 100.0
+    },
+    "aggregate_item_discards": {
+      "WHEAT": 1637,
+      "FERTILIZER": 441,
+      "TOMATO": 71,
+      "MELON": 262,
+      "CARROT": 98,
+      "MILK": 320,
+      "STRAWBERRY": 861,
+      "WOOL": 348
+    },
+    "seed_clustered": {
+      "k_clusters": 10,
+      "cash": {
+        "mean": 100437.04000000001,
+        "se": 967.9091313180639,
+        "ci95": [
+          98247.62954495855,
+          102626.45045504147
+        ]
+      },
+      "discard_units": {
+        "mean": 40.379999999999995,
+        "se": 2.456184936938675,
+        "ci95": [
+          34.82410967264471,
+          45.93589032735528
+        ]
+      },
+      "spot_value_lost": {
+        "mean": 3823.35,
+        "se": 248.9872157583821,
+        "ci95": [
+          3260.14091795454,
+          4386.55908204546
+        ]
+      }
+    }
+  },
+  "decision_gate_a": {
+    "gate_name": "DECISION_GATE_A",
+    "question": "Does the Kaggriculture engine genuinely discard worker inventory at midnight when shed capacity is exceeded, and is the loss economically meaningful?",
+    "passed": true,
+    "mean_discard_units_per_match": 40.379999999999995,
+    "ci95_discard_units": [
+      34.82410967264471,
+      45.93589032735528
+    ],
+    "mean_spot_value_lost_per_match": 3823.35,
+    "ci95_spot_value_lost": [
+      3260.14091795454,
+      4386.55908204546
+    ],
+    "matches_with_discard_gt_0": 100,
+    "percent_matches_with_discard": 100.0,
+    "verdict": "PROCEED TO RESCUE",
+    "rationale": "True engine discard observed: mean 40.38 units/match ($3,823.35/match lost). 100/100 matches suffered discard. Engine midnight overflow is active, destructive, and economically meaningful."
+  },
+  "matches": [
+    {
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 87357.0,
+      "total_carried_units": 1053,
+      "total_deposited_units": 919,
+      "total_discarded_units": 134,
+      "discarded_by_item": {
+        "WHEAT": 32,
+        "FERTILIZER": 23,
+        "TOMATO": 2,
+        "MELON": 24,
+        "CARROT": 9,
+        "MILK": 22,
+        "STRAWBERRY": 18,
+        "WOOL": 4
+      },
+      "spot_value_lost": 16015.0,
+      "overflow_days_count": 9,
+      "overflow_days": [
+        12,
+        15,
+        19,
+        20,
+        21,
+        23,
+        25,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 22,
+        "shed_turns_ge_95": 16,
+        "shed_turns_at_capacity": 10
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 103519.0,
+      "total_carried_units": 1019,
+      "total_deposited_units": 986,
+      "total_discarded_units": 33,
+      "discarded_by_item": {
+        "WHEAT": 25,
+        "STRAWBERRY": 8
+      },
+      "spot_value_lost": 1585.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        15,
+        19,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 8
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 97956.0,
+      "total_carried_units": 1030,
+      "total_deposited_units": 1015,
+      "total_discarded_units": 15,
+      "discarded_by_item": {
+        "STRAWBERRY": 12,
+        "WHEAT": 3
+      },
+      "spot_value_lost": 1515.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        20,
+        21,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 87357.0,
+      "total_carried_units": 1053,
+      "total_deposited_units": 919,
+      "total_discarded_units": 134,
+      "discarded_by_item": {
+        "WHEAT": 32,
+        "FERTILIZER": 23,
+        "TOMATO": 2,
+        "MELON": 24,
+        "CARROT": 9,
+        "MILK": 22,
+        "STRAWBERRY": 18,
+        "WOOL": 4
+      },
+      "spot_value_lost": 16015.0,
+      "overflow_days_count": 9,
+      "overflow_days": [
+        12,
+        15,
+        19,
+        20,
+        21,
+        23,
+        25,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 22,
+        "shed_turns_ge_95": 16,
+        "shed_turns_at_capacity": 10
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 102277.0,
+      "total_carried_units": 1025,
+      "total_deposited_units": 1003,
+      "total_discarded_units": 22,
+      "discarded_by_item": {
+        "STRAWBERRY": 3,
+        "FERTILIZER": 7,
+        "WHEAT": 10,
+        "MILK": 2
+      },
+      "spot_value_lost": 1630.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        18,
+        20,
+        22,
+        23
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 10,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 103519.0,
+      "total_carried_units": 1021,
+      "total_deposited_units": 988,
+      "total_discarded_units": 33,
+      "discarded_by_item": {
+        "WHEAT": 25,
+        "STRAWBERRY": 8
+      },
+      "spot_value_lost": 1585.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        15,
+        19,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 8
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 97956.0,
+      "total_carried_units": 1030,
+      "total_deposited_units": 1015,
+      "total_discarded_units": 15,
+      "discarded_by_item": {
+        "STRAWBERRY": 12,
+        "WHEAT": 3
+      },
+      "spot_value_lost": 1515.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        20,
+        21,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 102277.0,
+      "total_carried_units": 1025,
+      "total_deposited_units": 1003,
+      "total_discarded_units": 22,
+      "discarded_by_item": {
+        "STRAWBERRY": 3,
+        "FERTILIZER": 7,
+        "WHEAT": 10,
+        "MILK": 2
+      },
+      "spot_value_lost": 1630.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        18,
+        20,
+        22,
+        23
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 10,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 90013.0,
+      "total_carried_units": 1051,
+      "total_deposited_units": 984,
+      "total_discarded_units": 67,
+      "discarded_by_item": {
+        "WHEAT": 26,
+        "MELON": 9,
+        "TOMATO": 4,
+        "MILK": 2,
+        "FERTILIZER": 5,
+        "WOOL": 3,
+        "STRAWBERRY": 18
+      },
+      "spot_value_lost": 6720.0,
+      "overflow_days_count": 7,
+      "overflow_days": [
+        11,
+        12,
+        15,
+        19,
+        20,
+        23,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 9
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96501,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 90013.0,
+      "total_carried_units": 1051,
+      "total_deposited_units": 984,
+      "total_discarded_units": 67,
+      "discarded_by_item": {
+        "WHEAT": 26,
+        "MELON": 9,
+        "TOMATO": 4,
+        "MILK": 2,
+        "FERTILIZER": 5,
+        "WOOL": 3,
+        "STRAWBERRY": 18
+      },
+      "spot_value_lost": 6720.0,
+      "overflow_days_count": 7,
+      "overflow_days": [
+        11,
+        12,
+        15,
+        19,
+        20,
+        23,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 9
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 99840.0,
+      "total_carried_units": 1020,
+      "total_deposited_units": 999,
+      "total_discarded_units": 21,
+      "discarded_by_item": {
+        "WHEAT": 6,
+        "FERTILIZER": 3,
+        "STRAWBERRY": 12
+      },
+      "spot_value_lost": 1890.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        21,
+        22,
+        25,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 6,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 111271.0,
+      "total_carried_units": 1025,
+      "total_deposited_units": 1017,
+      "total_discarded_units": 8,
+      "discarded_by_item": {
+        "FERTILIZER": 3,
+        "MILK": 5
+      },
+      "spot_value_lost": 1100.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        12,
+        20,
+        24,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 110456.0,
+      "total_carried_units": 1026,
+      "total_deposited_units": 1015,
+      "total_discarded_units": 11,
+      "discarded_by_item": {
+        "FERTILIZER": 3,
+        "MILK": 3,
+        "WHEAT": 1,
+        "STRAWBERRY": 4
+      },
+      "spot_value_lost": 1285.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        12,
+        20,
+        24,
+        25
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 99628.0,
+      "total_carried_units": 1002,
+      "total_deposited_units": 996,
+      "total_discarded_units": 6,
+      "discarded_by_item": {
+        "STRAWBERRY": 6
+      },
+      "spot_value_lost": 720.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 19,
+        "shed_turns_ge_95": 6,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 87873.0,
+      "total_carried_units": 1005,
+      "total_deposited_units": 942,
+      "total_discarded_units": 63,
+      "discarded_by_item": {
+        "TOMATO": 2,
+        "WHEAT": 22,
+        "WOOL": 11,
+        "MILK": 15,
+        "STRAWBERRY": 7,
+        "FERTILIZER": 6
+      },
+      "spot_value_lost": 6710.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        14,
+        18,
+        20,
+        22,
+        24,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 14,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 109217.0,
+      "total_carried_units": 1011,
+      "total_deposited_units": 997,
+      "total_discarded_units": 14,
+      "discarded_by_item": {
+        "MILK": 1,
+        "STRAWBERRY": 7,
+        "WHEAT": 6
+      },
+      "spot_value_lost": 1150.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 6,
+        "shed_turns_at_capacity": 2
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 99607.0,
+      "total_carried_units": 1038,
+      "total_deposited_units": 975,
+      "total_discarded_units": 63,
+      "discarded_by_item": {
+        "WHEAT": 29,
+        "FERTILIZER": 9,
+        "TOMATO": 2,
+        "STRAWBERRY": 8,
+        "WOOL": 15
+      },
+      "spot_value_lost": 5705.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        15,
+        19,
+        20,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 18,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 103852.0,
+      "total_carried_units": 1027,
+      "total_deposited_units": 968,
+      "total_discarded_units": 59,
+      "discarded_by_item": {
+        "TOMATO": 4,
+        "FERTILIZER": 6,
+        "CARROT": 6,
+        "MILK": 4,
+        "MELON": 12,
+        "WHEAT": 16,
+        "STRAWBERRY": 6,
+        "WOOL": 5
+      },
+      "spot_value_lost": 6810.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        12,
+        15,
+        19,
+        20,
+        23,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 12,
+        "shed_turns_at_capacity": 8
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 92432.0,
+      "total_carried_units": 1044,
+      "total_deposited_units": 982,
+      "total_discarded_units": 62,
+      "discarded_by_item": {
+        "WHEAT": 20,
+        "CARROT": 4,
+        "FERTILIZER": 8,
+        "STRAWBERRY": 19,
+        "WOOL": 11
+      },
+      "spot_value_lost": 5920.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        12,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 94015.0,
+      "total_carried_units": 1038,
+      "total_deposited_units": 988,
+      "total_discarded_units": 50,
+      "discarded_by_item": {
+        "WHEAT": 18,
+        "CARROT": 1,
+        "FERTILIZER": 6,
+        "STRAWBERRY": 17,
+        "WOOL": 8
+      },
+      "spot_value_lost": 4725.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        12,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 105071.0,
+      "total_carried_units": 1025,
+      "total_deposited_units": 1007,
+      "total_discarded_units": 18,
+      "discarded_by_item": {
+        "WOOL": 2,
+        "STRAWBERRY": 8,
+        "WHEAT": 8
+      },
+      "spot_value_lost": 1560.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        19,
+        21,
+        22,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 10,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96502,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 99830.0,
+      "total_carried_units": 1049,
+      "total_deposited_units": 1000,
+      "total_discarded_units": 49,
+      "discarded_by_item": {
+        "WHEAT": 24,
+        "FERTILIZER": 4,
+        "MILK": 5,
+        "STRAWBERRY": 16
+      },
+      "spot_value_lost": 3720.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        18,
+        20,
+        22,
+        24,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 14,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 8
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 110476.0,
+      "total_carried_units": 1039,
+      "total_deposited_units": 1025,
+      "total_discarded_units": 14,
+      "discarded_by_item": {
+        "WHEAT": 8,
+        "MILK": 3,
+        "STRAWBERRY": 3
+      },
+      "spot_value_lost": 1040.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        21,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 2
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 110476.0,
+      "total_carried_units": 1039,
+      "total_deposited_units": 1025,
+      "total_discarded_units": 14,
+      "discarded_by_item": {
+        "WHEAT": 8,
+        "MILK": 3,
+        "STRAWBERRY": 3
+      },
+      "spot_value_lost": 1040.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        21,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 2
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 104759.0,
+      "total_carried_units": 1013,
+      "total_deposited_units": 1001,
+      "total_discarded_units": 12,
+      "discarded_by_item": {
+        "WHEAT": 9,
+        "STRAWBERRY": 3
+      },
+      "spot_value_lost": 585.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        10,
+        21
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 16,
+        "shed_turns_ge_95": 5,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 105776.0,
+      "total_carried_units": 1030,
+      "total_deposited_units": 1005,
+      "total_discarded_units": 25,
+      "discarded_by_item": {
+        "CARROT": 2,
+        "WHEAT": 8,
+        "MILK": 3,
+        "STRAWBERRY": 8,
+        "WOOL": 4
+      },
+      "spot_value_lost": 2510.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        10,
+        20,
+        22,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 12,
+        "shed_turns_ge_95": 5,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 102487.0,
+      "total_carried_units": 1008,
+      "total_deposited_units": 964,
+      "total_discarded_units": 44,
+      "discarded_by_item": {
+        "WHEAT": 27,
+        "FERTILIZER": 4,
+        "WOOL": 4,
+        "STRAWBERRY": 4,
+        "MELON": 5
+      },
+      "spot_value_lost": 3605.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        15,
+        19,
+        24,
+        25
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 11,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 91462.0,
+      "total_carried_units": 1012,
+      "total_deposited_units": 960,
+      "total_discarded_units": 52,
+      "discarded_by_item": {
+        "WHEAT": 43,
+        "TOMATO": 3,
+        "STRAWBERRY": 5,
+        "FERTILIZER": 1
+      },
+      "spot_value_lost": 1955.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        15,
+        19,
+        20,
+        23
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 93385.0,
+      "total_carried_units": 1108,
+      "total_deposited_units": 1019,
+      "total_discarded_units": 89,
+      "discarded_by_item": {
+        "FERTILIZER": 10,
+        "TOMATO": 7,
+        "CARROT": 6,
+        "MELON": 12,
+        "MILK": 10,
+        "WHEAT": 32,
+        "STRAWBERRY": 12
+      },
+      "spot_value_lost": 8470.0,
+      "overflow_days_count": 9,
+      "overflow_days": [
+        12,
+        13,
+        15,
+        19,
+        22,
+        23,
+        24,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 22,
+        "shed_turns_ge_95": 19,
+        "shed_turns_at_capacity": 11
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96503,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 91939.0,
+      "total_carried_units": 1117,
+      "total_deposited_units": 1016,
+      "total_discarded_units": 101,
+      "discarded_by_item": {
+        "FERTILIZER": 14,
+        "TOMATO": 7,
+        "CARROT": 6,
+        "MELON": 12,
+        "MILK": 6,
+        "WHEAT": 34,
+        "STRAWBERRY": 14,
+        "WOOL": 8
+      },
+      "spot_value_lost": 10120.0,
+      "overflow_days_count": 9,
+      "overflow_days": [
+        12,
+        13,
+        15,
+        19,
+        22,
+        23,
+        24,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 22,
+        "shed_turns_ge_95": 19,
+        "shed_turns_at_capacity": 11
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 115533.0,
+      "total_carried_units": 1048,
+      "total_deposited_units": 1018,
+      "total_discarded_units": 30,
+      "discarded_by_item": {
+        "FERTILIZER": 3,
+        "CARROT": 3,
+        "WHEAT": 23,
+        "STRAWBERRY": 1
+      },
+      "spot_value_lost": 1100.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        13,
+        20,
+        21,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 11,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 115917.0,
+      "total_carried_units": 1048,
+      "total_deposited_units": 1018,
+      "total_discarded_units": 30,
+      "discarded_by_item": {
+        "FERTILIZER": 3,
+        "CARROT": 3,
+        "WHEAT": 23,
+        "STRAWBERRY": 1
+      },
+      "spot_value_lost": 1100.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        13,
+        20,
+        21,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 11,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 103446.0,
+      "total_carried_units": 1042,
+      "total_deposited_units": 1005,
+      "total_discarded_units": 37,
+      "discarded_by_item": {
+        "WHEAT": 12,
+        "WOOL": 12,
+        "STRAWBERRY": 9,
+        "FERTILIZER": 3,
+        "MILK": 1
+      },
+      "spot_value_lost": 4240.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        19,
+        20,
+        23,
+        24,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 16,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 9
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 103446.0,
+      "total_carried_units": 1042,
+      "total_deposited_units": 1005,
+      "total_discarded_units": 37,
+      "discarded_by_item": {
+        "WHEAT": 12,
+        "WOOL": 12,
+        "STRAWBERRY": 9,
+        "FERTILIZER": 3,
+        "MILK": 1
+      },
+      "spot_value_lost": 4240.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        19,
+        20,
+        23,
+        24,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 16,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 9
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 106483.0,
+      "total_carried_units": 1067,
+      "total_deposited_units": 1013,
+      "total_discarded_units": 54,
+      "discarded_by_item": {
+        "WHEAT": 26,
+        "FERTILIZER": 13,
+        "WOOL": 4,
+        "STRAWBERRY": 8,
+        "MILK": 3
+      },
+      "spot_value_lost": 4190.0,
+      "overflow_days_count": 7,
+      "overflow_days": [
+        14,
+        18,
+        19,
+        22,
+        23,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 9
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 106483.0,
+      "total_carried_units": 1067,
+      "total_deposited_units": 1013,
+      "total_discarded_units": 54,
+      "discarded_by_item": {
+        "WHEAT": 26,
+        "FERTILIZER": 13,
+        "WOOL": 4,
+        "STRAWBERRY": 8,
+        "MILK": 3
+      },
+      "spot_value_lost": 4190.0,
+      "overflow_days_count": 7,
+      "overflow_days": [
+        14,
+        18,
+        19,
+        22,
+        23,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 9
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 107726.0,
+      "total_carried_units": 1044,
+      "total_deposited_units": 1038,
+      "total_discarded_units": 6,
+      "discarded_by_item": {
+        "STRAWBERRY": 1,
+        "WHEAT": 4,
+        "FERTILIZER": 1
+      },
+      "spot_value_lost": 320.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        20,
+        25
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 9,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 2
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 107726.0,
+      "total_carried_units": 1044,
+      "total_deposited_units": 1038,
+      "total_discarded_units": 6,
+      "discarded_by_item": {
+        "STRAWBERRY": 1,
+        "WHEAT": 4,
+        "FERTILIZER": 1
+      },
+      "spot_value_lost": 320.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        20,
+        25
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 9,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 2
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 96553.0,
+      "total_carried_units": 1060,
+      "total_deposited_units": 996,
+      "total_discarded_units": 64,
+      "discarded_by_item": {
+        "FERTILIZER": 8,
+        "WHEAT": 27,
+        "STRAWBERRY": 22,
+        "WOOL": 4,
+        "MILK": 3
+      },
+      "spot_value_lost": 5395.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        20,
+        22,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 16,
+        "shed_turns_ge_95": 11,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96504,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 95387.0,
+      "total_carried_units": 1057,
+      "total_deposited_units": 988,
+      "total_discarded_units": 69,
+      "discarded_by_item": {
+        "FERTILIZER": 8,
+        "WHEAT": 29,
+        "STRAWBERRY": 25,
+        "WOOL": 4,
+        "MILK": 3
+      },
+      "spot_value_lost": 5805.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        20,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 18,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 101787.0,
+      "total_carried_units": 1054,
+      "total_deposited_units": 1001,
+      "total_discarded_units": 53,
+      "discarded_by_item": {
+        "FERTILIZER": 10,
+        "TOMATO": 4,
+        "CARROT": 6,
+        "MILK": 9,
+        "WHEAT": 20,
+        "STRAWBERRY": 4
+      },
+      "spot_value_lost": 3870.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        12,
+        13,
+        22,
+        28
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 14,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 101787.0,
+      "total_carried_units": 1054,
+      "total_deposited_units": 1001,
+      "total_discarded_units": 53,
+      "discarded_by_item": {
+        "FERTILIZER": 10,
+        "TOMATO": 4,
+        "CARROT": 6,
+        "MILK": 9,
+        "WHEAT": 20,
+        "STRAWBERRY": 4
+      },
+      "spot_value_lost": 3870.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        12,
+        13,
+        22,
+        28
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 14,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 97266.0,
+      "total_carried_units": 1038,
+      "total_deposited_units": 982,
+      "total_discarded_units": 56,
+      "discarded_by_item": {
+        "WHEAT": 29,
+        "FERTILIZER": 4,
+        "STRAWBERRY": 11,
+        "WOOL": 4,
+        "MILK": 6,
+        "TOMATO": 2
+      },
+      "spot_value_lost": 4325.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        15,
+        19,
+        20,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 97397.0,
+      "total_carried_units": 1038,
+      "total_deposited_units": 982,
+      "total_discarded_units": 56,
+      "discarded_by_item": {
+        "WHEAT": 29,
+        "FERTILIZER": 4,
+        "STRAWBERRY": 11,
+        "WOOL": 4,
+        "MILK": 6,
+        "TOMATO": 2
+      },
+      "spot_value_lost": 4325.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        15,
+        19,
+        20,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 102380.0,
+      "total_carried_units": 1073,
+      "total_deposited_units": 1044,
+      "total_discarded_units": 29,
+      "discarded_by_item": {
+        "WHEAT": 16,
+        "FERTILIZER": 5,
+        "MELON": 6,
+        "STRAWBERRY": 2
+      },
+      "spot_value_lost": 2640.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        21,
+        24,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 20,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 100657.0,
+      "total_carried_units": 1076,
+      "total_deposited_units": 1037,
+      "total_discarded_units": 39,
+      "discarded_by_item": {
+        "WHEAT": 18,
+        "FERTILIZER": 4,
+        "MELON": 6,
+        "STRAWBERRY": 11
+      },
+      "spot_value_lost": 3670.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        21,
+        24,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 19,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 79344.0,
+      "total_carried_units": 1055,
+      "total_deposited_units": 991,
+      "total_discarded_units": 64,
+      "discarded_by_item": {
+        "WHEAT": 47,
+        "FERTILIZER": 5,
+        "WOOL": 7,
+        "STRAWBERRY": 5
+      },
+      "spot_value_lost": 3675.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        15,
+        19,
+        23,
+        24,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 79344.0,
+      "total_carried_units": 1055,
+      "total_deposited_units": 991,
+      "total_discarded_units": 64,
+      "discarded_by_item": {
+        "WHEAT": 47,
+        "FERTILIZER": 5,
+        "WOOL": 7,
+        "STRAWBERRY": 5
+      },
+      "spot_value_lost": 3675.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        15,
+        19,
+        23,
+        24,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 105299.0,
+      "total_carried_units": 1063,
+      "total_deposited_units": 1026,
+      "total_discarded_units": 37,
+      "discarded_by_item": {
+        "WHEAT": 8,
+        "WOOL": 9,
+        "STRAWBERRY": 12,
+        "FERTILIZER": 2,
+        "MELON": 6
+      },
+      "spot_value_lost": 5140.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        19,
+        22,
+        24,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96505,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 105299.0,
+      "total_carried_units": 1063,
+      "total_deposited_units": 1026,
+      "total_discarded_units": 37,
+      "discarded_by_item": {
+        "WHEAT": 8,
+        "WOOL": 9,
+        "STRAWBERRY": 12,
+        "FERTILIZER": 2,
+        "MELON": 6
+      },
+      "spot_value_lost": 5140.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        19,
+        22,
+        24,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 86646.0,
+      "total_carried_units": 1025,
+      "total_deposited_units": 964,
+      "total_discarded_units": 61,
+      "discarded_by_item": {
+        "WHEAT": 24,
+        "FERTILIZER": 7,
+        "WOOL": 14,
+        "STRAWBERRY": 16
+      },
+      "spot_value_lost": 6020.0,
+      "overflow_days_count": 7,
+      "overflow_days": [
+        15,
+        19,
+        20,
+        21,
+        24,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 18,
+        "shed_turns_ge_95": 14,
+        "shed_turns_at_capacity": 10
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 109076.0,
+      "total_carried_units": 1005,
+      "total_deposited_units": 980,
+      "total_discarded_units": 25,
+      "discarded_by_item": {
+        "MILK": 2,
+        "STRAWBERRY": 20,
+        "FERTILIZER": 1,
+        "WHEAT": 2
+      },
+      "spot_value_lost": 2870.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        20,
+        21,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 86646.0,
+      "total_carried_units": 1025,
+      "total_deposited_units": 964,
+      "total_discarded_units": 61,
+      "discarded_by_item": {
+        "WHEAT": 24,
+        "FERTILIZER": 7,
+        "WOOL": 14,
+        "STRAWBERRY": 16
+      },
+      "spot_value_lost": 6020.0,
+      "overflow_days_count": 7,
+      "overflow_days": [
+        15,
+        19,
+        20,
+        21,
+        24,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 18,
+        "shed_turns_ge_95": 14,
+        "shed_turns_at_capacity": 10
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 107538.0,
+      "total_carried_units": 1016,
+      "total_deposited_units": 984,
+      "total_discarded_units": 32,
+      "discarded_by_item": {
+        "MILK": 5,
+        "STRAWBERRY": 20,
+        "FERTILIZER": 1,
+        "WHEAT": 6
+      },
+      "spot_value_lost": 3450.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        20,
+        21,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 110628.0,
+      "total_carried_units": 1005,
+      "total_deposited_units": 980,
+      "total_discarded_units": 25,
+      "discarded_by_item": {
+        "MILK": 2,
+        "STRAWBERRY": 20,
+        "FERTILIZER": 1,
+        "WHEAT": 2
+      },
+      "spot_value_lost": 2870.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        20,
+        21,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 110628.0,
+      "total_carried_units": 1005,
+      "total_deposited_units": 980,
+      "total_discarded_units": 25,
+      "discarded_by_item": {
+        "MILK": 2,
+        "STRAWBERRY": 20,
+        "FERTILIZER": 1,
+        "WHEAT": 2
+      },
+      "spot_value_lost": 2870.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        20,
+        21,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 106210.0,
+      "total_carried_units": 1060,
+      "total_deposited_units": 1037,
+      "total_discarded_units": 23,
+      "discarded_by_item": {
+        "WHEAT": 14,
+        "FERTILIZER": 3,
+        "WOOL": 1,
+        "STRAWBERRY": 5
+      },
+      "spot_value_lost": 1450.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        15,
+        19,
+        23,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 14,
+        "shed_turns_ge_95": 10,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 103488.0,
+      "total_carried_units": 1069,
+      "total_deposited_units": 1019,
+      "total_discarded_units": 50,
+      "discarded_by_item": {
+        "WHEAT": 27,
+        "FERTILIZER": 7,
+        "WOOL": 7,
+        "STRAWBERRY": 9
+      },
+      "spot_value_lost": 3855.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        15,
+        19,
+        23,
+        24,
+        27,
+        28
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 11,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 8
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 100689.0,
+      "total_carried_units": 1077,
+      "total_deposited_units": 1027,
+      "total_discarded_units": 50,
+      "discarded_by_item": {
+        "STRAWBERRY": 14,
+        "WHEAT": 15,
+        "FERTILIZER": 8,
+        "MILK": 5,
+        "WOOL": 8
+      },
+      "spot_value_lost": 5255.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        17,
+        23,
+        24,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 14,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 104379.0,
+      "total_carried_units": 1075,
+      "total_deposited_units": 1035,
+      "total_discarded_units": 40,
+      "discarded_by_item": {
+        "FERTILIZER": 7,
+        "TOMATO": 1,
+        "CARROT": 3,
+        "WHEAT": 10,
+        "WOOL": 12,
+        "STRAWBERRY": 5,
+        "MILK": 2
+      },
+      "spot_value_lost": 4435.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        12,
+        20,
+        24,
+        25
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 20,
+        "shed_turns_ge_95": 14,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 100689.0,
+      "total_carried_units": 1077,
+      "total_deposited_units": 1027,
+      "total_discarded_units": 50,
+      "discarded_by_item": {
+        "STRAWBERRY": 14,
+        "WHEAT": 15,
+        "FERTILIZER": 8,
+        "MILK": 5,
+        "WOOL": 8
+      },
+      "spot_value_lost": 5255.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        17,
+        23,
+        24,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 14,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96506,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 102944.0,
+      "total_carried_units": 1063,
+      "total_deposited_units": 1032,
+      "total_discarded_units": 31,
+      "discarded_by_item": {
+        "FERTILIZER": 4,
+        "TOMATO": 1,
+        "CARROT": 3,
+        "STRAWBERRY": 7,
+        "MELON": 6,
+        "WOOL": 7,
+        "MILK": 3
+      },
+      "spot_value_lost": 4785.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        12,
+        21,
+        24,
+        25
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 21,
+        "shed_turns_ge_95": 13,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 109870.0,
+      "total_carried_units": 1046,
+      "total_deposited_units": 1014,
+      "total_discarded_units": 32,
+      "discarded_by_item": {
+        "WHEAT": 5,
+        "FERTILIZER": 2,
+        "MILK": 5,
+        "STRAWBERRY": 14,
+        "MELON": 6
+      },
+      "spot_value_lost": 4305.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        12,
+        21,
+        22,
+        23,
+        25,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 14,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 109870.0,
+      "total_carried_units": 1046,
+      "total_deposited_units": 1014,
+      "total_discarded_units": 32,
+      "discarded_by_item": {
+        "WHEAT": 5,
+        "FERTILIZER": 2,
+        "MILK": 5,
+        "STRAWBERRY": 14,
+        "MELON": 6
+      },
+      "spot_value_lost": 4305.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        12,
+        21,
+        22,
+        23,
+        25,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 14,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 103928.0,
+      "total_carried_units": 1039,
+      "total_deposited_units": 996,
+      "total_discarded_units": 43,
+      "discarded_by_item": {
+        "WHEAT": 25,
+        "STRAWBERRY": 18
+      },
+      "spot_value_lost": 2785.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        15,
+        19,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 18,
+        "shed_turns_ge_95": 12,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 97526.0,
+      "total_carried_units": 1018,
+      "total_deposited_units": 986,
+      "total_discarded_units": 32,
+      "discarded_by_item": {
+        "WHEAT": 20,
+        "FERTILIZER": 4,
+        "WOOL": 4,
+        "STRAWBERRY": 4
+      },
+      "spot_value_lost": 2180.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        15,
+        19,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 12,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 103087.0,
+      "total_carried_units": 1028,
+      "total_deposited_units": 1010,
+      "total_discarded_units": 18,
+      "discarded_by_item": {
+        "FERTILIZER": 3,
+        "WHEAT": 5,
+        "TOMATO": 2,
+        "MILK": 4,
+        "STRAWBERRY": 4
+      },
+      "spot_value_lost": 1665.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        13,
+        19,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 12,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 99666.0,
+      "total_carried_units": 1015,
+      "total_deposited_units": 1009,
+      "total_discarded_units": 6,
+      "discarded_by_item": {
+        "FERTILIZER": 3,
+        "WHEAT": 3
+      },
+      "spot_value_lost": 375.0,
+      "overflow_days_count": 1,
+      "overflow_days": [
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 12,
+        "shed_turns_ge_95": 6,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 98018.0,
+      "total_carried_units": 1017,
+      "total_deposited_units": 990,
+      "total_discarded_units": 27,
+      "discarded_by_item": {
+        "WHEAT": 10,
+        "STRAWBERRY": 12,
+        "MILK": 5
+      },
+      "spot_value_lost": 2490.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        21,
+        25,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 12,
+        "shed_turns_ge_95": 5,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96507,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 97967.0,
+      "total_carried_units": 1024,
+      "total_deposited_units": 1021,
+      "total_discarded_units": 3,
+      "discarded_by_item": {
+        "STRAWBERRY": 3
+      },
+      "spot_value_lost": 360.0,
+      "overflow_days_count": 1,
+      "overflow_days": [
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 9,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 1
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 104489.0,
+      "total_carried_units": 1040,
+      "total_deposited_units": 1033,
+      "total_discarded_units": 7,
+      "discarded_by_item": {
+        "WHEAT": 5,
+        "STRAWBERRY": 2
+      },
+      "spot_value_lost": 365.0,
+      "overflow_days_count": 1,
+      "overflow_days": [
+        20
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 2
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 104489.0,
+      "total_carried_units": 1040,
+      "total_deposited_units": 1033,
+      "total_discarded_units": 7,
+      "discarded_by_item": {
+        "WHEAT": 5,
+        "STRAWBERRY": 2
+      },
+      "spot_value_lost": 365.0,
+      "overflow_days_count": 1,
+      "overflow_days": [
+        20
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 2
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 105698.0,
+      "total_carried_units": 1030,
+      "total_deposited_units": 1007,
+      "total_discarded_units": 23,
+      "discarded_by_item": {
+        "WHEAT": 8,
+        "MILK": 6,
+        "CARROT": 2,
+        "FERTILIZER": 2,
+        "STRAWBERRY": 5
+      },
+      "spot_value_lost": 2030.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        20,
+        24,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 11,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 105698.0,
+      "total_carried_units": 1030,
+      "total_deposited_units": 1007,
+      "total_discarded_units": 23,
+      "discarded_by_item": {
+        "WHEAT": 8,
+        "MILK": 6,
+        "CARROT": 2,
+        "FERTILIZER": 2,
+        "STRAWBERRY": 5
+      },
+      "spot_value_lost": 2030.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        20,
+        24,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 11,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 91592.0,
+      "total_carried_units": 1049,
+      "total_deposited_units": 958,
+      "total_discarded_units": 91,
+      "discarded_by_item": {
+        "WHEAT": 37,
+        "FERTILIZER": 16,
+        "CARROT": 3,
+        "WOOL": 18,
+        "STRAWBERRY": 11,
+        "MELON": 6
+      },
+      "spot_value_lost": 9050.0,
+      "overflow_days_count": 8,
+      "overflow_days": [
+        13,
+        14,
+        17,
+        18,
+        22,
+        25,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 20,
+        "shed_turns_ge_95": 16,
+        "shed_turns_at_capacity": 10
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 98094.0,
+      "total_carried_units": 998,
+      "total_deposited_units": 954,
+      "total_discarded_units": 44,
+      "discarded_by_item": {
+        "MELON": 21,
+        "FERTILIZER": 2,
+        "MILK": 6,
+        "WHEAT": 12,
+        "CARROT": 3
+      },
+      "spot_value_lost": 6815.0,
+      "overflow_days_count": 1,
+      "overflow_days": [
+        10
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 6,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 90751.0,
+      "total_carried_units": 1010,
+      "total_deposited_units": 914,
+      "total_discarded_units": 96,
+      "discarded_by_item": {
+        "MELON": 40,
+        "MILK": 5,
+        "FERTILIZER": 8,
+        "WHEAT": 22,
+        "CARROT": 3,
+        "STRAWBERRY": 14,
+        "WOOL": 4
+      },
+      "spot_value_lost": 14735.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        10,
+        11,
+        20,
+        22,
+        24,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 9,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 98374.0,
+      "total_carried_units": 1037,
+      "total_deposited_units": 980,
+      "total_discarded_units": 57,
+      "discarded_by_item": {
+        "WHEAT": 36,
+        "FERTILIZER": 5,
+        "STRAWBERRY": 4,
+        "WOOL": 12
+      },
+      "spot_value_lost": 4280.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        15,
+        19,
+        20,
+        24,
+        27,
+        28
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 11,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 8
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 100429.0,
+      "total_carried_units": 1016,
+      "total_deposited_units": 962,
+      "total_discarded_units": 54,
+      "discarded_by_item": {
+        "WHEAT": 28,
+        "FERTILIZER": 3,
+        "STRAWBERRY": 17,
+        "WOOL": 6
+      },
+      "spot_value_lost": 4240.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        15,
+        19,
+        20,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 9,
+        "shed_turns_ge_95": 6,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96508,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 103387.0,
+      "total_carried_units": 1034,
+      "total_deposited_units": 1020,
+      "total_discarded_units": 14,
+      "discarded_by_item": {
+        "WHEAT": 5,
+        "STRAWBERRY": 9
+      },
+      "spot_value_lost": 1205.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        20,
+        21,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 89981.0,
+      "total_carried_units": 1014,
+      "total_deposited_units": 972,
+      "total_discarded_units": 42,
+      "discarded_by_item": {
+        "TOMATO": 2,
+        "WHEAT": 12,
+        "WOOL": 6,
+        "MILK": 12,
+        "STRAWBERRY": 7,
+        "FERTILIZER": 3
+      },
+      "spot_value_lost": 4680.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        14,
+        18,
+        20,
+        22,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 18,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 89981.0,
+      "total_carried_units": 1014,
+      "total_deposited_units": 972,
+      "total_discarded_units": 42,
+      "discarded_by_item": {
+        "TOMATO": 2,
+        "WHEAT": 12,
+        "WOOL": 6,
+        "MILK": 12,
+        "STRAWBERRY": 7,
+        "FERTILIZER": 3
+      },
+      "spot_value_lost": 4680.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        14,
+        18,
+        20,
+        22,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 18,
+        "shed_turns_ge_95": 9,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 82492.0,
+      "total_carried_units": 1034,
+      "total_deposited_units": 969,
+      "total_discarded_units": 65,
+      "discarded_by_item": {
+        "MELON": 14,
+        "WHEAT": 24,
+        "MILK": 6,
+        "FERTILIZER": 4,
+        "STRAWBERRY": 17
+      },
+      "spot_value_lost": 7500.0,
+      "overflow_days_count": 7,
+      "overflow_days": [
+        10,
+        12,
+        16,
+        20,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 12,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 82492.0,
+      "total_carried_units": 1034,
+      "total_deposited_units": 969,
+      "total_discarded_units": 65,
+      "discarded_by_item": {
+        "MELON": 14,
+        "WHEAT": 24,
+        "MILK": 6,
+        "FERTILIZER": 4,
+        "STRAWBERRY": 17
+      },
+      "spot_value_lost": 7500.0,
+      "overflow_days_count": 7,
+      "overflow_days": [
+        10,
+        12,
+        16,
+        20,
+        23,
+        24,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 12,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 108317.0,
+      "total_carried_units": 1028,
+      "total_deposited_units": 1017,
+      "total_discarded_units": 11,
+      "discarded_by_item": {
+        "STRAWBERRY": 3,
+        "WHEAT": 3,
+        "WOOL": 1,
+        "MILK": 4
+      },
+      "spot_value_lost": 1275.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        21,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 108311.0,
+      "total_carried_units": 1028,
+      "total_deposited_units": 1017,
+      "total_discarded_units": 11,
+      "discarded_by_item": {
+        "STRAWBERRY": 3,
+        "WHEAT": 3,
+        "WOOL": 1,
+        "MILK": 4
+      },
+      "spot_value_lost": 1275.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        21,
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 15,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 100587.0,
+      "total_carried_units": 1050,
+      "total_deposited_units": 1017,
+      "total_discarded_units": 33,
+      "discarded_by_item": {
+        "WHEAT": 13,
+        "MILK": 5,
+        "STRAWBERRY": 6,
+        "WOOL": 6,
+        "CARROT": 3
+      },
+      "spot_value_lost": 3150.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        15,
+        20,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 13,
+        "shed_turns_ge_95": 12,
+        "shed_turns_at_capacity": 4
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 101504.0,
+      "total_carried_units": 1019,
+      "total_deposited_units": 992,
+      "total_discarded_units": 27,
+      "discarded_by_item": {
+        "WHEAT": 5,
+        "FERTILIZER": 2,
+        "STRAWBERRY": 11,
+        "MILK": 3,
+        "MELON": 6
+      },
+      "spot_value_lost": 3625.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        22,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 11,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 2
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 105760.0,
+      "total_carried_units": 1027,
+      "total_deposited_units": 998,
+      "total_discarded_units": 29,
+      "discarded_by_item": {
+        "MILK": 10,
+        "CARROT": 3,
+        "WHEAT": 6,
+        "FERTILIZER": 4,
+        "STRAWBERRY": 6
+      },
+      "spot_value_lost": 2975.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        10,
+        19,
+        23,
+        25,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 16,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96509,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 100923.0,
+      "total_carried_units": 1027,
+      "total_deposited_units": 998,
+      "total_discarded_units": 29,
+      "discarded_by_item": {
+        "MILK": 10,
+        "CARROT": 3,
+        "WHEAT": 6,
+        "FERTILIZER": 4,
+        "STRAWBERRY": 6
+      },
+      "spot_value_lost": 2975.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        10,
+        19,
+        23,
+        25,
+        26
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 16,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 7
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "final_cash": 102853.0,
+      "total_carried_units": 1034,
+      "total_deposited_units": 1005,
+      "total_discarded_units": 29,
+      "discarded_by_item": {
+        "FERTILIZER": 7,
+        "WHEAT": 18,
+        "WOOL": 4
+      },
+      "spot_value_lost": 1950.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        20,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 12,
+        "shed_turns_ge_95": 11,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "final_cash": 102853.0,
+      "total_carried_units": 1034,
+      "total_deposited_units": 1005,
+      "total_discarded_units": 29,
+      "discarded_by_item": {
+        "FERTILIZER": 7,
+        "WHEAT": 18,
+        "WOOL": 4
+      },
+      "spot_value_lost": 1950.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        20,
+        24
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 12,
+        "shed_turns_ge_95": 11,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "pass",
+      "seat": 0,
+      "final_cash": 108290.0,
+      "total_carried_units": 1011,
+      "total_deposited_units": 1003,
+      "total_discarded_units": 8,
+      "discarded_by_item": {
+        "MILK": 2,
+        "WHEAT": 6
+      },
+      "spot_value_lost": 470.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        21,
+        22
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 11,
+        "shed_turns_ge_95": 5,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "pass",
+      "seat": 1,
+      "final_cash": 108290.0,
+      "total_carried_units": 1011,
+      "total_deposited_units": 1003,
+      "total_discarded_units": 8,
+      "discarded_by_item": {
+        "MILK": 2,
+        "WHEAT": 6
+      },
+      "spot_value_lost": 470.0,
+      "overflow_days_count": 2,
+      "overflow_days": [
+        21,
+        22
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 11,
+        "shed_turns_ge_95": 5,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "final_cash": 89668.0,
+      "total_carried_units": 1033,
+      "total_deposited_units": 975,
+      "total_discarded_units": 58,
+      "discarded_by_item": {
+        "FERTILIZER": 16,
+        "CARROT": 3,
+        "MILK": 9,
+        "TOMATO": 4,
+        "WHEAT": 17,
+        "STRAWBERRY": 3,
+        "WOOL": 6
+      },
+      "spot_value_lost": 5370.0,
+      "overflow_days_count": 10,
+      "overflow_days": [
+        12,
+        15,
+        19,
+        20,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 22,
+        "shed_turns_ge_95": 17,
+        "shed_turns_at_capacity": 12
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "final_cash": 93931.0,
+      "total_carried_units": 1012,
+      "total_deposited_units": 955,
+      "total_discarded_units": 57,
+      "discarded_by_item": {
+        "FERTILIZER": 16,
+        "CARROT": 3,
+        "MILK": 4,
+        "TOMATO": 4,
+        "WOOL": 9,
+        "WHEAT": 14,
+        "STRAWBERRY": 1,
+        "MELON": 6
+      },
+      "spot_value_lost": 6355.0,
+      "overflow_days_count": 9,
+      "overflow_days": [
+        12,
+        15,
+        19,
+        20,
+        22,
+        24,
+        25,
+        26,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 21,
+        "shed_turns_ge_95": 17,
+        "shed_turns_at_capacity": 10
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "full_production_agent",
+      "seat": 0,
+      "final_cash": 99324.0,
+      "total_carried_units": 1074,
+      "total_deposited_units": 986,
+      "total_discarded_units": 88,
+      "discarded_by_item": {
+        "WHEAT": 57,
+        "FERTILIZER": 5,
+        "WOOL": 13,
+        "TOMATO": 3,
+        "STRAWBERRY": 7,
+        "MILK": 3
+      },
+      "spot_value_lost": 6025.0,
+      "overflow_days_count": 6,
+      "overflow_days": [
+        15,
+        19,
+        23,
+        24,
+        27,
+        28
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 8,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 6
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "melon_sniper",
+      "seat": 0,
+      "final_cash": 102256.0,
+      "total_carried_units": 1053,
+      "total_deposited_units": 1024,
+      "total_discarded_units": 29,
+      "discarded_by_item": {
+        "WHEAT": 12,
+        "WOOL": 5,
+        "STRAWBERRY": 8,
+        "MILK": 4
+      },
+      "spot_value_lost": 2900.0,
+      "overflow_days_count": 4,
+      "overflow_days": [
+        19,
+        21,
+        25,
+        27
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 12,
+        "shed_turns_ge_95": 7,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "full_production_agent",
+      "seat": 1,
+      "final_cash": 97987.0,
+      "total_carried_units": 1068,
+      "total_deposited_units": 993,
+      "total_discarded_units": 75,
+      "discarded_by_item": {
+        "WHEAT": 54,
+        "FERTILIZER": 4,
+        "WOOL": 6,
+        "TOMATO": 3,
+        "STRAWBERRY": 5,
+        "CARROT": 3
+      },
+      "spot_value_lost": 3835.0,
+      "overflow_days_count": 5,
+      "overflow_days": [
+        15,
+        19,
+        24,
+        27,
+        28
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 10,
+        "shed_turns_ge_95": 6,
+        "shed_turns_at_capacity": 5
+      },
+      "conservation_verified": true
+    },
+    {
+      "seed": 96510,
+      "opponent": "melon_sniper",
+      "seat": 1,
+      "final_cash": 100054.0,
+      "total_carried_units": 1041,
+      "total_deposited_units": 1012,
+      "total_discarded_units": 29,
+      "discarded_by_item": {
+        "FERTILIZER": 1,
+        "STRAWBERRY": 8,
+        "MILK": 2,
+        "WHEAT": 8,
+        "MELON": 6,
+        "WOOL": 4
+      },
+      "spot_value_lost": 3880.0,
+      "overflow_days_count": 3,
+      "overflow_days": [
+        21,
+        24,
+        25
+      ],
+      "storage_stats": {
+        "peak_shed_occupancy": 100,
+        "shed_turns_ge_90": 17,
+        "shed_turns_ge_95": 8,
+        "shed_turns_at_capacity": 3
+      },
+      "conservation_verified": true
+    }
+  ]
+}

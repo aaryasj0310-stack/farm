@@ -1,0 +1,23 @@
+{
+  "function_name": "_drop_inventories_to_shed",
+  "engine_module": "kaggle_environments.envs.kaggriculture.kaggriculture",
+  "trigger_condition": "(step + 1) % turns_per_day == 0",
+  "calling_function": "_end_of_day(state, env, day)",
+  "timing": "Immediately following resolution of turn 23 actions and before turn 0 of the next day",
+  "mechanics_summary": {
+    "shed_capacity": 100,
+    "source_of_items": "private['inventories'] (index 0 is farmer, subsequent indices are hired hands)",
+    "deposit_logic": "For each worker inventory, for each item: take = min(n, capacity - current_shed_total). If take > 0, shed[item] += take. del inv[item] unconditionally deletes the inventory item.",
+    "discard_mechanism": "Any units exceeding remaining capacity (n - take) are deleted from inv without entering shed, producing permanent inventory destruction.",
+    "worker_precedence": "Worker index 0 (farmer) processes first, followed by hired hands in list order (1, 2, ...).",
+    "item_precedence": "Iterates over inv.items() in dict insertion order.",
+    "reset_sequence": [
+      "farm['farmer'] = list(_default_spawn(board_size))",
+      "farm['hands'] = []",
+      "farm['hires_today'] = 0",
+      "private['inventories'] = [{}]"
+    ],
+    "seeds_treatment": "Seeds reside in private['seeds'] and are excluded from shed and from midnight drop/discard mechanics."
+  },
+  "source_code": "def _drop_inventories_to_shed(private, capacity):\n    \"\"\"Drop every per-farmer inventory into the shed up to `capacity`; overflow is discarded.\n    Seeds are tracked separately in private[\"seeds\"] and don't pass through the shed.\"\"\"\n    shed = private[\"shed\"]\n    for inv in private[\"inventories\"]:\n        for item, n in list(inv.items()):\n            if n <= 0:\n                del inv[item]\n                continue\n            current = sum(v for k, v in shed.items())\n            room = max(0, capacity - current)\n            take = min(n, room)\n            if take > 0:\n                shed[item] = shed.get(item, 0) + take\n            del inv[item]"
+}

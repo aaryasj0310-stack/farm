@@ -1,0 +1,129 @@
+{
+  "Case_A_Below_Capacity": {
+    "description": "Total items (60) <= capacity (100). All items deposited.",
+    "pre_shed": {
+      "WHEAT": 40
+    },
+    "pre_inventories": [
+      {
+        "CARROT": 10
+      },
+      {
+        "COW_MILK": 10
+      }
+    ],
+    "post_shed": {
+      "WHEAT": 40,
+      "CARROT": 10,
+      "COW_MILK": 10
+    },
+    "post_inventories": [
+      {},
+      {}
+    ],
+    "total_shed_pre": 40,
+    "total_carried_pre": 20,
+    "total_shed_post": 60,
+    "deposited": 20,
+    "discarded": 0,
+    "all_inventories_cleared": true
+  },
+  "Case_B_Partial_Overflow": {
+    "description": "Shed at 90/100, farmer carries 15 carrots. 10 deposited, 5 discarded.",
+    "pre_shed": {
+      "WHEAT": 90
+    },
+    "pre_inventories": [
+      {
+        "CARROT": 15
+      }
+    ],
+    "post_shed": {
+      "WHEAT": 90,
+      "CARROT": 10
+    },
+    "post_inventories": [
+      {}
+    ],
+    "total_shed_pre": 90,
+    "total_carried_pre": 15,
+    "total_shed_post": 100,
+    "deposited": 10,
+    "discarded": 5,
+    "all_inventories_cleared": true
+  },
+  "Case_C_Full_Overflow": {
+    "description": "Shed at 100/100 (full), farmer carries 10 melons. 0 deposited, 10 discarded.",
+    "pre_shed": {
+      "WHEAT": 100
+    },
+    "pre_inventories": [
+      {
+        "MELON": 10
+      }
+    ],
+    "post_shed": {
+      "WHEAT": 100
+    },
+    "post_inventories": [
+      {}
+    ],
+    "total_shed_pre": 100,
+    "total_carried_pre": 10,
+    "total_shed_post": 100,
+    "deposited": 0,
+    "discarded": 10,
+    "all_inventories_cleared": true
+  },
+  "Case_D_Multi_Worker_Precedence": {
+    "description": "Shed at 95/100. Worker 0 carries 4 eggs, Worker 1 carries 4 wool. Room starts at 5. Worker 0 deposits 4, Worker 1 deposits 1, 3 wool discarded.",
+    "pre_shed": {
+      "WHEAT": 95
+    },
+    "pre_inventories": [
+      {
+        "EGG": 4
+      },
+      {
+        "SHEEP_WOOL": 4
+      }
+    ],
+    "post_shed": {
+      "WHEAT": 95,
+      "EGG": 4,
+      "SHEEP_WOOL": 1
+    },
+    "post_inventories": [
+      {},
+      {}
+    ],
+    "total_shed_pre": 95,
+    "total_carried_pre": 8,
+    "total_shed_post": 100,
+    "deposited": 5,
+    "discarded": 3,
+    "all_inventories_cleared": true
+  },
+  "In_Engine_Step23_Transition": {
+    "pre_step23_shed": {
+      "WHEAT": 95
+    },
+    "pre_step23_inventory": [
+      {
+        "CARROT": 10
+      }
+    ],
+    "post_step24_shed": {
+      "WHEAT": 95,
+      "CARROT": 5
+    },
+    "post_step24_inventory": [
+      {}
+    ],
+    "deposited": 5,
+    "discarded": 5,
+    "step_after_eod": 24,
+    "day_after_eod": 1,
+    "hour_after_eod": 0
+  }
+}
