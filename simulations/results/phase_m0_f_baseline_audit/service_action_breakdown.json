@@ -1,0 +1,37 @@
+{
+  "total_feed_actions_emitted": 10737,
+  "mean_feed_actions_per_match": 214.74,
+  "total_care_actions_emitted": 9752,
+  "mean_care_actions_per_match": 195.04,
+  "species_breakdown": {
+    "COW": {
+      "feed": 6913,
+      "care": 6588,
+      "feed_skip": 786,
+      "care_skip": 1340
+    },
+    "SHEEP": {
+      "feed": 4150,
+      "care": 3917,
+      "feed_skip": 878,
+      "care_skip": 1210
+    },
+    "GOOSE": {
+      "feed": 0,
+      "care": 0,
+      "feed_skip": 0,
+      "care_skip": 0
+    }
+  },
+  "care_skip_opportunities": {
+    "UNFED_ANIMAL_CANNOT_BANK_CARE": 1664,
+    "NO_FUTURE_PRODUCTION_EVENT": 558,
+    "ENDGAME_TOO_LATE": 324,
+    "EXISTING_YIELD_AT_MAX_HELD": 4
+  },
+  "feed_skip_opportunities": {
+    "CARE_BANK_ALREADY_SUFFICIENT": 925,
+    "CARE_BONUS_WOULD_CLIP": 428,
+    "NO_FUTURE_PRODUCTION": 311
+  }
+}

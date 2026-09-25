@@ -1,0 +1,54 @@
+{
+  "mechanism": "yield_units = min(max_held, yield_units + base + bonus)",
+  "clipping_verified": true,
+  "cow_example": {
+    "passed": true,
+    "care_bank_history": [
+      {
+        "day": 0,
+        "bank_after": 1,
+        "yield_after": 0
+      },
+      {
+        "day": 1,
+        "bank_after": 2,
+        "yield_after": 0
+      },
+      {
+        "day": 2,
+        "bank_after": 3,
+        "yield_after": 0
+      },
+      {
+        "day": 3,
+        "bank_after": 4,
+        "yield_after": 0
+      },
+      {
+        "day": 4,
+        "bank_after": 5,
+        "yield_after": 0
+      },
+      {
+        "day": 5,
+        "bank_after": 6,
+        "yield_after": 0
+      },
+      {
+        "day": 6,
+        "bank_after": 7,
+        "yield_after": 0
+      }
+    ],
+    "day_7_yield": 6,
+    "day_7_bank": 0
+  },
+  "sheep_example": {
+    "passed": true,
+    "starting_yield": 4,
+    "base": 1,
+    "bonus": 3,
+    "final_yield": 6,
+    "clipped_units": 2
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "test_1_cow_accumulation": {
+    "passed": true,
+    "care_bank_history": [
+      {
+        "day": 0,
+        "bank_after": 1,
+        "yield_after": 0
+      },
+      {
+        "day": 1,
+        "bank_after": 2,
+        "yield_after": 0
+      },
+      {
+        "day": 2,
+        "bank_after": 3,
+        "yield_after": 0
+      },
+      {
+        "day": 3,
+        "bank_after": 4,
+        "yield_after": 0
+      },
+      {
+        "day": 4,
+        "bank_after": 5,
+        "yield_after": 0
+      },
+      {
+        "day": 5,
+        "bank_after": 6,
+        "yield_after": 0
+      },
+      {
+        "day": 6,
+        "bank_after": 7,
+        "yield_after": 0
+      }
+    ],
+    "day_7_yield": 6,
+    "day_7_bank": 0
+  },
+  "test_2_production_day_care_ordering": {
+    "passed": true,
+    "yield": 3,
+    "bank_for_next_cycle": 1
+  },
+  "test_3_unfed_production": {
+    "passed": true,
+    "yield": 1,
+    "bank": 0,
+    "consecutive_unfed": 1
+  },
+  "test_4_survival": {
+    "passed": true,
+    "day_1_unfed_survived": true,
+    "feed_resets_counter": true,
+    "two_consecutive_escaped": true
+  },
+  "test_5_sheep_clipping": {
+    "passed": true,
+    "starting_yield": 4,
+    "base": 1,
+    "bonus": 3,
+    "final_yield": 6,
+    "clipped_units": 2
+  },
+  "test_6_goose_daily": {
+    "passed": true,
+    "day_3_yield": 1,
+    "day_4_yield": 3
+  }
+}
