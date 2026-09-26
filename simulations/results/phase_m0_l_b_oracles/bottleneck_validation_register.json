@@ -1,0 +1,38 @@
+[
+  {
+    "id": "BN-VAL-01",
+    "domain": "Productive Land Utilization",
+    "candidate": "SW Quadrant Unlock & Activation",
+    "census_hypothesis": "SW dormancy was a recoverable loss of $8,000 \u2013 $15,000.",
+    "oracle_validation": "FALSIFIED (Value Trap). Tested 4 arms (D10, D14, D18, P4.1). P4.1 forced purchase caused -$10,574 paired loss (0W / 20L).",
+    "corrected_recoverable_cash": "$0.00",
+    "strategic_recommendation": "Maintain QUADRANT_HARD_BLOCK = {3, 4}. Do not unlock SW in production."
+  },
+  {
+    "id": "BN-VAL-02",
+    "domain": "Worker Throughput",
+    "candidate": "Soft Worker Locality",
+    "census_hypothesis": "64.5% movement overhead could recover $5,000 \u2013 $10,000.",
+    "oracle_validation": "PARTIALLY CONFIRMED. Theoretical agronomic ceiling is ~$42,297, but realistic travel mechanics limit recoverable commute to ~15-20%. Arm 2B Soft Locality measured +$1,974.95 mean cash (+58W / 42L), cutting travel by 2.12 pp and adding 77.5 productive actions.",
+    "corrected_recoverable_cash": "$1,500 \u2013 $2,500",
+    "strategic_recommendation": "Strong candidate for M0-L-C isolated strategy implementation."
+  },
+  {
+    "id": "BN-VAL-03",
+    "domain": "Crop Portfolio Economics",
+    "candidate": "Carrot & Tomato Suppression",
+    "census_hypothesis": "Carrots/tomatoes have low margin/op ($14-$17), suppressing them could recover $4,000 \u2013 $8,000.",
+    "oracle_validation": "FALSIFIED (Value Trap). Carrots and tomatoes provide irreplaceable early bootstrap liquidity (D2-8) and late-season harvest completion (D25-28). Suppressing them caused -$5,800 to -$6,495 loss.",
+    "corrected_recoverable_cash": "$0.00",
+    "strategic_recommendation": "Retain baseline crop diversification. Do not suppress carrots or tomatoes."
+  },
+  {
+    "id": "BN-VAL-04",
+    "domain": "Livestock Economics & Feed",
+    "candidate": "On-Farm Wheat Feed Bank",
+    "census_hypothesis": "Avoiding $29,992 wheat purchases could recover substantial capital.",
+    "oracle_validation": "FALSIFIED (Accounting Illusion & Value Trap). M0-L-A accounting proved farm is net-positive cash (+$6,059) on wheat. Forcing feed buffering caused -$15,579 to -$28,728 disaster via shed clogging and melon displacement.",
+    "corrected_recoverable_cash": "$0.00",
+    "strategic_recommendation": "Retain baseline FEED_WHEAT_BUFFER_DAYS = 4. Do not dedicate acreage to feed banking."
+  }
+]

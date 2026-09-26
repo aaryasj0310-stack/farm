@@ -1,0 +1,200 @@
+{
+  "Arm3B_Carrot_Suppressed": {
+    "n_matches": 20,
+    "treatment_mean_cash": 101429.9,
+    "baseline_mean_cash": 107925.55,
+    "mean_paired_gain": -6495.65,
+    "median_paired_gain": -9387.5,
+    "std_paired_gain": 9772.23170263579,
+    "record": {
+      "wins": 4,
+      "losses": 16,
+      "ties": 0,
+      "win_rate": 0.2
+    },
+    "seed_clustered_ci_95": {
+      "mean": -6495.65,
+      "se": 1743.75,
+      "df": 1,
+      "t_crit": 12.706,
+      "ci_lower": -28651.737499999996,
+      "ci_upper": 15660.437499999998
+    },
+    "opponent_breakdown": {
+      "pass": {
+        "mean_delta": -9209.5,
+        "median_delta": -8656.0,
+        "n": 4
+      },
+      "pure_wheat_rush": {
+        "mean_delta": -8941.0,
+        "median_delta": -8941.0,
+        "n": 4
+      },
+      "cow_milk_engine": {
+        "mean_delta": -14133.75,
+        "median_delta": -14097.0,
+        "n": 4
+      },
+      "melon_sniper": {
+        "mean_delta": 345.0,
+        "median_delta": 320.0,
+        "n": 4
+      },
+      "full_production_agent": {
+        "mean_delta": -539.0,
+        "median_delta": -656.0,
+        "n": 4
+      }
+    },
+    "seat_breakdown": {
+      "0": {
+        "mean_delta": -6570.6,
+        "median_delta": -10342.0,
+        "n": 10
+      },
+      "1": {
+        "mean_delta": -6420.7,
+        "median_delta": -9387.5,
+        "n": 10
+      }
+    },
+    "safety_audit": {
+      "total_animal_escapes": 0,
+      "max_market_orders_turn": 10,
+      "passed_safety": true
+    }
+  },
+  "Arm3C_Tomato_Suppressed": {
+    "n_matches": 20,
+    "treatment_mean_cash": 104640.1,
+    "baseline_mean_cash": 107925.55,
+    "mean_paired_gain": -3285.45,
+    "median_paired_gain": -2544.0,
+    "std_paired_gain": 9164.612051254542,
+    "record": {
+      "wins": 6,
+      "losses": 14,
+      "ties": 0,
+      "win_rate": 0.3
+    },
+    "seed_clustered_ci_95": {
+      "mean": -3285.45,
+      "se": 952.9499999999998,
+      "df": 1,
+      "t_crit": 12.706,
+      "ci_lower": -15393.632699999998,
+      "ci_upper": 8822.732699999997
+    },
+    "opponent_breakdown": {
+      "pass": {
+        "mean_delta": -10232.0,
+        "median_delta": -10785.5,
+        "n": 4
+      },
+      "pure_wheat_rush": {
+        "mean_delta": -1475.5,
+        "median_delta": -1475.5,
+        "n": 4
+      },
+      "cow_milk_engine": {
+        "mean_delta": 6674.25,
+        "median_delta": 6898.0,
+        "n": 4
+      },
+      "melon_sniper": {
+        "mean_delta": -3250.0,
+        "median_delta": -3373.5,
+        "n": 4
+      },
+      "full_production_agent": {
+        "mean_delta": -8144.0,
+        "median_delta": -8261.0,
+        "n": 4
+      }
+    },
+    "seat_breakdown": {
+      "0": {
+        "mean_delta": -3303.3,
+        "median_delta": -3257.0,
+        "n": 10
+      },
+      "1": {
+        "mean_delta": -3267.6,
+        "median_delta": -2414.0,
+        "n": 10
+      }
+    },
+    "safety_audit": {
+      "total_animal_escapes": 0,
+      "max_market_orders_turn": 10,
+      "passed_safety": true
+    }
+  },
+  "Arm3D_Full_Specialization": {
+    "n_matches": 20,
+    "treatment_mean_cash": 102124.95,
+    "baseline_mean_cash": 107925.55,
+    "mean_paired_gain": -5800.6,
+    "median_paired_gain": -8389.0,
+    "std_paired_gain": 5767.6557346710815,
+    "record": {
+      "wins": 5,
+      "losses": 15,
+      "ties": 0,
+      "win_rate": 0.25
+    },
+    "seed_clustered_ci_95": {
+      "mean": -5800.6,
+      "se": 803.4000000000001,
+      "df": 1,
+      "t_crit": 12.706,
+      "ci_lower": -16008.600400000001,
+      "ci_upper": 4407.4004
+    },
+    "opponent_breakdown": {
+      "pass": {
+        "mean_delta": -8211.25,
+        "median_delta": -8797.0,
+        "n": 4
+      },
+      "pure_wheat_rush": {
+        "mean_delta": -11700.0,
+        "median_delta": -11700.0,
+        "n": 4
+      },
+      "cow_milk_engine": {
+        "mean_delta": -4675.5,
+        "median_delta": -4485.5,
+        "n": 4
+      },
+      "melon_sniper": {
+        "mean_delta": -732.75,
+        "median_delta": -935.0,
+        "n": 4
+      },
+      "full_production_agent": {
+        "mean_delta": -3683.5,
+        "median_delta": -3800.5,
+        "n": 4
+      }
+    },
+    "seat_breakdown": {
+      "0": {
+        "mean_delta": -5815.9,
+        "median_delta": -8389.0,
+        "n": 10
+      },
+      "1": {
+        "mean_delta": -5785.3,
+        "median_delta": -7217.5,
+        "n": 10
+      }
+    },
+    "safety_audit": {
+      "total_animal_escapes": 0,
+      "max_market_orders_turn": 10,
+      "passed_safety": true
+    }
+  }
+}

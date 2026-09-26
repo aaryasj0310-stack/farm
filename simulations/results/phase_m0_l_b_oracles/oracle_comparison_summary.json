@@ -1,0 +1,161 @@
+{
+  "phase": "M0-L-B",
+  "description": "Economic Bottleneck Oracle Validation Counterfactual Campaign",
+  "baseline_commit": "8e481849f7abbe1e913a9a0c0eb565048582944c",
+  "baseline_mean_cash": 109066.17,
+  "oracle_evaluations": {
+    "Oracle_1_SW_Productive_Capacity": {
+      "title": "SW Unlock & Productive Cultivation",
+      "evaluated_arms": {
+        "Arm1B_Unlock_D10": {
+          "n": 20,
+          "mean_delta": -6945.2,
+          "median_delta": -7184.0,
+          "record": {
+            "wins": 2,
+            "losses": 18,
+            "ties": 0,
+            "win_rate": 0.1
+          },
+          "sw_purchase_rate": 0.0
+        },
+        "Arm1E_P41_Zonal": {
+          "n": 20,
+          "mean_delta": -10574.0,
+          "median_delta": -10347.0,
+          "record": {
+            "wins": 0,
+            "losses": 20,
+            "ties": 0,
+            "win_rate": 0.0
+          },
+          "sw_purchase_rate": 1.0
+        }
+      },
+      "conclusion": "FALSIFIED_VALUE_TRAP",
+      "measured_recoverable_cash": 0.0,
+      "findings": "SW expansion incurs $2,000 upfront land sink and diverts critical labor and water from high-yield core melons/strawberries. P4.1 Zonal causes -$10,574 paired loss with 0 wins across 20 matches."
+    },
+    "Oracle_2_Worker_Movement_Reduction": {
+      "title": "Worker Locality & Route Compaction",
+      "evaluated_arms": {
+        "Arm2B_Soft_Locality_100Match": {
+          "n": 100,
+          "mean_delta": 1974.95,
+          "median_delta": 1594.5,
+          "record": {
+            "wins": 58,
+            "losses": 42,
+            "ties": 0,
+            "win_rate": 0.58
+          },
+          "movement_shift": {
+            "travel_overhead_drop_pp": 2.12,
+            "productive_gain_actions": 77.5
+          },
+          "seed_clustered_ci_95": [
+            -427.04,
+            4376.94
+          ]
+        },
+        "Arm2C_Persistent_Locality_Pilot": {
+          "n": 20,
+          "mean_delta": -7268.05,
+          "median_delta": -8205.5,
+          "record": {
+            "wins": 0,
+            "losses": 20,
+            "ties": 0,
+            "win_rate": 0.0
+          }
+        }
+      },
+      "conclusion": "PARTIALLY_RECOVERABLE_POSITIVE",
+      "measured_recoverable_cash": 1974.95,
+      "theoretical_upper_bound": 42297.0,
+      "findings": "Rigid territorial pinning is catastrophic (-$7,268). Soft workload-aware locality successfully recovers +$1,974.95 mean cash (+58W / 42L) by converting 161 moves into 77.5 extra productive actions."
+    },
+    "Oracle_3_Crop_Portfolio_Specialization": {
+      "title": "Carrot & Tomato Suppression vs Cash Crop Allocation",
+      "evaluated_arms": {
+        "Arm3B_Carrot_Suppressed": {
+          "n": 20,
+          "mean_delta": -6495.65,
+          "median_delta": -9387.5,
+          "record": {
+            "wins": 4,
+            "losses": 16,
+            "ties": 0,
+            "win_rate": 0.2
+          }
+        },
+        "Arm3C_Tomato_Suppressed": {
+          "n": 20,
+          "mean_delta": -3285.45,
+          "median_delta": -2544.0,
+          "record": {
+            "wins": 6,
+            "losses": 14,
+            "ties": 0,
+            "win_rate": 0.3
+          }
+        },
+        "Arm3D_Full_Specialization": {
+          "n": 20,
+          "mean_delta": -5800.6,
+          "median_delta": -8389.0,
+          "record": {
+            "wins": 5,
+            "losses": 15,
+            "ties": 0,
+            "win_rate": 0.25
+          }
+        }
+      },
+      "conclusion": "FALSIFIED_VALUE_TRAP",
+      "measured_recoverable_cash": 0.0,
+      "findings": "Carrots and tomatoes are essential liquidity engines (Days 2-8) and endgame harvesters (Days 25-28). Suppressing them causes -$5,800 to -$6,495 loss due to cash starvation and late-season tile dormancy."
+    },
+    "Oracle_4_On_Farm_Wheat_Feed_Bank": {
+      "title": "Dedicated Wheat Feed Bank vs Market Procurement",
+      "evaluated_arms": {
+        "Arm4B_Buffer_8Days": {
+          "n": 20,
+          "mean_delta": -15579.95,
+          "median_delta": -14744.0,
+          "record": {
+            "wins": 0,
+            "losses": 20,
+            "ties": 0,
+            "win_rate": 0.0
+          }
+        },
+        "Arm4C_Buffer_14Days": {
+          "n": 20,
+          "mean_delta": -28728.75,
+          "median_delta": -22338.5,
+          "record": {
+            "wins": 0,
+            "losses": 20,
+            "ties": 0,
+            "win_rate": 0.0
+          }
+        },
+        "Arm4D_Expanded_Acreage_12T": {
+          "n": 20,
+          "mean_delta": -19363.8,
+          "median_delta": -19352.5,
+          "record": {
+            "wins": 0,
+            "losses": 20,
+            "ties": 0,
+            "win_rate": 0.0
+          }
+        }
+      },
+      "conclusion": "FALSIFIED_VALUE_TRAP",
+      "measured_recoverable_cash": 0.0,
+      "findings": "Baseline is already net-positive cash (+$6,059) on wheat trading. Expanding feed buffering causes shed saturation and mass market wheat over-purchasing (-$15,579 to -$28,728). Planting extra wheat directly cannibalizes melon profits."
+    }
+  }
+}

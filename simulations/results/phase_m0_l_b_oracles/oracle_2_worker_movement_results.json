@@ -1,0 +1,109 @@
+{
+  "Arm2B_Soft_Locality": {
+    "n_matches": 100,
+    "treatment_mean_cash": 111041.12,
+    "baseline_mean_cash": 109066.17,
+    "mean_paired_gain": 1974.95,
+    "median_paired_gain": 1594.5,
+    "std_paired_gain": 6758.55906042348,
+    "record": {
+      "wins": 58,
+      "losses": 42,
+      "ties": 0,
+      "win_rate": 0.58
+    },
+    "seed_clustered_ci_95": {
+      "mean": 1974.95,
+      "se": 1061.886612198622,
+      "df": 9,
+      "t_crit": 2.262,
+      "ci_lower": -427.0375167932832,
+      "ci_upper": 4376.937516793283
+    },
+    "opponent_breakdown": {
+      "pass": {
+        "mean_delta": 3572.55,
+        "median_delta": 3519.5,
+        "n": 20
+      },
+      "pure_wheat_rush": {
+        "mean_delta": 2662.5,
+        "median_delta": 3037.5,
+        "n": 20
+      },
+      "cow_milk_engine": {
+        "mean_delta": 12.8,
+        "median_delta": -1209.0,
+        "n": 20
+      },
+      "melon_sniper": {
+        "mean_delta": 3727.35,
+        "median_delta": 4907.0,
+        "n": 20
+      },
+      "full_production_agent": {
+        "mean_delta": -100.45,
+        "median_delta": 554.0,
+        "n": 20
+      }
+    },
+    "seat_breakdown": {
+      "0": {
+        "mean_delta": 1577.04,
+        "median_delta": 1431.5,
+        "n": 50
+      },
+      "1": {
+        "mean_delta": 2372.86,
+        "median_delta": 2094.5,
+        "n": 50
+      }
+    },
+    "safety_audit": {
+      "total_animal_escapes": 0,
+      "max_market_orders_turn": 10,
+      "passed_safety": true
+    },
+    "movement_metrics": {
+      "mean_move_count": 4602.13,
+      "mean_productive_count": 2262.04,
+      "mean_total_actions": 7381.66,
+      "travel_pct": 62.35,
+      "productive_pct": 30.64
+    }
+  },
+  "Arm2C_Persistent_Locality": {
+    "n_matches": 20,
+    "mean_paired_gain": -7268.05,
+    "median_paired_gain": -8205.5,
+    "record": {
+      "wins": 0,
+      "losses": 20,
+      "ties": 0,
+      "win_rate": 0.0
+    },
+    "seed_clustered_ci_95": {
+      "ci_lower": -18125.96,
+      "ci_upper": 3589.86
+    },
+    "status": "PILOT_TERMINATED",
+    "reason": "Severe territorial lock-in preventing urgent chore service across boundaries"
+  },
+  "Arm2D_Combined_Locality": {
+    "n_matches": 20,
+    "mean_paired_gain": 228.65,
+    "median_paired_gain": -966.5,
+    "record": {
+      "wins": 8,
+      "losses": 12,
+      "ties": 0,
+      "win_rate": 0.4
+    },
+    "seed_clustered_ci_95": {
+      "ci_lower": -7155.44,
+      "ci_upper": 7612.74
+    },
+    "status": "PILOT_SUPERSEDED",
+    "reason": "Equivalent to Arm 2B soft locality"
+  }
+}

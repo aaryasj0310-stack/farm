@@ -1,0 +1,209 @@
+{
+  "Arm4B_Buffer_8Days": {
+    "n_matches": 20,
+    "treatment_mean_cash": 92345.6,
+    "baseline_mean_cash": 107925.55,
+    "mean_paired_gain": -15579.95,
+    "median_paired_gain": -14744.0,
+    "std_paired_gain": 8160.897593015379,
+    "record": {
+      "wins": 0,
+      "losses": 20,
+      "ties": 0,
+      "win_rate": 0.0
+    },
+    "seed_clustered_ci_95": {
+      "mean": -15579.95,
+      "se": 4682.849999999999,
+      "df": 1,
+      "t_crit": 12.706,
+      "ci_lower": -75080.24209999999,
+      "ci_upper": 43920.342099999994
+    },
+    "opponent_breakdown": {
+      "pass": {
+        "mean_delta": -17582.5,
+        "median_delta": -18136.0,
+        "n": 4
+      },
+      "pure_wheat_rush": {
+        "mean_delta": -22339.0,
+        "median_delta": -22355.0,
+        "n": 4
+      },
+      "cow_milk_engine": {
+        "mean_delta": -7775.25,
+        "median_delta": -7999.0,
+        "n": 4
+      },
+      "melon_sniper": {
+        "mean_delta": -16903.0,
+        "median_delta": -16928.0,
+        "n": 4
+      },
+      "full_production_agent": {
+        "mean_delta": -13300.0,
+        "median_delta": -12725.5,
+        "n": 4
+      }
+    },
+    "seat_breakdown": {
+      "0": {
+        "mean_delta": -15529.2,
+        "median_delta": -14744.0,
+        "n": 10
+      },
+      "1": {
+        "mean_delta": -15630.7,
+        "median_delta": -15893.0,
+        "n": 10
+      }
+    },
+    "safety_audit": {
+      "total_animal_escapes": 0,
+      "max_market_orders_turn": 10,
+      "passed_safety": true
+    },
+    "wheat_metrics": {
+      "mean_wheat_bought_qty": 1071.0
+    }
+  },
+  "Arm4C_Buffer_14Days": {
+    "n_matches": 20,
+    "treatment_mean_cash": 79196.8,
+    "baseline_mean_cash": 107925.55,
+    "mean_paired_gain": -28728.75,
+    "median_paired_gain": -22338.5,
+    "std_paired_gain": 14878.161300075108,
+    "record": {
+      "wins": 0,
+      "losses": 20,
+      "ties": 0,
+      "win_rate": 0.0
+    },
+    "seed_clustered_ci_95": {
+      "mean": -28728.75,
+      "se": 10842.650000000001,
+      "df": 1,
+      "t_crit": 12.706,
+      "ci_lower": -166495.4609,
+      "ci_upper": 109037.9609
+    },
+    "opponent_breakdown": {
+      "pass": {
+        "mean_delta": -20743.75,
+        "median_delta": -21302.5,
+        "n": 4
+      },
+      "pure_wheat_rush": {
+        "mean_delta": -22847.5,
+        "median_delta": -22909.0,
+        "n": 4
+      },
+      "cow_milk_engine": {
+        "mean_delta": -33215.25,
+        "median_delta": -33439.0,
+        "n": 4
+      },
+      "melon_sniper": {
+        "mean_delta": -33407.75,
+        "median_delta": -33417.5,
+        "n": 4
+      },
+      "full_production_agent": {
+        "mean_delta": -33429.5,
+        "median_delta": -33546.5,
+        "n": 4
+      }
+    },
+    "seat_breakdown": {
+      "0": {
+        "mean_delta": -28782.7,
+        "median_delta": -22338.5,
+        "n": 10
+      },
+      "1": {
+        "mean_delta": -28674.8,
+        "median_delta": -22215.5,
+        "n": 10
+      }
+    },
+    "safety_audit": {
+      "total_animal_escapes": 0,
+      "max_market_orders_turn": 10,
+      "passed_safety": true
+    },
+    "wheat_metrics": {
+      "mean_wheat_bought_qty": 1576.6
+    }
+  },
+  "Arm4D_Expanded_Acreage_12T": {
+    "n_matches": 20,
+    "treatment_mean_cash": 88561.75,
+    "baseline_mean_cash": 107925.55,
+    "mean_paired_gain": -19363.8,
+    "median_paired_gain": -19352.5,
+    "std_paired_gain": 6400.632819043015,
+    "record": {
+      "wins": 0,
+      "losses": 20,
+      "ties": 0,
+      "win_rate": 0.0
+    },
+    "seed_clustered_ci_95": {
+      "mean": -19363.8,
+      "se": 598.2000000000007,
+      "df": 1,
+      "t_crit": 12.706,
+      "ci_lower": -26964.529200000008,
+      "ci_upper": -11763.07079999999
+    },
+    "opponent_breakdown": {
+      "pass": {
+        "mean_delta": -17174.5,
+        "median_delta": -17727.0,
+        "n": 4
+      },
+      "pure_wheat_rush": {
+        "mean_delta": -23451.0,
+        "median_delta": -23456.5,
+        "n": 4
+      },
+      "cow_milk_engine": {
+        "mean_delta": -19432.75,
+        "median_delta": -19209.0,
+        "n": 4
+      },
+      "melon_sniper": {
+        "mean_delta": -15264.0,
+        "median_delta": -15284.5,
+        "n": 4
+      },
+      "full_production_agent": {
+        "mean_delta": -21496.75,
+        "median_delta": -21429.5,
+        "n": 4
+      }
+    },
+    "seat_breakdown": {
+      "0": {
+        "mean_delta": -19419.1,
+        "median_delta": -19352.5,
+        "n": 10
+      },
+      "1": {
+        "mean_delta": -19308.5,
+        "median_delta": -19352.5,
+        "n": 10
+      }
+    },
+    "safety_audit": {
+      "total_animal_escapes": 0,
+      "max_market_orders_turn": 10,
+      "passed_safety": true
+    },
+    "wheat_metrics": {
+      "mean_wheat_bought_qty": 1052.7
+    }
+  }
+}
