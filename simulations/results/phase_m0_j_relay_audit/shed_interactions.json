@@ -1,0 +1,2026 @@
+{
+  "total_deposits": 2645,
+  "total_pickups": 11130,
+  "deposit_item_counts": {
+    "WHEAT": 781,
+    "WOOL": 107,
+    "MILK": 170,
+    "FERTILIZER": 841,
+    "MELON": 31,
+    "CARROT": 506,
+    "STRAWBERRY": 162,
+    "TOMATO": 47
+  },
+  "deposit_item_units": {
+    "WHEAT": 2277,
+    "WOOL": 421,
+    "MILK": 507,
+    "FERTILIZER": 847,
+    "MELON": 201,
+    "CARROT": 1030,
+    "STRAWBERRY": 353,
+    "TOMATO": 84
+  },
+  "sample_deposits": [
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 382,
+      "day": 15,
+      "hour": 22,
+      "worker_idx": 12,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 44,
+      "post_shed": 47
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 479,
+      "day": 19,
+      "hour": 23,
+      "worker_idx": 4,
+      "item": "WOOL",
+      "qty": 4,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 4,
+      "pre_shed": 0,
+      "post_shed": 4
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 575,
+      "day": 23,
+      "hour": 23,
+      "worker_idx": 7,
+      "item": "WHEAT",
+      "qty": 4,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 4,
+      "pre_shed": 44,
+      "post_shed": 48
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 575,
+      "day": 23,
+      "hour": 23,
+      "worker_idx": 12,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 48,
+      "post_shed": 51
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 598,
+      "day": 24,
+      "hour": 22,
+      "worker_idx": 4,
+      "item": "MILK",
+      "qty": 2,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 695,
+      "day": 28,
+      "hour": 23,
+      "worker_idx": 1,
+      "item": "FERTILIZER",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 695,
+      "day": 28,
+      "hour": 23,
+      "worker_idx": 1,
+      "item": "MILK",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 695,
+      "day": 28,
+      "hour": 23,
+      "worker_idx": 8,
+      "item": "WHEAT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 24,
+      "post_shed": 26
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 695,
+      "day": 28,
+      "hour": 23,
+      "worker_idx": 12,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 26,
+      "post_shed": 29
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 699,
+      "day": 29,
+      "hour": 3,
+      "worker_idx": 0,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 701,
+      "day": 29,
+      "hour": 5,
+      "worker_idx": 10,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 702,
+      "day": 29,
+      "hour": 6,
+      "worker_idx": 8,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 703,
+      "day": 29,
+      "hour": 7,
+      "worker_idx": 0,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 708,
+      "day": 29,
+      "hour": 12,
+      "worker_idx": 5,
+      "item": "MELON",
+      "qty": 6,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 6,
+      "pre_shed": 0,
+      "post_shed": 6
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 710,
+      "day": 29,
+      "hour": 14,
+      "worker_idx": 4,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 711,
+      "day": 29,
+      "hour": 15,
+      "worker_idx": 3,
+      "item": "WHEAT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 711,
+      "day": 29,
+      "hour": 15,
+      "worker_idx": 8,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 712,
+      "day": 29,
+      "hour": 16,
+      "worker_idx": 9,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 712,
+      "day": 29,
+      "hour": 16,
+      "worker_idx": 12,
+      "item": "CARROT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 0,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 2,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 3,
+      "post_shed": 4
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 2,
+      "item": "CARROT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 10,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 1,
+      "item": "WHEAT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 1,
+      "item": "CARROT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 4,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 5,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 1,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 6,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 2,
+      "post_shed": 5
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 717,
+      "day": 29,
+      "hour": 21,
+      "worker_idx": 7,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat0",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 0,
+      "step": 718,
+      "day": 29,
+      "hour": 22,
+      "worker_idx": 3,
+      "item": "WOOL",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 382,
+      "day": 15,
+      "hour": 22,
+      "worker_idx": 2,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 52,
+      "post_shed": 53
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 383,
+      "day": 15,
+      "hour": 23,
+      "worker_idx": 0,
+      "item": "WOOL",
+      "qty": 4,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 4,
+      "pre_shed": 0,
+      "post_shed": 4
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 383,
+      "day": 15,
+      "hour": 23,
+      "worker_idx": 4,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 52,
+      "post_shed": 55
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 479,
+      "day": 19,
+      "hour": 23,
+      "worker_idx": 3,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 52,
+      "post_shed": 53
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 503,
+      "day": 20,
+      "hour": 23,
+      "worker_idx": 5,
+      "item": "MILK",
+      "qty": 2,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 526,
+      "day": 21,
+      "hour": 22,
+      "worker_idx": 5,
+      "item": "WHEAT",
+      "qty": 2,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 52,
+      "post_shed": 54
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 527,
+      "day": 21,
+      "hour": 23,
+      "worker_idx": 1,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 52,
+      "post_shed": 55
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 575,
+      "day": 23,
+      "hour": 23,
+      "worker_idx": 11,
+      "item": "WOOL",
+      "qty": 4,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 4,
+      "pre_shed": 0,
+      "post_shed": 4
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 599,
+      "day": 24,
+      "hour": 23,
+      "worker_idx": 2,
+      "item": "MILK",
+      "qty": 6,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 6,
+      "pre_shed": 0,
+      "post_shed": 6
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 599,
+      "day": 24,
+      "hour": 23,
+      "worker_idx": 6,
+      "item": "WHEAT",
+      "qty": 4,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 4,
+      "pre_shed": 52,
+      "post_shed": 56
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 599,
+      "day": 24,
+      "hour": 23,
+      "worker_idx": 12,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 56,
+      "post_shed": 59
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 701,
+      "day": 29,
+      "hour": 5,
+      "worker_idx": 10,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 702,
+      "day": 29,
+      "hour": 6,
+      "worker_idx": 12,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 704,
+      "day": 29,
+      "hour": 8,
+      "worker_idx": 3,
+      "item": "STRAWBERRY",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 705,
+      "day": 29,
+      "hour": 9,
+      "worker_idx": 10,
+      "item": "MILK",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 705,
+      "day": 29,
+      "hour": 9,
+      "worker_idx": 11,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 706,
+      "day": 29,
+      "hour": 10,
+      "worker_idx": 4,
+      "item": "TOMATO",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 708,
+      "day": 29,
+      "hour": 12,
+      "worker_idx": 0,
+      "item": "STRAWBERRY",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 708,
+      "day": 29,
+      "hour": 12,
+      "worker_idx": 5,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 708,
+      "day": 29,
+      "hour": 12,
+      "worker_idx": 5,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 708,
+      "day": 29,
+      "hour": 12,
+      "worker_idx": 12,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 1,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 709,
+      "day": 29,
+      "hour": 13,
+      "worker_idx": 2,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 709,
+      "day": 29,
+      "hour": 13,
+      "worker_idx": 6,
+      "item": "WHEAT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 710,
+      "day": 29,
+      "hour": 14,
+      "worker_idx": 4,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 711,
+      "day": 29,
+      "hour": 15,
+      "worker_idx": 9,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 711,
+      "day": 29,
+      "hour": 15,
+      "worker_idx": 9,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 711,
+      "day": 29,
+      "hour": 15,
+      "worker_idx": 10,
+      "item": "MILK",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 711,
+      "day": 29,
+      "hour": 15,
+      "worker_idx": 11,
+      "item": "WOOL",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 712,
+      "day": 29,
+      "hour": 16,
+      "worker_idx": 1,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 7,
+      "item": "CARROT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 8,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 715,
+      "day": 29,
+      "hour": 19,
+      "worker_idx": 3,
+      "item": "CARROT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 0,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 4,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 1,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat0",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 0,
+      "step": 718,
+      "day": 29,
+      "hour": 22,
+      "worker_idx": 5,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 382,
+      "day": 15,
+      "hour": 22,
+      "worker_idx": 12,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 44,
+      "post_shed": 47
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 479,
+      "day": 19,
+      "hour": 23,
+      "worker_idx": 4,
+      "item": "WOOL",
+      "qty": 4,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 4,
+      "pre_shed": 0,
+      "post_shed": 4
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 575,
+      "day": 23,
+      "hour": 23,
+      "worker_idx": 7,
+      "item": "WHEAT",
+      "qty": 4,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 4,
+      "pre_shed": 44,
+      "post_shed": 48
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 575,
+      "day": 23,
+      "hour": 23,
+      "worker_idx": 12,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 48,
+      "post_shed": 51
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 598,
+      "day": 24,
+      "hour": 22,
+      "worker_idx": 4,
+      "item": "MILK",
+      "qty": 2,
+      "op": "PLACE",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 695,
+      "day": 28,
+      "hour": 23,
+      "worker_idx": 1,
+      "item": "FERTILIZER",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 695,
+      "day": 28,
+      "hour": 23,
+      "worker_idx": 1,
+      "item": "MILK",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 695,
+      "day": 28,
+      "hour": 23,
+      "worker_idx": 12,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 24,
+      "post_shed": 27
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 699,
+      "day": 29,
+      "hour": 3,
+      "worker_idx": 0,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 701,
+      "day": 29,
+      "hour": 5,
+      "worker_idx": 10,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 702,
+      "day": 29,
+      "hour": 6,
+      "worker_idx": 8,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 703,
+      "day": 29,
+      "hour": 7,
+      "worker_idx": 0,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 708,
+      "day": 29,
+      "hour": 12,
+      "worker_idx": 5,
+      "item": "MELON",
+      "qty": 6,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 6,
+      "pre_shed": 0,
+      "post_shed": 6
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 710,
+      "day": 29,
+      "hour": 14,
+      "worker_idx": 4,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 711,
+      "day": 29,
+      "hour": 15,
+      "worker_idx": 3,
+      "item": "WHEAT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 711,
+      "day": 29,
+      "hour": 15,
+      "worker_idx": 8,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 712,
+      "day": 29,
+      "hour": 16,
+      "worker_idx": 9,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 712,
+      "day": 29,
+      "hour": 16,
+      "worker_idx": 12,
+      "item": "CARROT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 0,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 2,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 3,
+      "post_shed": 4
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 2,
+      "item": "CARROT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 713,
+      "day": 29,
+      "hour": 17,
+      "worker_idx": 10,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 1,
+      "item": "WHEAT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 1,
+      "item": "CARROT",
+      "qty": 2,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 4,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 0,
+      "post_shed": 1
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 5,
+      "item": "FERTILIZER",
+      "qty": 1,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 1,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 716,
+      "day": 29,
+      "hour": 20,
+      "worker_idx": 6,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 2,
+      "post_shed": 5
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 717,
+      "day": 29,
+      "hour": 21,
+      "worker_idx": 7,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        5,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_cow_milk_engine_seat1",
+      "seed": 96501,
+      "opponent": "cow_milk_engine",
+      "seat": 1,
+      "step": 718,
+      "day": 29,
+      "hour": 22,
+      "worker_idx": 3,
+      "item": "WOOL",
+      "qty": 3,
+      "op": "DROP",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 0,
+      "post_shed": 3
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat1",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "step": 382,
+      "day": 15,
+      "hour": 22,
+      "worker_idx": 2,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 52,
+      "post_shed": 53
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat1",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "step": 383,
+      "day": 15,
+      "hour": 23,
+      "worker_idx": 0,
+      "item": "WOOL",
+      "qty": 4,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 4,
+      "pre_shed": 0,
+      "post_shed": 4
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat1",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "step": 383,
+      "day": 15,
+      "hour": 23,
+      "worker_idx": 4,
+      "item": "WHEAT",
+      "qty": 3,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 3,
+      "pre_shed": 52,
+      "post_shed": 55
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat1",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "step": 479,
+      "day": 19,
+      "hour": 23,
+      "worker_idx": 3,
+      "item": "WHEAT",
+      "qty": 1,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 1,
+      "pre_shed": 52,
+      "post_shed": 53
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat1",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "step": 503,
+      "day": 20,
+      "hour": 23,
+      "worker_idx": 5,
+      "item": "MILK",
+      "qty": 2,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 0,
+      "post_shed": 2
+    },
+    {
+      "match_id": "96501_pure_wheat_rush_seat1",
+      "seed": 96501,
+      "opponent": "pure_wheat_rush",
+      "seat": 1,
+      "step": 526,
+      "day": 21,
+      "hour": 22,
+      "worker_idx": 5,
+      "item": "WHEAT",
+      "qty": 2,
+      "op": "PLACE",
+      "pos": [
+        4,
+        4
+      ],
+      "pre_inv": 2,
+      "pre_shed": 52,
+      "post_shed": 54
+    }
+  ]
+}

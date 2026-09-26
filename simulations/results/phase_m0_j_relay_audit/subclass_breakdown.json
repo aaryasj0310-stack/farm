@@ -1,0 +1,38 @@
+{
+  "total_candidates_by_subclass": {
+    "WHEAT_FEED": 10152,
+    "PRODUCT_LOGISTICS": 13285,
+    "FERTILIZER_APPLICATION": 10933
+  },
+  "order_valid_by_subclass": {
+    "WHEAT_FEED": 925,
+    "FERTILIZER_APPLICATION": 962,
+    "PRODUCT_LOGISTICS": 1102
+  },
+  "subclass_details": {
+    "WHEAT_FEED": {
+      "total": 10152,
+      "order_valid": 925,
+      "explanation": "Wheat in baseline is purchased at market (delivering directly to shed). Field workers rarely deposit wheat into shed during active feeding season."
+    },
+    "FERTILIZER_APPLICATION": {
+      "total": 10933,
+      "order_valid": 962,
+      "explanation": "Fertilizer collected from animals is deposited to shed for night selling or applied directly from worker inventory."
+    },
+    "PRODUCT_LOGISTICS": {
+      "total": 13285,
+      "order_valid": 1102,
+      "explanation": "Saleable harvested products (berries, carrots, melons, milk, wool) are deposited to shed to be SOLD by MarketBrain; picking them back out has zero economic value."
+    },
+    "ANIMAL_PLACEMENT": {
+      "total": 0,
+      "order_valid": 0,
+      "explanation": "Livestock bought at market lands directly in shed; workers do not deposit animals into shed."
+    },
+    "OTHER": {
+      "total": 0,
+      "order_valid": 0
+    }
+  }
+}

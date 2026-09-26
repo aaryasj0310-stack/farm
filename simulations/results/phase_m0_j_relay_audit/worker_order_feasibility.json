@@ -1,0 +1,24 @@
+{
+  "total_checked": 34370,
+  "feasibility_breakdown": {
+    "ORDER_REVERSED": 15652,
+    "SAME_WORKER_IMPOSSIBLE": 2645,
+    "WORKER_NOT_AT_SHED": 13079,
+    "ORDER_VALID": 2989,
+    "NO_FREE_ACTION": 5
+  },
+  "feasibility_percentages": {
+    "ORDER_REVERSED": "45.54%",
+    "SAME_WORKER_IMPOSSIBLE": "7.70%",
+    "WORKER_NOT_AT_SHED": "38.05%",
+    "ORDER_VALID": "8.70%",
+    "NO_FREE_ACTION": "0.01%"
+  },
+  "descriptions": {
+    "WORKER_NOT_AT_SHED": "Worker u_B > u_A is located elsewhere on farm, cannot pick up without teleporting.",
+    "ORDER_REVERSED": "Worker u_B < u_A executed before depositor u_A deposited into shed.",
+    "SAME_WORKER_IMPOSSIBLE": "Worker u_B == u_A cannot both deposit and pick up / use item in single turn.",
+    "NO_FREE_ACTION": "Worker u_B > u_A is at shed but already committed to higher priority task.",
+    "ORDER_VALID": "Worker u_B > u_A is at shed, executed idle/pass/drop, and could execute same-turn PICKUP."
+  }
+}

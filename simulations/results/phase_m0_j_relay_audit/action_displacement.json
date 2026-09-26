@@ -1,0 +1,10 @@
+{
+  "displaced_action_categories": {
+    "DROP": 1314,
+    "MOVE": 1152,
+    "PASS": 520,
+    "WATER": 5,
+    "LOW_PRIORITY_FALLBACK": 3
+  },
+  "analysis": "When order-valid relay opportunities occur (almost exclusively during Day 29 liquidation), candidate workers at the shed are performing DROP to liquidate their own goods or PASS. Replacing these actions with PICKUP would degrade liquidation or displace harvest delivery."
+}
