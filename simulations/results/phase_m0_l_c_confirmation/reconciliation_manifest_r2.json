@@ -1,0 +1,64 @@
+{
+  "phase": "M0-L-C-R2-FINAL-INTEGRITY",
+  "timestamp": "2026-09-26 21:00:00 UTC",
+  "provenance": {
+    "source_promotion_commit": "faa6cb99f66b2066e639806d0eabc72a0c7d7982",
+    "r1_reconciliation_commit": "312ee00b3111d77680588ec56f3e457e008f8303",
+    "production_defaults_preserved": {
+      "SOFT_WORKER_LOCALITY_MODE": "ON",
+      "MIDNIGHT_STORAGE_DUMP_MODE": "RESCUE",
+      "QUADRANT_HARD_BLOCK": [
+        4
+      ]
+    }
+  },
+  "verified_file_hashes": {
+    "raw_confirmation_paired_results": {
+      "path": "simulations\\results\\phase_m0_l_c_confirmation\\paired_results.json",
+      "sha256": "b13a55987285e07a99b5b4d31de49a5f78de813b7a22131906f8f35551161346",
+      "verified_match": true
+    },
+    "corrected_aggregate_statistics": {
+      "path": "simulations\\results\\phase_m0_l_c_confirmation\\aggregate_statistics.json",
+      "sha256": "a6cdd24c7b7a83b1ecae277349e62c5a844b8bcbf368dee36c8a25105f0d4f28"
+    },
+    "corrected_downside_forensics": {
+      "path": "simulations\\results\\phase_m0_l_c_confirmation\\downside_forensics.json",
+      "sha256": "2e0fb36c939cf54de116c8e960e17fd91b33af843094ced20bd17de21b9af245"
+    },
+    "corrected_release_gate_evaluation": {
+      "path": "simulations\\results\\phase_m0_l_c_confirmation\\release_gate_evaluation.json",
+      "sha256": "fbde9ba2281173b6e4f34b4544b4bd50011bc93201727330d25da59fc88680c1"
+    },
+    "reconciliation_script": {
+      "path": "D:\\website project\\kaggri ox\\scripts\\reconcile_phase_m0_l_c_r_evidence.py",
+      "sha256": "da9e3631f578ee8617327a69bfc50ce821c2bc379217dd7c0309a8adb3492ec0"
+    },
+    "reconciliation_unit_tests": {
+      "path": "agent\\tests\\test_phase_m0_l_c_r_reconciliation.py",
+      "sha256": "bc4b49e0dee8ce7e7408a128072435a8b8534a8170dfa7c1c1202b867fc15da2"
+    },
+    "release_test_results": {
+      "path": "simulations\\results\\phase_m0_l_c_release\\test_results.json",
+      "sha256": "148dccd33295d0352253eeda765b1cb65192dbf988fb6f6daa2a57ff269dbe79"
+    },
+    "official_submission_zip": {
+      "path": "dist\\submission.zip",
+      "sha256": "e7ff7c5a4b91364c10898cb8a22e4680c9330f1e30171593da2d1eed7dd4ed41"
+    }
+  },
+  "audited_release_disposition": {
+    "historical_promotion_status": "APPROVED_AND_PROMOTED_TO_PRODUCTION",
+    "historical_promotion_commit": "faa6cb99f66b2066e639806d0eabc72a0c7d7982",
+    "audited_release_disposition": "PROVISIONAL_PASS_UNVERIFIED_GATES",
+    "certification_status": "UNCONDITIONAL_CERTIFICATION_WITHHELD",
+    "recommendation": "MAINTAIN_PROVISIONAL_PRODUCTION_PENDING_TELEMETRY_CALIBRATION",
+    "gates_verified_pass_count": 7,
+    "gates_total_count": 8,
+    "unverified_gates": [
+      "gate_6_feed_floor_preserved"
+    ],
+    "failed_gates": [],
+    "summary": "7/8 gates VERIFIED PASS. 1 gate(s) UNVERIFIED (gate_6_feed_floor_preserved). Economic gain and animal survival are verified; unconditional release certification withheld due to feed buffer telemetry limitations."
+  }
+}

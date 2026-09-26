@@ -1,28 +1,32 @@
 {
   "gate_1_positive_mean_gain": {
     "passed": true,
+    "disposition": "VERIFIED PASS",
     "threshold": "> $0.00",
     "measured": 6815.59,
-    "status": "PASS"
+    "status": "VERIFIED PASS"
   },
   "gate_2_strictly_positive_ci_lower": {
     "passed": true,
+    "disposition": "VERIFIED PASS",
     "threshold": "> $0.00",
     "measured": 5380.77,
     "ci_95": [
       5380.77,
       8250.41
     ],
-    "status": "PASS"
+    "status": "VERIFIED PASS"
   },
   "gate_3_positive_paired_outcomes_70pct": {
     "passed": true,
+    "disposition": "VERIFIED PASS",
     "threshold": ">= 70.0%",
     "measured": "180/200 (90.0%)",
-    "status": "PASS"
+    "status": "VERIFIED PASS"
   },
   "gate_4_consistent_breakdowns": {
     "passed": true,
+    "disposition": "VERIFIED PASS",
     "threshold": "All 5 benchmark opponents have positive mean paired gain",
     "opponent_means": {
       "cow_milk_engine": 7292.78,
@@ -31,43 +35,64 @@
       "pass": 4606.08,
       "pure_wheat_rush": 10217.92
     },
-    "status": "PASS"
+    "status": "VERIFIED PASS"
   },
   "gate_5_no_animal_escapes": {
     "passed": true,
+    "disposition": "VERIFIED PASS",
     "threshold": "Treatment escapes == 0 and <= Control escapes",
-    "control_escapes": 0,
-    "treatment_escapes": 0,
-    "status": "PASS"
+    "control_total_escapes": 0,
+    "treatment_total_escapes": 0,
+    "control_max_single_match_escapes": 0,
+    "treatment_max_single_match_escapes": 0,
+    "status": "VERIFIED PASS"
   },
   "gate_6_feed_floor_preserved": {
-    "passed": true,
-    "threshold": "0 confirmed animal starvation deaths or escapes; feed quota intact",
-    "operational_metric": "Post-transition day-rollover animal survival (step % 24 == 23)",
-    "control_confirmed_starvation_deaths": 0,
-    "treatment_confirmed_starvation_deaths": 0,
-    "control_confirmed_escapes": 0,
-    "treatment_confirmed_escapes": 0,
-    "telemetry_clarification": "Unfed turn observations during intermediate hours prior to feeding do not represent missed feeding days. Confirmed animal starvation deaths and escapes were strictly 0 in both arms.",
-    "status": "PASS"
+    "passed": false,
+    "disposition": "UNVERIFIED",
+    "threshold": "0 starvation deaths and feed floor fully preserved",
+    "engine_survival_invariant_verified": true,
+    "confirmed_animal_escapes": 0,
+    "max_consecutive_unfed_observed": 1,
+    "engine_escape_threshold": 2,
+    "min_wheat_in_shed_observed": 0,
+    "total_starvation_hourly_observations": 67690,
+    "telemetry_distinction": "Hourly observation telemetry (starvation_events) counts turns where cunfed > 0 prior to midday feeding. Engine starvation deaths occur exclusively at midnight rollover when cunfed >= 2. Because highest cunfed observed was 1, exactly zero animals starved or escaped.",
+    "status": "UNVERIFIED",
+    "audit_notes": "Engine animal survival invariant is VERIFIED (0 starvation deaths, 0 escapes, max consecutive unfed days = 1 < 2). However, continuous positive feed buffer cannot be verified from archived telemetry (min_wheat_in_shed reached 0), and single-day feeding deferrals were recorded (max_consecutive_unfed = 1). Per M0-L-C-R2 protocol, this gate is designated UNVERIFIED rather than manufacturing unsupported claims."
   },
   "gate_7_market_order_cap": {
     "passed": true,
+    "disposition": "VERIFIED PASS",
     "threshold": "<= 10 market orders per turn",
     "max_measured_control": 10,
     "max_measured_treatment": 10,
-    "status": "PASS"
+    "status": "VERIFIED PASS"
   },
   "gate_8_runtime_packaging": {
     "passed": true,
-    "threshold": "Clean package build and isolated execution without unhandled exceptions",
+    "disposition": "VERIFIED PASS",
+    "threshold": "Clean package build, isolated execution without unhandled exceptions, and passing tests",
     "artifact_path": "dist/submission.zip",
     "sha256": "e7ff7c5a4b91364c10898cb8a22e4680c9330f1e30171593da2d1eed7dd4ed41",
     "isolated_720_step_cash": 110017.0,
     "unhandled_exceptions": 0,
     "order_cap_breaches": 0,
-    "status": "PASS"
+    "regression_suite_status": "ALL_TESTS_PASSING",
+    "status": "VERIFIED PASS"
   },
-  "all_prespecified_gates_passed": true,
-  "recommendation": "PROMOTE_TO_PRODUCTION"
+  "overall_evaluation": {
+    "historical_promotion_status": "APPROVED_AND_PROMOTED_TO_PRODUCTION",
+    "historical_promotion_commit": "faa6cb99f66b2066e639806d0eabc72a0c7d7982",
+    "audited_release_disposition": "PROVISIONAL_PASS_UNVERIFIED_GATES",
+    "certification_status": "UNCONDITIONAL_CERTIFICATION_WITHHELD",
+    "recommendation": "MAINTAIN_PROVISIONAL_PRODUCTION_PENDING_TELEMETRY_CALIBRATION",
+    "gates_verified_pass_count": 7,
+    "gates_total_count": 8,
+    "unverified_gates": [
+      "gate_6_feed_floor_preserved"
+    ],
+    "failed_gates": [],
+    "summary": "7/8 gates VERIFIED PASS. 1 gate(s) UNVERIFIED (gate_6_feed_floor_preserved). Economic gain and animal survival are verified; unconditional release certification withheld due to feed buffer telemetry limitations."
+  }
 }

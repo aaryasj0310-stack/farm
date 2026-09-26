@@ -1,17 +1,18 @@
 {
   "full_regression_suite": {
     "command": "pytest agent/tests/",
-    "total_tests": 1333,
-    "passed": 1333,
+    "total_tests": 1338,
+    "passed": 1338,
     "failed": 0,
     "skipped": 0,
+    "duration_seconds": 191.21,
     "status": "ALL_TESTS_PASSING"
   },
   "targeted_test_suites": {
     "test_soft_worker_locality": "10 / 10 PASSED",
     "test_adaptive_zonal_dispatch": "12 / 12 PASSED",
     "test_submission_package": "4 / 4 PASSED",
-    "test_phase_m0_l_c_r_reconciliation": "7 / 7 PASSED"
+    "test_phase_m0_l_c_r_reconciliation": "12 / 12 PASSED"
   },
   "overall_status": "ALL_TESTS_PASSING"
 }
