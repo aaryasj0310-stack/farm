@@ -1,0 +1,16 @@
+{
+  "full_shed_earlier_drop_blocked": {
+    "passed": true,
+    "farmer_wheat_dropped_and_discarded": true,
+    "shed_wheat_after": 0,
+    "hand_wheat_pickup_result": 0,
+    "note": "When shed is full, DROP fails to store item; subsequent same-turn PICKUP fails"
+  },
+  "earlier_pickup_frees_capacity_for_later_drop": {
+    "passed": true,
+    "farmer_picked_up_wheat": 2,
+    "hand_dropped_fertilizer_accepted": true,
+    "shed_total_units_after": 100,
+    "note": "Earlier PICKUP frees capacity, allowing later DROP in same turn to succeed into previously full shed"
+  }
+}
