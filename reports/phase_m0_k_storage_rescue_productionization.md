@@ -19,22 +19,23 @@ Phase M0-K successfully productionized and independently confirmed **M0-D Storag
 2. **Independent Confirmation on Fresh Protected Seeds**:
    - Evaluated the frozen candidate across 20 previously untouched seeds `96521–96540` $\times$ 5 opponents $\times$ 2 seats (200 scenario cells / 400 real-engine matches).
    - Final Results:
-     - Baseline C0 Mean: **$101,979.75**
-     - Candidate C2 Mean: **$106,984.40**
-     - Paired Mean Gain: **+$5,004.65**
+     - Baseline C0 Mean: **$101,979.75** ($\sigma = 8,958.89$, median = **$102,212.00**)
+     - Candidate C2 Mean: **$106,984.40** ($\sigma = 8,668.26$, median = **$107,423.50**)
+     - Paired Mean Gain: **+$5,004.65** ($\sigma = 4,782.72$)
      - Paired Median Gain: **+$5,361.00**
      - 95% Clustered CI: **[+$4,374.52, +$5,634.77]** (df=19, SE=$301.06)
      - Positive Seed Clusters: **20 / 20 (100.0%)**
      - Overall Win Rate: **171W / 0T / 29L (85.5% win rate)**
      - Discard Reduction: **7,536 $\to$ 538 units (-92.86%)**
-     - Net Inventory Spot Value Preserved: **+$832,052.00**
+     - Net Inventory Spot Value Preserved: **+$1,398,785.00** ($1,480,845.00 lost under C0 vs $82,060.00 lost under C2)
      - Animal Escapes / Starvations: **0**, Feed Floor Violations: **0**, Order Cap Breaches: **0**.
+     - *Telemetry Note (R1)*: Avoided inventory destruction valued at spot prices ($1,398,785.00) represents physical crop asset value saved, distinct from realized paired terminal cash gain (+$5,004.65). Historical whole-step transaction revenue and net unit deltas are documented and labeled as unverified in the R1 Addendum.
 
 3. **Production Promotion**:
    - All 8 explicit release acceptance gates passed.
    - `MIDNIGHT_STORAGE_DUMP_MODE = "RESCUE"` promoted to default in `agent/config.py` and `submission/config.py`.
    - Official multi-file submission package `dist/submission.zip` rebuilt and verified in isolated runtime ($115,554 match cash).
-   - Full test suite verified: **1,325 / 1,325 tests passed (100%)**.
+   - Full test suite verified: **1,335 / 1,335 tests passed (100%)**.
 
 ---
 
@@ -43,7 +44,7 @@ Phase M0-K successfully productionized and independently confirmed **M0-D Storag
 - **Repository**: `https://github.com/aaryasj0310-stack/farm`
 - **Branch**: `experiment/sw-forward-architecture-phase-a`
 - **Starting HEAD**: `451513efe88ede55717cea5ba2eb36decede4210`
-- **Frozen Candidate Commit**: `0a23f938b1d9bf5443a5ee9048a127ee7dcb46a9`
+- **Frozen Candidate Commit**: `0a23f93eaad59dad71723ff989d44fb9e132ca76`
 - **Python Runtime**: Python 3.12.10 (Windows)
 - **Engine Source**: `kaggle_environments/envs/kaggriculture/kaggriculture.py` (SHA256: `bc8a54879ef02c7ea64b8b333d6a976f0ea65c4949149d01f463f23bccee653e`)
 - **Working Tree**: Clean throughout all audit stages.
@@ -127,14 +128,15 @@ Storage Rescue operates cleanly within the existing modular pipeline:
 ## 7. Confirmation Economic Results
 
 ### Aggregate Statistics
-- **C0 Baseline Mean Cash**: $101,979.75 ($\sigma = 24,089.47$, median = $103,450.00)
-- **C2 Rescue Mean Cash**: $106,984.40 ($\sigma = 24,196.48$, median = $108,126.50)
-- **Paired Mean Gain**: **+$5,004.65**
+- **C0 Baseline Mean Cash**: $101,979.75 ($\sigma = 8,958.89$, median = $102,212.00)
+- **C2 Rescue Mean Cash**: $106,984.40 ($\sigma = 8,668.26$, median = $107,423.50)
+- **Paired Mean Gain**: **+$5,004.65** ($\sigma = 4,782.72$)
 - **Paired Median Gain**: **+$5,361.00**
 - **Win / Tie / Loss Record**: **171W / 0T / 29L (85.5% Win Rate)**
 - **Seed-Clustered Standard Error**: **$301.06** (df=19)
 - **95% Clustered Confidence Interval**: **[+$4,374.52, +$5,634.77]** ($p < 10^{-12}$)
 - **Positive Seed Clusters**: **20 / 20 (100.0%)**
+- *Statistical Property Note*: On skewed paired distributions, the median of paired differences ($\text{median}(\Delta) = +\$5,361.00$) does not equal the difference of individual medians ($\text{median}(C2) - \text{median}(C0) = \$107,423.50 - \$102,212.00 = +\$5,211.50$). The paired median represents the 50th percentile of match-by-match advantage.
 
 ### Clustered Performance by Seed (20 / 20 Positive)
 | Seed | Mean Gain | Seed | Mean Gain | Seed | Mean Gain | Seed | Mean Gain |
@@ -168,13 +170,14 @@ Storage Rescue operates cleanly within the existing modular pipeline:
 - **C2 Total Units Destroyed**: 538 units (mean 2.69 units/match)
 - **Units Preserved from Destruction**: **6,998 units**
 - **Destruction Elimination Rate**: **92.86%**
-- **C0 Actual Spot Value Lost**: $888,272.00
-- **C2 Actual Spot Value Lost**: $56,220.00
-- **Net Inventory Spot Value Preserved**: **+$832,052.00**
-- **Rescue Orders Emitted**: 1,232 orders
-- **Rescue Orders Executed**: 165 orders
-- **Wheat Units Sold**: 13,024 units
-- **Revenue Realized from Rescue Sales**: $941,919.00
+- **C0 Actual Spot Value Lost**: **$1,480,845.00**
+- **C2 Actual Spot Value Lost**: **$82,060.00**
+- **Net Inventory Spot Value Preserved**: **+$1,398,785.00**
+- **Telemetry Reconciliation (R1)**:
+  - The historical confirmation archive recorded `rescue_units_sold = -13024` and `rescue_revenue = 941919.0`.
+  - *Root Cause Analysis*: As diagnosed in R1-02 and R1-03, `rescue_units_sold` was computed using `shed_wheat_pre - shed_wheat_post` over the midnight step (Hour 23 $\to$ Hour 0). At midnight rollover, the game engine executes `_drop_inventories_to_shed`, dumping workers' carried wheat into the shed. When worker deposits exceed wheat sold, `shed_wheat_post` exceeds `shed_wheat_pre`, creating negative step deltas (-13,024). Inverting this sign to claim "13,024 units sold" was an invalid post-hoc heuristic.
+  - *Revenue Attribution*: The $941,919.00 figure measured total whole-step money deltas (`money_post - money_pre`) across all sales and purchases occurring on Hour 23 steps, rather than isolated rescue wheat order revenue.
+  - *Status*: Avoided physical inventory destruction (6,998 units; $1,398,785.00 spot value preserved) and terminal paired cash gain (+$5,004.65) are authoritative and verified. Direct historical rescue transaction counts and revenues are formally labeled **unverified** in the archived telemetry.
 
 ---
 
@@ -194,8 +197,9 @@ A critical safety risk of dumping wheat is starving animals or provoking escapes
 
 - **Engine Market Order Cap**: $\le 10$ orders per turn.
 - **Displaced Critical Orders**: **0**.
-- **Order Cap Breaches**: **0**.
+- **Order Cap Breaches**: **0** (verified across all turns of all matches).
 - **Arbitration Mechanism**: Storage rescue checks `len(market) < 10` before appending. If 10 market orders are already planned by the economic brain, rescue yields unconditionally.
+- **Telemetry Reconciliation (R1)**: The archived `market_safety.json` reported `orders_blocked_by_10_cap = 1067` because the script naively subtracted `executed` from `emitted`. In reality, orders unexecuted in the engine were due to inventory exhaustion (or net shed increase), not cap blocking. Gate 8 validation was confirmed across 100% of turns.
 
 ---
 
@@ -205,11 +209,15 @@ Across 200 paired scenario cells on fresh seeds:
 - **Wins**: 171 (85.5%)
 - **Losses**: 29 (14.5%)
 - **Zero-loss Opponents**: None, but `full_production_agent` had only 2 losses out of 40 (95.0% win rate).
-- **Forensic Diagnosis of Losses**:
-  - In all 29 loss cells, animal escapes were 0 and feed violations were 0.
-  - In 26 of 29 losses, discard was still reduced or identical under C2.
-  - The slight drawdowns (worst: -$11,884.00 on seed 96530 vs `pure_wheat_rush` seat 0) occurred due to market price feedback: selling wheat at Hour 23 altered market inventory and spot prices on Day+1 Hour 1, which in high-volatility seeds slightly lowered melon or strawberry liquidation values later in the week.
-  - The median drawdown in loss matches was small (-$2,014.00), vastly overshadowed by the typical win gain (+ $5,361.00 median overall gain).
+- **Observed Forensic Facts**:
+  1. In all 29 loss cells, animal escapes were 0 and feed reserve floor violations were 0.
+  2. In 26 of 29 losses, physical inventory discard was still reduced or equal under C2.
+  3. The median loss drawdown was modest (-$2,014.00), vastly outweighed by the typical win (+ $5,361.00 median paired gain).
+  4. The maximum loss occurred on Seed 96530 vs `pure_wheat_rush` Seat 0 (-$11,884.00), where C0 achieved $117,621.00 vs C2's $105,737.00.
+- **Forensic Hypotheses (Non-Definitive)**:
+  - *Hypothesis A (Market Equilibrium Shift)*: Proactively selling wheat at Hour 23 increases town market inventory by next morning, altering price elasticity curves for crops and slightly suppressing high-value melon or strawberry liquidation prices on volatile seeds.
+  - *Hypothesis B (Task Schedule Divergence)*: Earlier cash realization can trigger capital purchases (e.g. land, animals) a turn earlier, slightly altering worker dispatch locations and harvest delivery timing.
+  - These hypotheses explain observed variance without implying strategy invalidity, as C2 remains overwhelmingly superior across 85.5% of matches.
 
 ---
 
@@ -224,7 +232,7 @@ Across 200 paired scenario cells on fresh seeds:
 | **Gate 5: Discard Reduction** | $\ge 40.0\%$ | **92.86%** | **PASSED** |
 | **Gate 6: Animal Escape Parity** | $C2 \le C0$ | **C0=0, C2=0** | **PASSED** |
 | **Gate 7: Feed Floor Violations** | $== 0$ | **0 violations** | **PASSED** |
-| **Gate 8: Market Order Cap** | $\le 10$ orders | **0 breaches** | **PASSED** |
+| **Gate 8: Market Order Cap** | $\le 10$ orders | **0 breaches (verified)** | **PASSED** |
 
 **FINAL DISPOSITION: ALL 8 RELEASE GATES PASSED. PROMOTED TO PRODUCTION.**
 
@@ -259,11 +267,11 @@ Under baseline C0, **3,682 units** of inventory were discarded by the engine. Un
 **No.** Rescue sell orders are only appended if `len(market) < 10`. Displaced critical orders was exactly 0.
 
 ### Q5: What was the exact git commit where the candidate was frozen before fresh-seed testing?
-Commit **`0a23f938b1d9bf5443a5ee9048a127ee7dcb46a9`** (`release(kaggriculture): freeze M0-D storage rescue candidate`).
+Commit **`0a23f93eaad59dad71723ff989d44fb9e132ca76`** (`release(kaggriculture): freeze M0-D storage rescue candidate`).
 
 ### Q6: What were the paired mean, median, standard error, and 95% CI on fresh confirmation seeds?
-- Paired Mean Gain: **+$5,004.65**
-- Paired Median Gain: **+$5,361.00**
+- Paired Mean Gain: **+$5,004.65** ($\sigma = 4,782.72$)
+- Paired Median Gain: **+$5,361.00** (C0 Median = $102,212.00, C2 Median = $107,423.50)
 - Clustered Standard Error: **$301.06** (df=19)
 - 95% Clustered CI: **[+$4,374.52, +$5,634.77]**
 
@@ -293,13 +301,13 @@ Commit **`0a23f938b1d9bf5443a5ee9048a127ee7dcb46a9`** (`release(kaggriculture): 
 **92.86%** of all discards were eliminated.
 
 ### Q13: What was the total dollar value of inventory saved from destruction on fresh seeds?
-**+$832,052.00** of inventory spot value was preserved ($888,272 lost under C0 vs $56,220 under C2).
+**+$1,398,785.00** of inventory spot value was preserved ($1,480,845.00 lost under C0 vs $82,060.00 under C2). *(Note: Earlier draft narrative quoted $832,052 from preliminary partial calculations; the authoritative 200-pair archive records $1,398,785.00 preserved)*.
 
 ### Q14: How many rescue sell orders were emitted vs executed on fresh seeds?
-**1,232 orders emitted**, of which **165 orders executed** (when shed wheat was available and projected load exceeded 98).
+1,232 candidate rescue orders were recorded by the controller. Exact executed orders at the market boundary were not isolated in historical telemetry and are labeled unverified; see R1 Addendum for methodology reconciliation.
 
 ### Q15: How many units of wheat were sold through rescue orders and what revenue was realized?
-**13,024 units of wheat** were sold, generating **$941,919.00** in immediate cash revenue.
+Historical archive recorded -13,024 units due to whole-step worker deposits, and $941,919.00 whole-step cash changes. Both metrics are formally labeled unverified. Authoritative avoided physical destruction was 6,998 units ($1,398,785.00 spot value).
 
 ### Q16: Were there any feed reserve floor violations on fresh seeds?
 **Zero (0) violations.** The reserve floor of $\max(10, \text{animals} \times 2)$ was preserved on every step.
@@ -308,13 +316,13 @@ Commit **`0a23f938b1d9bf5443a5ee9048a127ee7dcb46a9`** (`release(kaggriculture): 
 **Zero (0) escapes and zero (0) starvation events** (C0 escapes = 0, C2 escapes = 0).
 
 ### Q18: Were there any market-order cap violations (orders > 10)?
-**Zero (0) violations.** The 10-order cap was respected on 100% of turns.
+**Zero (0) violations.** The 10-order cap was respected on 100% of turns. (The historical metric of 1,067 cap-blocked orders was a calculation artifact from subtracting unexecuted from emitted orders).
 
 ### Q19: What do downside forensics show for the losses on fresh seeds?
-The 29 losses (14.5%) were caused entirely by second-order market pricing dynamics (selling wheat at Hour 23 altered subsequent crop spot prices). No losses were caused by animal starvation, missing feed, or displaced orders.
+Observed facts: 0 animal escapes, 0 feed violations, discard reduced or equal in 26/29 losses. Hypothesized causes: secondary market price shifts and dispatch timing variance under earlier cash realization.
 
 ### Q20: Did the candidate pass all 8 release acceptance criteria?
 **Yes, all 8 criteria passed unconditionally.**
 
 ### Q21: What is the final production disposition of Storage Rescue?
-**PROMOTED TO PRODUCTION.** `MIDNIGHT_STORAGE_DUMP_MODE = "RESCUE"` is now the permanent production default in `agent/config.py`, mirrored in `submission/config.py`, verified in `dist/submission.zip`, and validated with a 100% passing test suite (1,325 tests).
+**PROMOTED TO PRODUCTION.** `MIDNIGHT_STORAGE_DUMP_MODE = "RESCUE"` is now the permanent production default in `agent/config.py`, mirrored in `submission/config.py`, verified in `dist/submission.zip`, and validated with a 100% passing test suite (1,335 tests).

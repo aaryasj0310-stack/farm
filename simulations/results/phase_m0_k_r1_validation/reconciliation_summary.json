@@ -1,0 +1,885 @@
+{
+  "immutability_audit": {
+    "status": "PASS",
+    "verified_count": 21,
+    "mismatches": []
+  },
+  "recomputed_statistics": {
+    "c0": {
+      "mean": 101979.75,
+      "std": 8958.88637291006,
+      "median": 102212.0,
+      "p10": 92096.7,
+      "p25": 98339.0,
+      "p50": 102212.0,
+      "p75": 106567.5,
+      "p90": 111090.0
+    },
+    "c2": {
+      "mean": 106984.395,
+      "std": 8668.255852047618,
+      "median": 107423.5,
+      "p10": 98345.5,
+      "p25": 103272.5,
+      "p50": 107423.5,
+      "p75": 111610.0,
+      "p90": 115118.4
+    },
+    "delta": {
+      "mean": 5004.645,
+      "std": 4782.720661254739,
+      "median": 5361.0,
+      "p10": -802.7999999999998,
+      "p25": 1489.0,
+      "p50": 5361.0,
+      "p75": 7980.0,
+      "p90": 10683.199999999999
+    },
+    "record": {
+      "wins": 171,
+      "ties": 0,
+      "losses": 29,
+      "win_rate_pct": 85.5
+    },
+    "clustered": {
+      "k_clusters": 20,
+      "df": 19,
+      "grand_mean": 5004.645,
+      "se_clustered": 301.0605641530585,
+      "t_crit": 2.093024,
+      "ci_95": [
+        4374.518013774109,
+        5634.771986225892
+      ],
+      "positive_clusters": 20,
+      "cluster_means": {
+        "96521": 5917.1,
+        "96522": 5408.0,
+        "96523": 1470.6,
+        "96524": 5079.8,
+        "96525": 4702.2,
+        "96526": 3838.8,
+        "96527": 4123.3,
+        "96528": 5559.6,
+        "96529": 5723.8,
+        "96530": 5459.7,
+        "96531": 7272.9,
+        "96532": 5622.4,
+        "96533": 4155.0,
+        "96534": 6956.7,
+        "96535": 4301.0,
+        "96536": 3934.4,
+        "96537": 4612.8,
+        "96538": 6289.0,
+        "96539": 6270.0,
+        "96540": 3395.8
+      }
+    },
+    "storage": {
+      "c0_discarded_units": 7536,
+      "c2_discarded_units": 538,
+      "units_saved": 6998,
+      "discard_reduction_pct": 92.86093418259024,
+      "c0_spot_value_lost": 1480845.0,
+      "c2_spot_value_lost": 82060.0,
+      "spot_value_preserved": 1398785.0
+    },
+    "flawed_historical_telemetry": {
+      "raw_sum_rescue_orders": 1232,
+      "raw_sum_rescue_executed": 165,
+      "raw_sum_rescue_units": -13024,
+      "raw_sum_rescue_revenue": 941919.0,
+      "flaw_explanation_units": "Computed via (shed_wheat_pre - shed_wheat_post) over step Hour 23->0. Engine _drop_inventories_to_shed deposits workers' wheat into shed at midnight rollover, making shed_wheat_post > shed_wheat_pre, yielding -13,024. Inverting sign to +13,024 is invalid.",
+      "flaw_explanation_revenue": "Computed via (money_post - money_pre) over step Hour 23->0. Measures total step cash delta across all sales and purchases, not rescue wheat revenue alone.",
+      "flaw_explanation_cap_blocked": "market_safety.json reported orders_blocked_by_10_cap = (emitted - executed) = 1,067. In kaggriculture, unexecuted orders are not blocked by the cap; controller only emits if len(market)<10."
+    }
+  },
+  "validation_replay_seed_97013": {
+    "seed": 97013,
+    "final_cash": 103544.0,
+    "rescue_steps": [
+      {
+        "day": 15,
+        "hour": 23,
+        "projected_load": 100,
+        "shed_wheat_pre": 44,
+        "shed_wheat_post": 83,
+        "rescue_order_emitted": true,
+        "rescue_order_requested": 2,
+        "flawed_step_wheat_sold": -39,
+        "flawed_step_cash_delta": 70.0,
+        "authoritative_turn_wheat_units_sold": 2,
+        "authoritative_turn_wheat_revenue": 70,
+        "all_committed_units_on_turn": [
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          }
+        ]
+      },
+      {
+        "day": 19,
+        "hour": 23,
+        "projected_load": 104,
+        "shed_wheat_pre": 44,
+        "shed_wheat_post": 71,
+        "rescue_order_emitted": true,
+        "rescue_order_requested": 6,
+        "flawed_step_wheat_sold": -27,
+        "flawed_step_cash_delta": 940.0,
+        "authoritative_turn_wheat_units_sold": 6,
+        "authoritative_turn_wheat_revenue": 205,
+        "all_committed_units_on_turn": [
+          {
+            "op": "SELL",
+            "item": "WOOL",
+            "price": 245
+          },
+          {
+            "op": "SELL",
+            "item": "WOOL",
+            "price": 245
+          },
+          {
+            "op": "SELL",
+            "item": "WOOL",
+            "price": 245
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 34
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 34
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 34
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 34
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 34
+          }
+        ]
+      },
+      {
+        "day": 23,
+        "hour": 23,
+        "projected_load": 116,
+        "shed_wheat_pre": 44,
+        "shed_wheat_post": 54,
+        "rescue_order_emitted": true,
+        "rescue_order_requested": 18,
+        "flawed_step_wheat_sold": -10,
+        "flawed_step_cash_delta": 1750.0,
+        "authoritative_turn_wheat_units_sold": 22,
+        "authoritative_turn_wheat_revenue": 770,
+        "all_committed_units_on_turn": [
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WOOL",
+            "price": 245
+          },
+          {
+            "op": "SELL",
+            "item": "WOOL",
+            "price": 245
+          },
+          {
+            "op": "SELL",
+            "item": "WOOL",
+            "price": 245
+          },
+          {
+            "op": "SELL",
+            "item": "WOOL",
+            "price": 245
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 34
+          }
+        ]
+      },
+      {
+        "day": 24,
+        "hour": 23,
+        "projected_load": 106,
+        "shed_wheat_pre": 44,
+        "shed_wheat_post": 52,
+        "rescue_order_emitted": true,
+        "rescue_order_requested": 8,
+        "flawed_step_wheat_sold": -8,
+        "flawed_step_cash_delta": 2182.0,
+        "authoritative_turn_wheat_units_sold": 8,
+        "authoritative_turn_wheat_revenue": 280,
+        "all_committed_units_on_turn": [
+          {
+            "op": "SELL",
+            "item": "MILK",
+            "price": 237
+          },
+          {
+            "op": "SELL",
+            "item": "MILK",
+            "price": 237
+          },
+          {
+            "op": "SELL",
+            "item": "MILK",
+            "price": 236
+          },
+          {
+            "op": "SELL",
+            "item": "STRAWBERRY",
+            "price": 239
+          },
+          {
+            "op": "SELL",
+            "item": "STRAWBERRY",
+            "price": 239
+          },
+          {
+            "op": "SELL",
+            "item": "STRAWBERRY",
+            "price": 238
+          },
+          {
+            "op": "SELL",
+            "item": "STRAWBERRY",
+            "price": 238
+          },
+          {
+            "op": "SELL",
+            "item": "STRAWBERRY",
+            "price": 238
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          }
+        ]
+      },
+      {
+        "day": 27,
+        "hour": 23,
+        "projected_load": 110,
+        "shed_wheat_pre": 44,
+        "shed_wheat_post": 56,
+        "rescue_order_emitted": true,
+        "rescue_order_requested": 12,
+        "flawed_step_wheat_sold": -12,
+        "flawed_step_cash_delta": 1807.0,
+        "authoritative_turn_wheat_units_sold": 12,
+        "authoritative_turn_wheat_revenue": 436,
+        "all_committed_units_on_turn": [
+          {
+            "op": "SELL",
+            "item": "MELON",
+            "price": 231
+          },
+          {
+            "op": "SELL",
+            "item": "MELON",
+            "price": 230
+          },
+          {
+            "op": "SELL",
+            "item": "MELON",
+            "price": 229
+          },
+          {
+            "op": "SELL",
+            "item": "MELON",
+            "price": 228
+          },
+          {
+            "op": "SELL",
+            "item": "MELON",
+            "price": 227
+          },
+          {
+            "op": "SELL",
+            "item": "MELON",
+            "price": 226
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 37
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 37
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 37
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 37
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          }
+        ]
+      },
+      {
+        "day": 28,
+        "hour": 23,
+        "projected_load": 128,
+        "shed_wheat_pre": 42,
+        "shed_wheat_post": 36,
+        "rescue_order_emitted": true,
+        "rescue_order_requested": 20,
+        "flawed_step_wheat_sold": 6,
+        "flawed_step_cash_delta": 3129.0,
+        "authoritative_turn_wheat_units_sold": 40,
+        "authoritative_turn_wheat_revenue": 1422,
+        "all_committed_units_on_turn": [
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "MILK",
+            "price": 255
+          },
+          {
+            "op": "SELL",
+            "item": "MILK",
+            "price": 255
+          },
+          {
+            "op": "SELL",
+            "item": "MILK",
+            "price": 254
+          },
+          {
+            "op": "SELL",
+            "item": "MILK",
+            "price": 254
+          },
+          {
+            "op": "SELL",
+            "item": "MILK",
+            "price": 254
+          },
+          {
+            "op": "SELL",
+            "item": "CARROT",
+            "price": 67
+          },
+          {
+            "op": "SELL",
+            "item": "CARROT",
+            "price": 67
+          },
+          {
+            "op": "SELL",
+            "item": "CARROT",
+            "price": 66
+          },
+          {
+            "op": "SELL",
+            "item": "FERTILIZER",
+            "price": 66
+          },
+          {
+            "op": "SELL",
+            "item": "FERTILIZER",
+            "price": 65
+          },
+          {
+            "op": "SELL",
+            "item": "FERTILIZER",
+            "price": 65
+          },
+          {
+            "op": "SELL",
+            "item": "TOMATO",
+            "price": 56
+          },
+          {
+            "op": "SELL",
+            "item": "TOMATO",
+            "price": 55
+          },
+          {
+            "op": "BUY_PRODUCT",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "BUY_PRODUCT",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 36
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          },
+          {
+            "op": "SELL",
+            "item": "WHEAT",
+            "price": 35
+          }
+        ]
+      }
+    ]
+  },
+  "metric_comparison_table": {
+    "candidate_frozen_sha": {
+      "reported_in_m0_k": "0a23f938b1d9bf5443a5ee9048a127ee7dcb46a9",
+      "corrected_actual_git": "0a23f93eaad59dad71723ff989d44fb9e132ca76",
+      "status": "CORRECTED"
+    },
+    "c0_median_cash": {
+      "reported_in_m0_k": 103450.0,
+      "corrected_actual_git": 102212.0,
+      "status": "CORRECTED"
+    },
+    "c2_median_cash": {
+      "reported_in_m0_k": 108126.5,
+      "corrected_actual_git": 107423.5,
+      "status": "CORRECTED"
+    },
+    "paired_median_gain": {
+      "reported_in_m0_k": 5361.0,
+      "corrected_actual_git": 5361.0,
+      "status": "VERIFIED_ACCURATE"
+    },
+    "c0_std_cash": {
+      "reported_in_m0_k": 24089.47,
+      "corrected_actual_git": 8958.89,
+      "status": "CORRECTED"
+    },
+    "c2_std_cash": {
+      "reported_in_m0_k": 24196.48,
+      "corrected_actual_git": 8668.26,
+      "status": "CORRECTED"
+    },
+    "spot_value_preserved": {
+      "reported_in_m0_k": 832052.0,
+      "archived_storage_comparison": 1398785.0,
+      "status": "CORRECTED_TO_ARCHIVE"
+    },
+    "c0_spot_value_lost": {
+      "reported_in_m0_k": 888272.0,
+      "archived_storage_comparison": 1480845.0,
+      "status": "CORRECTED_TO_ARCHIVE"
+    },
+    "c2_spot_value_lost": {
+      "reported_in_m0_k": 56220.0,
+      "archived_storage_comparison": 82060.0,
+      "status": "CORRECTED_TO_ARCHIVE"
+    },
+    "rescue_units_sold": {
+      "reported_in_m0_k": 13024,
+      "archived_raw": -13024,
+      "status": "LABELED_UNVERIFIED_AND_FLAWED"
+    },
+    "rescue_revenue": {
+      "reported_in_m0_k": 941919.0,
+      "archived_raw": 941919.0,
+      "status": "LABELED_UNVERIFIED_STEP_CASH_DELTA"
+    },
+    "orders_blocked_by_10_cap": {
+      "reported_in_m0_k": 0,
+      "archived_market_safety": 1067,
+      "status": "CORRECTED_METHODOLOGY_EXPLAINED"
+    }
+  }
+}
