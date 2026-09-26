@@ -7,7 +7,28 @@ and guarantee safe midnight rollover into shed storage without silent overflow d
 from __future__ import annotations
 
 import copy
+import sys
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+# Bidirectional module aliasing to guarantee singleton state across import paths
+_mod_name = __name__
+if _mod_name.startswith("agent."):
+    _bare_name = _mod_name[6:]
+    sys.modules.setdefault(_bare_name, sys.modules[_mod_name])
+    _pkg_parts = _bare_name.split(".")
+    if len(_pkg_parts) > 1 and _pkg_parts[0] in sys.modules:
+        setattr(sys.modules[_pkg_parts[0]], _pkg_parts[1], sys.modules[_mod_name])
+else:
+    _agent_name = f"agent.{_mod_name}"
+    sys.modules.setdefault(_agent_name, sys.modules[_mod_name])
+    _pkg_parts = _mod_name.split(".")
+    _agent_pkg = f"agent.{_pkg_parts[0]}"
+    if "agent" in sys.modules:
+        if _agent_pkg not in sys.modules and _pkg_parts[0] in sys.modules:
+            sys.modules[_agent_pkg] = sys.modules[_pkg_parts[0]]
+        if _agent_pkg in sys.modules:
+            setattr(sys.modules[_agent_pkg], _pkg_parts[1], sys.modules[_mod_name])
+            setattr(sys.modules["agent"], _pkg_parts[0], sys.modules[_agent_pkg])
 
 CROPS_BUFFERABLE = {"WHEAT", "CARROT", "MELON", "TOMATO", "STRAWBERRY"}
 MAX_SAFE_SHED_HEADROOM = 95  # 5 slot safety buffer below engine's 100 cap
@@ -36,7 +57,7 @@ _TELEMETRY: Dict[str, Any] = {
 
 
 def reset_midnight_storage_telemetry() -> None:
-    """Clear all recorded midnight storage telemetry."""
+    """Clear all recorded midnight storage telemetry across all module aliases."""
     global _TELEMETRY
     _TELEMETRY = {
         "opportunities_detected": 0,
@@ -59,11 +80,22 @@ def reset_midnight_storage_telemetry() -> None:
         "rescue_products_sold": {},
         "events": [],
     }
+    for k in ("execution.midnight_storage_controller", "agent.execution.midnight_storage_controller"):
+        mod = sys.modules.get(k)
+        if mod is not None and mod is not sys.modules.get(__name__) and hasattr(mod, "_TELEMETRY"):
+            mod._TELEMETRY = copy.deepcopy(_TELEMETRY)
 
 
 def get_midnight_storage_telemetry() -> Dict[str, Any]:
     """Return immutable snapshot of all recorded midnight storage telemetry."""
-    return copy.deepcopy(_TELEMETRY)
+    telem = _TELEMETRY
+    for k in ("execution.midnight_storage_controller", "agent.execution.midnight_storage_controller"):
+        mod = sys.modules.get(k)
+        if mod is not None and hasattr(mod, "_TELEMETRY"):
+            other = mod._TELEMETRY
+            if other.get("rescue_events", 0) > telem.get("rescue_events", 0):
+                telem = other
+    return copy.deepcopy(telem)
 
 
 def get_midnight_mode() -> str:

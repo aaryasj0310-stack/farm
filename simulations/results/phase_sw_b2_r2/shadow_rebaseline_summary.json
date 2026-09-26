@@ -1,0 +1,117 @@
+{
+  "scenario_cells_count": 100,
+  "total_matches_run": 100,
+  "elapsed_seconds": 821.93,
+  "cash_summary": {
+    "mean": 114080.46,
+    "median": 115204.0,
+    "std": 10109.3,
+    "min": 85543.0,
+    "max": 135752.0,
+    "win_rate_pct": 100.0,
+    "min_cash_observed_across_panel": 246.0
+  },
+  "shadow_planner_observability": {
+    "mean_turn_latency_ms": 32.76,
+    "max_turn_latency_ms": 501.44,
+    "matches_with_sw_recommendation": 66,
+    "sw_recommendation_rate_pct": 66.0,
+    "actual_baseline_sw_purchased_count": 0,
+    "first_recommendation_day_distribution": {
+      "10": 22,
+      "9": 20,
+      "11": 24
+    },
+    "mean_first_recommendation_day": 10.06,
+    "total_recommendation_events": 66,
+    "mean_projected_portfolio_delta_fc": 5605.47,
+    "median_projected_portfolio_delta_fc": 5820.0,
+    "total_exceptions": 0,
+    "all_rejection_reasons": {
+      "FLAG_HERD_FEED_ASSUMPTION": 71300,
+      "OWNED": 31003,
+      "DELAY": 25664,
+      "FLAG_PRICE_DEPRESSION_ESTIMATE": 21099,
+      "REJECT": 13776,
+      "DOWNSIZE": 1367
+    }
+  },
+  "workload_displacement_audit": {
+    "repeated_displaced_observations_total": 233850,
+    "unique_displaced_tasks_total": 92093,
+    "displaced_tasks_by_tier": {
+      "HARD": 94966,
+      "STRATEGIC": 138884
+    },
+    "displaced_hard_tasks_count": 94966
+  },
+  "animal_survival_audit": {
+    "confirmed_starvation_deaths": 0,
+    "confirmed_escapes": 0,
+    "ambiguous_disappearances": 0,
+    "total_animal_losses": 0,
+    "missed_feeding_days_total": 1545,
+    "feed_floor_breach_turns_total": 9383,
+    "continuous_feed_floor_preserved_matches": 0
+  },
+  "storage_safety_audit": {
+    "peak_shed_occupancy_max": 100,
+    "peak_shed_occupancy_mean": 99.7,
+    "total_rescue_events": 781,
+    "total_rescue_units_sold": 9345,
+    "storage_overflows_observed": 0
+  },
+  "per_opponent_breakdown": {
+    "pass": {
+      "count": 20,
+      "mean_cash": 119988.5,
+      "median_cash": 117377.5,
+      "win_rate_pct": 100.0,
+      "sw_recommendation_matches": 10
+    },
+    "pure_wheat_rush": {
+      "count": 20,
+      "mean_cash": 114059.5,
+      "median_cash": 114544.5,
+      "win_rate_pct": 100.0,
+      "sw_recommendation_matches": 8
+    },
+    "cow_milk_engine": {
+      "count": 20,
+      "mean_cash": 110331.05,
+      "median_cash": 111517.5,
+      "win_rate_pct": 100.0,
+      "sw_recommendation_matches": 15
+    },
+    "melon_sniper": {
+      "count": 20,
+      "mean_cash": 108375.45,
+      "median_cash": 108310.5,
+      "win_rate_pct": 100.0,
+      "sw_recommendation_matches": 20
+    },
+    "full_production_agent": {
+      "count": 20,
+      "mean_cash": 117647.8,
+      "median_cash": 116611.0,
+      "win_rate_pct": 100.0,
+      "sw_recommendation_matches": 13
+    }
+  },
+  "per_seat_breakdown": {
+    "seat_0": {
+      "count": 50,
+      "mean_cash": 113976.1,
+      "median_cash": 114998.5,
+      "win_rate_pct": 100.0,
+      "sw_recommendation_matches": 34
+    },
+    "seat_1": {
+      "count": 50,
+      "mean_cash": 114184.82,
+      "median_cash": 115275.5,
+      "win_rate_pct": 100.0,
+      "sw_recommendation_matches": 32
+    }
+  }
+}

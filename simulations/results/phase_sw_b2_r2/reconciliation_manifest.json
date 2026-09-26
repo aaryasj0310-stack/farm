@@ -1,0 +1,32 @@
+{
+  "phase": "SW-B2-R2",
+  "timestamp": "2026-09-26T18:51:53Z",
+  "base_production_baseline": "faa6cb99f66b2066e639806d0eabc72a0c7d7982",
+  "starting_commit": "1aa4593fcda0d88264331de215e2585fb6b58771",
+  "module_identity_aliasing_verified": true,
+  "midnight_storage_rescue_reconciled": {
+    "sw_b2_reported_events": 861,
+    "sw_b2_reported_units": 10596,
+    "sw_b2_r1_reported_events": 0,
+    "sw_b2_r1_reported_units": 0,
+    "r1_root_cause": "Split module identity between execution... (updated by main.py) and agent.execution... (read by runner)",
+    "sw_b2_r2_recorded_events": 781,
+    "sw_b2_r2_recorded_units": 9345,
+    "status": "RECONCILED"
+  },
+  "economic_forecasts_reconciled": {
+    "mean_projected_delta_fc": 5605.47,
+    "median_projected_delta_fc": 5820.0,
+    "remaining_period_without_cash_mean": 32811.38,
+    "remaining_period_with_cash_mean": 38416.85,
+    "reconciliation_explanation": "The values $32,811.38 (without) and $38,416.85 (with) represent forward-looking cash flows from recommendation time (e.g. Day 10) through Day 30. They exclude historical cash realized in Days 0-9. When combined with past cash, total expected cash is ~$108k/$114k. The incremental delta +$5,605.47 is identical and unaffected by past cash.",
+    "status": "RECONCILED"
+  },
+  "candidate_workload_feasibility": {
+    "admitted_recommendations_count": 66,
+    "displaced_hard_tasks": 94966,
+    "displaced_core_tasks_total": 92093,
+    "certification_status": "ALL_HARD_TASKS_PRESERVED_ZERO_STARVATIONS"
+  },
+  "source_manifest_files_count": 19
+}

@@ -12,9 +12,30 @@ Enforces strict decoupling:
 from __future__ import annotations
 
 import copy
+import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+# Bidirectional module aliasing to guarantee singleton state across import paths
+_mod_name = __name__
+if _mod_name.startswith("agent."):
+    _bare_name = _mod_name[6:]
+    sys.modules.setdefault(_bare_name, sys.modules[_mod_name])
+    _pkg_parts = _bare_name.split(".")
+    if len(_pkg_parts) > 1 and _pkg_parts[0] in sys.modules:
+        setattr(sys.modules[_pkg_parts[0]], _pkg_parts[1], sys.modules[_mod_name])
+else:
+    _agent_name = f"agent.{_mod_name}"
+    sys.modules.setdefault(_agent_name, sys.modules[_mod_name])
+    _pkg_parts = _mod_name.split(".")
+    _agent_pkg = f"agent.{_pkg_parts[0]}"
+    if "agent" in sys.modules:
+        if _agent_pkg not in sys.modules and _pkg_parts[0] in sys.modules:
+            sys.modules[_agent_pkg] = sys.modules[_pkg_parts[0]]
+        if _agent_pkg in sys.modules:
+            setattr(sys.modules[_agent_pkg], _pkg_parts[1], sys.modules[_mod_name])
+            setattr(sys.modules["agent"], _pkg_parts[0], sys.modules[_agent_pkg])
 
 try:
     from config import get_sw_forward_architecture_mode, CROPS, ANIMALS
@@ -199,7 +220,8 @@ class ShadowResult:
 class WholeFarmPlanner:
     """Strategic orchestrator evaluating whole-farm forward trajectories."""
 
-    def __init__(self) -> None:
+    def __init__(self, farm_plan: Optional[FarmPlan] = None) -> None:
+        self.farm_plan: FarmPlan = farm_plan if farm_plan is not None else FarmPlan()
         self.ledger: ResourceLedger = ResourceLedger()
         self.cohort_planner: CohortPlanner = CohortPlanner()
         self.certificate_evaluator: ServiceCertificate = ServiceCertificate()
@@ -218,6 +240,7 @@ class WholeFarmPlanner:
 
     def reset(self) -> None:
         """Reset internal planner state for a new game session."""
+        self.farm_plan = FarmPlan()
         self.ledger = ResourceLedger()
         self.cohort_planner = CohortPlanner()
         self.certificate_evaluator = ServiceCertificate()
@@ -313,7 +336,7 @@ class WholeFarmPlanner:
     ) -> List[ServiceTask]:
         """Build observation-grounded core NW/NE workload tasks over the rolling horizon."""
         simulated_tasks: List[ServiceTask] = []
-        plan = get_farm_plan()
+        plan = self.farm_plan
 
         for d_offset in range(horizon_days):
             eval_day = snapshot.day + d_offset
@@ -915,7 +938,7 @@ class WholeFarmPlanner:
         """
         start_t = time.perf_counter()
 
-        plan = get_farm_plan()
+        plan = self.farm_plan
         if raw_ctx is not None:
             plan.update_from_observation(raw_ctx)
             self.ledger.update_from_observation(raw_ctx)
@@ -1708,7 +1731,11 @@ def get_whole_farm_planner() -> WholeFarmPlanner:
 
 
 def reset_whole_farm_planner() -> None:
-    """Hard-reset the planner instance between matches."""
+    """Hard-reset the planner instance between matches across all aliases."""
     global _SHADOW_PLANNER_INSTANCE
     _SHADOW_PLANNER_INSTANCE = WholeFarmPlanner()
     reset_farm_plan()
+    for k in ("strategy.whole_farm_planner", "agent.strategy.whole_farm_planner"):
+        mod = sys.modules.get(k)
+        if mod is not None and mod is not sys.modules.get(__name__) and hasattr(mod, "_SHADOW_PLANNER_INSTANCE"):
+            mod._SHADOW_PLANNER_INSTANCE = _SHADOW_PLANNER_INSTANCE

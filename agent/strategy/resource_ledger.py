@@ -11,9 +11,30 @@ from __future__ import annotations
 
 import copy
 import math
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+# Bidirectional module aliasing to guarantee singleton state across import paths
+_mod_name = __name__
+if _mod_name.startswith("agent."):
+    _bare_name = _mod_name[6:]
+    sys.modules.setdefault(_bare_name, sys.modules[_mod_name])
+    _pkg_parts = _bare_name.split(".")
+    if len(_pkg_parts) > 1 and _pkg_parts[0] in sys.modules:
+        setattr(sys.modules[_pkg_parts[0]], _pkg_parts[1], sys.modules[_mod_name])
+else:
+    _agent_name = f"agent.{_mod_name}"
+    sys.modules.setdefault(_agent_name, sys.modules[_mod_name])
+    _pkg_parts = _mod_name.split(".")
+    _agent_pkg = f"agent.{_pkg_parts[0]}"
+    if "agent" in sys.modules:
+        if _agent_pkg not in sys.modules and _pkg_parts[0] in sys.modules:
+            sys.modules[_agent_pkg] = sys.modules[_pkg_parts[0]]
+        if _agent_pkg in sys.modules:
+            setattr(sys.modules[_agent_pkg], _pkg_parts[1], sys.modules[_mod_name])
+            setattr(sys.modules["agent"], _pkg_parts[0], sys.modules[_agent_pkg])
 
 from config import CROPS, FARMER_SPAWN, SHED_ACCESS_TILES, TURNS_PER_DAY
 from state.observation_parser import crop_age

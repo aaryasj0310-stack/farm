@@ -37,12 +37,21 @@ for _base in reversed(_DIR_CANDIDATES):
         if _base in sys.path:
             sys.path.remove(_base)
         sys.path.insert(0, _base)
-        for _sub in reversed(("state", "strategy", "execution", "market")):
+        for _sub in reversed(("state", "strategy", "execution", "market", "diagnostics")):
             _sub_path = os.path.join(_base, _sub)
             if os.path.exists(_sub_path):
                 if _sub_path in sys.path:
                     sys.path.remove(_sub_path)
                 sys.path.insert(0, _sub_path)
+
+# Bidirectional package aliasing between bare package names and agent.<package>
+for _pkg in ("config", "state", "strategy", "execution", "market", "diagnostics"):
+    if f"agent.{_pkg}" in sys.modules and _pkg not in sys.modules:
+        sys.modules[_pkg] = sys.modules[f"agent.{_pkg}"]
+    elif _pkg in sys.modules and f"agent.{_pkg}" not in sys.modules:
+        sys.modules[f"agent.{_pkg}"] = sys.modules[_pkg]
+    if "agent" in sys.modules and f"agent.{_pkg}" in sys.modules:
+        setattr(sys.modules["agent"], _pkg, sys.modules[f"agent.{_pkg}"])
 
 try:
     from observation_parser import parse_observation
