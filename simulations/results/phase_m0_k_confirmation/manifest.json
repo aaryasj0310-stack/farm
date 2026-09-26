@@ -1,0 +1,68 @@
+{
+  "phase": "M0-K-CONFIRMATION",
+  "total_cells": 200,
+  "total_matches": 400,
+  "runtime_seconds": 1734.3967969417572,
+  "seeds": [
+    96521,
+    96522,
+    96523,
+    96524,
+    96525,
+    96526,
+    96527,
+    96528,
+    96529,
+    96530,
+    96531,
+    96532,
+    96533,
+    96534,
+    96535,
+    96536,
+    96537,
+    96538,
+    96539,
+    96540
+  ],
+  "opponents": [
+    "pass",
+    "pure_wheat_rush",
+    "cow_milk_engine",
+    "melon_sniper",
+    "full_production_agent"
+  ],
+  "seats": [
+    0,
+    1
+  ],
+  "c0_mean_cash": 101979.75,
+  "c2_mean_cash": 106984.395,
+  "mean_paired_gain": 5004.645,
+  "median_gain": 5361.0,
+  "win_rate_pct": 85.5,
+  "record": {
+    "wins": 171,
+    "ties": 0,
+    "losses": 29
+  },
+  "ci_95": [
+    4374.518013774109,
+    5634.771986225892
+  ],
+  "cluster_se": 301.0605641530586,
+  "positive_clusters": 20,
+  "discard_reduction_pct": 92.86093418259024,
+  "feed_violations": 0,
+  "release_gates": {
+    "gate_1_paired_mean_positive": true,
+    "gate_2_ci95_lower_positive": true,
+    "gate_3_cluster_consistency": true,
+    "gate_4_win_rate_ge_70": true,
+    "gate_5_discard_reduction_ge_40": true,
+    "gate_6_no_escape_regression": true,
+    "gate_7_feed_violations_zero": true,
+    "gate_8_no_order_cap_breaches": true
+  },
+  "all_gates_passed": true
+}

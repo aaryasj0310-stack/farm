@@ -292,7 +292,7 @@ def set_same_turn_crop_pipeline_mode(mode: str) -> None:
 
 # Kaggriculture Phase M0-D: Engine Mechanics Exploitation — Midnight Storage Dump & Rescue
 # Supported modes: "OFF" (production baseline), "BUFFER" / "ON" (M0-B buffered riding), "RESCUE" (M0-D end-of-day storage rescue)
-MIDNIGHT_STORAGE_DUMP_MODE: str = "OFF"
+MIDNIGHT_STORAGE_DUMP_MODE: str = "RESCUE"
 
 def get_midnight_storage_dump_mode() -> str:
     """Return active midnight storage dump mode ('OFF', 'ON', 'BUFFER', 'RESCUE')."""

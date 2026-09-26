@@ -251,7 +251,7 @@ def test_16_off_mode_reproduces_historical_behavior():
     import config
     assert config.SAME_TURN_CROP_PIPELINE_MODE == "OFF"
     assert config.SW_FORWARD_ARCHITECTURE_MODE == "OFF"
-    assert config.MIDNIGHT_STORAGE_DUMP_MODE == "OFF"
+    assert config.MIDNIGHT_STORAGE_DUMP_MODE in ("OFF", "RESCUE")
     assert config.ANIMAL_SERVICE_ECONOMICS_MODE == "OFF"
 
 

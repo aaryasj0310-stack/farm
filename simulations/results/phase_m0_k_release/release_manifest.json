@@ -1,0 +1,48 @@
+{
+  "phase": "M0-K-RELEASE",
+  "promoted_feature": "STORAGE_RESCUE",
+  "promoted_configuration": {
+    "MIDNIGHT_STORAGE_DUMP_MODE": "RESCUE"
+  },
+  "reproduction_summary": {
+    "seeds": "97013-97022 (10 seeds)",
+    "scenario_cells": 100,
+    "total_matches": 200,
+    "c0_mean_cash": 104009.28,
+    "c2_mean_cash": 109066.17,
+    "mean_paired_gain": 5056.89,
+    "win_rate_pct": 84.0,
+    "discard_reduction_pct": 92.42,
+    "feed_violations": 0,
+    "animal_escapes": 0,
+    "bit_for_bit_match_to_m0_d": true
+  },
+  "confirmation_summary": {
+    "seeds": "96521-96540 (20 fresh protected seeds)",
+    "scenario_cells": 200,
+    "total_matches": 400,
+    "c0_mean_cash": 101979.75,
+    "c2_mean_cash": 106984.40,
+    "mean_paired_gain": 5004.65,
+    "median_gain": 5361.00,
+    "win_rate_pct": 85.5,
+    "ci_95": [4374.52, 5634.77],
+    "cluster_se": 301.06,
+    "positive_seed_clusters": "20 / 20 (100.0%)",
+    "discard_reduction_pct": 92.86,
+    "feed_violations": 0,
+    "animal_escapes": 0,
+    "all_release_gates_passed": true
+  },
+  "release_gates_evaluated": {
+    "gate_1_paired_mean_positive": "PASS (+5,004.65 > 0)",
+    "gate_2_ci95_lower_positive": "PASS (lower bound +$4,374.52 > 0)",
+    "gate_3_cluster_consistency": "PASS (20/20 positive clusters >= 14)",
+    "gate_4_win_rate_ge_70": "PASS (85.5% >= 70%)",
+    "gate_5_discard_reduction_ge_40": "PASS (92.86% >= 40%)",
+    "gate_6_no_escape_regression": "PASS (C0=0, C2=0)",
+    "gate_7_feed_violations_zero": "PASS (0 violations)",
+    "gate_8_no_order_cap_breaches": "PASS (10 order cap strictly obeyed)"
+  },
+  "release_status": "APPROVED_AND_PROMOTED_TO_PRODUCTION"
+}
