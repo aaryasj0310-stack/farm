@@ -1,0 +1,109 @@
+{
+  "timestamp": "2026-09-26 14:54:32 UTC",
+  "phase": "M0-L-C",
+  "branch": "release/phase-m0-l-c-soft-locality",
+  "panel": {
+    "seeds": [
+      96541,
+      96542,
+      96543,
+      96544,
+      96545,
+      96546,
+      96547,
+      96548,
+      96549,
+      96550,
+      96551,
+      96552,
+      96553,
+      96554,
+      96555,
+      96556,
+      96557,
+      96558,
+      96559,
+      96560
+    ],
+    "opponents": [
+      "pass",
+      "pure_wheat_rush",
+      "cow_milk_engine",
+      "melon_sniper",
+      "full_production_agent"
+    ],
+    "seats": [
+      0,
+      1
+    ],
+    "total_pairs": 200
+  },
+  "artifacts": {
+    "frozen_candidate_hashes.json": "e5949a1fef9658c0997d3a36fd5f8ba07b3b677e13ea58322fc1becb50ca96f1",
+    "paired_results.json": "b13a55987285e07a99b5b4d31de49a5f78de813b7a22131906f8f35551161346",
+    "aggregate_statistics.json": "f608d2026aa26a839956104d72999cec77096dfb898b909a45a5301b55a12a51",
+    "clustered_statistics.json": "705d905944a512b7699002f89e9af14fe54b2d37300ac63f69c8a68191efac00",
+    "opponent_breakdown.json": "eb370b5fb96830a2d99d03f2f974b645ee6990d27ca40fe4f5428780de9f4cd3",
+    "seat_breakdown.json": "f4d68918cc1104def7dc27e6751cf5a57bfb2ee246f8ec8fcbc53ba17d417876",
+    "movement_conversion_analysis.json": "d8b92d5c45e845317869696ea2e1c3a015b393421c739b0b0ab07c33b43db1e5",
+    "animal_safety.json": "57f3e26cf9c2da0e67bfeb9db7e1aa9f0988019f26fdb6bc321ed699b37fb46c",
+    "market_safety.json": "aeacfdaee902fca7ce1d64e8cf36fdb6928a884a9d0b0302edcad30b09c045c9",
+    "downside_forensics.json": "70f1320d165a4610bb2750b34ece632813e4a6cdb27289f17270dfcdb2473896",
+    "release_gate_evaluation.json": "6e7ff2af2cf34495d63f343e435ffde3955acb26283a960351e4533676732639"
+  },
+  "release_gate_summary": {
+    "gate_1_positive_mean_gain": {
+      "passed": true,
+      "threshold": "> $0.00",
+      "measured": 6815.59
+    },
+    "gate_2_strictly_positive_ci_lower": {
+      "passed": true,
+      "threshold": "> $0.00",
+      "measured": 5380.77,
+      "ci_95": [
+        5380.77,
+        8250.41
+      ]
+    },
+    "gate_3_positive_paired_outcomes_70pct": {
+      "passed": true,
+      "threshold": ">= 70.0%",
+      "measured": "180/200 (90.0%)"
+    },
+    "gate_4_consistent_breakdowns": {
+      "passed": true,
+      "threshold": "All 5 benchmark opponents have positive mean paired gain",
+      "opponent_means": {
+        "pass": 4606.07,
+        "pure_wheat_rush": 10217.92,
+        "cow_milk_engine": 7292.77,
+        "melon_sniper": 3745.28,
+        "full_production_agent": 8215.9
+      }
+    },
+    "gate_5_no_animal_escapes": {
+      "passed": true,
+      "threshold": "Treatment escapes == 0 and <= Control escapes",
+      "control_escapes": 0,
+      "treatment_escapes": 0
+    },
+    "gate_6_feed_floor_preserved": {
+      "passed": true,
+      "threshold": "Feed floor safe with 0 starvation deaths",
+      "status": "PRESERVED"
+    },
+    "gate_7_market_order_cap": {
+      "passed": true,
+      "threshold": "<= 10 market orders per turn",
+      "max_measured": 10
+    },
+    "gate_8_runtime_packaging": {
+      "passed": true,
+      "threshold": "Clean execution without exceptions or regressions",
+      "status": "PASSED"
+    },
+    "all_prespecified_gates_passed": true,
+    "recommendation": "PROMOTE_TO_PRODUCTION"
+  }
+}

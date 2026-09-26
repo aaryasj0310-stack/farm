@@ -235,9 +235,9 @@ def set_sw_forward_architecture_mode(mode: str) -> None:
                 pass
 
 
-# Kaggriculture Phase C0: Soft Worker Locality Experiment
-# Supported modes: "OFF" (production baseline), "ON" (treatment)
-SOFT_WORKER_LOCALITY_MODE: str = "OFF"
+# Kaggriculture Phase C0: Soft Worker Locality (Promoted in Phase M0-L-C)
+# Supported modes: "OFF", "ON" (production default)
+SOFT_WORKER_LOCALITY_MODE: str = "ON"
 
 def get_soft_worker_locality_mode() -> str:
     """Return the active soft worker locality mode ('OFF', 'ON')."""

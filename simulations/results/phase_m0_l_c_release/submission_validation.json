@@ -1,0 +1,31 @@
+{
+  "artifact_path": "dist/submission.zip",
+  "artifact_size_bytes": 345409,
+  "sha256": "e7ff7c5a4b91364c10898cb8a22e4680c9330f1e30171593da2d1eed7dd4ed41",
+  "canonical_structure": {
+    "root_files": [
+      "main.py",
+      "config.py"
+    ],
+    "subpackages": [
+      "state",
+      "strategy",
+      "execution",
+      "market"
+    ]
+  },
+  "prohibited_artifacts_check": "PASS (0 tests, 0 pycache, 0 pyc, 0 pytest_cache)",
+  "runtime_sync_check": "PASS (all 48 runtime modules synchronized)",
+  "isolated_match_execution": {
+    "status": "SUCCESS",
+    "episode_steps": 720,
+    "p0_cash": 110017.0,
+    "p1_cash": 0.0,
+    "unhandled_exceptions": 0
+  },
+  "engine_compliance": {
+    "max_market_orders": 10,
+    "max_orders_observed": 10,
+    "order_cap_breaches": 0
+  }
+}

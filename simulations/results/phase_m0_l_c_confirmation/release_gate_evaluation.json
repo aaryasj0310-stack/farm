@@ -1,0 +1,55 @@
+{
+  "gate_1_positive_mean_gain": {
+    "passed": true,
+    "threshold": "> $0.00",
+    "measured": 6815.59
+  },
+  "gate_2_strictly_positive_ci_lower": {
+    "passed": true,
+    "threshold": "> $0.00",
+    "measured": 5380.77,
+    "ci_95": [
+      5380.77,
+      8250.41
+    ]
+  },
+  "gate_3_positive_paired_outcomes_70pct": {
+    "passed": true,
+    "threshold": ">= 70.0%",
+    "measured": "180/200 (90.0%)"
+  },
+  "gate_4_consistent_breakdowns": {
+    "passed": true,
+    "threshold": "All 5 benchmark opponents have positive mean paired gain",
+    "opponent_means": {
+      "pass": 4606.07,
+      "pure_wheat_rush": 10217.92,
+      "cow_milk_engine": 7292.77,
+      "melon_sniper": 3745.28,
+      "full_production_agent": 8215.9
+    }
+  },
+  "gate_5_no_animal_escapes": {
+    "passed": true,
+    "threshold": "Treatment escapes == 0 and <= Control escapes",
+    "control_escapes": 0,
+    "treatment_escapes": 0
+  },
+  "gate_6_feed_floor_preserved": {
+    "passed": true,
+    "threshold": "Feed floor safe with 0 starvation deaths",
+    "status": "PRESERVED"
+  },
+  "gate_7_market_order_cap": {
+    "passed": true,
+    "threshold": "<= 10 market orders per turn",
+    "max_measured": 10
+  },
+  "gate_8_runtime_packaging": {
+    "passed": true,
+    "threshold": "Clean execution without exceptions or regressions",
+    "status": "PASSED"
+  },
+  "all_prespecified_gates_passed": true,
+  "recommendation": "PROMOTE_TO_PRODUCTION"
+}

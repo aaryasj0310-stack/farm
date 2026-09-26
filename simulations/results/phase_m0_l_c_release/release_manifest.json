@@ -1,0 +1,45 @@
+{
+  "phase": "M0-L-C-RELEASE",
+  "timestamp": "2026-09-26 14:58:32 UTC",
+  "promoted_feature": "SOFT_WORKER_LOCALITY",
+  "promoted_configuration": {
+    "SOFT_WORKER_LOCALITY_MODE": "ON",
+    "MIDNIGHT_STORAGE_DUMP_MODE": "RESCUE",
+    "QUADRANT_HARD_BLOCK": [
+      4
+    ]
+  },
+  "confirmation_summary": {
+    "seeds": "96541-96560 (20 fresh previously untouched seeds)",
+    "scenario_cells": 200,
+    "total_matches": 400,
+    "c0_mean_cash": 106680.54,
+    "c1_mean_cash": 113496.13,
+    "mean_paired_gain": 6815.59,
+    "median_gain": 6003.0,
+    "win_rate_pct": 90.0,
+    "ci_95": [
+      5380.77,
+      8250.41
+    ],
+    "confirmed_animal_escapes": 0,
+    "all_release_gates_passed": true
+  },
+  "release_gates_evaluated": {
+    "gate_1_paired_mean_positive": "PASS (+$6,815.59 > 0)",
+    "gate_2_ci95_lower_positive": "PASS (lower bound +$5,380.77 > 0)",
+    "gate_3_positive_paired_outcomes_70pct": "PASS (90.0% >= 70%)",
+    "gate_4_consistent_breakdowns": "PASS (All 5 benchmark opponents positive: +$3,745 to +$10,218)",
+    "gate_5_no_animal_escapes": "PASS (C0=0, C1=0 confirmed escapes)",
+    "gate_6_feed_floor_preserved": "PASS (0 starvation events, feed floor fully preserved)",
+    "gate_7_market_order_cap": "PASS (10 order cap strictly obeyed)",
+    "gate_8_runtime_packaging": "PASS (isolated 720-step zip package test passed cleanly)"
+  },
+  "release_status": "APPROVED_AND_PROMOTED_TO_PRODUCTION",
+  "artifacts": {
+    "dist/submission.zip": "e7ff7c5a4b91364c10898cb8a22e4680c9330f1e30171593da2d1eed7dd4ed41",
+    "production_config.json": "7975ad53744af9fbc0116224002d14deee190ae20717e61ff6ac55d6ff8986a4",
+    "submission_validation.json": "7691c4066f311a6ac7c17d4d3a8859b340aebecdb052e95e38f201bb3d8ba0e5",
+    "test_results.json": "aaa6462c207968150b3079c03141388acd2d443175a8c73746c73506f4659a79"
+  }
+}

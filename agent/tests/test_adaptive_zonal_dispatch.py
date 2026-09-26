@@ -24,11 +24,20 @@ from config import (
     C2_SPILLOVER_PRIORITY_FLOOR,
     DAY_TO_HANDS,
     get_target_hands,
+    set_soft_worker_locality_mode,
 )
 from execution.task_scheduler import assign_tasks, get_home_quadrant
 from execution.pathfinding import bfs_first_step, path_length
 from strategy.animal_planner import get_animal_targets
 from strategy.macro_planner import _crop_allowed_today
+
+
+@pytest.fixture(autouse=True)
+def isolate_legacy_c2_dispatch():
+    set_soft_worker_locality_mode("OFF")
+    yield
+    set_soft_worker_locality_mode("ON")
+
 
 
 class MockTile:
