@@ -84,6 +84,69 @@ class CertificateResult:
         "earliest-start bounds, and dependency checks; not an executable discrete worker-by-worker engine schedule."
     )
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Faithfully serialize this certificate result without hardcoding constants."""
+        failing_task_ids = [t.task_id for t in getattr(self, "failing_tasks", [])]
+        displaced_task_ids = [t.task_id for t in getattr(self, "displaced_core_tasks", [])]
+        uncompleted_sw_task_ids = [t.task_id for t in getattr(self, "uncompleted_sw_tasks", [])]
+
+        displaced_hard_tasks = [
+            t.task_id for t in getattr(self, "displaced_core_tasks", [])
+            if getattr(t, "tier", None) == CommitmentTier.HARD or str(getattr(t, "tier", "")) == "HARD"
+        ]
+
+        repairs = [
+            {
+                "type": r.type,
+                "target": r.target,
+                "actions_freed": r.actions_freed,
+                "cash_freed": r.cash_freed,
+                "expected_value_lost": r.expected_value_lost,
+                "deadline_slack_gained": r.deadline_slack_gained,
+                "resolves_certificate": r.resolves_certificate,
+                "reason": r.reason,
+            }
+            for r in getattr(self, "repair_options", [])
+        ]
+
+        return {
+            "combined_workload_feasible": bool(self.feasible),
+            "hard_tasks_feasible": bool(self.hard_tasks_feasible),
+            "minimum_slack": int(self.minimum_slack),
+            "peak_workload": int(self.peak_workload),
+            "binding_resource": str(self.binding_resource),
+            "binding_day": int(self.binding_day),
+            "binding_deadline_hour": int(self.binding_hour),
+            "failing_task_ids": failing_task_ids,
+            "displaced_task_ids": displaced_task_ids,
+            "displaced_hard_tasks_count": len(displaced_hard_tasks),
+            "displaced_hard_task_ids": displaced_hard_tasks,
+            "uncompleted_sw_task_ids": uncompleted_sw_task_ids,
+            "region": "SW",
+            "commitment_tier": "HARD_TIER_PRESERVED" if self.hard_tasks_feasible else "HARD_TIER_COMPROMISED",
+            "repair_options": repairs,
+            "guarantee_tier": str(self.guarantee_tier),
+            "guarantee_type": str(self.guarantee_type),
+            "horizon_hours": int(self.horizon_hours),
+        }
+
+
+def serialize_candidate_certificate(
+    cert: CertificateResult,
+    port: Optional[Dict[str, Any]] = None,
+    day: int = 0,
+    hour: int = 0,
+) -> Dict[str, Any]:
+    """Authoritatively serialize the selected admitted candidate certificate."""
+    cert_dict = cert.to_dict()
+    cand_id = port.get("name", "unknown") if port else "unknown"
+    tranche_size = port.get("tiles_used", 0) if port else 0
+    cert_dict["candidate_id"] = cand_id
+    cert_dict["evaluation_day"] = day
+    cert_dict["evaluation_hour"] = hour
+    cert_dict["selected_tranche_size_tiles"] = tranche_size
+    return cert_dict
+
 
 class ServiceCertificate:
     """Evaluates multi-day serviceability across rolling 72-96 hour windows."""

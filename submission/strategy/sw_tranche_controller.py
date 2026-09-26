@@ -46,6 +46,176 @@ SW_PORT: Tuple[int, int] = (4, 5)
 
 
 @dataclass
+class SWLandLifecycleTelemetry:
+    """Rigorous 9-stage lifecycle telemetry for SW land acquisition."""
+    # Stage 1: SW recommendation
+    sw_recommendation_step: Optional[int] = None
+    sw_recommendation_day: Optional[int] = None
+    sw_recommendation_hour: Optional[int] = None
+
+    # Stage 2: Admission approved
+    sw_approved_step: Optional[int] = None
+    sw_approved_day: Optional[int] = None
+    sw_approved_hour: Optional[int] = None
+
+    # Stage 3: SW purchase intent created
+    sw_intent_created_step: Optional[int] = None
+
+    # Stage 4: SW purchase order emitted
+    sw_order_emitted_step: Optional[int] = None
+    sw_order_emitted_day: Optional[int] = None
+    sw_order_emitted_hour: Optional[int] = None
+    sw_order_emitted_count: int = 0
+
+    # Stage 5: Order retained after shared 10-slot market arbitration
+    sw_order_retained_step: Optional[int] = None
+    sw_order_retained_slot_index: Optional[int] = None
+
+    # Stage 6: Engine-confirmed SW ownership
+    sw_confirmed_step: Optional[int] = None
+    sw_confirmed_day: Optional[int] = None
+    sw_confirmed_hour: Optional[int] = None
+    sw_confirmed_cash_deduction: float = 0.0
+
+    # Stage 7: Purchase failed or dropped
+    purchase_failed_events: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Stage 8: Retried purchase
+    purchase_retry_count: int = 0
+    purchase_retry_steps: List[int] = field(default_factory=list)
+
+    # Stage 9: First productive SW tile planted
+    first_productive_plant_step: Optional[int] = None
+    first_productive_plant_day: Optional[int] = None
+    first_productive_plant_crop: Optional[str] = None
+    first_productive_plant_pos: Optional[Tuple[int, int]] = None
+
+    # Quadrant targeting sanity
+    targeted_quadrant: str = "SW"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "stage_1_recommendation": {
+                "step": self.sw_recommendation_step,
+                "day": self.sw_recommendation_day,
+                "hour": self.sw_recommendation_hour,
+            },
+            "stage_2_approval": {
+                "step": self.sw_approved_step,
+                "day": self.sw_approved_day,
+                "hour": self.sw_approved_hour,
+            },
+            "stage_3_intent_created": {
+                "step": self.sw_intent_created_step,
+            },
+            "stage_4_order_emitted": {
+                "step": self.sw_order_emitted_step,
+                "day": self.sw_order_emitted_day,
+                "hour": self.sw_order_emitted_hour,
+                "total_emissions": self.sw_order_emitted_count,
+            },
+            "stage_5_retained_in_market": {
+                "step": self.sw_order_retained_step,
+                "slot_index": self.sw_order_retained_slot_index,
+            },
+            "stage_6_engine_confirmed": {
+                "step": self.sw_confirmed_step,
+                "day": self.sw_confirmed_day,
+                "hour": self.sw_confirmed_hour,
+                "cash_deduction": self.sw_confirmed_cash_deduction,
+            },
+            "stage_7_purchase_failed_events": list(self.purchase_failed_events),
+            "stage_8_retried_purchases": {
+                "retry_count": self.purchase_retry_count,
+                "retry_steps": list(self.purchase_retry_steps),
+            },
+            "stage_9_first_productive_plant": {
+                "step": self.first_productive_plant_step,
+                "day": self.first_productive_plant_day,
+                "crop": self.first_productive_plant_crop,
+                "pos": list(self.first_productive_plant_pos) if self.first_productive_plant_pos else None,
+            },
+            "targeted_quadrant": self.targeted_quadrant,
+        }
+
+
+@dataclass
+class CropProvenanceTracker:
+    """Auditable tile-level physical provenance and revenue attribution tracker."""
+    core_harvested_units: Dict[str, int] = field(default_factory=dict)
+    sw_harvested_units: Dict[str, int] = field(default_factory=dict)
+    core_planted_units: Dict[str, int] = field(default_factory=dict)
+    sw_planted_units: Dict[str, int] = field(default_factory=dict)
+    total_sales_units: Dict[str, int] = field(default_factory=dict)
+    total_sales_revenue: Dict[str, float] = field(default_factory=dict)
+    individual_sales: Dict[str, List[Tuple[int, int, float]]] = field(default_factory=dict)  # (step, units, price)
+    ending_shed_units: Dict[str, int] = field(default_factory=dict)
+    ending_worker_units: Dict[str, int] = field(default_factory=dict)
+    discarded_overflow_units: Dict[str, int] = field(default_factory=dict)
+
+    def record_harvest(self, pos: Tuple[int, int], crop: str, units: int) -> None:
+        """Record harvest distinguished by physical tile coordinates."""
+        is_sw = (pos[0] < 5 and pos[1] >= 5)
+        if is_sw:
+            self.sw_harvested_units[crop] = self.sw_harvested_units.get(crop, 0) + units
+        else:
+            self.core_harvested_units[crop] = self.core_harvested_units.get(crop, 0) + units
+
+    def record_sale(self, step: int, crop: str, units: int, unit_price: float) -> None:
+        """Record executed market sale."""
+        self.total_sales_units[crop] = self.total_sales_units.get(crop, 0) + units
+        rev = float(units * unit_price)
+        self.total_sales_revenue[crop] = self.total_sales_revenue.get(crop, 0.0) + rev
+        self.individual_sales.setdefault(crop, []).append((step, units, unit_price))
+
+    def get_provenance_attribution(self, crop: str) -> Dict[str, Any]:
+        """Compute exact physical provenance bounds and proportional attribution."""
+        h_sw = self.sw_harvested_units.get(crop, 0)
+        h_core = self.core_harvested_units.get(crop, 0)
+        s_total = self.total_sales_units.get(crop, 0)
+        rev_total = self.total_sales_revenue.get(crop, 0.0)
+        avg_price = (rev_total / s_total) if s_total > 0 else 0.0
+
+        # Provenance bounds
+        upper_sw_units = min(h_sw, s_total)
+        lower_sw_units = max(0, s_total - h_core)
+        h_sum = h_sw + h_core
+        prop_sw_units = (s_total * (h_sw / h_sum)) if h_sum > 0 else 0.0
+
+        upper_rev = upper_sw_units * avg_price
+        lower_rev = lower_sw_units * avg_price
+        prop_rev = prop_sw_units * avg_price
+
+        shed_end = self.ending_shed_units.get(crop, 0)
+        worker_end = self.ending_worker_units.get(crop, 0)
+        discarded = self.discarded_overflow_units.get(crop, 0)
+
+        # Conservation check: harvested == sales + shed + worker + discarded
+        accounted = s_total + shed_end + worker_end + discarded
+        conservation_verified = (h_sum == accounted)
+
+        return {
+            "crop": crop,
+            "core_harvested_units": h_core,
+            "sw_harvested_units": h_sw,
+            "total_harvested_units": h_sum,
+            "total_sold_units": s_total,
+            "total_sold_revenue": round(rev_total, 2),
+            "average_realized_price": round(avg_price, 2),
+            "sw_sales_upper_bound_units": upper_sw_units,
+            "sw_sales_lower_bound_units": lower_sw_units,
+            "sw_sales_proportional_units": round(prop_sw_units, 2),
+            "sw_revenue_upper_bound": round(upper_rev, 2),
+            "sw_revenue_lower_bound": round(lower_rev, 2),
+            "sw_revenue_proportional": round(prop_rev, 2),
+            "ending_shed_units": shed_end,
+            "ending_worker_units": worker_end,
+            "discarded_overflow_units": discarded,
+            "conservation_verified": conservation_verified,
+        }
+
+
+@dataclass
 class SWTrancheState:
     """State of the SW tranche controller for a single match."""
     treatment_active: bool = False
@@ -65,6 +235,12 @@ class SWTrancheState:
     pre_purchase_cash: float = 0.0
     post_purchase_cash: float = 0.0
     worker_count_at_purchase: int = 0
+
+    # 9-Stage Land Order Lifecycle Telemetry
+    lifecycle: SWLandLifecycleTelemetry = field(default_factory=SWLandLifecycleTelemetry)
+
+    # Auditable Tile-Level Physical Provenance Tracker
+    provenance: CropProvenanceTracker = field(default_factory=CropProvenanceTracker)
 
     # Economics & operations tracking
     sw_land_cost_paid: float = 0.0
@@ -223,6 +399,15 @@ class SWTrancheController:
         self.state.pre_purchase_cash = float(cash_before)
         self.state.worker_count_at_purchase = int(worker_count)
 
+        # Update 9-stage lifecycle telemetry
+        self.state.lifecycle.sw_recommendation_step = day * 24 + hour
+        self.state.lifecycle.sw_recommendation_day = day
+        self.state.lifecycle.sw_recommendation_hour = hour
+        self.state.lifecycle.sw_approved_step = day * 24 + hour
+        self.state.lifecycle.sw_approved_day = day
+        self.state.lifecycle.sw_approved_hour = hour
+        self.state.lifecycle.sw_intent_created_step = day * 24 + hour
+
         # Freeze admitted coordinates and crop targets
         self.state.admitted_sw_tiles.clear()
         self.state.admitted_sw_crop_targets.clear()
@@ -243,6 +428,153 @@ class SWTrancheController:
         self.state.sw_purchase_day = day
         self.state.sw_purchase_hour = hour
         self.state.sw_land_cost_paid = 2000.0
+
+        # Update lifecycle telemetry
+        self.state.lifecycle.sw_confirmed_step = day * 24 + hour
+        self.state.lifecycle.sw_confirmed_day = day
+        self.state.lifecycle.sw_confirmed_hour = hour
+        self.state.lifecycle.sw_confirmed_cash_deduction = 2000.0
+
+    def notify_market_orders_emitted(
+        self,
+        orders: List[Any],
+        step: int,
+        day: int,
+        hour: int,
+        farm_money: float,
+        unlocked_quadrants: Set[str],
+    ) -> None:
+        """Inspect emitted market orders and track exact SW land order lifecycle."""
+        if not self.is_treatment_active():
+            return
+
+        has_ne = "NE" in unlocked_quadrants
+        has_sw = "SW" in unlocked_quadrants
+
+        # Check for BUY_LAND order
+        buy_land_idx = None
+        for idx, o in enumerate(orders):
+            if isinstance(o, (list, tuple)) and o and o[0] == "BUY_LAND":
+                buy_land_idx = idx
+                break
+
+        if buy_land_idx is not None:
+            # If NE is NOT unlocked, this BUY_LAND targets NE, NOT SW!
+            if not has_ne:
+                logger.debug(f"[SWTrancheController] BUY_LAND emitted at step {step} targets NE. Ignoring for SW telemetry.")
+                return
+
+            # If NE is unlocked and SW is NOT unlocked, this BUY_LAND targets SW!
+            if has_ne and not has_sw:
+                lc = self.state.lifecycle
+                if lc.sw_order_emitted_step is None:
+                    lc.sw_order_emitted_step = step
+                    lc.sw_order_emitted_day = day
+                    lc.sw_order_emitted_hour = hour
+                else:
+                    lc.purchase_retry_count += 1
+                    lc.purchase_retry_steps.append(step)
+                lc.sw_order_emitted_count += 1
+                self.state.sw_land_order_emitted = True
+
+                # Slot arbitration check: is it within top 10 market slots?
+                if buy_land_idx < 10:
+                    lc.sw_order_retained_step = step
+                    lc.sw_order_retained_slot_index = buy_land_idx
+                else:
+                    lc.purchase_failed_events.append({
+                        "step": step,
+                        "day": day,
+                        "hour": hour,
+                        "reason": f"market_slot_truncation (slot {buy_land_idx} >= 10)",
+                        "cash": farm_money,
+                    })
+
+    def observe_engine_step(
+        self,
+        obs: Dict[str, Any],
+        seat: int,
+        step: int,
+        day: int,
+        hour: int,
+    ) -> None:
+        """Authoritatively observe engine state transition."""
+        if not self.is_treatment_active():
+            return
+
+        farm = obs.get("farms", [{}])[seat]
+        unlocked = set(farm.get("unlocked_quadrants", ["NW"]))
+        cur_cash = float(farm.get("money", 0.0))
+        lc = self.state.lifecycle
+
+        # Check engine confirmation of SW purchase
+        if "SW" in unlocked:
+            if lc.sw_confirmed_step is None:
+                lc.sw_confirmed_step = step
+                lc.sw_confirmed_day = day
+                lc.sw_confirmed_hour = hour
+                lc.sw_confirmed_cash_deduction = 2000.0
+                self.confirm_purchase(day, hour)
+        else:
+            # If an order was retained in the previous step but SW is still not unlocked:
+            if lc.sw_order_retained_step == step - 1:
+                lc.purchase_failed_events.append({
+                    "step": step - 1,
+                    "day": (step - 1) // 24,
+                    "hour": (step - 1) % 24,
+                    "reason": "engine_rejected_or_insufficient_funds",
+                    "cash": cur_cash,
+                })
+
+        # Check physical tile planting in SW
+        if "SW" in unlocked and lc.first_productive_plant_step is None:
+            tiles = farm.get("tiles", [])
+            for y, row in enumerate(tiles):
+                if y < 5:
+                    continue  # Only SW has y >= 5 and x < 5
+                for x, cell in enumerate(row):
+                    if x >= 5:
+                        continue
+                    if isinstance(cell, dict) and cell.get("kind") == "PLANT":
+                        c_name = cell.get("crop")
+                        p_day = cell.get("planted_day")
+                        if c_name and p_day == day:
+                            lc.first_productive_plant_step = step
+                            lc.first_productive_plant_day = day
+                            lc.first_productive_plant_crop = c_name
+                            lc.first_productive_plant_pos = (x, y)
+                            break
+                if lc.first_productive_plant_step is not None:
+                    break
+
+    def record_tile_harvest(self, pos: Tuple[int, int], crop: str, units: int) -> None:
+        """Record tile harvest with coordinates."""
+        self.state.provenance.record_harvest(pos, crop, units)
+
+    def record_executed_sale(self, step: int, crop: str, units: int, unit_price: float) -> None:
+        """Record executed market sale with unit price."""
+        self.state.provenance.record_sale(step, crop, units, unit_price)
+
+    def reconcile_conservation(self, final_obs: Dict[str, Any], seat: int) -> None:
+        """Reconcile conservation of goods at end of match."""
+        priv = final_obs.get("private", {})
+        if not priv and "privates" in final_obs:
+            priv = final_obs["privates"][seat]
+
+        shed = priv.get("shed", {}) if isinstance(priv, dict) else {}
+        invs = priv.get("inventories", []) if isinstance(priv, dict) else []
+
+        for crop in ("STRAWBERRY", "MELON", "WHEAT", "CARROT", "TOMATO"):
+            shed_qty = int(shed.get(crop, 0))
+            worker_qty = sum(int(inv.get(crop, 0)) for inv in invs if isinstance(inv, dict))
+            self.state.provenance.ending_shed_units[crop] = shed_qty
+            self.state.provenance.ending_worker_units[crop] = worker_qty
+
+            # Discarded units = total harvested - (sales + shed + worker)
+            h_tot = self.state.provenance.core_harvested_units.get(crop, 0) + self.state.provenance.sw_harvested_units.get(crop, 0)
+            s_tot = self.state.provenance.total_sales_units.get(crop, 0)
+            diff = h_tot - (s_tot + shed_qty + worker_qty)
+            self.state.provenance.discarded_overflow_units[crop] = max(0, diff)
 
     def notify_land_order_failed(self, reason: str) -> None:
         """Notify controller that emitted BUY_LAND order failed or was dropped."""
@@ -355,19 +687,33 @@ class SWTrancheController:
             if shed_total > self.state.peak_shed_usage:
                 self.state.peak_shed_usage = shed_total
 
-        # Track executed sales of SW crops vs total farm sales
+        # Track 9-stage land order lifecycle from market emissions
+        if market and farm:
+            unlocked_set = set(farm.unlocked if hasattr(farm, "unlocked") else ["NW"])
+            self.notify_market_orders_emitted(
+                orders=market,
+                step=day * 24 + hour,
+                day=day,
+                hour=hour,
+                farm_money=float(farm.money) if farm else 0.0,
+                unlocked_quadrants=unlocked_set,
+            )
+
+        # Track executed sales of SW crops vs total farm sales & provenance
         if market:
             for order in market:
                 if isinstance(order, (list, tuple)) and len(order) >= 3 and order[0] == "SELL":
                     prod = order[1]
                     qty = int(order[2])
+                    m_obj = ctx.get("market")
+                    px = float(getattr(m_obj, "prices", {}).get(prod, 0.0)) if m_obj else 0.0
+                    self.record_executed_sale(day * 24 + hour, prod, qty, px)
+
                     admitted_crops = set(self.state.admitted_sw_crop_targets.values())
                     if prod in admitted_crops:
                         self.state.total_farm_portfolio_sales[prod] = (
                             self.state.total_farm_portfolio_sales.get(prod, 0) + qty
                         )
-                        m_obj = ctx.get("market")
-                        px = float(getattr(m_obj, "prices", {}).get(prod, 0.0)) if m_obj else 0.0
                         self.state.total_farm_portfolio_revenue += (px * qty)
 
                         # Bounded SW-origin attribution (max physical harvest: 16 units per crop type on 4 tiles)
@@ -396,6 +742,22 @@ class SWTrancheController:
                         self.state.core_watered_count += 1
                     elif op == "HARVEST":
                         self.state.core_harvest_count += 1
+                        pos = None
+                        if farm and hasattr(farm, "farmer"):
+                            if u_idx == 0:
+                                pos = tuple(farm.farmer)
+                            elif hasattr(farm, "hands") and u_idx - 1 < len(farm.hands):
+                                pos = tuple(farm.hands[u_idx - 1])
+                        if pos and hasattr(farm, "tiles"):
+                            try:
+                                tile = farm.tiles[pos[1]][pos[0]] if pos[1] < len(farm.tiles) and pos[0] < len(farm.tiles[pos[1]]) else None
+                                if tile:
+                                    c_name = getattr(tile, "crop", None) or (tile.get("crop") if isinstance(tile, dict) else None)
+                                    y_units = getattr(tile, "yield_units", 1) or (tile.get("yield_units", 1) if isinstance(tile, dict) else 1)
+                                    if c_name:
+                                        self.record_tile_harvest(pos, c_name, int(y_units))
+                            except Exception:
+                                pass
         # Track physical SW plantings from farm observation on Day rollover (hour 23)
         if farm and hasattr(farm, "iter_tiles") and hour == 23:
             for t in farm.iter_tiles():
@@ -473,7 +835,7 @@ class SWTrancheController:
             "selected_portfolio_name": self.state.selected_portfolio_name,
             "admitted_tiles_count": len(self.state.admitted_sw_tiles),
             "admitted_tiles": sorted(list(self.state.admitted_sw_tiles)),
-            "admitted_crops": dict(self.state.admitted_sw_crop_targets),
+            "admitted_crops": {f"{k[0]},{k[1]}": v for k, v in self.state.admitted_sw_crop_targets.items()},
             "predicted_delta_fc": round(self.state.predicted_delta_fc, 2),
             "pre_purchase_cash": round(self.state.pre_purchase_cash, 2),
             "post_purchase_cash": round(self.state.post_purchase_cash, 2),
@@ -494,6 +856,11 @@ class SWTrancheController:
             },
             "primary_no_purchase_reason": self.state.primary_no_purchase_reason,
             "invariant_violations_attempted": self.state.invariant_violations_attempted,
+            "sw_land_lifecycle": self.state.lifecycle.to_dict(),
+            "crop_provenance": {
+                crop: self.state.provenance.get_provenance_attribution(crop)
+                for crop in ("STRAWBERRY", "MELON", "WHEAT", "CARROT", "TOMATO")
+            },
             "core_safety": {
                 "animals_fed_total": self.state.animals_fed_total,
                 "core_watered_count": self.state.core_watered_count,

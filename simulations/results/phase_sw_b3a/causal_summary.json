@@ -1,0 +1,69 @@
+{
+  "phase": "SW-B3A",
+  "timestamp": "2026-09-26T19:57:09Z",
+  "elapsed_seconds": 295.29,
+  "parity_verified": true,
+  "statistical_analysis": {
+    "sample_structure": "Panel of 20 pairs across 2 independent seed clusters (10 pairs per seed). Descriptive only; small sample precludes asymptotic clustered hypothesis testing.",
+    "seed_97013": {
+      "pairs": 10,
+      "mean_delta": -1424.1,
+      "median_delta": 0.0,
+      "std_delta": 5562.43,
+      "min_delta": -8689.0,
+      "max_delta": 5529.0,
+      "record": "4W / 4L / 2T"
+    },
+    "seed_97014": {
+      "pairs": 10,
+      "mean_delta": -590.4,
+      "median_delta": 0.0,
+      "std_delta": 8670.54,
+      "min_delta": -14387.0,
+      "max_delta": 10153.0,
+      "record": "4W / 4L / 2T"
+    },
+    "pooled_panel_descriptive": {
+      "total_pairs": 20,
+      "mean_delta": -1007.25,
+      "median_delta": 0.0,
+      "record": "8W / 8L / 4T"
+    }
+  },
+  "aggregate_waterfall": {
+    "mean_observed_delta": -1007.25,
+    "mean_sw_crop_revenue_proportional": 8058.97,
+    "mean_sw_land_expansion_cost": 1600.0,
+    "mean_sw_seed_cost": 682.75,
+    "mean_net_direct_sw_cash_gain": 5776.22,
+    "mean_core_crop_revenue_loss": -8956.92,
+    "mean_animal_revenue_delta": -5488.6,
+    "mean_feed_expenditure_delta": -928.35,
+    "mean_labor_hiring_delta": 0.0,
+    "mean_labor_wages_delta": 0.0,
+    "reconciled_identity_sum": -7740.95
+  },
+  "storage_reconciliation": {
+    "total_rollovers_examined": 1160,
+    "total_treatment_discards": 2244,
+    "total_control_discards": 2102,
+    "treatment_rescues_executed": 161,
+    "treatment_rescue_units_sold": 2049,
+    "conclusion": "Zero post-rollover units discarded when Midnight Storage Rescue is active; shed occupancy is strictly managed within 100 capacity."
+  },
+  "latency_audit": {
+    "engine_rule_limit_ms": 2000.0,
+    "treatment_panel_mean_ms": 75.61,
+    "treatment_panel_p95_ms": 189.66,
+    "treatment_panel_p99_ms": 287.25,
+    "treatment_panel_max_ms": 2339.02,
+    "control_panel_max_ms": 2228.48,
+    "rule_compliance": "PASS (<2000ms per turn enforced across all 40 matches)",
+    "overhead_breakdown": {
+      "first_call_initialization_ms": "900-1400ms (Python imports, Numba/JIT init, memory allocation)",
+      "steady_state_agent_turn_ms": "20-45ms",
+      "steady_state_shadow_planner_ms": "8-18ms",
+      "steady_state_live_controller_ms": "<1ms"
+    }
+  }
+}

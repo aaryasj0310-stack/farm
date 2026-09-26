@@ -42,7 +42,7 @@ try:
     from strategy.farm_plan import FarmPlan, StrategicState, get_farm_plan, reset_farm_plan
     from strategy.resource_ledger import ResourceLedger, InflowConfidence
     from strategy.cohort_planner import CohortPlanner, CropCohort, OpportunityCostEvaluation
-    from strategy.service_certificate import ServiceCertificate, CertificateResult, ServiceTask, CommitmentTier
+    from strategy.service_certificate import ServiceCertificate, CertificateResult, ServiceTask, CommitmentTier, serialize_candidate_certificate
     from state.observation_parser import needs_water_today, crop_produces_today, turns_until_decay
     from market.price_math import market_price, total_revenue_estimate
 except ImportError:
@@ -50,7 +50,7 @@ except ImportError:
     from farm_plan import FarmPlan, StrategicState, get_farm_plan, reset_farm_plan
     from resource_ledger import ResourceLedger, InflowConfidence
     from cohort_planner import CohortPlanner, CropCohort, OpportunityCostEvaluation
-    from service_certificate import ServiceCertificate, CertificateResult, ServiceTask, CommitmentTier
+    from service_certificate import ServiceCertificate, CertificateResult, ServiceTask, CommitmentTier, serialize_candidate_certificate
     from observation_parser import needs_water_today, crop_produces_today, turns_until_decay
     from price_math import market_price, total_revenue_estimate
 
@@ -191,6 +191,7 @@ class ShadowDecision:
     virtual_sw_purchase_day: Optional[int] = None
     virtual_cash: float = 0.0
     actual_sw_unlocked: bool = False
+    selected_candidate_certificate: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -1674,6 +1675,12 @@ class WholeFarmPlanner:
             virtual_sw_purchase_day=self.virtual_sw_purchase_day,
             virtual_cash=virtual_money,
             actual_sw_unlocked=actual_sw_unlocked,
+            selected_candidate_certificate=serialize_candidate_certificate(
+                cert_result,
+                best_portfolio_data[0] if best_portfolio_data else None,
+                snapshot.day,
+                snapshot.hour,
+            ) if cert_result is not None else None,
         )
 
         elapsed_ms = (time.perf_counter() - start_t) * 1000.0
