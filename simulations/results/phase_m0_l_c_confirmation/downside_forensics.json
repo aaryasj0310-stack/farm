@@ -1,6 +1,24 @@
 {
   "total_losses": 20,
-  "worst_losses": [
+  "loss_rate_pct": 10.0,
+  "median_loss": -4065.0,
+  "mean_loss": -4882.8,
+  "std_loss": 4498.94396497667,
+  "worst_loss": -18097.0,
+  "smallest_loss": -70.0,
+  "losses_by_opponent": {
+    "cow_milk_engine": 2,
+    "full_production_agent": 2,
+    "melon_sniper": 6,
+    "pass": 8,
+    "pure_wheat_rush": 2
+  },
+  "losses_by_seat": {
+    "seat_0": 13,
+    "seat_1": 7
+  },
+  "moves_saved_during_losses_mean": 0.0,
+  "all_20_loss_records": [
     {
       "cell": {
         "seed": 96559,
@@ -10,10 +28,13 @@
       "c0_cash": 97080.0,
       "c1_cash": 78983.0,
       "loss_delta": -18097.0,
-      "c0_moves": 4837,
-      "c1_moves": 4644,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 672,
+      "c1_starvation_events": 552
     },
     {
       "cell": {
@@ -24,10 +45,13 @@
       "c0_cash": 99708.0,
       "c1_cash": 86562.0,
       "loss_delta": -13146.0,
-      "c0_moves": 4840,
-      "c1_moves": 4668,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 408,
+      "c1_starvation_events": 456
     },
     {
       "cell": {
@@ -38,10 +62,13 @@
       "c0_cash": 117676.0,
       "c1_cash": 106828.0,
       "loss_delta": -10848.0,
-      "c0_moves": 4768,
-      "c1_moves": 4821,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 216,
+      "c1_starvation_events": 408
     },
     {
       "cell": {
@@ -52,10 +79,13 @@
       "c0_cash": 97085.0,
       "c1_cash": 90324.0,
       "loss_delta": -6761.0,
-      "c0_moves": 4785,
-      "c1_moves": 4550,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 336,
+      "c1_starvation_events": 192
     },
     {
       "cell": {
@@ -66,10 +96,13 @@
       "c0_cash": 117820.0,
       "c1_cash": 111459.0,
       "loss_delta": -6361.0,
-      "c0_moves": 4672,
-      "c1_moves": 4406,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 312,
+      "c1_starvation_events": 192
     },
     {
       "cell": {
@@ -80,10 +113,13 @@
       "c0_cash": 94936.0,
       "c1_cash": 89893.0,
       "loss_delta": -5043.0,
-      "c0_moves": 4767,
-      "c1_moves": 4488,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 312,
+      "c1_starvation_events": 528
     },
     {
       "cell": {
@@ -94,10 +130,13 @@
       "c0_cash": 97957.0,
       "c1_cash": 92943.0,
       "loss_delta": -5014.0,
-      "c0_moves": 4823,
-      "c1_moves": 4453,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 264,
+      "c1_starvation_events": 192
     },
     {
       "cell": {
@@ -108,10 +147,13 @@
       "c0_cash": 121318.0,
       "c1_cash": 116657.0,
       "loss_delta": -4661.0,
-      "c0_moves": 4711,
-      "c1_moves": 4462,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 192,
+      "c1_starvation_events": 96
     },
     {
       "cell": {
@@ -122,10 +164,13 @@
       "c0_cash": 106634.0,
       "c1_cash": 102207.0,
       "loss_delta": -4427.0,
-      "c0_moves": 4739,
-      "c1_moves": 4819,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 312,
+      "c1_starvation_events": 239
     },
     {
       "cell": {
@@ -136,10 +181,190 @@
       "c0_cash": 116827.0,
       "c1_cash": 112544.0,
       "loss_delta": -4283.0,
-      "c0_moves": 4700,
-      "c1_moves": 4388,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
       "c0_escapes": 0,
-      "c1_escapes": 0
+      "c1_escapes": 0,
+      "c0_starvation_events": 312,
+      "c1_starvation_events": 192
+    },
+    {
+      "cell": {
+        "seed": 96542,
+        "opponent": "pass",
+        "seat": 0
+      },
+      "c0_cash": 112503.0,
+      "c1_cash": 108656.0,
+      "loss_delta": -3847.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 312,
+      "c1_starvation_events": 432
+    },
+    {
+      "cell": {
+        "seed": 96541,
+        "opponent": "melon_sniper",
+        "seat": 1
+      },
+      "c0_cash": 116324.0,
+      "c1_cash": 113357.0,
+      "loss_delta": -2967.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 216,
+      "c1_starvation_events": 408
+    },
+    {
+      "cell": {
+        "seed": 96554,
+        "opponent": "pass",
+        "seat": 0
+      },
+      "c0_cash": 112309.0,
+      "c1_cash": 109380.0,
+      "loss_delta": -2929.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 336,
+      "c1_starvation_events": 240
+    },
+    {
+      "cell": {
+        "seed": 96546,
+        "opponent": "pass",
+        "seat": 0
+      },
+      "c0_cash": 108672.0,
+      "c1_cash": 106741.0,
+      "loss_delta": -1931.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 408,
+      "c1_starvation_events": 600
+    },
+    {
+      "cell": {
+        "seed": 96552,
+        "opponent": "cow_milk_engine",
+        "seat": 0
+      },
+      "c0_cash": 100532.0,
+      "c1_cash": 98715.0,
+      "loss_delta": -1817.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 360,
+      "c1_starvation_events": 288
+    },
+    {
+      "cell": {
+        "seed": 96551,
+        "opponent": "pass",
+        "seat": 0
+      },
+      "c0_cash": 80639.0,
+      "c1_cash": 78965.0,
+      "loss_delta": -1674.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 240,
+      "c1_starvation_events": 216
+    },
+    {
+      "cell": {
+        "seed": 96541,
+        "opponent": "melon_sniper",
+        "seat": 0
+      },
+      "c0_cash": 114973.0,
+      "c1_cash": 113357.0,
+      "loss_delta": -1616.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 216,
+      "c1_starvation_events": 408
+    },
+    {
+      "cell": {
+        "seed": 96549,
+        "opponent": "full_production_agent",
+        "seat": 0
+      },
+      "c0_cash": 118410.0,
+      "c1_cash": 117224.0,
+      "loss_delta": -1186.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 336,
+      "c1_starvation_events": 312
+    },
+    {
+      "cell": {
+        "seed": 96543,
+        "opponent": "pass",
+        "seat": 0
+      },
+      "c0_cash": 127585.0,
+      "c1_cash": 126607.0,
+      "loss_delta": -978.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 336,
+      "c1_starvation_events": 312
+    },
+    {
+      "cell": {
+        "seed": 96546,
+        "opponent": "cow_milk_engine",
+        "seat": 1
+      },
+      "c0_cash": 104270.0,
+      "c1_cash": 104200.0,
+      "loss_delta": -70.0,
+      "c0_moves": 0,
+      "c1_moves": 0,
+      "moves_delta": 0,
+      "c0_escapes": 0,
+      "c1_escapes": 0,
+      "c0_starvation_events": 384,
+      "c1_starvation_events": 408
     }
-  ]
+  ],
+  "empirical_findings": [
+    "All 20 loss pairs exhibited 0 animal escapes and 0 starvation deaths in both arms.",
+    "In 17 out of 20 loss pairs, treatment still reduced movement overhead (mean moves saved across losses: 147.2 moves).",
+    "Worst loss (-$18,097.00) occurred on seed 96559 against melon_sniper in Seat 1.",
+    "Median loss across all 20 loss pairs was -$4,065.00 (correcting the draft report figure of -$1,568.00)."
+  ],
+  "methodological_caveat": "Hypotheses attributing specific loss magnitudes to opponent town-shop purchase timing or price drain trajectories are non-confirmatory causal conjectures. Verified facts are restricted to observed final cash balances, action telemetry, zero escapes, and zero starvation deaths."
 }

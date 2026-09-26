@@ -1,42 +1,57 @@
 {
-  "pass": {
-    "mean_delta": 4606.075,
-    "median_delta": 4783.5,
-    "n": 40,
-    "wins": 32,
-    "losses": 8,
-    "win_rate": 0.8
-  },
-  "pure_wheat_rush": {
-    "mean_delta": 10217.925,
-    "median_delta": 9281.0,
-    "n": 40,
+  "cow_milk_engine": {
+    "n_pairs": 40,
+    "c0_mean_cash": 107072.95,
+    "c1_mean_cash": 114365.72,
+    "mean_paired_gain": 7292.78,
+    "median_paired_gain": 6377.5,
     "wins": 38,
     "losses": 2,
+    "ties": 0,
     "win_rate": 0.95
   },
-  "cow_milk_engine": {
-    "mean_delta": 7292.775,
-    "median_delta": 6377.5,
-    "n": 40,
+  "full_production_agent": {
+    "n_pairs": 40,
+    "c0_mean_cash": 106933.38,
+    "c1_mean_cash": 115149.28,
+    "mean_paired_gain": 8215.9,
+    "median_paired_gain": 5490.0,
     "wins": 38,
     "losses": 2,
+    "ties": 0,
     "win_rate": 0.95
   },
   "melon_sniper": {
-    "mean_delta": 3745.275,
-    "median_delta": 3716.5,
-    "n": 40,
+    "n_pairs": 40,
+    "c0_mean_cash": 107820.18,
+    "c1_mean_cash": 111565.45,
+    "mean_paired_gain": 3745.28,
+    "median_paired_gain": 3716.5,
     "wins": 34,
     "losses": 6,
+    "ties": 0,
     "win_rate": 0.85
   },
-  "full_production_agent": {
-    "mean_delta": 8215.9,
-    "median_delta": 5490.0,
-    "n": 40,
+  "pass": {
+    "n_pairs": 40,
+    "c0_mean_cash": 105047.85,
+    "c1_mean_cash": 109653.92,
+    "mean_paired_gain": 4606.08,
+    "median_paired_gain": 4783.5,
+    "wins": 32,
+    "losses": 8,
+    "ties": 0,
+    "win_rate": 0.8
+  },
+  "pure_wheat_rush": {
+    "n_pairs": 40,
+    "c0_mean_cash": 106528.35,
+    "c1_mean_cash": 116746.28,
+    "mean_paired_gain": 10217.92,
+    "median_paired_gain": 9281.0,
     "wins": 38,
     "losses": 2,
+    "ties": 0,
     "win_rate": 0.95
   }
 }
