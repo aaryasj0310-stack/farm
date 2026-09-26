@@ -830,10 +830,16 @@ class ResourceLedger:
         """
         sales = planned_sales or []
         sales_by_hour: Dict[int, int] = {}
+        wheat_sales_by_hour: Dict[int, int] = {}
+        orders_by_hour: Dict[int, int] = {}
         for s in sales:
             h = s.get("hour", 0)
             q = int(s.get("quantity", 0))
+            prod = str(s.get("product", "")).upper()
             sales_by_hour[h] = sales_by_hour.get(h, 0) + q
+            if prod == "WHEAT":
+                wheat_sales_by_hour[h] = wheat_sales_by_hour.get(h, 0) + q
+            orders_by_hour[h] = orders_by_hour.get(h, 0) + 1
 
         timeline: Dict[int, Dict[str, Any]] = {}
         shed_occ = self.current_shed_occupancy
@@ -843,6 +849,7 @@ class ResourceLedger:
         discarded_products: Dict[str, int] = {}
         overflow_workers: List[int] = []
 
+        total_wheat_sold_timeline = 0
         for h in range(self.hour, min(24, self.hour + horizon_hours)):
             # 1. Worker deposits at shed if reaching shed at hour h
             for w in self.workers:
@@ -875,6 +882,9 @@ class ResourceLedger:
                 actual_sold = min(shed_occ, sold)
                 shed_occ -= actual_sold
 
+            w_sold_h = min(actual_sold, wheat_sales_by_hour.get(h, 0))
+            total_wheat_sold_timeline += w_sold_h
+
             total_carried_now = sum(sum(inv.values()) for inv in worker_carried.values())
             timeline[h] = {
                 "shed_occupancy": shed_occ,
@@ -898,11 +908,26 @@ class ResourceLedger:
             except Exception:
                 rescue_mode = True
 
-        if rescue_mode and potential_midnight_shed > 98:
+        # Production Controller Parity for Storage Rescue:
+        # - Rescue only active at Hour 23, Day < 29
+        # - Triggers only when projected midnight load (shed + carried) > 98
+        # - Deducts specifically from available WHEAT in shed (not non-wheat sales)
+        # - Enforces feed reserve: max(10, animals * 2)
+        # - Enforces market order limit: cannot execute if 10 orders already planned for Hour 23
+        orders_at_h23 = orders_by_hour.get(23, 0)
+        rescue_eligible = (
+            rescue_mode and
+            self.day < 29 and
+            self.hour <= 23 and
+            potential_midnight_shed > 98 and
+            orders_at_h23 < 10
+        )
+        if rescue_eligible:
             anim_cnt = len({l.animal_pos for l in self.feed_liabilities if l.day == self.day})
+            if anim_cnt == 0:
+                anim_cnt = len({l.animal_pos for l in self.feed_liabilities})
             safe_w = max(10, anim_cnt * 2)
-            # Available wheat in shed after projected sales
-            shed_w = max(0, self.shed_wheat - sum(s.get("actual_sold", 0) for s in timeline.values()))
+            shed_w = max(0, self.shed_wheat - total_wheat_sold_timeline)
             can_sell_w = max(0, shed_w - safe_w)
             needed_relief = potential_midnight_shed - 98
             rescue_relief_units = min(can_sell_w, needed_relief)
@@ -912,6 +937,7 @@ class ResourceLedger:
                 if 23 in timeline:
                     timeline[23]["sales"] += rescue_relief_units
                     timeline[23]["actual_sold"] += rescue_relief_units
+                    timeline[23]["shed_occupancy"] -= rescue_relief_units
 
         if potential_midnight_shed > self.shed_capacity:
             expected_overflow = potential_midnight_shed - self.shed_capacity

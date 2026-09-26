@@ -1,0 +1,45 @@
+{
+  "phase": "SW-B2-R1",
+  "title": "Phase SW-B2-R1 SHADOW Evidence Integrity & LIVE Canary Readiness Audit Manifest",
+  "timestamp": "2026-09-26T23:10:00+05:30",
+  "starting_head": "8116b9516d3f68069f01b66814a641e806791644",
+  "production_promotion_commit": "faa6cb99f66b2066e639806d0eabc72a0c7d7982",
+  "engine_metadata": {
+    "version": "1.14.0",
+    "engine_source_path": "C:\\Users\\rohit\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\kaggle_environments\\envs\\kaggriculture\\kaggriculture.py",
+    "engine_source_sha256": "bc8a54879ef02c7ea64b8b333d6a976f0ea65c4949149d01f463f23bccee653e"
+  },
+  "core_source_hashes": {
+    "agent/config.py": "e28b97a482ff7404b914866e03466d0af5b44820d01435a536a16cc13a68314a",
+    "submission/config.py": "e28b97a482ff7404b914866e03466d0af5b44820d01435a536a16cc13a68314a",
+    "agent/strategy/resource_ledger.py": "7efc9b39b2d9bf9070ab2813a5b83345aa4853f817b552ebd12679c4fccebc88",
+    "submission/strategy/resource_ledger.py": "7efc9b39b2d9bf9070ab2813a5b83345aa4853f817b552ebd12679c4fccebc88",
+    "agent/strategy/service_certificate.py": "08095649e56c4d6ba28458bc53ebdea37cfb25d539a18abe47649266bf1495dd",
+    "submission/strategy/service_certificate.py": "08095649e56c4d6ba28458bc53ebdea37cfb25d539a18abe47649266bf1495dd",
+    "agent/strategy/whole_farm_planner.py": "de9ff16cba3dd005386ae650dc67b9ff85457bcb600fc87c7b9fa85fd6f6c2ea",
+    "submission/strategy/whole_farm_planner.py": "de9ff16cba3dd005386ae650dc67b9ff85457bcb600fc87c7b9fa85fd6f6c2ea",
+    "agent/execution/midnight_storage_controller.py": "c5828cd6ae31144ce2f8f81646824d34c73a976ed0511f3fd4135892d2662243",
+    "submission/execution/midnight_storage_controller.py": "c5828cd6ae31144ce2f8f81646824d34c73a976ed0511f3fd4135892d2662243",
+    "agent/diagnostics/animal_tracker.py": "42712afd8104b3787e0abaed1fdda2928df4da23706b9821e83ba32a3d28b064",
+    "submission/diagnostics/animal_tracker.py": "42712afd8104b3787e0abaed1fdda2928df4da23706b9821e83ba32a3d28b064"
+  },
+  "official_submission_zip": {
+    "path": "dist/submission.zip",
+    "sha256": "E7FF7C5A4B91364C10898CB8A22E4680C9330F1E30171593DA2D1EED7DD4ED41",
+    "untouched": true
+  },
+  "original_sw_b2_artifacts_preserved": {
+    "simulations/results/phase_sw_b2_shadow/shadow_rebaseline_100_cells.json": "e459d8c399a4540730b6c576d6c8b9d1525e86c718efa6f83d5c248e9773528f",
+    "simulations/results/phase_sw_b2_shadow/shadow_rebaseline_summary.json": "5c7f6b60f8d7a1abbdb18c48b6876b2ea3fefbb4bf520df62e525f35e30a965f",
+    "simulations/results/phase_sw_b2_shadow/source_manifest.json": "29f1da470d695b362052b5915860c65b60a6d356e19650fd2764c77c4e63953a"
+  },
+  "corrected_r1_audit_artifacts": {
+    "simulations/results/phase_sw_b2_r1_shadow/shadow_rebaseline_100_cells.json": "e9ac0669949a342f9176a99bf6e551a9de0a23e9bf2c55702c8f2715d5dbc294",
+    "simulations/results/phase_sw_b2_r1_shadow/shadow_rebaseline_summary.json": "495b9c71b4eaa4b132e9b3b05d90b0857158cc786a5addca66226c296bbced08",
+    "simulations/results/phase_sw_b2_r1_shadow/recommendation_economic_forecasts.json": "69c388d9e490efd524e6cce565e13eb7377a16ce84a1c529852c8f0920768be5",
+    "scripts/test_off_shadow_parity.py": "91474a3a4e5f6dec63a745706f4874eca5a62a7d130eae6aeff0d1b1f4f2dba7",
+    "scripts/run_phase_sw_b2_r1_shadow_rebaseline.py": "7fc4aed3ef1bf087f716be9a97dd9e9df66fdf4d7862ecc483eab57564ea7abe",
+    "agent/tests/test_storage_rescue_counterexamples.py": "7909858b4d5f824fc0397f9cbf2ba4a318eb342485c263c5c81375608f029d51",
+    "agent/tests/test_animal_survival_tracker.py": "0cc3a2084a27ebaedc028ed9ad2bd5feef8a4b64c0622926e6d46d3bab78beac"
+  }
+}

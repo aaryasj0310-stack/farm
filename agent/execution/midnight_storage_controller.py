@@ -220,6 +220,10 @@ def apply_midnight_storage_rescue(market: List[List[Any]], ctx: Dict[str, Any]) 
     if day >= 29 or hour != 23:
         return market
 
+    # Shared maximum of 10 market commands per turn
+    if len(market) >= 10:
+        return market
+
     private = ctx.get("private")
     farm = ctx.get("farm")
     if not private or not farm or not hasattr(private, "shed") or not hasattr(private, "inventories"):
@@ -236,9 +240,12 @@ def apply_midnight_storage_rescue(market: List[List[Any]], ctx: Dict[str, Any]) 
 
     needed = projected - 98
     w_stock = shed.get("WHEAT", 0)
+    already_selling_w = sum(int(order[2]) for order in market if len(order) >= 3 and order[0] == "SELL" and order[1] == "WHEAT")
+    available_w = max(0, w_stock - already_selling_w)
+
     anim_cnt = sum(1 for t in farm.iter_tiles() if getattr(t, "is_animal", False))
     safe_w = max(10, anim_cnt * 2)
-    can_sell_w = max(0, w_stock - safe_w)
+    can_sell_w = max(0, available_w - safe_w)
 
     sell_qty = min(can_sell_w, needed)
     if sell_qty > 0 and len(market) < 10:
