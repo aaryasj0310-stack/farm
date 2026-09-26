@@ -887,6 +887,32 @@ class ResourceLedger:
         remaining_carried = sum(sum(inv.values()) for inv in worker_carried.values())
         potential_midnight_shed = shed_occ + remaining_carried
 
+        rescue_relief_units = 0
+        try:
+            from config import get_midnight_storage_dump_mode
+            rescue_mode = (get_midnight_storage_dump_mode() == "RESCUE")
+        except Exception:
+            try:
+                from agent.config import get_midnight_storage_dump_mode
+                rescue_mode = (get_midnight_storage_dump_mode() == "RESCUE")
+            except Exception:
+                rescue_mode = True
+
+        if rescue_mode and potential_midnight_shed > 98:
+            anim_cnt = len({l.animal_pos for l in self.feed_liabilities if l.day == self.day})
+            safe_w = max(10, anim_cnt * 2)
+            # Available wheat in shed after projected sales
+            shed_w = max(0, self.shed_wheat - sum(s.get("actual_sold", 0) for s in timeline.values()))
+            can_sell_w = max(0, shed_w - safe_w)
+            needed_relief = potential_midnight_shed - 98
+            rescue_relief_units = min(can_sell_w, needed_relief)
+            if rescue_relief_units > 0:
+                shed_occ -= rescue_relief_units
+                potential_midnight_shed -= rescue_relief_units
+                if 23 in timeline:
+                    timeline[23]["sales"] += rescue_relief_units
+                    timeline[23]["actual_sold"] += rescue_relief_units
+
         if potential_midnight_shed > self.shed_capacity:
             expected_overflow = potential_midnight_shed - self.shed_capacity
             # Identify discarded products and workers
@@ -923,6 +949,7 @@ class ResourceLedger:
             "final_projected_shed": final_shed,
             "final_projected_carried": final_carried,
             "expected_overflow": expected_overflow,
+            "rescue_relief_units": rescue_relief_units,
             "discarded_products": discarded_products,
             "overflow_workers": overflow_workers,
             "is_storage_safe": (expected_overflow == 0),

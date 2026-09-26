@@ -1,0 +1,75 @@
+{
+  "scenario_cells_count": 100,
+  "total_matches_run": 100,
+  "elapsed_seconds": 834.11,
+  "cash_summary": {
+    "mean": 113949.5,
+    "median": 112797.0,
+    "std": 9730.02,
+    "min": 85537.0,
+    "max": 135752.0,
+    "win_rate_pct": 100.0
+  },
+  "shadow_planner_observability": {
+    "mean_turn_latency_ms": 33.59,
+    "max_turn_latency_ms": 500.42,
+    "matches_with_sw_recommendation": 66,
+    "sw_recommendation_rate_pct": 66.0,
+    "actual_baseline_sw_purchased_count": 0,
+    "total_exceptions": 0,
+    "all_rejection_reasons": {
+      "FLAG_HERD_FEED_ASSUMPTION": 71300,
+      "OWNED": 31003,
+      "DELAY": 25655,
+      "FLAG_PRICE_DEPRESSION_ESTIMATE": 21177,
+      "REJECT": 13785,
+      "DOWNSIZE": 1367
+    }
+  },
+  "per_opponent_breakdown": {
+    "pass": {
+      "count": 20,
+      "mean_cash": 119550.6,
+      "median_cash": 117377.0,
+      "win_rate_pct": 100.0
+    },
+    "pure_wheat_rush": {
+      "count": 20,
+      "mean_cash": 114546.6,
+      "median_cash": 114296.0,
+      "win_rate_pct": 100.0
+    },
+    "cow_milk_engine": {
+      "count": 20,
+      "mean_cash": 110342.6,
+      "median_cash": 111521.0,
+      "win_rate_pct": 100.0
+    },
+    "melon_sniper": {
+      "count": 20,
+      "mean_cash": 108458.9,
+      "median_cash": 108363.5,
+      "win_rate_pct": 100.0
+    },
+    "full_production_agent": {
+      "count": 20,
+      "mean_cash": 116848.8,
+      "median_cash": 114120.5,
+      "win_rate_pct": 100.0
+    }
+  },
+  "per_seat_breakdown": {
+    "seat_0": {
+      "count": 50,
+      "mean_cash": 113736.5,
+      "median_cash": 113542.5,
+      "win_rate_pct": 100.0
+    },
+    "seat_1": {
+      "count": 50,
+      "mean_cash": 114162.5,
+      "median_cash": 112693.5,
+      "win_rate_pct": 100.0
+    }
+  }
+}

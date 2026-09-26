@@ -1004,11 +1004,47 @@ class WholeFarmPlanner:
                     y_mult = 6 if crop_name == "WHEAT" else (4 if crop_name == "CARROT" else (2 if crop_name == "MELON" else 1))
                     core_crop_harvests[crop_name] = cnt * y_mult
 
+        # Core livestock baseline revenue WITHOUT SW (milk and wool)
+        core_livestock_revenue_without = 0.0
+        num_cows = 0
+        num_sheep = 0
+        if raw_ctx and "farm" in raw_ctx:
+            for t in raw_ctx["farm"].iter_tiles():
+                if getattr(t, "is_animal", False) or getattr(t, "kind", None) == "PASTURE":
+                    sp = getattr(t, "animal", None)
+                    if sp == "COW":
+                        num_cows += 1
+                    elif sp == "SHEEP":
+                        num_sheep += 1
+        elif snapshot.animals_summary:
+            for sp, cnt in snapshot.animals_summary:
+                if sp == "COW":
+                    num_cows += cnt
+                elif sp == "SHEEP":
+                    num_sheep += cnt
+
+        days_remaining = max(0, 30 - snapshot.day)
+        mkt_prices_dict = dict(snapshot.market_prices) if snapshot.market_prices else {}
+        if num_cows > 0:
+            cow_yields_remaining = days_remaining // 2
+            est_milk_units = num_cows * cow_yields_remaining * 3
+            milk_price = float(mkt_prices_dict.get("MILK", 10.0))
+            core_livestock_revenue_without += est_milk_units * milk_price
+
+        if num_sheep > 0:
+            sheep_yields_remaining = days_remaining // 3
+            est_wool_units = num_sheep * sheep_yields_remaining * 2
+            wool_price = float(mkt_prices_dict.get("WOOL", 12.0))
+            core_livestock_revenue_without += est_wool_units * wool_price
+
         core_gross_revenue_without = 0.0
         for c_name, c_units in core_crop_harvests.items():
             if c_units > 0:
                 inv = market_inv_dict.get(c_name, 0)
                 core_gross_revenue_without += float(total_revenue_estimate(c_name, inv, c_units))
+
+        # Include livestock product yields in core revenue
+        core_gross_revenue_without += core_livestock_revenue_without
 
         days_left = max(0, 30 - snapshot.day)
         core_daily_wages_without = snapshot.active_worker_count * 8 * days_left

@@ -9,10 +9,15 @@ Tests verify:
 6. Serialization & Diagnostics: DynamicHerdPlan pre_ne_diagnostics serialize cleanly.
 """
 
+import os
 import sys
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
 import pytest
 from unittest.mock import MagicMock
-import agent.config
+import agent.config as agent_config
 import submission.config
 from agent.config import get_point2_pre_ne_capital_mode, POINT2_PRE_NE_CAPITAL_MODE
 from submission.config import get_point2_pre_ne_capital_mode as sub_get_point2_pre_ne_capital_mode, POINT2_PRE_NE_CAPITAL_MODE as SUB_POINT2_PRE_NE_CAPITAL_MODE
@@ -25,7 +30,7 @@ from agent.market.order_builder import OrderBuilder
 
 
 def _patch_config_attr(monkeypatch, attr, value):
-    monkeypatch.setattr(agent.config, attr, value)
+    monkeypatch.setattr(agent_config, attr, value)
     if "config" in sys.modules:
         monkeypatch.setattr(sys.modules["config"], attr, value, raising=False)
 

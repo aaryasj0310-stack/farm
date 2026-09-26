@@ -1,0 +1,5640 @@
+[
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 107632.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 47.94,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.55,
+      "max_latency_ms": 297.6,
+      "p95_latency_ms": 44.15,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -103,
+      "peak_workload": 30,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2406,
+      "feed_safe_pct": 88.5,
+      "storage_safe_pct": 84.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 464,
+        "DELAY": 254,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 217
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 244,
+        "MELON": 204,
+        "WHEAT": 40
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 127,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 107632.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 51.36,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 33.39,
+      "max_latency_ms": 395.69,
+      "p95_latency_ms": 75.42,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -103,
+      "peak_workload": 30,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2406,
+      "feed_safe_pct": 88.5,
+      "storage_safe_pct": 84.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 464,
+        "DELAY": 254,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 217
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 244,
+        "MELON": 204,
+        "WHEAT": 40
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 127,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 106637.0,
+      "opp_final_cash": 9397.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 88.05,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 58.73,
+      "max_latency_ms": 490.2,
+      "p95_latency_ms": 82.73,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -91,
+      "peak_workload": 26,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2383,
+      "feed_safe_pct": 91.8,
+      "storage_safe_pct": 83.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 396,
+        "DELAY": 280,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 217,
+        "DOWNSIZE": 43
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 104,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 109,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 106637.0,
+      "opp_final_cash": 9397.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 86.19,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 56.89,
+      "max_latency_ms": 499.63,
+      "p95_latency_ms": 80.62,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -91,
+      "peak_workload": 26,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2383,
+      "feed_safe_pct": 91.8,
+      "storage_safe_pct": 83.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 396,
+        "DELAY": 280,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 217,
+        "DOWNSIZE": 43
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 104,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 109,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 106774.0,
+      "opp_final_cash": 1703.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 47.44,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.22,
+      "max_latency_ms": 255.28,
+      "p95_latency_ms": 50.58,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -103,
+      "peak_workload": 30,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2362,
+      "feed_safe_pct": 85.4,
+      "storage_safe_pct": 80.8,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "DELAY": 242,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 216,
+        "MELON": 204,
+        "WHEAT": 12
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 140,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 106774.0,
+      "opp_final_cash": 1703.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 51.32,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 32.8,
+      "max_latency_ms": 322.45,
+      "p95_latency_ms": 71.1,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -103,
+      "peak_workload": 30,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2362,
+      "feed_safe_pct": 85.4,
+      "storage_safe_pct": 80.8,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "DELAY": 242,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 216,
+        "MELON": 204,
+        "WHEAT": 12
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 140,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 105218.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 91.54,
+      "min_cash_seen": 247.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 56.79,
+      "max_latency_ms": 399.32,
+      "p95_latency_ms": 80.3,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2204,
+      "feed_safe_pct": 94.6,
+      "storage_safe_pct": 89.7,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 265,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 7.5,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 256,
+        "MELON": 204,
+        "WHEAT": 52
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 96,
+      "rescue_events": 5,
+      "rescue_units_sold": 52,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 105218.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 88.31,
+      "min_cash_seen": 247.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 55.01,
+      "max_latency_ms": 376.9,
+      "p95_latency_ms": 77.32,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2204,
+      "feed_safe_pct": 94.6,
+      "storage_safe_pct": 89.7,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 265,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 7.5,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 256,
+        "MELON": 204,
+        "WHEAT": 52
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 96,
+      "rescue_events": 5,
+      "rescue_units_sold": 52,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 111624.0,
+      "opp_final_cash": 11420.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 50.75,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.15,
+      "max_latency_ms": 212.47,
+      "p95_latency_ms": 47.94,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -106,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2316,
+      "feed_safe_pct": 92.4,
+      "storage_safe_pct": 78.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 313,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 196,
+        "MELON": 164,
+        "WHEAT": 32
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 77,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97013,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 111624.0,
+      "opp_final_cash": 11420.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 62.7,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 38.93,
+      "max_latency_ms": 500.42,
+      "p95_latency_ms": 76.08,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -106,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2316,
+      "feed_safe_pct": 92.4,
+      "storage_safe_pct": 78.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 313,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 196,
+        "MELON": 164,
+        "WHEAT": 32
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 77,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 117399.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 99.41,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 56.71,
+      "max_latency_ms": 378.15,
+      "p95_latency_ms": 77.8,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 20,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2360,
+      "feed_safe_pct": 88.5,
+      "storage_safe_pct": 75.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 413,
+        "DELAY": 266,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 148,
+        "DOWNSIZE": 40
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 88,
+        "MELON": 88
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 150,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 117399.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 86.72,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 47.08,
+      "max_latency_ms": 353.23,
+      "p95_latency_ms": 75.52,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 20,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2360,
+      "feed_safe_pct": 88.5,
+      "storage_safe_pct": 75.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 413,
+        "DELAY": 266,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 148,
+        "DOWNSIZE": 40
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 88,
+        "MELON": 88
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 150,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 119368.0,
+      "opp_final_cash": 9860.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 50.6,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.97,
+      "max_latency_ms": 195.34,
+      "p95_latency_ms": 51.58,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -95,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2247,
+      "feed_safe_pct": 92.9,
+      "storage_safe_pct": 79.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 496,
+        "DELAY": 222,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120
+      },
+      "proposed_tranche_size_mean": 7.9,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 194,
+        "MELON": 188,
+        "WHEAT": 6
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 122,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 119368.0,
+      "opp_final_cash": 9860.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 60.33,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 38.91,
+      "max_latency_ms": 400.09,
+      "p95_latency_ms": 77.32,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -95,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2247,
+      "feed_safe_pct": 92.9,
+      "storage_safe_pct": 79.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 496,
+        "DELAY": 222,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120
+      },
+      "proposed_tranche_size_mean": 7.9,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 194,
+        "MELON": 188,
+        "WHEAT": 6
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 122,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 85537.0,
+      "opp_final_cash": 1767.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 91.32,
+      "min_cash_seen": 251.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 58.78,
+      "max_latency_ms": 426.24,
+      "p95_latency_ms": 77.68,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2394,
+      "feed_safe_pct": 90.7,
+      "storage_safe_pct": 81.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 422,
+        "DELAY": 265,
+        "DOWNSIZE": 1
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 124,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 4,
+      "rescue_units_sold": 30,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 85537.0,
+      "opp_final_cash": 1767.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 82.97,
+      "min_cash_seen": 251.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 53.11,
+      "max_latency_ms": 374.79,
+      "p95_latency_ms": 77.46,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2394,
+      "feed_safe_pct": 90.7,
+      "storage_safe_pct": 81.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 422,
+        "DELAY": 265,
+        "DOWNSIZE": 1
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 124,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 4,
+      "rescue_units_sold": 30,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 118851.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 48.36,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.32,
+      "max_latency_ms": 237.97,
+      "p95_latency_ms": 49.42,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -103,
+      "peak_workload": 27,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2295,
+      "feed_safe_pct": 92.4,
+      "storage_safe_pct": 76.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 266,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 160,
+        "MELON": 144,
+        "WHEAT": 16
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 121,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 118851.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 53.86,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 34.78,
+      "max_latency_ms": 415.63,
+      "p95_latency_ms": 75.27,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -103,
+      "peak_workload": 27,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2295,
+      "feed_safe_pct": 92.4,
+      "storage_safe_pct": 76.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 266,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 160,
+        "MELON": 144,
+        "WHEAT": 16
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 121,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 111949.0,
+      "opp_final_cash": 7244.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 101.0,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 58.7,
+      "max_latency_ms": 359.87,
+      "p95_latency_ms": 83.89,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2303,
+      "feed_safe_pct": 94.0,
+      "storage_safe_pct": 80.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 251,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 15
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 144,
+        "MELON": 144
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 11,
+      "rescue_units_sold": 121,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97014,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 111949.0,
+      "opp_final_cash": 7244.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 88.95,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 50.24,
+      "max_latency_ms": 397.99,
+      "p95_latency_ms": 81.76,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2303,
+      "feed_safe_pct": 94.0,
+      "storage_safe_pct": 80.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 251,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 15
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 144,
+        "MELON": 144
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 11,
+      "rescue_units_sold": 121,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 121061.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 48.06,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.74,
+      "max_latency_ms": 221.73,
+      "p95_latency_ms": 50.37,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2303,
+      "feed_safe_pct": 91.0,
+      "storage_safe_pct": 72.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 400,
+        "DELAY": 275,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 44
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 104,
+        "MELON": 84,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 156,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 124295.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 53.15,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 34.54,
+      "max_latency_ms": 447.05,
+      "p95_latency_ms": 72.84,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2425,
+      "feed_safe_pct": 91.9,
+      "storage_safe_pct": 70.7,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 400,
+        "DELAY": 275,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 44
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 104,
+        "MELON": 84,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 11,
+      "rescue_units_sold": 143,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 108040.0,
+      "opp_final_cash": 9805.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 93.01,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 58.17,
+      "max_latency_ms": 370.79,
+      "p95_latency_ms": 81.63,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -93,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2314,
+      "feed_safe_pct": 91.5,
+      "storage_safe_pct": 77.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 400,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 285,
+        "DELAY": 277,
+        "DOWNSIZE": 42
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 108,
+        "MELON": 104,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 11,
+      "rescue_units_sold": 132,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 108040.0,
+      "opp_final_cash": 9805.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 87.31,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 54.18,
+      "max_latency_ms": 383.49,
+      "p95_latency_ms": 76.89,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -93,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2314,
+      "feed_safe_pct": 91.5,
+      "storage_safe_pct": 77.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 400,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 285,
+        "DELAY": 277,
+        "DOWNSIZE": 42
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 108,
+        "MELON": 104,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 11,
+      "rescue_units_sold": 132,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 110658.0,
+      "opp_final_cash": 1581.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 46.79,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.53,
+      "max_latency_ms": 233.43,
+      "p95_latency_ms": 48.51,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 31,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2302,
+      "feed_safe_pct": 91.4,
+      "storage_safe_pct": 79.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 464,
+        "DELAY": 254,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 228,
+        "MELON": 216,
+        "WHEAT": 12
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 110,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 109100.0,
+      "opp_final_cash": 1560.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 50.24,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 32.42,
+      "max_latency_ms": 431.66,
+      "p95_latency_ms": 63.28,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 31,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2388,
+      "feed_safe_pct": 90.7,
+      "storage_safe_pct": 81.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 464,
+        "DELAY": 254,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 228,
+        "MELON": 216,
+        "WHEAT": 12
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 118,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 117161.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 93.13,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 56.55,
+      "max_latency_ms": 353.56,
+      "p95_latency_ms": 76.55,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -103,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2184,
+      "feed_safe_pct": 95.3,
+      "storage_safe_pct": 84.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "DELAY": 240,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 172,
+        "REJECT": 1
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 212,
+        "MELON": 184,
+        "WHEAT": 28
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 75,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 116574.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 89.18,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 54.01,
+      "max_latency_ms": 378.6,
+      "p95_latency_ms": 72.09,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -103,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2215,
+      "feed_safe_pct": 95.4,
+      "storage_safe_pct": 84.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "DELAY": 240,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 172,
+        "REJECT": 1
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 212,
+        "MELON": 184,
+        "WHEAT": 28
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 82,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 117834.0,
+      "opp_final_cash": 9670.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 60.52,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.31,
+      "max_latency_ms": 224.57,
+      "p95_latency_ms": 51.1,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -111,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2332,
+      "feed_safe_pct": 88.9,
+      "storage_safe_pct": 73.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 397,
+        "DELAY": 290,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 150,
+        "DOWNSIZE": 32
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 120,
+        "WHEAT": 8
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 16,
+      "rescue_units_sold": 172,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97015,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 120731.0,
+      "opp_final_cash": 9347.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 61.01,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 37.2,
+      "max_latency_ms": 234.99,
+      "p95_latency_ms": 52.35,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -111,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2324,
+      "feed_safe_pct": 88.7,
+      "storage_safe_pct": 72.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 397,
+        "DELAY": 290,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 150,
+        "DOWNSIZE": 32
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 120,
+        "WHEAT": 8
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 16,
+      "rescue_units_sold": 158,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 116030.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 55.01,
+      "min_cash_seen": 252.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 35.8,
+      "max_latency_ms": 238.88,
+      "p95_latency_ms": 52.41,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2312,
+      "feed_safe_pct": 93.7,
+      "storage_safe_pct": 76.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 266,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 221
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 124,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 9,
+      "rescue_units_sold": 55,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 116030.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 53.6,
+      "min_cash_seen": 252.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 33.44,
+      "max_latency_ms": 243.92,
+      "p95_latency_ms": 60.02,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2312,
+      "feed_safe_pct": 93.7,
+      "storage_safe_pct": 76.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 266,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 221
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 124,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 9,
+      "rescue_units_sold": 55,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 117730.0,
+      "opp_final_cash": 12977.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 57.1,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 35.91,
+      "max_latency_ms": 247.81,
+      "p95_latency_ms": 52.34,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -101,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2280,
+      "feed_safe_pct": 91.9,
+      "storage_safe_pct": 80.5,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "DELAY": 226,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 234,
+        "MELON": 208,
+        "WHEAT": 26
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 7,
+      "rescue_units_sold": 68,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 117730.0,
+      "opp_final_cash": 12977.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 57.82,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.33,
+      "max_latency_ms": 234.44,
+      "p95_latency_ms": 53.44,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -101,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2280,
+      "feed_safe_pct": 91.9,
+      "storage_safe_pct": 80.5,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "DELAY": 226,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 234,
+        "MELON": 208,
+        "WHEAT": 26
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 7,
+      "rescue_units_sold": 68,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 110582.0,
+      "opp_final_cash": 1693.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 57.44,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 34.87,
+      "max_latency_ms": 230.19,
+      "p95_latency_ms": 48.39,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2227,
+      "feed_safe_pct": 93.5,
+      "storage_safe_pct": 88.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 493,
+        "DELAY": 222,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 148,
+        "DOWNSIZE": 3
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 256,
+        "MELON": 216,
+        "WHEAT": 40
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 62,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 111258.0,
+      "opp_final_cash": 1723.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 55.15,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 31.8,
+      "max_latency_ms": 189.49,
+      "p95_latency_ms": 56.84,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2227,
+      "feed_safe_pct": 93.5,
+      "storage_safe_pct": 88.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 493,
+        "DELAY": 222,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 189,
+        "DOWNSIZE": 3
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 256,
+        "MELON": 216,
+        "WHEAT": 40
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 62,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 115918.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 56.76,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.35,
+      "max_latency_ms": 245.31,
+      "p95_latency_ms": 53.68,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2385,
+      "feed_safe_pct": 90.5,
+      "storage_safe_pct": 80.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 265,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 224,
+        "DOWNSIZE": 1
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 140,
+        "WHEAT": 8
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 66,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 118105.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 57.16,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.36,
+      "max_latency_ms": 273.6,
+      "p95_latency_ms": 54.78,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2385,
+      "feed_safe_pct": 90.5,
+      "storage_safe_pct": 80.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 265,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 240,
+        "DOWNSIZE": 1
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 140,
+        "WHEAT": 8
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 66,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 121221.0,
+      "opp_final_cash": 7469.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 58.81,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 35.65,
+      "max_latency_ms": 253.66,
+      "p95_latency_ms": 52.59,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -117,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2315,
+      "feed_safe_pct": 94.2,
+      "storage_safe_pct": 78.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 389,
+        "DELAY": 267,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 121,
+        "DOWNSIZE": 63
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 144,
+        "MELON": 136,
+        "WHEAT": 8
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 11,
+      "rescue_units_sold": 100,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97016,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 121242.0,
+      "opp_final_cash": 7382.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 57.64,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 33.68,
+      "max_latency_ms": 276.55,
+      "p95_latency_ms": 72.93,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -111,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2389,
+      "feed_safe_pct": 94.2,
+      "storage_safe_pct": 80.5,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 415,
+        "DELAY": 265,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 122,
+        "DOWNSIZE": 39
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 144,
+        "MELON": 136,
+        "WHEAT": 8
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 93,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 117355.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 64.7,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 37.02,
+      "max_latency_ms": 225.94,
+      "p95_latency_ms": 52.86,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2391,
+      "feed_safe_pct": 91.4,
+      "storage_safe_pct": 77.7,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 401,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 290,
+        "DELAY": 270,
+        "DOWNSIZE": 48
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 88,
+        "MELON": 88
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 130,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 123563.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 61.98,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.0,
+      "max_latency_ms": 229.12,
+      "p95_latency_ms": 51.35,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2399,
+      "feed_safe_pct": 93.2,
+      "storage_safe_pct": 79.8,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 403,
+        "DELAY": 263,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 172,
+        "DOWNSIZE": 53
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 88,
+        "MELON": 88
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 106,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 112183.0,
+      "opp_final_cash": 11699.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 55.2,
+      "min_cash_seen": 247.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 35.94,
+      "max_latency_ms": 296.25,
+      "p95_latency_ms": 48.83,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -94,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2243,
+      "feed_safe_pct": 89.3,
+      "storage_safe_pct": 81.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 392,
+        "DELAY": 284,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 213,
+        "DOWNSIZE": 43
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 120,
+        "MELON": 120
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 68,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 112183.0,
+      "opp_final_cash": 11699.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 49.74,
+      "min_cash_seen": 247.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 31.37,
+      "max_latency_ms": 225.67,
+      "p95_latency_ms": 48.46,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -94,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2243,
+      "feed_safe_pct": 89.3,
+      "storage_safe_pct": 81.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 392,
+        "DELAY": 284,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 213,
+        "DOWNSIZE": 43
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 120,
+        "MELON": 120
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 68,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 112310.0,
+      "opp_final_cash": 1768.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 60.94,
+      "min_cash_seen": 253.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.76,
+      "max_latency_ms": 249.23,
+      "p95_latency_ms": 51.06,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2293,
+      "feed_safe_pct": 92.6,
+      "storage_safe_pct": 86.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 260,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 192,
+        "REJECT": 6
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 128
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 7,
+      "rescue_units_sold": 77,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 121830.0,
+      "opp_final_cash": 1884.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 64.45,
+      "min_cash_seen": 249.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.26,
+      "max_latency_ms": 252.41,
+      "p95_latency_ms": 49.74,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -106,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2258,
+      "feed_safe_pct": 91.4,
+      "storage_safe_pct": 72.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 422,
+        "DELAY": 271,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 238,
+        "DOWNSIZE": 26
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 88,
+        "MELON": 88
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 16,
+      "rescue_units_sold": 254,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 125692.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 62.17,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 39.03,
+      "max_latency_ms": 373.58,
+      "p95_latency_ms": 77.65,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2307,
+      "feed_safe_pct": 89.8,
+      "storage_safe_pct": 80.8,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "DELAY": 226,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 172
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 258,
+        "MELON": 212,
+        "WHEAT": 46
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 130,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 115780.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 50.23,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.97,
+      "max_latency_ms": 202.95,
+      "p95_latency_ms": 50.63,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2309,
+      "feed_safe_pct": 88.6,
+      "storage_safe_pct": 76.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 290,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 228,
+        "MELON": 184,
+        "WHEAT": 44
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 133,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 124829.0,
+      "opp_final_cash": 12111.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 61.3,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 37.56,
+      "max_latency_ms": 262.85,
+      "p95_latency_ms": 55.16,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2367,
+      "feed_safe_pct": 90.8,
+      "storage_safe_pct": 79.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 451,
+        "DELAY": 262,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 222,
+        "REJECT": 3
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 108,
+        "MELON": 108
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 118,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97017,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 124446.0,
+      "opp_final_cash": 9212.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 59.95,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.07,
+      "max_latency_ms": 218.03,
+      "p95_latency_ms": 49.19,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -106,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2298,
+      "feed_safe_pct": 90.5,
+      "storage_safe_pct": 74.8,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 430,
+        "DELAY": 285,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 192,
+        "DOWNSIZE": 4
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 88,
+        "MELON": 88
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 14,
+      "rescue_units_sold": 172,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 129293.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 59.25,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 38.59,
+      "max_latency_ms": 384.22,
+      "p95_latency_ms": 70.9,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2363,
+      "feed_safe_pct": 89.7,
+      "storage_safe_pct": 79.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 402,
+        "DELAY": 278,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 39
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 104,
+        "MELON": 84,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 99,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 129293.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 47.9,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.52,
+      "max_latency_ms": 256.74,
+      "p95_latency_ms": 44.53,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2363,
+      "feed_safe_pct": 89.7,
+      "storage_safe_pct": 79.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 402,
+        "DELAY": 278,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 39
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 104,
+        "MELON": 84,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 99,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 112482.0,
+      "opp_final_cash": 12498.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 57.61,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 36.08,
+      "max_latency_ms": 283.36,
+      "p95_latency_ms": 50.8,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -101,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2241,
+      "feed_safe_pct": 92.5,
+      "storage_safe_pct": 80.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 274,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 234,
+        "MELON": 208,
+        "WHEAT": 26
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 9,
+      "rescue_units_sold": 69,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 112482.0,
+      "opp_final_cash": 12498.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 56.8,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 35.44,
+      "max_latency_ms": 227.58,
+      "p95_latency_ms": 50.86,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -101,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2241,
+      "feed_safe_pct": 92.5,
+      "storage_safe_pct": 80.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 274,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 234,
+        "MELON": 208,
+        "WHEAT": 26
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 9,
+      "rescue_units_sold": 69,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 114795.0,
+      "opp_final_cash": 1754.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 61.99,
+      "min_cash_seen": 253.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 37.87,
+      "max_latency_ms": 302.03,
+      "p95_latency_ms": 69.53,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2434,
+      "feed_safe_pct": 92.4,
+      "storage_safe_pct": 80.5,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 260,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 148,
+        "REJECT": 5
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 156,
+        "MELON": 136,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 88,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 111784.0,
+      "opp_final_cash": 1730.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 49.28,
+      "min_cash_seen": 253.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.83,
+      "max_latency_ms": 233.44,
+      "p95_latency_ms": 46.6,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2367,
+      "feed_safe_pct": 91.4,
+      "storage_safe_pct": 82.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 262,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 148,
+        "REJECT": 3
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 136,
+        "MELON": 120,
+        "WHEAT": 16
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 7,
+      "rescue_units_sold": 68,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 104766.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 45.91,
+      "min_cash_seen": 247.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.54,
+      "max_latency_ms": 213.86,
+      "p95_latency_ms": 40.96,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 30,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2417,
+      "feed_safe_pct": 86.6,
+      "storage_safe_pct": 77.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 314,
+        "DELAY": 242
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 264,
+        "MELON": 216,
+        "WHEAT": 48
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 196,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 104766.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 45.34,
+      "min_cash_seen": 247.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.35,
+      "max_latency_ms": 223.95,
+      "p95_latency_ms": 44.21,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 30,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2417,
+      "feed_safe_pct": 86.6,
+      "storage_safe_pct": 77.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 314,
+        "DELAY": 242
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 264,
+        "MELON": 216,
+        "WHEAT": 48
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 196,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 111656.0,
+      "opp_final_cash": 9615.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 49.11,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.46,
+      "max_latency_ms": 245.03,
+      "p95_latency_ms": 44.31,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2169,
+      "feed_safe_pct": 91.0,
+      "storage_safe_pct": 83.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 241,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 244,
+        "MELON": 212,
+        "WHEAT": 32
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 6,
+      "rescue_units_sold": 76,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97018,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 111656.0,
+      "opp_final_cash": 9615.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 48.28,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 28.64,
+      "max_latency_ms": 292.32,
+      "p95_latency_ms": 40.52,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2169,
+      "feed_safe_pct": 91.0,
+      "storage_safe_pct": 83.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 241,
+        "DELAY": 226
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 244,
+        "MELON": 212,
+        "WHEAT": 32
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 6,
+      "rescue_units_sold": 76,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 115317.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 48.22,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.77,
+      "max_latency_ms": 197.32,
+      "p95_latency_ms": 42.69,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2322,
+      "feed_safe_pct": 91.1,
+      "storage_safe_pct": 81.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 261,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 172,
+        "REJECT": 3
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 128,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 62,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 128804.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 47.99,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.35,
+      "max_latency_ms": 184.63,
+      "p95_latency_ms": 42.86,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2424,
+      "feed_safe_pct": 93.3,
+      "storage_safe_pct": 80.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 261,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 149,
+        "REJECT": 3
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 128,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 106,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 97262.0,
+      "opp_final_cash": 12604.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 44.76,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.66,
+      "max_latency_ms": 232.98,
+      "p95_latency_ms": 43.97,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -101,
+      "peak_workload": 26,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2336,
+      "feed_safe_pct": 87.2,
+      "storage_safe_pct": 71.8,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 462,
+        "DELAY": 256,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 202
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 216,
+        "MELON": 188,
+        "WHEAT": 28
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 140,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 97262.0,
+      "opp_final_cash": 12604.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 44.39,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.3,
+      "max_latency_ms": 215.02,
+      "p95_latency_ms": 44.62,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -101,
+      "peak_workload": 26,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2336,
+      "feed_safe_pct": 87.2,
+      "storage_safe_pct": 71.8,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 462,
+        "DELAY": 256,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 202
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 216,
+        "MELON": 188,
+        "WHEAT": 28
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 140,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 116903.0,
+      "opp_final_cash": 1702.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 45.57,
+      "min_cash_seen": 251.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.48,
+      "max_latency_ms": 181.25,
+      "p95_latency_ms": 41.59,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2288,
+      "feed_safe_pct": 89.2,
+      "storage_safe_pct": 74.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 404,
+        "DELAY": 284,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234,
+        "DOWNSIZE": 31
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 124,
+        "MELON": 100,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 13,
+      "rescue_units_sold": 147,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 116903.0,
+      "opp_final_cash": 1702.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 45.53,
+      "min_cash_seen": 251.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.4,
+      "max_latency_ms": 181.02,
+      "p95_latency_ms": 42.12,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 23,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2288,
+      "feed_safe_pct": 89.2,
+      "storage_safe_pct": 74.0,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 404,
+        "DELAY": 284,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234,
+        "DOWNSIZE": 31
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 124,
+        "MELON": 100,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 13,
+      "rescue_units_sold": 147,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 111509.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 46.75,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.13,
+      "max_latency_ms": 198.05,
+      "p95_latency_ms": 47.42,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2254,
+      "feed_safe_pct": 88.3,
+      "storage_safe_pct": 87.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "DELAY": 226,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 148
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 278,
+        "MELON": 228,
+        "WHEAT": 50
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 4,
+      "rescue_units_sold": 38,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 111509.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 46.63,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 28.74,
+      "max_latency_ms": 275.55,
+      "p95_latency_ms": 39.42,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2254,
+      "feed_safe_pct": 88.3,
+      "storage_safe_pct": 87.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "DELAY": 226,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 148
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 278,
+        "MELON": 228,
+        "WHEAT": 50
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 4,
+      "rescue_units_sold": 38,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 110131.0,
+      "opp_final_cash": 7664.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 52.06,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.6,
+      "max_latency_ms": 208.16,
+      "p95_latency_ms": 43.61,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2387,
+      "feed_safe_pct": 91.1,
+      "storage_safe_pct": 81.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 449,
+        "DELAY": 255,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 149,
+        "DOWNSIZE": 9
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 100,
+        "MELON": 100
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 107,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97019,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 110131.0,
+      "opp_final_cash": 7664.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 51.46,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.87,
+      "max_latency_ms": 200.36,
+      "p95_latency_ms": 45.8,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2387,
+      "feed_safe_pct": 91.1,
+      "storage_safe_pct": 81.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 449,
+        "DELAY": 255,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 149,
+        "DOWNSIZE": 9
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 100,
+        "MELON": 100
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 107,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 135752.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 50.56,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.58,
+      "max_latency_ms": 199.56,
+      "p95_latency_ms": 44.44,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2478,
+      "feed_safe_pct": 91.5,
+      "storage_safe_pct": 75.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 403,
+        "DELAY": 268,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 48
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 88,
+        "MELON": 88
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 146,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 134717.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 48.29,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.08,
+      "max_latency_ms": 181.98,
+      "p95_latency_ms": 40.9,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2482,
+      "feed_safe_pct": 91.1,
+      "storage_safe_pct": 75.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 403,
+        "DELAY": 268,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 48
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 88,
+        "MELON": 88
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 154,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 116110.0,
+      "opp_final_cash": 9819.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 44.63,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.27,
+      "max_latency_ms": 223.94,
+      "p95_latency_ms": 40.58,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -93,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2338,
+      "feed_safe_pct": 90.5,
+      "storage_safe_pct": 82.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 382,
+        "DELAY": 273,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234,
+        "DOWNSIZE": 64
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 104,
+        "MELON": 100,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 109,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 116110.0,
+      "opp_final_cash": 9819.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 44.24,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.1,
+      "max_latency_ms": 227.42,
+      "p95_latency_ms": 42.39,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -93,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2338,
+      "feed_safe_pct": 90.5,
+      "storage_safe_pct": 82.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 382,
+        "DELAY": 273,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 234,
+        "DOWNSIZE": 64
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 104,
+        "MELON": 100,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 10,
+      "rescue_units_sold": 109,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 109146.0,
+      "opp_final_cash": 1723.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 48.64,
+      "min_cash_seen": 251.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.49,
+      "max_latency_ms": 195.39,
+      "p95_latency_ms": 47.56,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2295,
+      "feed_safe_pct": 91.5,
+      "storage_safe_pct": 82.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 404,
+        "DELAY": 284,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 218,
+        "DOWNSIZE": 31
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 160,
+        "MELON": 136,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 99,
+      "rescue_events": 5,
+      "rescue_units_sold": 79,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 111067.0,
+      "opp_final_cash": 1717.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 47.36,
+      "min_cash_seen": 251.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 28.42,
+      "max_latency_ms": 183.51,
+      "p95_latency_ms": 42.28,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2311,
+      "feed_safe_pct": 92.6,
+      "storage_safe_pct": 82.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 404,
+        "DELAY": 284,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 241,
+        "DOWNSIZE": 31
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 160,
+        "MELON": 136,
+        "WHEAT": 24
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 98,
+      "rescue_events": 6,
+      "rescue_units_sold": 64,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 102061.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 46.81,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.92,
+      "max_latency_ms": 210.3,
+      "p95_latency_ms": 41.16,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2398,
+      "feed_safe_pct": 90.5,
+      "storage_safe_pct": 80.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 265,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 200,
+        "DOWNSIZE": 1
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 140,
+        "WHEAT": 8
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 66,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 102061.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 46.88,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.5,
+      "max_latency_ms": 237.01,
+      "p95_latency_ms": 46.12,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2398,
+      "feed_safe_pct": 90.5,
+      "storage_safe_pct": 80.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 265,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 200,
+        "DOWNSIZE": 1
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 140,
+        "WHEAT": 8
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 66,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 115651.0,
+      "opp_final_cash": 7297.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 50.05,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 30.87,
+      "max_latency_ms": 216.96,
+      "p95_latency_ms": 48.27,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -111,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2445,
+      "feed_safe_pct": 91.5,
+      "storage_safe_pct": 77.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 435,
+        "DELAY": 284,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 192
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 128
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 97,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97020,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 115651.0,
+      "opp_final_cash": 7297.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 48.34,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.78,
+      "max_latency_ms": 214.75,
+      "p95_latency_ms": 44.46,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -111,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2445,
+      "feed_safe_pct": 91.5,
+      "storage_safe_pct": 77.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 435,
+        "DELAY": 284,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 192
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 128
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 97,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 112585.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 44.92,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.04,
+      "max_latency_ms": 188.47,
+      "p95_latency_ms": 43.88,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2431,
+      "feed_safe_pct": 88.0,
+      "storage_safe_pct": 78.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 462,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 377,
+        "DELAY": 256
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 158,
+        "MELON": 128,
+        "WHEAT": 30
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 11,
+      "rescue_units_sold": 92,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 112084.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 45.0,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.27,
+      "max_latency_ms": 180.77,
+      "p95_latency_ms": 40.43,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2431,
+      "feed_safe_pct": 89.7,
+      "storage_safe_pct": 78.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 462,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 377,
+        "DELAY": 256
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 158,
+        "MELON": 128,
+        "WHEAT": 30
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 99,
+      "rescue_events": 9,
+      "rescue_units_sold": 99,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 120979.0,
+      "opp_final_cash": 12687.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 48.2,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 29.88,
+      "max_latency_ms": 196.7,
+      "p95_latency_ms": 42.4,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -95,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2335,
+      "feed_safe_pct": 94.2,
+      "storage_safe_pct": 77.5,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 400,
+        "DELAY": 268,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 152,
+        "DOWNSIZE": 51
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 160,
+        "MELON": 156,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 109,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 120979.0,
+      "opp_final_cash": 12687.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 46.7,
+      "min_cash_seen": 246.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 28.8,
+      "max_latency_ms": 197.08,
+      "p95_latency_ms": 41.84,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -95,
+      "peak_workload": 24,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2335,
+      "feed_safe_pct": 94.2,
+      "storage_safe_pct": 77.5,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 400,
+        "DELAY": 268,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 152,
+        "DOWNSIZE": 51
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 160,
+        "MELON": 156,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 109,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 112797.0,
+      "opp_final_cash": 1740.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 39.81,
+      "min_cash_seen": 251.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 23.08,
+      "max_latency_ms": 172.43,
+      "p95_latency_ms": 37.77,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2230,
+      "feed_safe_pct": 88.9,
+      "storage_safe_pct": 80.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 285,
+        "DELAY": 241,
+        "REJECT": 1
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 128
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 118,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 112797.0,
+      "opp_final_cash": 1740.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 31.71,
+      "min_cash_seen": 251.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 18.68,
+      "max_latency_ms": 131.22,
+      "p95_latency_ms": 29.26,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 22,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2230,
+      "feed_safe_pct": 88.9,
+      "storage_safe_pct": 80.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 285,
+        "DELAY": 241,
+        "REJECT": 1
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 128,
+        "MELON": 128
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 118,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 100487.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 29.36,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 18.93,
+      "max_latency_ms": 132.15,
+      "p95_latency_ms": 32.11,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 27,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2407,
+      "feed_safe_pct": 88.7,
+      "storage_safe_pct": 83.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 462,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 350,
+        "DELAY": 256
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 236,
+        "MELON": 196,
+        "WHEAT": 40
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 156,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 100278.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 28.75,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 18.33,
+      "max_latency_ms": 144.68,
+      "p95_latency_ms": 30.55,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 27,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2397,
+      "feed_safe_pct": 88.7,
+      "storage_safe_pct": 81.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 462,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 387,
+        "DELAY": 256
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 236,
+        "MELON": 196,
+        "WHEAT": 40
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 8,
+      "rescue_units_sold": 146,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 127937.0,
+      "opp_final_cash": 7750.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 40.18,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 23.45,
+      "max_latency_ms": 167.38,
+      "p95_latency_ms": 38.81,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -114,
+      "peak_workload": 26,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2291,
+      "feed_safe_pct": 90.8,
+      "storage_safe_pct": 77.7,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 262,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 4
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 112,
+        "MELON": 108,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 173,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97021,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 131534.0,
+      "opp_final_cash": 5981.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 32.99,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 19.74,
+      "max_latency_ms": 155.63,
+      "p95_latency_ms": 31.95,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -114,
+      "peak_workload": 26,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2370,
+      "feed_safe_pct": 92.1,
+      "storage_safe_pct": 79.4,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 262,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 4
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 112,
+        "MELON": 108,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 12,
+      "rescue_units_sold": 169,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "pass",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 114288.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 28.97,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 18.58,
+      "max_latency_ms": 154.74,
+      "p95_latency_ms": 31.12,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 30,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2327,
+      "feed_safe_pct": 87.6,
+      "storage_safe_pct": 83.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 462,
+        "DELAY": 256,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 248
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 260,
+        "MELON": 220,
+        "WHEAT": 40
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 95,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "pass",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 110483.0,
+      "opp_final_cash": 3000.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 28.09,
+      "min_cash_seen": 254.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 18.26,
+      "max_latency_ms": 146.88,
+      "p95_latency_ms": 31.11,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 29,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2365,
+      "feed_safe_pct": 87.9,
+      "storage_safe_pct": 80.3,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 462,
+        "DELAY": 256,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 236
+      },
+      "proposed_tranche_size_mean": 7.6,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 260,
+        "MELON": 220,
+        "WHEAT": 40
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 138,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "pure_wheat_rush",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 134675.0,
+      "opp_final_cash": 10455.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 37.63,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 22.72,
+      "max_latency_ms": 147.27,
+      "p95_latency_ms": 35.87,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -102,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2295,
+      "feed_safe_pct": 91.4,
+      "storage_safe_pct": 81.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 418,
+        "DELAY": 276,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 25
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 108,
+        "MELON": 104,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 77,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "pure_wheat_rush",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 134675.0,
+      "opp_final_cash": 10455.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 30.99,
+      "min_cash_seen": 250.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 18.72,
+      "max_latency_ms": 145.93,
+      "p95_latency_ms": 29.53,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 0,
+      "first_recommendation_day": null,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -102,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2295,
+      "feed_safe_pct": 91.4,
+      "storage_safe_pct": 81.9,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "REJECT": 418,
+        "DELAY": 276,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 120,
+        "DOWNSIZE": 25
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 108,
+        "MELON": 104,
+        "WHEAT": 4
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 77,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "cow_milk_engine",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 120224.0,
+      "opp_final_cash": 1811.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 31.7,
+      "min_cash_seen": 253.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 19.04,
+      "max_latency_ms": 129.72,
+      "p95_latency_ms": 30.02,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2322,
+      "feed_safe_pct": 91.1,
+      "storage_safe_pct": 81.6,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 261,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 172,
+        "REJECT": 3
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 128,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 62,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "cow_milk_engine",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 120076.0,
+      "opp_final_cash": 1854.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 29.24,
+      "min_cash_seen": 253.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 17.46,
+      "max_latency_ms": 123.12,
+      "p95_latency_ms": 28.75,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 11,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -107,
+      "peak_workload": 21,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2267,
+      "feed_safe_pct": 89.6,
+      "storage_safe_pct": 85.1,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 452,
+        "DELAY": 261,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 171,
+        "REJECT": 3
+      },
+      "proposed_tranche_size_mean": 8.0,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 148,
+        "MELON": 128,
+        "WHEAT": 20
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 44,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "melon_sniper",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 87836.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 33.35,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 20.97,
+      "max_latency_ms": 155.39,
+      "p95_latency_ms": 33.28,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 31,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2460,
+      "feed_safe_pct": 87.8,
+      "storage_safe_pct": 79.7,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 461,
+        "DELAY": 242
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 262,
+        "MELON": 216,
+        "WHEAT": 46
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 6,
+      "rescue_units_sold": 137,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "melon_sniper",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 86537.0,
+      "opp_final_cash": 1535.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 29.78,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 18.71,
+      "max_latency_ms": 156.45,
+      "p95_latency_ms": 30.3,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 10,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -105,
+      "peak_workload": 27,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2346,
+      "feed_safe_pct": 89.2,
+      "storage_safe_pct": 70.8,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 476,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 344,
+        "DELAY": 242
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 262,
+        "MELON": 216,
+        "WHEAT": 46
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 9,
+      "rescue_units_sold": 175,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "full_production_agent",
+      "seat": 0
+    },
+    "outcome": {
+      "final_cash": 112590.0,
+      "opp_final_cash": 7561.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 31.33,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 19.22,
+      "max_latency_ms": 135.92,
+      "p95_latency_ms": 32.53,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2369,
+      "feed_safe_pct": 90.8,
+      "storage_safe_pct": 83.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "DELAY": 226,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 173
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 234,
+        "MELON": 216,
+        "WHEAT": 18
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 60,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  },
+  {
+    "cell": {
+      "seed": 97022,
+      "opponent": "full_production_agent",
+      "seat": 1
+    },
+    "outcome": {
+      "final_cash": 112590.0,
+      "opp_final_cash": 7561.0,
+      "win": true,
+      "total_turns": 719,
+      "match_duration_s": 26.76,
+      "min_cash_seen": 248.0
+    },
+    "baseline_sw_purchase": {
+      "actual_sw_purchased": false,
+      "actual_sw_purchase_step": null,
+      "actual_sw_purchase_day": null
+    },
+    "shadow_diagnostics": {
+      "shadow_eval_turns": 719,
+      "mean_latency_ms": 15.95,
+      "max_latency_ms": 131.75,
+      "p95_latency_ms": 27.92,
+      "exceptions_count": 0,
+      "sw_recommendation_count": 1,
+      "first_recommendation_day": 9,
+      "target_sw_day_median": 8.0,
+      "min_worker_slack": -110,
+      "peak_workload": 25,
+      "binding_resource_top": "WORKER_HOURS",
+      "displaced_core_tasks_total": 2369,
+      "feed_safe_pct": 90.8,
+      "storage_safe_pct": 83.2,
+      "solvency_safe_pct": 100.0,
+      "top_rejection_reasons": {
+        "FLAG_HERD_FEED_ASSUMPTION": 713,
+        "OWNED": 492,
+        "DELAY": 226,
+        "FLAG_PRICE_DEPRESSION_ESTIMATE": 173
+      },
+      "proposed_tranche_size_mean": 7.7,
+      "portfolio_crop_composition": {
+        "STRAWBERRY": 234,
+        "MELON": 216,
+        "WHEAT": 18
+      }
+    },
+    "storage_safety": {
+      "peak_shed_occupancy": 100,
+      "rescue_events": 7,
+      "rescue_units_sold": 60,
+      "starvation_events": 0,
+      "animal_deaths": 0
+    }
+  }
+]

@@ -8,6 +8,11 @@ import math
 import sys
 from typing import Tuple, Dict, Optional, Any, List, Set
 
+if __name__ == "agent.config":
+    sys.modules.setdefault("config", sys.modules[__name__])
+elif __name__ == "config":
+    sys.modules.setdefault("agent.config", sys.modules[__name__])
+
 # ---------------------------------------------------------------- engine ----
 TURNS_PER_DAY = 24
 SEASON_DAYS = 30

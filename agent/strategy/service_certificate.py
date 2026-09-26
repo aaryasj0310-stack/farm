@@ -264,12 +264,30 @@ class ServiceCertificate:
             due_tasks = tasks_by_day_hour.get((day, hour), [])
 
             # Fidelity adjustment: calibrated travel overhead factors
-            if h_step < 24:
-                travel_factor = 1.15
-            elif h_step < 48:
-                travel_factor = 1.15
+            try:
+                from config import get_soft_worker_locality_mode
+                soft_locality_on = (get_soft_worker_locality_mode() == "ON")
+            except Exception:
+                try:
+                    from agent.config import get_soft_worker_locality_mode
+                    soft_locality_on = (get_soft_worker_locality_mode() == "ON")
+                except Exception:
+                    soft_locality_on = True
+
+            if soft_locality_on:
+                if h_step < 24:
+                    travel_factor = 1.08
+                elif h_step < 48:
+                    travel_factor = 1.10
+                else:
+                    travel_factor = 1.10
             else:
-                travel_factor = 1.10
+                if h_step < 24:
+                    travel_factor = 1.15
+                elif h_step < 48:
+                    travel_factor = 1.15
+                else:
+                    travel_factor = 1.10
 
             # Direct demand: on current day, multi-action tasks execute across their permitted window;
             # on future days, cohort tasks represent deadline capacity envelopes.
