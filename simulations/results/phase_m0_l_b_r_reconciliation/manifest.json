@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-09-26 13:22:58 UTC",
+  "phase": "M0-L-B-R",
+  "branch": "experiment/m0-l-b-r-oracle-integrity",
+  "canonical_baseline_commit": "8e481849f7abbe1e913a9a0c0eb565048582944c",
+  "artifacts": {
+    "matched_soft_locality_pairs.json": "916fa49e5817674b1358cd4b99131bfc7e234e2feb48f432ee092eee6c11eb43",
+    "matched_soft_locality_summary.json": "5305616065b15836f16edbf5fcd375750a612b7657321dbc6a27421836d4c4d1",
+    "bottleneck_reconciliation_register.json": "7b7e56c67e383a5ac3116a1923b699f3fd7d625a043b78dbbb0f2c1b9fea0a6d"
+  },
+  "audit_checks": {
+    "baseline_parity_exact_matches": "100/100",
+    "baseline_parity_verified": true,
+    "animal_escapes_observed": 0,
+    "max_market_orders": 10,
+    "safety_passed": true
+  }
+}

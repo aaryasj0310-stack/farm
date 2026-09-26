@@ -31,34 +31,6 @@ def main():
     o3 = json.load(open(o3_path, "r", encoding="utf-8"))
     o4 = json.load(open(o4_path, "r", encoding="utf-8"))
 
-    # Include pilot records for Arm 2C and 2D in o2 for completeness
-    if "Arm2C_Persistent_Locality" not in o2:
-        o2["Arm2C_Persistent_Locality"] = {
-            "n_matches": 20,
-            "mean_paired_gain": -7268.05,
-            "median_paired_gain": -8205.50,
-            "record": {"wins": 0, "losses": 20, "ties": 0, "win_rate": 0.0},
-            "seed_clustered_ci_95": {
-                "ci_lower": -18125.96,
-                "ci_upper": 3589.86,
-            },
-            "status": "PILOT_TERMINATED",
-            "reason": "Severe territorial lock-in preventing urgent chore service across boundaries",
-        }
-        o2["Arm2D_Combined_Locality"] = {
-            "n_matches": 20,
-            "mean_paired_gain": 228.65,
-            "median_paired_gain": -966.50,
-            "record": {"wins": 8, "losses": 12, "ties": 0, "win_rate": 0.4},
-            "seed_clustered_ci_95": {
-                "ci_lower": -7155.44,
-                "ci_upper": 7612.74,
-            },
-            "status": "PILOT_SUPERSEDED",
-            "reason": "Equivalent to Arm 2B soft locality",
-        }
-        with open(o2_path, "w", encoding="utf-8") as f:
-            json.dump(o2, f, indent=2)
 
     # 1. Oracle Comparison Summary
     summary = {
@@ -106,12 +78,14 @@ def main():
                             round(o2["Arm2B_Soft_Locality"]["seed_clustered_ci_95"]["ci_upper"], 2),
                         ],
                     },
-                    "Arm2C_Persistent_Locality_Pilot": {
-                        "n": o2["Arm2C_Persistent_Locality"]["n_matches"],
-                        "mean_delta": o2["Arm2C_Persistent_Locality"]["mean_paired_gain"],
-                        "median_delta": o2["Arm2C_Persistent_Locality"]["median_paired_gain"],
-                        "record": o2["Arm2C_Persistent_Locality"]["record"],
-                    },
+                    **({
+                        "Arm2C_Persistent_Locality_Pilot": {
+                            "n": o2["Arm2C_Persistent_Locality"]["n_matches"],
+                            "mean_delta": o2["Arm2C_Persistent_Locality"]["mean_paired_gain"],
+                            "median_delta": o2["Arm2C_Persistent_Locality"]["median_paired_gain"],
+                            "record": o2["Arm2C_Persistent_Locality"]["record"],
+                        }
+                    } if "Arm2C_Persistent_Locality" in o2 else {})
                 },
                 "conclusion": "PARTIALLY_RECOVERABLE_POSITIVE",
                 "measured_recoverable_cash": 1974.95,

@@ -1,0 +1,126 @@
+{
+  "n_pairs": 100,
+  "baseline_parity_audit": {
+    "total_census_checked": 100,
+    "parity_exact_matches": 100,
+    "parity_mismatches_count": 0,
+    "parity_verified": true,
+    "mismatches": []
+  },
+  "cash_metrics": {
+    "control_mean_cash": 109066.17,
+    "treatment_mean_cash": 113949.5,
+    "mean_paired_gain": 4883.33,
+    "median_paired_gain": 4660.0,
+    "std_paired_gain": 7879.88587064841,
+    "record": {
+      "wins": 74,
+      "losses": 26,
+      "ties": 0,
+      "win_rate": 0.74
+    },
+    "seed_clustered_ci_95": {
+      "mean": 4883.33,
+      "se": 1523.685687699402,
+      "df": 9,
+      "t_crit": 2.262,
+      "ci_lower": 1436.7529744239523,
+      "ci_upper": 8329.907025576047
+    }
+  },
+  "movement_conversion_metrics": {
+    "control": {
+      "mean_moves": 4763.06,
+      "mean_productive": 2187.39,
+      "mean_total": 7388.4,
+      "travel_pct": 64.47,
+      "productive_pct": 29.61
+    },
+    "treatment": {
+      "mean_moves": 4561.74,
+      "mean_productive": 2303.29,
+      "mean_total": 7382.52,
+      "travel_pct": 61.79,
+      "productive_pct": 31.2
+    },
+    "deltas": {
+      "saved_moves_per_match": 201.32,
+      "gained_productive_ops_per_match": 115.9,
+      "travel_overhead_shift_pp": -2.68,
+      "productive_ratio_shift_pp": 1.59,
+      "incremental_cash_per_productive_op": 42.13
+    }
+  },
+  "breakdown": {
+    "opponent": {
+      "pass": {
+        "mean_delta": 7309.05,
+        "median_delta": 6766.0,
+        "n": 20,
+        "wins": 16,
+        "losses": 4
+      },
+      "pure_wheat_rush": {
+        "mean_delta": 3309.95,
+        "median_delta": 3770.5,
+        "n": 20,
+        "wins": 16,
+        "losses": 4
+      },
+      "cow_milk_engine": {
+        "mean_delta": 3609.65,
+        "median_delta": 3940.0,
+        "n": 20,
+        "wins": 12,
+        "losses": 8
+      },
+      "melon_sniper": {
+        "mean_delta": 5456.05,
+        "median_delta": 5373.0,
+        "n": 20,
+        "wins": 14,
+        "losses": 6
+      },
+      "full_production_agent": {
+        "mean_delta": 4731.95,
+        "median_delta": 3642.5,
+        "n": 20,
+        "wins": 16,
+        "losses": 4
+      }
+    },
+    "seat": {
+      "0": {
+        "mean_delta": 4366.22,
+        "median_delta": 4112.0,
+        "n": 50,
+        "wins": 34,
+        "losses": 16
+      },
+      "1": {
+        "mean_delta": 5400.44,
+        "median_delta": 5457.0,
+        "n": 50,
+        "wins": 40,
+        "losses": 10
+      }
+    }
+  },
+  "safety_audit": {
+    "control": {
+      "animal_escapes": 2,
+      "max_market_orders": 10,
+      "min_wheat_in_shed": 0,
+      "starvation_events": 32559
+    },
+    "treatment": {
+      "animal_escapes": 0,
+      "max_market_orders": 10,
+      "min_wheat_in_shed": 0,
+      "starvation_events": 29952
+    },
+    "control_safety_passed": false,
+    "treatment_safety_passed": true,
+    "all_safety_guarantees_passed": true
+  }
+}

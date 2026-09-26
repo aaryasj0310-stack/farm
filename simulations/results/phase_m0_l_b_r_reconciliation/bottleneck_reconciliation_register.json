@@ -1,0 +1,48 @@
+[
+  {
+    "id": "BN-VAL-01-R",
+    "domain": "Productive Land Utilization",
+    "candidate": "SW Quadrant Unlock & Activation",
+    "audit_correction": "M0-L-B erroneously claimed SW was tested under hard-block {3, 4}. In canonical production, QUADRANT_HARD_BLOCK = {4} (SW dynamic). In Arms 1B-1D, SW purchase rate was 0.0% due to solvency gates. In Arm 1E (forced SW), loss was -$10,574.00 (0W/20L).",
+    "status": "CONFIRMED_VALUE_TRAP",
+    "recoverable_cash": "$0.00",
+    "action": "Maintain canonical production QUADRANT_HARD_BLOCK = {4}. Do not force SW expansion."
+  },
+  {
+    "id": "BN-VAL-02-R",
+    "domain": "Worker Throughput",
+    "candidate": "Soft Worker Locality (Arm 2B)",
+    "audit_correction": "Replaced confounded M0-L-B estimate with bitwise exact matched-control evaluation against canonical QUADRANT_HARD_BLOCK = {4}. Removed hardcoded Arm 2C/2D placeholder fallbacks. Verified 100% parity with M0-L-A census on Control.",
+    "status": "VALIDATED_ECONOMIC_GAIN",
+    "n_pairs": 100,
+    "mean_paired_gain": 4883.33,
+    "median_paired_gain": 4660.0,
+    "win_rate": 0.74,
+    "ci_95": [
+      1436.7529744239523,
+      8329.907025576047
+    ],
+    "movement_shift_pp": -2.68,
+    "productive_ops_gained": 115.9,
+    "safety_passed": true,
+    "action": "Proceed with candidate promotion analysis in Phase M0-L-C."
+  },
+  {
+    "id": "BN-VAL-03-R",
+    "domain": "Crop Portfolio Economics",
+    "candidate": "Carrot & Tomato Suppression",
+    "audit_correction": "Retained M0-L-B finding: carrots and tomatoes provide critical early bootstrap cash (Days 2-8) and late-season harvest realization (Days 25-28). Suppressing them causes -$3,285 to -$6,495 loss.",
+    "status": "CONFIRMED_VALUE_TRAP",
+    "recoverable_cash": "$0.00",
+    "action": "Retain baseline crop portfolio diversification."
+  },
+  {
+    "id": "BN-VAL-04-R",
+    "domain": "Livestock Economics & Feed",
+    "candidate": "On-Farm Wheat Feed Bank",
+    "audit_correction": "Relabeled $6,059.77 spread as Net Wheat Cash Flow across all farm operations (purchases, harvests, feed, and sales), not established trading arbitrage. On-farm wheat feed buffers cause storage congestion and -$15,579 to -$28,728 losses.",
+    "status": "CONFIRMED_VALUE_TRAP",
+    "recoverable_cash": "$0.00",
+    "action": "Retain baseline FEED_WHEAT_BUFFER_DAYS = 4."
+  }
+]
