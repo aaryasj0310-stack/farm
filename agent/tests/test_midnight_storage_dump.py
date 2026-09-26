@@ -235,3 +235,72 @@ def test_rescue_mode_market_relief_activation():
     total_sold = sum(o[2] for o in orders if o[0] == "SELL")
     assert total_sold >= 5  # At least 95 - 90 = 5 units freed
 
+
+def test_apply_midnight_storage_rescue_direct():
+    """Test 14: Direct unit test for apply_midnight_storage_rescue logic and boundaries."""
+    from execution.midnight_storage_controller import apply_midnight_storage_rescue
+
+    class MockTile:
+        def __init__(self, is_animal):
+            self.is_animal = is_animal
+
+    class MockFarm:
+        def __init__(self, animal_count):
+            self.animals = animal_count
+
+        def iter_tiles(self):
+            return [MockTile(True) for _ in range(self.animals)]
+
+    class MockPrivate:
+        def __init__(self, shed, inventories):
+            self.shed = shed
+            self.inventories = inventories
+
+    # 1. Mode OFF -> no action
+    config.set_midnight_storage_dump_mode("OFF")
+    ctx = {
+        "day": 10,
+        "hour": 23,
+        "farm": MockFarm(2),
+        "private": MockPrivate({"WHEAT": 50, "CARROT": 40}, [{"CARROT": 15}]),
+    }
+    mkt = apply_midnight_storage_rescue([], ctx)
+    assert len(mkt) == 0
+
+    # 2. Mode RESCUE, hour 22 -> no action
+    config.set_midnight_storage_dump_mode("RESCUE")
+    ctx["hour"] = 22
+    mkt = apply_midnight_storage_rescue([], ctx)
+    assert len(mkt) == 0
+
+    # 3. Mode RESCUE, hour 23, day 29 -> no action (endgame)
+    ctx["hour"] = 23
+    ctx["day"] = 29
+    mkt = apply_midnight_storage_rescue([], ctx)
+    assert len(mkt) == 0
+
+    # 4. Mode RESCUE, hour 23, day 10, projected 90 <= 98 -> no action
+    ctx["day"] = 10
+    ctx["private"] = MockPrivate({"WHEAT": 50, "CARROT": 30}, [{"CARROT": 10}])  # 80 + 10 = 90
+    mkt = apply_midnight_storage_rescue([], ctx)
+    assert len(mkt) == 0
+
+    # 5. Mode RESCUE, hour 23, day 10, projected 105 > 98 -> sells excess (105 - 98 = 7)
+    # safe_w for 2 animals = max(10, 4) = 10. Shed has 50 wheat, can sell up to 40.
+    ctx["private"] = MockPrivate({"WHEAT": 50, "CARROT": 40}, [{"CARROT": 15}])  # 90 + 15 = 105
+    mkt = apply_midnight_storage_rescue([], ctx)
+    assert len(mkt) == 1
+    assert mkt[0] == ["SELL", "WHEAT", 7]
+
+    # 6. Feed safety reserve limit: if shed wheat is only 12, can only sell 2 (floor 10)
+    ctx["private"] = MockPrivate({"WHEAT": 12, "CARROT": 78}, [{"CARROT": 15}])  # 90 + 15 = 105, needed 7, available 2
+    mkt = apply_midnight_storage_rescue([], ctx)
+    assert len(mkt) == 1
+    assert mkt[0] == ["SELL", "WHEAT", 2]
+
+    # 7. Market slot cap: if market already has 10 orders, do not breach cap
+    full_mkt = [["SELL", "CARROT", 1] for _ in range(10)]
+    mkt_capped = apply_midnight_storage_rescue(full_mkt, ctx)
+    assert len(mkt_capped) == 10
+
+
