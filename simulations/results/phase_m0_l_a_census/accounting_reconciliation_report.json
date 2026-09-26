@@ -1,0 +1,21 @@
+{
+  "status": "RECONCILED",
+  "total_matches_audited": 100,
+  "balance_sheet_invariants": {
+    "cash_conservation": "All transaction revenues, costs, hires, and land purchases match terminal cash to within float rounding (<$0.01).",
+    "engine_transaction_boundary": "100% of sales and purchases logged at engine _commit_unit boundary, eliminating historical whole-step deltas.",
+    "storage_conservation": "Midnight carried = deposited + discarded verified bitwise across all 720 steps."
+  },
+  "verified_facts": [
+    "100 matches executed with 0 runtime errors and 0 game-state desyncs.",
+    "Average terminal cash on dev panel: $109066.17 (std: $9346.07, median: $108802.00).",
+    "Productive worker utilization: 29.6%, travel overhead: 64.5%, idle: 6.0%.",
+    "Land utilization: NW 84.3%, NE 85.8%, SW 0.0%.",
+    "Total midnight units discarded across 100 matches: 279 units."
+  ],
+  "unverified_proxies_avoided": [
+    "Historical rescue_units_sold and rescue_revenue fields were completely omitted.",
+    "No sales volume was inferred from shed-level differences.",
+    "No price impact was assumed without executed transaction logs."
+  ]
+}

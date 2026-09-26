@@ -1,0 +1,102 @@
+{
+  "cash_distribution": {
+    "mean": 109066.17,
+    "std": 9346.074161022549,
+    "median": 108802.0,
+    "p10": 99674.0,
+    "p25": 103541.25,
+    "p75": 115432.5,
+    "p90": 119229.9
+  },
+  "revenue_distribution": {
+    "mean": 154196.86,
+    "std": 10102.544812935686,
+    "median": 155456.0,
+    "p10": 140217.4,
+    "p25": 147223.75,
+    "p75": 160910.25,
+    "p90": 167490.5
+  },
+  "investment_distribution": {
+    "mean": 48130.69,
+    "std": 6207.293290463918,
+    "median": 48861.5,
+    "p10": 38103.0,
+    "p25": 45064.0,
+    "p75": 52692.25,
+    "p90": 55564.700000000004
+  },
+  "spending_categories": {
+    "land": {
+      "mean_spend": 1000.0
+    },
+    "hire": {
+      "mean_spend": 7540.68,
+      "mean_hands_hired": 293.97
+    },
+    "seeds": {
+      "mean_spend": 4688.9,
+      "by_crop_spend": {
+        "WHEAT": 1019.1,
+        "CARROT": 622.2,
+        "TOMATO": 259.0,
+        "STRAWBERRY": 1499.0,
+        "MELON": 1289.6
+      }
+    },
+    "animals": {
+      "mean_spend": 4909.0,
+      "by_animal_spend": {
+        "GOOSE": 0.0,
+        "COW": 2764.0,
+        "SHEEP": 2145.0
+      }
+    },
+    "product_buy": {
+      "mean_spend": 29992.11
+    }
+  },
+  "sales_revenue_by_product": {
+    "WHEAT": {
+      "mean_revenue": 36051.88,
+      "mean_units": 994.06
+    },
+    "CARROT": {
+      "mean_revenue": 2865.18,
+      "mean_units": 69.48
+    },
+    "TOMATO": {
+      "mean_revenue": 1683.55,
+      "mean_units": 23.26
+    },
+    "STRAWBERRY": {
+      "mean_revenue": 22278.58,
+      "mean_units": 86.74
+    },
+    "MELON": {
+      "mean_revenue": 22022.54,
+      "mean_units": 92.61
+    },
+    "EGG": {
+      "mean_revenue": 0.0,
+      "mean_units": 0.0
+    },
+    "MILK": {
+      "mean_revenue": 37474.57,
+      "mean_units": 149.46
+    },
+    "WOOL": {
+      "mean_revenue": 16275.75,
+      "mean_units": 73.72
+    },
+    "FERTILIZER": {
+      "mean_revenue": 15544.81,
+      "mean_units": 191.94
+    }
+  },
+  "terminal_assets": {
+    "mean_shed_units": 0.0,
+    "mean_shed_spot_value": 0.0,
+    "mean_unplanted_seeds_value": 328.1
+  }
+}

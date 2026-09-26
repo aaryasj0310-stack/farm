@@ -1,0 +1,86 @@
+{
+  "summary": {
+    "productive_pct": {
+      "mean": 29.5675,
+      "std": 0.4798387250110207,
+      "median": 29.555,
+      "p10": 28.895999999999997,
+      "p25": 29.2975,
+      "p75": 29.915,
+      "p90": 30.105
+    },
+    "travel_pct": {
+      "mean": 64.46840000000002,
+      "std": 1.2781771426843809,
+      "median": 64.38499999999999,
+      "p10": 62.734,
+      "p25": 63.7,
+      "p75": 65.24,
+      "p90": 66.16600000000001
+    },
+    "idle_pct": {
+      "mean": 5.965000000000001,
+      "std": 1.1708138410973157,
+      "median": 6.0600000000000005,
+      "p10": 4.4750000000000005,
+      "p25": 5.237500000000001,
+      "p75": 6.745,
+      "p90": 7.439
+    },
+    "blocked_pct": {
+      "mean": 0.0852,
+      "std": 0.046547032801525196,
+      "median": 0.08,
+      "p10": 0.03,
+      "p25": 0.05,
+      "p75": 0.12,
+      "p90": 0.14
+    }
+  },
+  "mean_total_actions": 7388.4,
+  "mean_productive_actions": 2184.51,
+  "mean_travel_actions": 4763.06,
+  "mean_idle_pass_actions": 440.83,
+  "mean_blocked_actions": 6.3,
+  "mean_action_breakdown": {
+    "NORTH": 1507.43,
+    "SOUTH": 812.41,
+    "EAST": 1098.83,
+    "WEST": 1344.39,
+    "PASS": 440.83,
+    "PLANT": 158.88,
+    "WATER": 934.17,
+    "HARVEST": 257.1,
+    "DROP": 20.03,
+    "PLACE": 17.55,
+    "PICKUP": 117.38,
+    "FEED": 213.27,
+    "CARE": 196.53,
+    "COLLECT_FERTILIZER": 217.95,
+    "BUILD_COOP": 0.0,
+    "BUILD_PASTURE": 11.14,
+    "DIG": 16.7,
+    "FERTILIZE": 23.81
+  },
+  "mean_blocked_breakdown": {
+    "PLANT": 0.0,
+    "WATER": 0.77,
+    "HARVEST": 0.18,
+    "DROP": 0.0,
+    "PLACE": 0.0,
+    "PICKUP": 5.26,
+    "FEED": 0.09,
+    "CARE": 0.0,
+    "COLLECT_FERTILIZER": 0.0,
+    "BUILD_COOP": 0.0,
+    "BUILD_PASTURE": 0.0,
+    "DIG": 0.0,
+    "FERTILIZE": 0.0
+  },
+  "quadrant_worker_turns": {
+    "NW": 3948.45,
+    "NE": 3261.48,
+    "SW": 96.82,
+    "SE": 81.65
+  }
+}

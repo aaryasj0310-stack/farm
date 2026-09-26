@@ -1,0 +1,224 @@
+{
+  "crops": {
+    "WHEAT": {
+      "margin": {
+        "mean": 35032.78,
+        "std": 7135.916304628767,
+        "median": 35772.0,
+        "p10": 22238.0,
+        "p25": 32201.0,
+        "p75": 40787.0,
+        "p90": 42600.9
+      },
+      "revenue": {
+        "mean": 36051.88,
+        "std": 7139.916438805942,
+        "median": 36782.0,
+        "p10": 23238.0,
+        "p25": 33175.75,
+        "p75": 41807.0,
+        "p90": 43598.90000000001
+      },
+      "cost": {
+        "mean": 1019.1,
+        "std": 38.14101956866614,
+        "median": 1020.0,
+        "p10": 980.0,
+        "p25": 990.0,
+        "p75": 1040.0,
+        "p90": 1061.0
+      }
+    },
+    "CARROT": {
+      "margin": {
+        "mean": 2242.98,
+        "std": 1210.197454295719,
+        "median": 1974.5,
+        "p10": 1264.4,
+        "p25": 1513.0,
+        "p75": 2528.0,
+        "p90": 3087.0000000000023
+      },
+      "revenue": {
+        "mean": 2865.18,
+        "std": 1229.6287308604885,
+        "median": 2605.5,
+        "p10": 1864.1,
+        "p25": 2098.0,
+        "p75": 3187.0,
+        "p90": 3741.600000000002
+      },
+      "cost": {
+        "mean": 622.2,
+        "std": 72.4126781689226,
+        "median": 620.0,
+        "p10": 538.0,
+        "p25": 560.0,
+        "p75": 685.0,
+        "p90": 720.0
+      }
+    },
+    "TOMATO": {
+      "margin": {
+        "mean": 1424.55,
+        "std": 554.7622181501447,
+        "median": 1303.0,
+        "p10": 917.0,
+        "p25": 1092.5,
+        "p75": 1546.0,
+        "p90": 2212.9
+      },
+      "revenue": {
+        "mean": 1683.55,
+        "std": 575.1711273678259,
+        "median": 1553.0,
+        "p10": 1167.0,
+        "p25": 1347.75,
+        "p75": 1794.25,
+        "p90": 2565.3
+      },
+      "cost": {
+        "mean": 259.0,
+        "std": 41.05920829556491,
+        "median": 250.0,
+        "p10": 200.0,
+        "p25": 250.0,
+        "p75": 300.0,
+        "p90": 300.0
+      }
+    },
+    "STRAWBERRY": {
+      "margin": {
+        "mean": 20779.58,
+        "std": 3596.5154212589628,
+        "median": 20480.0,
+        "p10": 17035.0,
+        "p25": 18124.5,
+        "p75": 22988.75,
+        "p90": 25757.6
+      },
+      "revenue": {
+        "mean": 22278.58,
+        "std": 3613.508061245591,
+        "median": 22030.0,
+        "p10": 18538.6,
+        "p25": 19724.5,
+        "p75": 24541.5,
+        "p90": 27257.6
+      },
+      "cost": {
+        "mean": 1499.0,
+        "std": 84.6800275785682,
+        "median": 1500.0,
+        "p10": 1400.0,
+        "p25": 1500.0,
+        "p75": 1500.0,
+        "p90": 1600.0
+      }
+    },
+    "MELON": {
+      "margin": {
+        "mean": 20732.94,
+        "std": 2031.0017373133135,
+        "median": 21385.0,
+        "p10": 17717.5,
+        "p25": 19144.0,
+        "p75": 21760.0,
+        "p90": 22654.0
+      },
+      "revenue": {
+        "mean": 22022.54,
+        "std": 2128.6953770995156,
+        "median": 22745.0,
+        "p10": 18904.1,
+        "p25": 20264.0,
+        "p75": 23180.0,
+        "p90": 24022.000000000004
+      },
+      "cost": {
+        "mean": 1289.6,
+        "std": 120.48655568572826,
+        "median": 1280.0,
+        "p10": 1120.0,
+        "p25": 1200.0,
+        "p75": 1360.0,
+        "p90": 1440.0
+      }
+    }
+  },
+  "mean_total_crop_revenue": 84901.73,
+  "mean_total_crop_margin": 80212.83,
+  "mean_total_crop_labor_actions": 1305.82,
+  "per_crop_labor_and_yield": {
+    "WHEAT": {
+      "mean_seeds_bought": 101.91,
+      "mean_plantings": 98.92,
+      "mean_waterings": 453.11,
+      "mean_fertilizations": 0.0,
+      "mean_harvest_actions": 97.49,
+      "mean_harvest_units": 377.5,
+      "mean_sales_units": 994.06,
+      "mean_revenue": 36051.88,
+      "mean_margin": 35032.78,
+      "mean_discarded_units": 0.5,
+      "mean_unsold_units": 0.0,
+      "margin_per_labor_action": 53.93641458307673
+    },
+    "CARROT": {
+      "mean_seeds_bought": 31.11,
+      "mean_plantings": 26.15,
+      "mean_waterings": 92.89,
+      "mean_fertilizations": 0.0,
+      "mean_harvest_actions": 25.14,
+      "mean_harvest_units": 70.17,
+      "mean_sales_units": 69.48,
+      "mean_revenue": 2865.18,
+      "mean_margin": 2242.98,
+      "mean_discarded_units": 0.24,
+      "mean_unsold_units": 0.0,
+      "margin_per_labor_action": 15.556803995006241
+    },
+    "TOMATO": {
+      "mean_seeds_bought": 5.18,
+      "mean_plantings": 4.42,
+      "mean_waterings": 41.99,
+      "mean_fertilizations": 4.45,
+      "mean_harvest_actions": 10.74,
+      "mean_harvest_units": 23.28,
+      "mean_sales_units": 23.26,
+      "mean_revenue": 1683.55,
+      "mean_margin": 1424.55,
+      "mean_discarded_units": 0.13,
+      "mean_unsold_units": 0.0,
+      "margin_per_labor_action": 23.125811688311686
+    },
+    "STRAWBERRY": {
+      "mean_seeds_bought": 14.99,
+      "mean_plantings": 13.82,
+      "mean_waterings": 182.59,
+      "mean_fertilizations": 19.36,
+      "mean_harvest_actions": 40.81,
+      "mean_harvest_units": 86.99,
+      "mean_sales_units": 86.74,
+      "mean_revenue": 22278.58,
+      "mean_margin": 20779.58,
+      "mean_discarded_units": 0.41,
+      "mean_unsold_units": 0.0,
+      "margin_per_labor_action": 80.98674877231274
+    },
+    "MELON": {
+      "mean_seeds_bought": 16.12,
+      "mean_plantings": 15.57,
+      "mean_waterings": 162.82,
+      "mean_fertilizations": 0.0,
+      "mean_harvest_actions": 15.55,
+      "mean_harvest_units": 93.11,
+      "mean_sales_units": 92.61,
+      "mean_revenue": 22022.54,
+      "mean_margin": 20732.94,
+      "mean_discarded_units": 0.67,
+      "mean_unsold_units": 0.0,
+      "margin_per_labor_action": 106.90388780035062
+    }
+  }
+}
