@@ -2236,23 +2236,12 @@ class MacroPlanner:
                                     seed_cost = CROPS[target_crop]["seed"]
                                     if seeds.get(target_crop, 0) > 0:
                                         seeds[target_crop] -= 1
-                                        if hasattr(_treatment_ctrl, "record_seed_consumption"):
-                                            _treatment_ctrl.record_seed_consumption(target_crop, qty=1, from_inventory=True, cash_spent=0.0)
+                                        plant_queue.append((pos, target_crop))
+                                        planned[target_crop] = planned.get(target_crop, 0) + 1
+                                        committed_counts[target_crop] = committed_counts.get(target_crop, 0) + 1
                                     elif remaining_money >= seed_cost:
                                         buy_seed[target_crop] = buy_seed.get(target_crop, 0) + 1
                                         remaining_money -= seed_cost
-                                        if hasattr(_treatment_ctrl, "record_seed_consumption"):
-                                            _treatment_ctrl.record_seed_consumption(target_crop, qty=1, from_inventory=False, cash_spent=seed_cost)
-                                        else:
-                                            _treatment_ctrl.state.sw_seed_cost_realized += seed_cost
-                                    else:
-                                        continue
-                                    plant_queue.append((pos, target_crop))
-                                    planned[target_crop] = planned.get(target_crop, 0) + 1
-                                    committed_counts[target_crop] = committed_counts.get(target_crop, 0) + 1
-                                    _treatment_ctrl.state.sw_crops_planted[target_crop] = (
-                                        _treatment_ctrl.state.sw_crops_planted.get(target_crop, 0) + 1
-                                    )
                         else:
                             sw_soil_empty = [p for p in empty_tiles if p in SW_SOIL_TILES]
                             try:

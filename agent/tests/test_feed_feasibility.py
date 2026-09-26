@@ -1472,6 +1472,9 @@ def test_phase_b_repair_ledger_fail_closed_in_herd_plan_and_live(monkeypatch):
 
         import strategy.herd_planner as hp_module
         monkeypatch.setattr(hp_module, "generate_dynamic_herd_plan", mock_failing_herd_plan)
+        import sys
+        if "agent.strategy.herd_planner" in sys.modules:
+            monkeypatch.setattr(sys.modules["agent.strategy.herd_planner"], "generate_dynamic_herd_plan", mock_failing_herd_plan)
 
         planner = MacroPlanner(DummyFC())
         plan = planner.build(ctx)

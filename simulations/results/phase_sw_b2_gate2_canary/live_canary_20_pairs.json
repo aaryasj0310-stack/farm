@@ -1,0 +1,4062 @@
+[
+  {
+    "pair_id": "s97013_pass_seat0",
+    "seed": 97013,
+    "opponent": "pass",
+    "seat": 0,
+    "control_cash": 107571.0,
+    "treatment_cash": 101428.0,
+    "paired_delta": -6143.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "pass",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 107571.0,
+        "opp_final_cash": 3000.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 23.97,
+        "min_cash_seen": 254.0,
+        "mean_latency_ms": 25.91,
+        "max_latency_ms": 1180.97
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 19,
+        "hourly_unfed_observations": 3197,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 92,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 5,
+        "rescue_units_sold": 107
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "pass",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 101428.0,
+        "opp_final_cash": 3000.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 51.3,
+        "min_cash_seen": 161.0,
+        "mean_latency_ms": 63.66,
+        "max_latency_ms": 1654.17
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 13,
+        "final_herd_size": 13,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 44,
+        "hourly_unfed_observations": 3995,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 8,
+        "rescue_units_sold": 112
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 10,
+        "sw_purchase_hour": 15,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 255,
+        "sw_unlock_day": 10,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5724.0,
+        "pre_purchase_cash": 2711.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8026.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 0,
+            "sw_watered_tiles": 0,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 25,
+            "whole_quadrant_utilization_pct": 0.0,
+            "admitted_tranche_utilization_pct": 0.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 918,
+        "core_harvest_count": 259,
+        "animals_fed_total": 216
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_pass_seat1",
+    "seed": 97013,
+    "opponent": "pass",
+    "seat": 1,
+    "control_cash": 107571.0,
+    "treatment_cash": 98882.0,
+    "paired_delta": -8689.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "pass",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 107571.0,
+        "opp_final_cash": 3000.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 24.02,
+        "min_cash_seen": 254.0,
+        "mean_latency_ms": 25.92,
+        "max_latency_ms": 1177.21
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 19,
+        "hourly_unfed_observations": 3197,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 92,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 5,
+        "rescue_units_sold": 107
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "pass",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 98882.0,
+        "opp_final_cash": 3000.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 50.82,
+        "min_cash_seen": 161.0,
+        "mean_latency_ms": 62.98,
+        "max_latency_ms": 1757.46
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 13,
+        "final_herd_size": 13,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 47,
+        "hourly_unfed_observations": 3979,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 100
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 10,
+        "sw_purchase_hour": 15,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 255,
+        "sw_unlock_day": 10,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5724.0,
+        "pre_purchase_cash": 2711.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8050.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 0,
+            "sw_watered_tiles": 0,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 25,
+            "whole_quadrant_utilization_pct": 0.0,
+            "admitted_tranche_utilization_pct": 0.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 16,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 912,
+        "core_harvest_count": 261,
+        "animals_fed_total": 214
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_pure_wheat_rush_seat0",
+    "seed": 97013,
+    "opponent": "pure_wheat_rush",
+    "seat": 0,
+    "control_cash": 106006.0,
+    "treatment_cash": 106006.0,
+    "paired_delta": 0.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "pure_wheat_rush",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 106006.0,
+        "opp_final_cash": 9402.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 23.02,
+        "min_cash_seen": 250.0,
+        "mean_latency_ms": 23.16,
+        "max_latency_ms": 1171.9
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 20,
+        "hourly_unfed_observations": 3155,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 92,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 83
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "pure_wheat_rush",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 106006.0,
+        "opp_final_cash": 9402.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 64.29,
+        "min_cash_seen": 250.0,
+        "mean_latency_ms": 80.41,
+        "max_latency_ms": 1798.77
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 20,
+        "hourly_unfed_observations": 3155,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 92,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 83
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": false,
+        "sw_purchase_day": null,
+        "sw_purchase_hour": null,
+        "sw_purchase_confirmed": false,
+        "sw_order_emitted_step": 145,
+        "sw_order_emitted_day": 6,
+        "sw_unlock_step": null,
+        "sw_unlock_day": null,
+        "selected_portfolio_name": null,
+        "predicted_delta_fc": 0.0,
+        "pre_purchase_cash": 0.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 0,
+        "admitted_tiles": [],
+        "sw_crops_planted": {},
+        "sw_crops_sold": {},
+        "sw_revenue_realized": 0.0,
+        "sw_land_cost_paid": 0.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 0.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {},
+        "core_watered_count": 1012,
+        "core_harvest_count": 263,
+        "animals_fed_total": 210
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_pure_wheat_rush_seat1",
+    "seed": 97013,
+    "opponent": "pure_wheat_rush",
+    "seat": 1,
+    "control_cash": 106006.0,
+    "treatment_cash": 106006.0,
+    "paired_delta": 0.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "pure_wheat_rush",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 106006.0,
+        "opp_final_cash": 9402.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 23.24,
+        "min_cash_seen": 250.0,
+        "mean_latency_ms": 23.39,
+        "max_latency_ms": 1176.13
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 20,
+        "hourly_unfed_observations": 3155,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 92,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 83
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "pure_wheat_rush",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 106006.0,
+        "opp_final_cash": 9402.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 63.24,
+        "min_cash_seen": 250.0,
+        "mean_latency_ms": 79.09,
+        "max_latency_ms": 1646.18
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 20,
+        "hourly_unfed_observations": 3155,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 92,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 83
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": false,
+        "sw_purchase_day": null,
+        "sw_purchase_hour": null,
+        "sw_purchase_confirmed": false,
+        "sw_order_emitted_step": 145,
+        "sw_order_emitted_day": 6,
+        "sw_unlock_step": null,
+        "sw_unlock_day": null,
+        "selected_portfolio_name": null,
+        "predicted_delta_fc": 0.0,
+        "pre_purchase_cash": 0.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 0,
+        "admitted_tiles": [],
+        "sw_crops_planted": {},
+        "sw_crops_sold": {},
+        "sw_revenue_realized": 0.0,
+        "sw_land_cost_paid": 0.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 0.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {},
+        "core_watered_count": 1012,
+        "core_harvest_count": 263,
+        "animals_fed_total": 210
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_cow_milk_engine_seat0",
+    "seed": 97013,
+    "opponent": "cow_milk_engine",
+    "seat": 0,
+    "control_cash": 105320.0,
+    "treatment_cash": 106882.0,
+    "paired_delta": 1562.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "cow_milk_engine",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 105320.0,
+        "opp_final_cash": 1707.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 23.59,
+        "min_cash_seen": 254.0,
+        "mean_latency_ms": 25.22,
+        "max_latency_ms": 1147.72
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 28,
+        "hourly_unfed_observations": 3568,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 5,
+        "rescue_units_sold": 120
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "cow_milk_engine",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 106882.0,
+        "opp_final_cash": 1604.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 51.52,
+        "min_cash_seen": 163.0,
+        "mean_latency_ms": 63.34,
+        "max_latency_ms": 1794.5
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 13,
+        "final_herd_size": 13,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 32,
+        "hourly_unfed_observations": 4025,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 11,
+        "rescue_units_sold": 124
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 10,
+        "sw_purchase_hour": 15,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 255,
+        "sw_unlock_day": 10,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 4889.0,
+        "pre_purchase_cash": 2240.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 7750.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 0,
+            "sw_watered_tiles": 0,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 25,
+            "whole_quadrant_utilization_pct": 0.0,
+            "admitted_tranche_utilization_pct": 0.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 956,
+        "core_harvest_count": 261,
+        "animals_fed_total": 231
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_cow_milk_engine_seat1",
+    "seed": 97013,
+    "opponent": "cow_milk_engine",
+    "seat": 1,
+    "control_cash": 105320.0,
+    "treatment_cash": 108336.0,
+    "paired_delta": 3016.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "cow_milk_engine",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 105320.0,
+        "opp_final_cash": 1707.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 23.88,
+        "min_cash_seen": 254.0,
+        "mean_latency_ms": 25.63,
+        "max_latency_ms": 1167.41
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 28,
+        "hourly_unfed_observations": 3568,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 5,
+        "rescue_units_sold": 120
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "cow_milk_engine",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 108336.0,
+        "opp_final_cash": 1609.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 52.02,
+        "min_cash_seen": 163.0,
+        "mean_latency_ms": 64.07,
+        "max_latency_ms": 1774.66
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 13,
+        "final_herd_size": 13,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 29,
+        "hourly_unfed_observations": 4085,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 92,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 10,
+        "rescue_units_sold": 116
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 10,
+        "sw_purchase_hour": 15,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 255,
+        "sw_unlock_day": 10,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 4889.0,
+        "pre_purchase_cash": 2240.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 7772.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 0,
+            "sw_watered_tiles": 0,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 25,
+            "whole_quadrant_utilization_pct": 0.0,
+            "admitted_tranche_utilization_pct": 0.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 954,
+        "core_harvest_count": 263,
+        "animals_fed_total": 233
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_melon_sniper_seat0",
+    "seed": 97013,
+    "opponent": "melon_sniper",
+    "seat": 0,
+    "control_cash": 105220.0,
+    "treatment_cash": 110636.0,
+    "paired_delta": 5416.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "melon_sniper",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 105220.0,
+        "opp_final_cash": 1535.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 25.53,
+        "min_cash_seen": 247.0,
+        "mean_latency_ms": 28.12,
+        "max_latency_ms": 1156.06
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 10,
+        "final_herd_size": 10,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 8,
+        "hourly_unfed_observations": 2871,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 88,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 96,
+        "rescue_events": 4,
+        "rescue_units_sold": 50
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "melon_sniper",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 110636.0,
+        "opp_final_cash": 1535.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 52.84,
+        "min_cash_seen": 190.0,
+        "mean_latency_ms": 65.51,
+        "max_latency_ms": 1749.37
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 25,
+        "hourly_unfed_observations": 3330,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 89,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 5,
+        "rescue_units_sold": 91
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 9,
+        "sw_purchase_hour": 11,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 227,
+        "sw_unlock_day": 9,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5937.0,
+        "pre_purchase_cash": 3082.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8377.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 0,
+            "sw_watered_tiles": 0,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 25,
+            "whole_quadrant_utilization_pct": 0.0,
+            "admitted_tranche_utilization_pct": 0.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 7,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 1068,
+        "core_harvest_count": 274,
+        "animals_fed_total": 198
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_melon_sniper_seat1",
+    "seed": 97013,
+    "opponent": "melon_sniper",
+    "seat": 1,
+    "control_cash": 105220.0,
+    "treatment_cash": 110749.0,
+    "paired_delta": 5529.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "melon_sniper",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 105220.0,
+        "opp_final_cash": 1535.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 25.67,
+        "min_cash_seen": 247.0,
+        "mean_latency_ms": 28.6,
+        "max_latency_ms": 1705.05
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 10,
+        "final_herd_size": 10,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 8,
+        "hourly_unfed_observations": 2871,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 88,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 96,
+        "rescue_events": 4,
+        "rescue_units_sold": 50
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "melon_sniper",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 110749.0,
+        "opp_final_cash": 1535.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 45.73,
+        "min_cash_seen": 190.0,
+        "mean_latency_ms": 56.59,
+        "max_latency_ms": 1551.99
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 25,
+        "hourly_unfed_observations": 3327,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 88,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 5,
+        "rescue_units_sold": 99
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 9,
+        "sw_purchase_hour": 11,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 227,
+        "sw_unlock_day": 9,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5937.0,
+        "pre_purchase_cash": 3082.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8377.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 0,
+            "sw_watered_tiles": 0,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 25,
+            "whole_quadrant_utilization_pct": 0.0,
+            "admitted_tranche_utilization_pct": 0.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 7,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 1069,
+        "core_harvest_count": 274,
+        "animals_fed_total": 198
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_full_production_agent_seat0",
+    "seed": 97013,
+    "opponent": "full_production_agent",
+    "seat": 0,
+    "control_cash": 111625.0,
+    "treatment_cash": 103021.0,
+    "paired_delta": -8604.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "full_production_agent",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 111625.0,
+        "opp_final_cash": 11421.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 26.73,
+        "min_cash_seen": 248.0,
+        "mean_latency_ms": 28.23,
+        "max_latency_ms": 1636.41
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 17,
+        "hourly_unfed_observations": 3514,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 8,
+        "rescue_units_sold": 74
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "full_production_agent",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 103021.0,
+        "opp_final_cash": 10026.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 48.64,
+        "min_cash_seen": 183.0,
+        "mean_latency_ms": 58.62,
+        "max_latency_ms": 1532.86
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 22,
+        "hourly_unfed_observations": 3411,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 94,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 8,
+        "rescue_units_sold": 53
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 9,
+        "sw_purchase_hour": 11,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 227,
+        "sw_unlock_day": 9,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5947.0,
+        "pre_purchase_cash": 3005.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8335.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 2,
+            "sw_watered_tiles": 2,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 23,
+            "whole_quadrant_utilization_pct": 8.0,
+            "admitted_tranche_utilization_pct": 25.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 7,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 990,
+        "core_harvest_count": 265,
+        "animals_fed_total": 198
+      }
+    }
+  },
+  {
+    "pair_id": "s97013_full_production_agent_seat1",
+    "seed": 97013,
+    "opponent": "full_production_agent",
+    "seat": 1,
+    "control_cash": 111625.0,
+    "treatment_cash": 105297.0,
+    "paired_delta": -6328.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "full_production_agent",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 111625.0,
+        "opp_final_cash": 11421.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 27.5,
+        "min_cash_seen": 248.0,
+        "mean_latency_ms": 29.12,
+        "max_latency_ms": 1760.8
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 17,
+        "hourly_unfed_observations": 3514,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 8,
+        "rescue_units_sold": 74
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97013,
+        "opponent": "full_production_agent",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 105297.0,
+        "opp_final_cash": 10054.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 48.37,
+        "min_cash_seen": 183.0,
+        "mean_latency_ms": 58.14,
+        "max_latency_ms": 1473.67
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 19,
+        "hourly_unfed_observations": 3335,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 93,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 5,
+        "rescue_units_sold": 62
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 9,
+        "sw_purchase_hour": 11,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 227,
+        "sw_unlock_day": 9,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5947.0,
+        "pre_purchase_cash": 3005.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8368.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 2,
+            "sw_watered_tiles": 2,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 23,
+            "whole_quadrant_utilization_pct": 8.0,
+            "admitted_tranche_utilization_pct": 25.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 7,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 993,
+        "core_harvest_count": 261,
+        "animals_fed_total": 203
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_pass_seat0",
+    "seed": 97014,
+    "opponent": "pass",
+    "seat": 0,
+    "control_cash": 117399.0,
+    "treatment_cash": 117399.0,
+    "paired_delta": 0.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "pass",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 117399.0,
+        "opp_final_cash": 3000.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 29.51,
+        "min_cash_seen": 254.0,
+        "mean_latency_ms": 34.23,
+        "max_latency_ms": 1763.08
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 13,
+        "final_herd_size": 13,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 12,
+        "hourly_unfed_observations": 3792,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 104,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 11,
+        "rescue_units_sold": 148
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "pass",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 117399.0,
+        "opp_final_cash": 3000.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 62.78,
+        "min_cash_seen": 254.0,
+        "mean_latency_ms": 80.85,
+        "max_latency_ms": 1580.35
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 13,
+        "final_herd_size": 13,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 12,
+        "hourly_unfed_observations": 3792,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 104,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 11,
+        "rescue_units_sold": 148
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": false,
+        "sw_purchase_day": null,
+        "sw_purchase_hour": null,
+        "sw_purchase_confirmed": false,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": null,
+        "sw_unlock_day": null,
+        "selected_portfolio_name": null,
+        "predicted_delta_fc": 0.0,
+        "pre_purchase_cash": 0.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 0,
+        "admitted_tiles": [],
+        "sw_crops_planted": {},
+        "sw_crops_sold": {},
+        "sw_revenue_realized": 0.0,
+        "sw_land_cost_paid": 0.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 0.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {},
+        "core_watered_count": 932,
+        "core_harvest_count": 272,
+        "animals_fed_total": 253
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_pass_seat1",
+    "seed": 97014,
+    "opponent": "pass",
+    "seat": 1,
+    "control_cash": 117399.0,
+    "treatment_cash": 117399.0,
+    "paired_delta": 0.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "pass",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 117399.0,
+        "opp_final_cash": 3000.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 28.37,
+        "min_cash_seen": 254.0,
+        "mean_latency_ms": 32.81,
+        "max_latency_ms": 1684.68
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 13,
+        "final_herd_size": 13,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 12,
+        "hourly_unfed_observations": 3792,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 104,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 11,
+        "rescue_units_sold": 148
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "pass",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 117399.0,
+        "opp_final_cash": 3000.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 63.78,
+        "min_cash_seen": 254.0,
+        "mean_latency_ms": 82.14,
+        "max_latency_ms": 1503.28
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 13,
+        "final_herd_size": 13,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 12,
+        "hourly_unfed_observations": 3792,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 104,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 11,
+        "rescue_units_sold": 148
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": false,
+        "sw_purchase_day": null,
+        "sw_purchase_hour": null,
+        "sw_purchase_confirmed": false,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": null,
+        "sw_unlock_day": null,
+        "selected_portfolio_name": null,
+        "predicted_delta_fc": 0.0,
+        "pre_purchase_cash": 0.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 0,
+        "admitted_tiles": [],
+        "sw_crops_planted": {},
+        "sw_crops_sold": {},
+        "sw_revenue_realized": 0.0,
+        "sw_land_cost_paid": 0.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 0.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {},
+        "core_watered_count": 932,
+        "core_harvest_count": 272,
+        "animals_fed_total": 253
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_pure_wheat_rush_seat0",
+    "seed": 97014,
+    "opponent": "pure_wheat_rush",
+    "seat": 0,
+    "control_cash": 119335.0,
+    "treatment_cash": 123794.0,
+    "paired_delta": 4459.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "pure_wheat_rush",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 119335.0,
+        "opp_final_cash": 9872.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 23.71,
+        "min_cash_seen": 246.0,
+        "mean_latency_ms": 25.12,
+        "max_latency_ms": 1645.55
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 10,
+        "hourly_unfed_observations": 3385,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 104
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "pure_wheat_rush",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 123794.0,
+        "opp_final_cash": 9921.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 45.78,
+        "min_cash_seen": 246.0,
+        "mean_latency_ms": 55.5,
+        "max_latency_ms": 1577.74
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 12,
+        "hourly_unfed_observations": 3467,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 95,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 107
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 9,
+        "sw_purchase_hour": 11,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 145,
+        "sw_order_emitted_day": 6,
+        "sw_unlock_step": 227,
+        "sw_unlock_day": 9,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5819.0,
+        "pre_purchase_cash": 2264.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8208.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 0,
+            "sw_watered_tiles": 0,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 25,
+            "whole_quadrant_utilization_pct": 0.0,
+            "admitted_tranche_utilization_pct": 0.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 3,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 992,
+        "core_harvest_count": 271,
+        "animals_fed_total": 223
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_pure_wheat_rush_seat1",
+    "seed": 97014,
+    "opponent": "pure_wheat_rush",
+    "seat": 1,
+    "control_cash": 119335.0,
+    "treatment_cash": 123794.0,
+    "paired_delta": 4459.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "pure_wheat_rush",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 119335.0,
+        "opp_final_cash": 9872.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 24.25,
+        "min_cash_seen": 246.0,
+        "mean_latency_ms": 25.79,
+        "max_latency_ms": 1635.52
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 10,
+        "hourly_unfed_observations": 3385,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 91,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 104
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "pure_wheat_rush",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 123794.0,
+        "opp_final_cash": 9921.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 45.62,
+        "min_cash_seen": 246.0,
+        "mean_latency_ms": 55.35,
+        "max_latency_ms": 1562.72
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 12,
+        "hourly_unfed_observations": 3467,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 95,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 7,
+        "rescue_units_sold": 107
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 9,
+        "sw_purchase_hour": 11,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 145,
+        "sw_order_emitted_day": 6,
+        "sw_unlock_step": 227,
+        "sw_unlock_day": 9,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5819.0,
+        "pre_purchase_cash": 2264.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8208.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 0,
+            "sw_watered_tiles": 0,
+            "sw_harvestable_tiles": 0,
+            "sw_idle_tiles": 25,
+            "whole_quadrant_utilization_pct": 0.0,
+            "admitted_tranche_utilization_pct": 0.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 3,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 992,
+        "core_harvest_count": 271,
+        "animals_fed_total": 223
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_cow_milk_engine_seat0",
+    "seed": 97014,
+    "opponent": "cow_milk_engine",
+    "seat": 0,
+    "control_cash": 85543.0,
+    "treatment_cash": 95696.0,
+    "paired_delta": 10153.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "cow_milk_engine",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 85543.0,
+        "opp_final_cash": 1767.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 22.55,
+        "min_cash_seen": 251.0,
+        "mean_latency_ms": 24.44,
+        "max_latency_ms": 1348.32
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 15,
+        "hourly_unfed_observations": 3165,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 89,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 3,
+        "rescue_units_sold": 23
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "cow_milk_engine",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 95696.0,
+        "opp_final_cash": 1717.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 40.33,
+        "min_cash_seen": 251.0,
+        "mean_latency_ms": 49.79,
+        "max_latency_ms": 1487.29
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 18,
+        "hourly_unfed_observations": 3268,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 86,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 8,
+        "rescue_units_sold": 62
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 11,
+        "sw_purchase_hour": 3,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 267,
+        "sw_unlock_day": 11,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 6112.0,
+        "pre_purchase_cash": 4008.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8007.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 5,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 1,
+            "sw_idle_tiles": 20,
+            "whole_quadrant_utilization_pct": 20.0,
+            "admitted_tranche_utilization_pct": 62.5
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 1021,
+        "core_harvest_count": 273,
+        "animals_fed_total": 214
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_cow_milk_engine_seat1",
+    "seed": 97014,
+    "opponent": "cow_milk_engine",
+    "seat": 1,
+    "control_cash": 85543.0,
+    "treatment_cash": 95696.0,
+    "paired_delta": 10153.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "cow_milk_engine",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 85543.0,
+        "opp_final_cash": 1767.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 21.89,
+        "min_cash_seen": 251.0,
+        "mean_latency_ms": 23.81,
+        "max_latency_ms": 1578.39
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 15,
+        "hourly_unfed_observations": 3165,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 89,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 3,
+        "rescue_units_sold": 23
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "cow_milk_engine",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 95696.0,
+        "opp_final_cash": 1717.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 39.39,
+        "min_cash_seen": 251.0,
+        "mean_latency_ms": 48.59,
+        "max_latency_ms": 1213.43
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 11,
+        "final_herd_size": 11,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 18,
+        "hourly_unfed_observations": 3268,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 86,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 8,
+        "rescue_units_sold": 62
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 11,
+        "sw_purchase_hour": 3,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 267,
+        "sw_unlock_day": 11,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 6112.0,
+        "pre_purchase_cash": 4008.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 8007.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 5,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 1,
+            "sw_idle_tiles": 20,
+            "whole_quadrant_utilization_pct": 20.0,
+            "admitted_tranche_utilization_pct": 62.5
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 1021,
+        "core_harvest_count": 273,
+        "animals_fed_total": 214
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_melon_sniper_seat0",
+    "seed": 97014,
+    "opponent": "melon_sniper",
+    "seat": 0,
+    "control_cash": 118853.0,
+    "treatment_cash": 115676.0,
+    "paired_delta": -3177.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "melon_sniper",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 118853.0,
+        "opp_final_cash": 1535.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 22.12,
+        "min_cash_seen": 250.0,
+        "mean_latency_ms": 24.05,
+        "max_latency_ms": 1533.94
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 11,
+        "hourly_unfed_observations": 3552,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 89,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 8,
+        "rescue_units_sold": 101
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "melon_sniper",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 115676.0,
+        "opp_final_cash": 1535.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 39.86,
+        "min_cash_seen": 250.0,
+        "mean_latency_ms": 49.33,
+        "max_latency_ms": 1365.5
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 14,
+        "final_herd_size": 14,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 29,
+        "hourly_unfed_observations": 4445,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 88,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 12,
+        "rescue_units_sold": 168
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 11,
+        "sw_purchase_hour": 3,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 267,
+        "sw_unlock_day": 11,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5866.0,
+        "pre_purchase_cash": 8686.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 7742.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 948,
+        "core_harvest_count": 271,
+        "animals_fed_total": 257
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_melon_sniper_seat1",
+    "seed": 97014,
+    "opponent": "melon_sniper",
+    "seat": 1,
+    "control_cash": 118853.0,
+    "treatment_cash": 115676.0,
+    "paired_delta": -3177.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "melon_sniper",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 118853.0,
+        "opp_final_cash": 1535.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 21.36,
+        "min_cash_seen": 250.0,
+        "mean_latency_ms": 23.28,
+        "max_latency_ms": 1534.23
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 11,
+        "hourly_unfed_observations": 3552,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 89,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 8,
+        "rescue_units_sold": 101
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "melon_sniper",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 115676.0,
+        "opp_final_cash": 1535.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 39.24,
+        "min_cash_seen": 250.0,
+        "mean_latency_ms": 48.61,
+        "max_latency_ms": 1287.08
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 14,
+        "final_herd_size": 14,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 29,
+        "hourly_unfed_observations": 4445,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 88,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 12,
+        "rescue_units_sold": 168
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 11,
+        "sw_purchase_hour": 3,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 267,
+        "sw_unlock_day": 11,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5866.0,
+        "pre_purchase_cash": 8686.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 7742.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 8,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 4,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 948,
+        "core_harvest_count": 271,
+        "animals_fed_total": 257
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_full_production_agent_seat0",
+    "seed": 97014,
+    "opponent": "full_production_agent",
+    "seat": 0,
+    "control_cash": 117571.0,
+    "treatment_cash": 103184.0,
+    "paired_delta": -14387.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "full_production_agent",
+        "seat": 0,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 117571.0,
+        "opp_final_cash": 7596.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 25.99,
+        "min_cash_seen": 248.0,
+        "mean_latency_ms": 27.95,
+        "max_latency_ms": 1404.83
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 11,
+        "hourly_unfed_observations": 3392,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 104,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 9,
+        "rescue_units_sold": 104
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "full_production_agent",
+        "seat": 0,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 103184.0,
+        "opp_final_cash": 7297.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 40.34,
+        "min_cash_seen": 248.0,
+        "mean_latency_ms": 49.26,
+        "max_latency_ms": 1314.87
+      },
+      "animal_safety": {
+        "monitored_seat": 0,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 23,
+        "hourly_unfed_observations": 3823,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 108,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 6,
+        "rescue_units_sold": 78
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 11,
+        "sw_purchase_hour": 3,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 267,
+        "sw_unlock_day": 11,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5831.0,
+        "pre_purchase_cash": 9679.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 7818.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 5,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 1,
+            "sw_idle_tiles": 20,
+            "whole_quadrant_utilization_pct": 20.0,
+            "admitted_tranche_utilization_pct": 62.5
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 2,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 943,
+        "core_harvest_count": 263,
+        "animals_fed_total": 225
+      }
+    }
+  },
+  {
+    "pair_id": "s97014_full_production_agent_seat1",
+    "seed": 97014,
+    "opponent": "full_production_agent",
+    "seat": 1,
+    "control_cash": 117571.0,
+    "treatment_cash": 103184.0,
+    "paired_delta": -14387.0,
+    "control_win": true,
+    "treatment_win": true,
+    "control": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "full_production_agent",
+        "seat": 1,
+        "mode": "OFF"
+      },
+      "outcome": {
+        "final_cash": 117571.0,
+        "opp_final_cash": 7596.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 23.7,
+        "min_cash_seen": 248.0,
+        "mean_latency_ms": 25.53,
+        "max_latency_ms": 1461.98
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 11,
+        "hourly_unfed_observations": 3392,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 104,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 9,
+        "rescue_units_sold": 104
+      },
+      "sw_telemetry": {}
+    },
+    "treatment": {
+      "cell": {
+        "seed": 97014,
+        "opponent": "full_production_agent",
+        "seat": 1,
+        "mode": "TREATMENT"
+      },
+      "outcome": {
+        "final_cash": 103184.0,
+        "opp_final_cash": 7297.0,
+        "win": true,
+        "total_turns": 719,
+        "match_duration_s": 35.66,
+        "min_cash_seen": 248.0,
+        "mean_latency_ms": 43.8,
+        "max_latency_ms": 1434.66
+      },
+      "animal_safety": {
+        "monitored_seat": 1,
+        "total_turns": 719,
+        "peak_herd_size": 12,
+        "final_herd_size": 12,
+        "confirmed_starvation_deaths": 0,
+        "confirmed_escapes": 0,
+        "ambiguous_disappearances": 0,
+        "total_animal_losses": 0,
+        "missed_feeding_days": 23,
+        "hourly_unfed_observations": 3823,
+        "rollover_reconciliations_count": 29,
+        "min_shed_wheat_observed": 0,
+        "min_total_feed_wheat_observed": 0,
+        "feed_floor_breach_turns": 108,
+        "continuous_feed_floor_preserved": false,
+        "loss_events_count": 0,
+        "loss_events": []
+      },
+      "storage_safety": {
+        "peak_shed_occupancy": 100,
+        "rescue_events": 6,
+        "rescue_units_sold": 78
+      },
+      "sw_telemetry": {
+        "sw_purchase_approved": true,
+        "sw_purchase_day": 11,
+        "sw_purchase_hour": 3,
+        "sw_purchase_confirmed": true,
+        "sw_order_emitted_step": 142,
+        "sw_order_emitted_day": 5,
+        "sw_unlock_step": 267,
+        "sw_unlock_day": 11,
+        "selected_portfolio_name": "compact_commercial",
+        "predicted_delta_fc": 5831.0,
+        "pre_purchase_cash": 9679.0,
+        "post_purchase_cash": 0.0,
+        "admitted_tiles_count": 8,
+        "admitted_tiles": [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "sw_crops_planted": {
+          "STRAWBERRY": 4,
+          "MELON": 8
+        },
+        "sw_crops_sold": {
+          "MELON": 16,
+          "STRAWBERRY": 16
+        },
+        "sw_revenue_realized": 7818.0,
+        "sw_land_cost_paid": 2000.0,
+        "sw_seed_cost_realized": 0.0,
+        "sw_seed_opportunity_cost": 1040.0,
+        "invariant_violations_attempted": 0,
+        "checkpoints": {
+          "D+0": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 5,
+            "sw_watered_tiles": 5,
+            "sw_harvestable_tiles": 1,
+            "sw_idle_tiles": 20,
+            "whole_quadrant_utilization_pct": 20.0,
+            "admitted_tranche_utilization_pct": 62.5
+          },
+          "D+1": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+2": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 2,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+3": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+5": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          },
+          "D+7": {
+            "sw_owned_tiles": 25,
+            "sw_admitted_tiles": 8,
+            "sw_planted_tiles": 8,
+            "sw_watered_tiles": 6,
+            "sw_harvestable_tiles": 4,
+            "sw_idle_tiles": 17,
+            "whole_quadrant_utilization_pct": 32.0,
+            "admitted_tranche_utilization_pct": 100.0
+          }
+        },
+        "core_watered_count": 943,
+        "core_harvest_count": 263,
+        "animals_fed_total": 225
+      }
+    }
+  }
+]

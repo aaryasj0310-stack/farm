@@ -12,8 +12,29 @@ from __future__ import annotations
 
 import copy
 import logging
+import sys
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+# Bidirectional module aliasing to guarantee singleton state across import paths
+_mod_name = __name__
+if _mod_name.startswith("agent."):
+    _bare_name = _mod_name[6:]
+    sys.modules.setdefault(_bare_name, sys.modules[_mod_name])
+    _pkg_parts = _bare_name.split(".")
+    if len(_pkg_parts) > 1 and _pkg_parts[0] in sys.modules:
+        setattr(sys.modules[_pkg_parts[0]], _pkg_parts[1], sys.modules[_mod_name])
+else:
+    _agent_name = f"agent.{_mod_name}"
+    sys.modules.setdefault(_agent_name, sys.modules[_mod_name])
+    _pkg_parts = _mod_name.split(".")
+    _agent_pkg = f"agent.{_pkg_parts[0]}"
+    if "agent" in sys.modules:
+        if _agent_pkg not in sys.modules and _pkg_parts[0] in sys.modules:
+            sys.modules[_agent_pkg] = sys.modules[_pkg_parts[0]]
+        if _agent_pkg in sys.modules:
+            setattr(sys.modules[_agent_pkg], _pkg_parts[1], sys.modules[_mod_name])
+            setattr(sys.modules["agent"], _pkg_parts[0], sys.modules[_agent_pkg])
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +69,7 @@ class SWTrancheState:
     # Economics & operations tracking
     sw_land_cost_paid: float = 0.0
     sw_seed_cost_realized: float = 0.0
+    sw_seeds_bought_with_cash: Dict[str, int] = field(default_factory=dict)
     sw_seed_inventory_consumed: Dict[str, int] = field(default_factory=dict)
     sw_seed_opportunity_cost: float = 0.0
     sw_crops_planted: Dict[str, int] = field(default_factory=dict)
@@ -236,6 +258,14 @@ class SWTrancheController:
     ) -> None:
         """Record seed consumption distinguishing cash expenditure vs inventory consumption."""
         if from_inventory:
+            cash_count = self.state.sw_seeds_bought_with_cash.get(crop, 0)
+            if cash_count >= qty:
+                self.state.sw_seeds_bought_with_cash[crop] -= qty
+                return
+            elif cash_count > 0:
+                qty_from_cash = cash_count
+                self.state.sw_seeds_bought_with_cash[crop] = 0
+                qty -= qty_from_cash
             self.state.sw_seed_inventory_consumed[crop] = (
                 self.state.sw_seed_inventory_consumed.get(crop, 0) + qty
             )
@@ -243,6 +273,9 @@ class SWTrancheController:
             self.state.sw_seed_opportunity_cost += (unit_val * qty)
         if cash_spent > 0:
             self.state.sw_seed_cost_realized += float(cash_spent)
+            self.state.sw_seeds_bought_with_cash[crop] = (
+                self.state.sw_seeds_bought_with_cash.get(crop, 0) + qty
+            )
 
     def filter_macro_plant_queue(
         self,
@@ -363,6 +396,18 @@ class SWTrancheController:
                         self.state.core_watered_count += 1
                     elif op == "HARVEST":
                         self.state.core_harvest_count += 1
+        # Track physical SW plantings from farm observation on Day rollover (hour 23)
+        if farm and hasattr(farm, "iter_tiles") and hour == 23:
+            for t in farm.iter_tiles():
+                pos = (t.x, t.y) if hasattr(t, "x") else tuple(getattr(t, "pos", (0, 0)))
+                if pos in self.state.admitted_sw_tiles:
+                    crop = getattr(t, "crop", None)
+                    p_day = getattr(t, "planted_day", None)
+                    if crop and p_day == day:
+                        self.state.sw_crops_planted[crop] = (
+                            self.state.sw_crops_planted.get(crop, 0) + 1
+                        )
+                        self.record_seed_consumption(crop, qty=1, from_inventory=True)
 
         # Checkpoints relative to purchase day
         if self.state.sw_purchase_approved and self.state.sw_purchase_day is not None and hour == 23:

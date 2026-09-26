@@ -1,0 +1,100 @@
+{
+  "tournament": "Phase SW-B2-Gate2 LIVE Tranche-1 Canary",
+  "timestamp": "2026-09-26T19:23:29Z",
+  "total_pairs_run": 20,
+  "total_matches_run": 40,
+  "elapsed_seconds": 232.64,
+  "economic_performance": {
+    "control_mean_cash": 109444.3,
+    "control_median_cash": 109598.0,
+    "treatment_mean_cash": 108437.05,
+    "treatment_median_cash": 106444.0,
+    "mean_paired_gain": -1007.25,
+    "median_paired_gain": 0.0,
+    "std_paired_gain": 7102.8,
+    "ci_95_pct": [
+      -4120.19,
+      2105.69
+    ],
+    "pairwise_record": "8W / 8L / 4T",
+    "treatment_win_rate_vs_game": 100.0,
+    "control_win_rate_vs_game": 100.0,
+    "treatment_min_cash": 95696.0,
+    "control_min_cash": 85543.0
+  },
+  "sw_execution_telemetry": {
+    "approved_purchases": 16,
+    "confirmed_purchases": 16,
+    "mean_realized_sw_revenue": 6430.25,
+    "mean_land_cost_paid": 1600.0,
+    "mean_seed_cash_cost": 0.0,
+    "mean_seed_opportunity_cost": 832.0,
+    "mean_net_sw_direct_profit": 4830.25
+  },
+  "per_opponent_breakdown": {
+    "pass": {
+      "pairs": 4,
+      "control_mean_cash": 112485.0,
+      "treatment_mean_cash": 108777.0,
+      "mean_paired_gain": -3708.0,
+      "median_paired_gain": -3071.5,
+      "wins": 0,
+      "losses": 2
+    },
+    "pure_wheat_rush": {
+      "pairs": 4,
+      "control_mean_cash": 112670.5,
+      "treatment_mean_cash": 114900.0,
+      "mean_paired_gain": 2229.5,
+      "median_paired_gain": 2229.5,
+      "wins": 2,
+      "losses": 0
+    },
+    "cow_milk_engine": {
+      "pairs": 4,
+      "control_mean_cash": 95431.5,
+      "treatment_mean_cash": 101652.5,
+      "mean_paired_gain": 6221.0,
+      "median_paired_gain": 6584.5,
+      "wins": 4,
+      "losses": 0
+    },
+    "melon_sniper": {
+      "pairs": 4,
+      "control_mean_cash": 112036.5,
+      "treatment_mean_cash": 113184.25,
+      "mean_paired_gain": 1147.75,
+      "median_paired_gain": 1119.5,
+      "wins": 2,
+      "losses": 2
+    },
+    "full_production_agent": {
+      "pairs": 4,
+      "control_mean_cash": 114598.0,
+      "treatment_mean_cash": 103671.5,
+      "mean_paired_gain": -10926.5,
+      "median_paired_gain": -11495.5,
+      "wins": 0,
+      "losses": 4
+    }
+  },
+  "animal_safety_audit": {
+    "treatment_confirmed_starvations": 0,
+    "treatment_confirmed_escapes": 0,
+    "treatment_total_losses": 0,
+    "treatment_missed_feeding_days": 471,
+    "status": "ZERO_STARVATIONS_VERIFIED"
+  },
+  "storage_safety_audit": {
+    "treatment_total_rescues": 161,
+    "treatment_total_rescue_units": 2049,
+    "treatment_peak_shed_occupancy_max": 100,
+    "treatment_peak_shed_occupancy_mean": 100.0,
+    "status": "ZERO_OVERFLOWS_VERIFIED"
+  },
+  "latency_audit": {
+    "treatment_mean_latency_ms": 60.78,
+    "treatment_max_latency_ms": 1798.77,
+    "status": "LATENCY_SPIKE"
+  }
+}

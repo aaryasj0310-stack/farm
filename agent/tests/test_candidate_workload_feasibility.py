@@ -9,6 +9,15 @@ Verifies:
 """
 from __future__ import annotations
 
+import os
+import sys
+
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_AGENT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+for p in [_ROOT, _AGENT]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 import agent.main
 from strategy.service_certificate import (
     ServiceCertificate, ServiceTask, CommitmentTier, CertificateResult
