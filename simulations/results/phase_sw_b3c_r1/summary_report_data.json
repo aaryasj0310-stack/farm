@@ -1,0 +1,40 @@
+{
+  "execution_date": "2026-09-27T19:05:30",
+  "total_cells": 40,
+  "total_matches": 160,
+  "elapsed_seconds": 1546.0,
+  "baseline_submission_zip_hash": "E7FF7C5A4B91364C10898CB8A22E4680C9330F1E30171593DA2D1EED7DD4ED41",
+  "mean_final_cash": {
+    "arm_a": 113368.88,
+    "arm_b": 110213.1,
+    "arm_c": 108370.1,
+    "arm_d": 109302.5
+  },
+  "mean_paired_deltas": {
+    "d_vs_a": -4066.38,
+    "d_vs_b": -910.6,
+    "d_vs_c": 932.4
+  },
+  "pairwise_records": {
+    "d_vs_a": "5W / 23L / 12T",
+    "d_vs_b": "13W / 15L / 12T",
+    "d_vs_c": "15W / 13L / 12T"
+  },
+  "sw_net_margin_mean_arm_d": 4298.86,
+  "core_crop_revenue_delta_mean_d_vs_a": -7401.68,
+  "animal_revenue_delta_mean_d_vs_a": -2464.93,
+  "hard_obligations_summary": {
+    "total_due": 19798,
+    "total_completed": 18518,
+    "total_missed": 1280,
+    "reconciliation_rate_pct": 100.0
+  },
+  "sw_task_lifecycle_summary": {
+    "total_proposed": 16321,
+    "total_admitted": 1742,
+    "total_deferred": 6350,
+    "total_eligible_unselected": 8229,
+    "total_unresolved": 0,
+    "reconciliation_rate_pct": 100.0
+  }
+}

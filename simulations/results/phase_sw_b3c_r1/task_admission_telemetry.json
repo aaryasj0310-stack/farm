@@ -1,0 +1,3895 @@
+{
+  "s97013_pass_seat0": {
+    "sw_tasks_proposed": 475,
+    "sw_tasks_admitted": 54,
+    "sw_tasks_deferred": 189,
+    "sw_tasks_eligible_unselected": 232,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 106,
+      "UNASSIGNED_CORE_HARD_TASK": 62,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5,
+      "UNAUTHORIZED_SW_TILE": 16
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 106,
+      "UNASSIGNED_CORE_HARD_TASK": 62,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5,
+      "UNAUTHORIZED_SW_TILE": 16
+    },
+    "sw_candidate_evaluations_proposed": 5739,
+    "sw_candidate_evaluations_admitted": 4066,
+    "sw_candidate_evaluations_deferred": 1673,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1065,
+      "UNASSIGNED_CORE_HARD_TASK": 412,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 84,
+      "UNAUTHORIZED_SW_TILE": 112
+    },
+    "core_hard_tasks_due": 549,
+    "core_hard_tasks_completed": 508,
+    "missed_core_deadlines": 41,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 295,
+        "completed": 289,
+        "missed": 6
+      },
+      "FEED": {
+        "due": 182,
+        "completed": 156,
+        "missed": 26
+      },
+      "HARVEST": {
+        "due": 10,
+        "completed": 8,
+        "missed": 2
+      },
+      "OTHER": {
+        "due": 62,
+        "completed": 55,
+        "missed": 7
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7017,
+    "sw_actions_executed": 372,
+    "core_water_executed": 845,
+    "sw_water_executed": 87,
+    "core_harvest_executed": 248,
+    "sw_harvest_executed": 12,
+    "core_plant_executed": 157,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 2,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 12,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 16,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97013_pass_seat1": {
+    "sw_tasks_proposed": 522,
+    "sw_tasks_admitted": 54,
+    "sw_tasks_deferred": 236,
+    "sw_tasks_eligible_unselected": 232,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 106,
+      "UNASSIGNED_CORE_HARD_TASK": 62,
+      "UNAUTHORIZED_SW_TILE": 63,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 106,
+      "UNASSIGNED_CORE_HARD_TASK": 62,
+      "UNAUTHORIZED_SW_TILE": 63,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "sw_candidate_evaluations_proposed": 6041,
+    "sw_candidate_evaluations_admitted": 4066,
+    "sw_candidate_evaluations_deferred": 1975,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1058,
+      "UNASSIGNED_CORE_HARD_TASK": 412,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 84,
+      "UNAUTHORIZED_SW_TILE": 421
+    },
+    "core_hard_tasks_due": 549,
+    "core_hard_tasks_completed": 508,
+    "missed_core_deadlines": 41,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 295,
+        "completed": 289,
+        "missed": 6
+      },
+      "FEED": {
+        "due": 182,
+        "completed": 156,
+        "missed": 26
+      },
+      "HARVEST": {
+        "due": 10,
+        "completed": 8,
+        "missed": 2
+      },
+      "OTHER": {
+        "due": 62,
+        "completed": 55,
+        "missed": 7
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7017,
+    "sw_actions_executed": 372,
+    "core_water_executed": 845,
+    "sw_water_executed": 87,
+    "core_harvest_executed": 248,
+    "sw_harvest_executed": 12,
+    "core_plant_executed": 157,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 2,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 12,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 16,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97013_pure_wheat_rush_seat0": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 396,
+    "core_hard_tasks_completed": 370,
+    "missed_core_deadlines": 26,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 228,
+        "completed": 228,
+        "missed": 0
+      },
+      "FEED": {
+        "due": 129,
+        "completed": 112,
+        "missed": 17
+      },
+      "HARVEST": {
+        "due": 1,
+        "completed": 1,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 38,
+        "completed": 29,
+        "missed": 9
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7379,
+    "sw_actions_executed": 0,
+    "core_water_executed": 1012,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 263,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 162,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97013_pure_wheat_rush_seat1": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 396,
+    "core_hard_tasks_completed": 370,
+    "missed_core_deadlines": 26,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 228,
+        "completed": 228,
+        "missed": 0
+      },
+      "FEED": {
+        "due": 129,
+        "completed": 112,
+        "missed": 17
+      },
+      "HARVEST": {
+        "due": 1,
+        "completed": 1,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 38,
+        "completed": 29,
+        "missed": 9
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7379,
+    "sw_actions_executed": 0,
+    "core_water_executed": 1012,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 263,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 162,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97013_cow_milk_engine_seat0": {
+    "sw_tasks_proposed": 514,
+    "sw_tasks_admitted": 72,
+    "sw_tasks_deferred": 169,
+    "sw_tasks_eligible_unselected": 273,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 69,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 76,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 6,
+      "UNAUTHORIZED_SW_TILE": 18
+    },
+    "deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 69,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 76,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 6,
+      "UNAUTHORIZED_SW_TILE": 18
+    },
+    "sw_candidate_evaluations_proposed": 6306,
+    "sw_candidate_evaluations_admitted": 4864,
+    "sw_candidate_evaluations_deferred": 1442,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 832,
+      "UNASSIGNED_CORE_HARD_TASK": 450,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 59,
+      "UNAUTHORIZED_SW_TILE": 101
+    },
+    "core_hard_tasks_due": 521,
+    "core_hard_tasks_completed": 483,
+    "missed_core_deadlines": 38,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 274,
+        "completed": 269,
+        "missed": 5
+      },
+      "FEED": {
+        "due": 185,
+        "completed": 159,
+        "missed": 26
+      },
+      "HARVEST": {
+        "due": 7,
+        "completed": 7,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 55,
+        "completed": 48,
+        "missed": 7
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6987,
+    "sw_actions_executed": 385,
+    "core_water_executed": 867,
+    "sw_water_executed": 93,
+    "core_harvest_executed": 250,
+    "sw_harvest_executed": 14,
+    "core_plant_executed": 154,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 2,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 14,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 20,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(2,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 10,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97013_cow_milk_engine_seat1": {
+    "sw_tasks_proposed": 530,
+    "sw_tasks_admitted": 72,
+    "sw_tasks_deferred": 185,
+    "sw_tasks_eligible_unselected": 273,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 69,
+      "UNAUTHORIZED_SW_TILE": 34,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 76,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 6
+    },
+    "deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 69,
+      "UNAUTHORIZED_SW_TILE": 34,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 76,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 6
+    },
+    "sw_candidate_evaluations_proposed": 6418,
+    "sw_candidate_evaluations_admitted": 4864,
+    "sw_candidate_evaluations_deferred": 1554,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 832,
+      "UNASSIGNED_CORE_HARD_TASK": 450,
+      "UNAUTHORIZED_SW_TILE": 213,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 59
+    },
+    "core_hard_tasks_due": 521,
+    "core_hard_tasks_completed": 483,
+    "missed_core_deadlines": 38,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 274,
+        "completed": 269,
+        "missed": 5
+      },
+      "FEED": {
+        "due": 185,
+        "completed": 159,
+        "missed": 26
+      },
+      "HARVEST": {
+        "due": 7,
+        "completed": 7,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 55,
+        "completed": 48,
+        "missed": 7
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6987,
+    "sw_actions_executed": 385,
+    "core_water_executed": 867,
+    "sw_water_executed": 93,
+    "core_harvest_executed": 250,
+    "sw_harvest_executed": 14,
+    "core_plant_executed": 154,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 2,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 14,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 20,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(2,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 10,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97013_melon_sniper_seat0": {
+    "sw_tasks_proposed": 543,
+    "sw_tasks_admitted": 64,
+    "sw_tasks_deferred": 234,
+    "sw_tasks_eligible_unselected": 245,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 113,
+      "UNAUTHORIZED_SW_TILE": 5,
+      "UNASSIGNED_CORE_HARD_TASK": 99,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 17
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 113,
+      "UNAUTHORIZED_SW_TILE": 5,
+      "UNASSIGNED_CORE_HARD_TASK": 99,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 17
+    },
+    "sw_candidate_evaluations_proposed": 5349,
+    "sw_candidate_evaluations_admitted": 3421,
+    "sw_candidate_evaluations_deferred": 1928,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1126,
+      "UNAUTHORIZED_SW_TILE": 33,
+      "UNASSIGNED_CORE_HARD_TASK": 650,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 119
+    },
+    "core_hard_tasks_due": 502,
+    "core_hard_tasks_completed": 462,
+    "missed_core_deadlines": 40,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 287,
+        "completed": 283,
+        "missed": 4
+      },
+      "FEED": {
+        "due": 156,
+        "completed": 134,
+        "missed": 22
+      },
+      "HARVEST": {
+        "due": 7,
+        "completed": 7,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 52,
+        "completed": 38,
+        "missed": 14
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6966,
+    "sw_actions_executed": 409,
+    "core_water_executed": 918,
+    "sw_water_executed": 98,
+    "core_harvest_executed": 248,
+    "sw_harvest_executed": 13,
+    "core_plant_executed": 163,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 13,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 18,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 11,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97013_melon_sniper_seat1": {
+    "sw_tasks_proposed": 564,
+    "sw_tasks_admitted": 64,
+    "sw_tasks_deferred": 283,
+    "sw_tasks_eligible_unselected": 217,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 109,
+      "UNAUTHORIZED_SW_TILE": 56,
+      "UNASSIGNED_CORE_HARD_TASK": 99,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 19
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 109,
+      "UNAUTHORIZED_SW_TILE": 56,
+      "UNASSIGNED_CORE_HARD_TASK": 99,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 19
+    },
+    "sw_candidate_evaluations_proposed": 5617,
+    "sw_candidate_evaluations_admitted": 3383,
+    "sw_candidate_evaluations_deferred": 2234,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1128,
+      "UNAUTHORIZED_SW_TILE": 333,
+      "UNASSIGNED_CORE_HARD_TASK": 651,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 122
+    },
+    "core_hard_tasks_due": 504,
+    "core_hard_tasks_completed": 464,
+    "missed_core_deadlines": 40,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 290,
+        "completed": 286,
+        "missed": 4
+      },
+      "FEED": {
+        "due": 155,
+        "completed": 133,
+        "missed": 22
+      },
+      "HARVEST": {
+        "due": 7,
+        "completed": 7,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 52,
+        "completed": 38,
+        "missed": 14
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6973,
+    "sw_actions_executed": 413,
+    "core_water_executed": 927,
+    "sw_water_executed": 97,
+    "core_harvest_executed": 251,
+    "sw_harvest_executed": 13,
+    "core_plant_executed": 165,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 13,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 18,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 11,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97013_full_production_agent_seat0": {
+    "sw_tasks_proposed": 494,
+    "sw_tasks_admitted": 61,
+    "sw_tasks_deferred": 141,
+    "sw_tasks_eligible_unselected": 292,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 78,
+      "UNAUTHORIZED_SW_TILE": 3,
+      "UNASSIGNED_CORE_HARD_TASK": 59,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 1
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 78,
+      "UNAUTHORIZED_SW_TILE": 3,
+      "UNASSIGNED_CORE_HARD_TASK": 59,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 1
+    },
+    "sw_candidate_evaluations_proposed": 4728,
+    "sw_candidate_evaluations_admitted": 3535,
+    "sw_candidate_evaluations_deferred": 1193,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 874,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 17,
+      "UNAUTHORIZED_SW_TILE": 16,
+      "UNASSIGNED_CORE_HARD_TASK": 286
+    },
+    "core_hard_tasks_due": 513,
+    "core_hard_tasks_completed": 477,
+    "missed_core_deadlines": 36,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 308,
+        "completed": 305,
+        "missed": 3
+      },
+      "FEED": {
+        "due": 158,
+        "completed": 135,
+        "missed": 23
+      },
+      "HARVEST": {
+        "due": 3,
+        "completed": 3,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 44,
+        "completed": 34,
+        "missed": 10
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6990,
+    "sw_actions_executed": 404,
+    "core_water_executed": 923,
+    "sw_water_executed": 96,
+    "core_harvest_executed": 251,
+    "sw_harvest_executed": 12,
+    "core_plant_executed": 164,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 12,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 16,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 16,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97013_full_production_agent_seat1": {
+    "sw_tasks_proposed": 544,
+    "sw_tasks_admitted": 61,
+    "sw_tasks_deferred": 212,
+    "sw_tasks_eligible_unselected": 271,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 95,
+      "UNAUTHORIZED_SW_TILE": 67,
+      "UNASSIGNED_CORE_HARD_TASK": 50
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 95,
+      "UNAUTHORIZED_SW_TILE": 67,
+      "UNASSIGNED_CORE_HARD_TASK": 50
+    },
+    "sw_candidate_evaluations_proposed": 5024,
+    "sw_candidate_evaluations_admitted": 3473,
+    "sw_candidate_evaluations_deferred": 1551,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 930,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 11,
+      "UNAUTHORIZED_SW_TILE": 446,
+      "UNASSIGNED_CORE_HARD_TASK": 164
+    },
+    "core_hard_tasks_due": 504,
+    "core_hard_tasks_completed": 472,
+    "missed_core_deadlines": 32,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 304,
+        "completed": 301,
+        "missed": 3
+      },
+      "FEED": {
+        "due": 156,
+        "completed": 136,
+        "missed": 20
+      },
+      "HARVEST": {
+        "due": 4,
+        "completed": 4,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 40,
+        "completed": 31,
+        "missed": 9
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6990,
+    "sw_actions_executed": 401,
+    "core_water_executed": 926,
+    "sw_water_executed": 94,
+    "core_harvest_executed": 251,
+    "sw_harvest_executed": 12,
+    "core_plant_executed": 163,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 5,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 12,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 16,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97014_pass_seat0": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 468,
+    "core_hard_tasks_completed": 449,
+    "missed_core_deadlines": 19,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 271,
+        "completed": 266,
+        "missed": 5
+      },
+      "FEED": {
+        "due": 152,
+        "completed": 142,
+        "missed": 10
+      },
+      "HARVEST": {
+        "due": 4,
+        "completed": 4,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 41,
+        "completed": 37,
+        "missed": 4
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7366,
+    "sw_actions_executed": 0,
+    "core_water_executed": 932,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 272,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 161,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97014_pass_seat1": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 468,
+    "core_hard_tasks_completed": 449,
+    "missed_core_deadlines": 19,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 271,
+        "completed": 266,
+        "missed": 5
+      },
+      "FEED": {
+        "due": 152,
+        "completed": 142,
+        "missed": 10
+      },
+      "HARVEST": {
+        "due": 4,
+        "completed": 4,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 41,
+        "completed": 37,
+        "missed": 4
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7366,
+    "sw_actions_executed": 0,
+    "core_water_executed": 932,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 272,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 161,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97014_pure_wheat_rush_seat0": {
+    "sw_tasks_proposed": 546,
+    "sw_tasks_admitted": 59,
+    "sw_tasks_deferred": 225,
+    "sw_tasks_eligible_unselected": 262,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 114,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 11,
+      "UNASSIGNED_CORE_HARD_TASK": 100
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 114,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 11,
+      "UNASSIGNED_CORE_HARD_TASK": 100
+    },
+    "sw_candidate_evaluations_proposed": 5087,
+    "sw_candidate_evaluations_admitted": 3319,
+    "sw_candidate_evaluations_deferred": 1768,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 843,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 46,
+      "UNASSIGNED_CORE_HARD_TASK": 879
+    },
+    "core_hard_tasks_due": 534,
+    "core_hard_tasks_completed": 498,
+    "missed_core_deadlines": 36,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 309,
+        "completed": 301,
+        "missed": 8
+      },
+      "FEED": {
+        "due": 175,
+        "completed": 157,
+        "missed": 18
+      },
+      "HARVEST": {
+        "due": 8,
+        "completed": 8,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 42,
+        "completed": 32,
+        "missed": 10
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6990,
+    "sw_actions_executed": 398,
+    "core_water_executed": 873,
+    "sw_water_executed": 94,
+    "core_harvest_executed": 254,
+    "sw_harvest_executed": 10,
+    "core_plant_executed": 160,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 10,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 12,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 16,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97014_pure_wheat_rush_seat1": {
+    "sw_tasks_proposed": 546,
+    "sw_tasks_admitted": 59,
+    "sw_tasks_deferred": 225,
+    "sw_tasks_eligible_unselected": 262,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 114,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 11,
+      "UNASSIGNED_CORE_HARD_TASK": 100
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 114,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 11,
+      "UNASSIGNED_CORE_HARD_TASK": 100
+    },
+    "sw_candidate_evaluations_proposed": 5087,
+    "sw_candidate_evaluations_admitted": 3319,
+    "sw_candidate_evaluations_deferred": 1768,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 843,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 46,
+      "UNASSIGNED_CORE_HARD_TASK": 879
+    },
+    "core_hard_tasks_due": 534,
+    "core_hard_tasks_completed": 498,
+    "missed_core_deadlines": 36,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 309,
+        "completed": 301,
+        "missed": 8
+      },
+      "FEED": {
+        "due": 175,
+        "completed": 157,
+        "missed": 18
+      },
+      "HARVEST": {
+        "due": 8,
+        "completed": 8,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 42,
+        "completed": 32,
+        "missed": 10
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6990,
+    "sw_actions_executed": 398,
+    "core_water_executed": 873,
+    "sw_water_executed": 94,
+    "core_harvest_executed": 254,
+    "sw_harvest_executed": 10,
+    "core_plant_executed": 160,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 10,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 12,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 16,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97014_cow_milk_engine_seat0": {
+    "sw_tasks_proposed": 686,
+    "sw_tasks_admitted": 79,
+    "sw_tasks_deferred": 224,
+    "sw_tasks_eligible_unselected": 383,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 107,
+      "UNASSIGNED_CORE_HARD_TASK": 112,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 107,
+      "UNASSIGNED_CORE_HARD_TASK": 112,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "sw_candidate_evaluations_proposed": 7641,
+    "sw_candidate_evaluations_admitted": 6071,
+    "sw_candidate_evaluations_deferred": 1570,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1027,
+      "UNASSIGNED_CORE_HARD_TASK": 511,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 32
+    },
+    "core_hard_tasks_due": 454,
+    "core_hard_tasks_completed": 423,
+    "missed_core_deadlines": 31,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 272,
+        "completed": 268,
+        "missed": 4
+      },
+      "FEED": {
+        "due": 143,
+        "completed": 126,
+        "missed": 17
+      },
+      "HARVEST": {
+        "due": 3,
+        "completed": 3,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 36,
+        "completed": 26,
+        "missed": 10
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6988,
+    "sw_actions_executed": 391,
+    "core_water_executed": 959,
+    "sw_water_executed": 102,
+    "core_harvest_executed": 259,
+    "sw_harvest_executed": 14,
+    "core_plant_executed": 166,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 3,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 14,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 20,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 12,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 12,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,5)": {
+        "water_count": 13,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(3,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97014_cow_milk_engine_seat1": {
+    "sw_tasks_proposed": 686,
+    "sw_tasks_admitted": 79,
+    "sw_tasks_deferred": 224,
+    "sw_tasks_eligible_unselected": 383,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 107,
+      "UNASSIGNED_CORE_HARD_TASK": 112,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 107,
+      "UNASSIGNED_CORE_HARD_TASK": 112,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "sw_candidate_evaluations_proposed": 7641,
+    "sw_candidate_evaluations_admitted": 6071,
+    "sw_candidate_evaluations_deferred": 1570,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1027,
+      "UNASSIGNED_CORE_HARD_TASK": 511,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 32
+    },
+    "core_hard_tasks_due": 454,
+    "core_hard_tasks_completed": 423,
+    "missed_core_deadlines": 31,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 272,
+        "completed": 268,
+        "missed": 4
+      },
+      "FEED": {
+        "due": 143,
+        "completed": 126,
+        "missed": 17
+      },
+      "HARVEST": {
+        "due": 3,
+        "completed": 3,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 36,
+        "completed": 26,
+        "missed": 10
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6988,
+    "sw_actions_executed": 391,
+    "core_water_executed": 959,
+    "sw_water_executed": 102,
+    "core_harvest_executed": 259,
+    "sw_harvest_executed": 14,
+    "core_plant_executed": 166,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 3,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 14,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 20,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 12,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 12,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,5)": {
+        "water_count": 13,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(3,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97014_melon_sniper_seat0": {
+    "sw_tasks_proposed": 512,
+    "sw_tasks_admitted": 47,
+    "sw_tasks_deferred": 172,
+    "sw_tasks_eligible_unselected": 293,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 121,
+      "UNASSIGNED_CORE_HARD_TASK": 48,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 121,
+      "UNASSIGNED_CORE_HARD_TASK": 48,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3
+    },
+    "sw_candidate_evaluations_proposed": 5993,
+    "sw_candidate_evaluations_admitted": 4343,
+    "sw_candidate_evaluations_deferred": 1650,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1318,
+      "UNASSIGNED_CORE_HARD_TASK": 295,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 37
+    },
+    "core_hard_tasks_due": 555,
+    "core_hard_tasks_completed": 514,
+    "missed_core_deadlines": 41,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 290,
+        "completed": 283,
+        "missed": 7
+      },
+      "FEED": {
+        "due": 202,
+        "completed": 176,
+        "missed": 26
+      },
+      "HARVEST": {
+        "due": 10,
+        "completed": 8,
+        "missed": 2
+      },
+      "OTHER": {
+        "due": 53,
+        "completed": 47,
+        "missed": 6
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7023,
+    "sw_actions_executed": 360,
+    "core_water_executed": 863,
+    "sw_water_executed": 86,
+    "core_harvest_executed": 257,
+    "sw_harvest_executed": 11,
+    "core_plant_executed": 160,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 11,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 16,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97014_melon_sniper_seat1": {
+    "sw_tasks_proposed": 512,
+    "sw_tasks_admitted": 47,
+    "sw_tasks_deferred": 172,
+    "sw_tasks_eligible_unselected": 293,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 121,
+      "UNASSIGNED_CORE_HARD_TASK": 48,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 121,
+      "UNASSIGNED_CORE_HARD_TASK": 48,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3
+    },
+    "sw_candidate_evaluations_proposed": 5993,
+    "sw_candidate_evaluations_admitted": 4343,
+    "sw_candidate_evaluations_deferred": 1650,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1318,
+      "UNASSIGNED_CORE_HARD_TASK": 295,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 37
+    },
+    "core_hard_tasks_due": 555,
+    "core_hard_tasks_completed": 514,
+    "missed_core_deadlines": 41,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 290,
+        "completed": 283,
+        "missed": 7
+      },
+      "FEED": {
+        "due": 202,
+        "completed": 176,
+        "missed": 26
+      },
+      "HARVEST": {
+        "due": 10,
+        "completed": 8,
+        "missed": 2
+      },
+      "OTHER": {
+        "due": 53,
+        "completed": 47,
+        "missed": 6
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7023,
+    "sw_actions_executed": 360,
+    "core_water_executed": 863,
+    "sw_water_executed": 86,
+    "core_harvest_executed": 257,
+    "sw_harvest_executed": 11,
+    "core_plant_executed": 160,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 11,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 16,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97014_full_production_agent_seat0": {
+    "sw_tasks_proposed": 588,
+    "sw_tasks_admitted": 55,
+    "sw_tasks_deferred": 226,
+    "sw_tasks_eligible_unselected": 307,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 120,
+      "UNASSIGNED_CORE_HARD_TASK": 88,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 18
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 120,
+      "UNASSIGNED_CORE_HARD_TASK": 88,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 18
+    },
+    "sw_candidate_evaluations_proposed": 5295,
+    "sw_candidate_evaluations_admitted": 3536,
+    "sw_candidate_evaluations_deferred": 1759,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 940,
+      "UNASSIGNED_CORE_HARD_TASK": 676,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 143
+    },
+    "core_hard_tasks_due": 544,
+    "core_hard_tasks_completed": 509,
+    "missed_core_deadlines": 35,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 317,
+        "completed": 312,
+        "missed": 5
+      },
+      "FEED": {
+        "due": 170,
+        "completed": 155,
+        "missed": 15
+      },
+      "HARVEST": {
+        "due": 5,
+        "completed": 5,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 52,
+        "completed": 37,
+        "missed": 15
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7023,
+    "sw_actions_executed": 356,
+    "core_water_executed": 876,
+    "sw_water_executed": 85,
+    "core_harvest_executed": 249,
+    "sw_harvest_executed": 11,
+    "core_plant_executed": 166,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 11,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 15,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(3,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97014_full_production_agent_seat1": {
+    "sw_tasks_proposed": 588,
+    "sw_tasks_admitted": 55,
+    "sw_tasks_deferred": 226,
+    "sw_tasks_eligible_unselected": 307,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 120,
+      "UNASSIGNED_CORE_HARD_TASK": 88,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 18
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 120,
+      "UNASSIGNED_CORE_HARD_TASK": 88,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 18
+    },
+    "sw_candidate_evaluations_proposed": 5295,
+    "sw_candidate_evaluations_admitted": 3536,
+    "sw_candidate_evaluations_deferred": 1759,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 940,
+      "UNASSIGNED_CORE_HARD_TASK": 676,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 143
+    },
+    "core_hard_tasks_due": 544,
+    "core_hard_tasks_completed": 509,
+    "missed_core_deadlines": 35,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 317,
+        "completed": 312,
+        "missed": 5
+      },
+      "FEED": {
+        "due": 170,
+        "completed": 155,
+        "missed": 15
+      },
+      "HARVEST": {
+        "due": 5,
+        "completed": 5,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 52,
+        "completed": 37,
+        "missed": 15
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7023,
+    "sw_actions_executed": 356,
+    "core_water_executed": 876,
+    "sw_water_executed": 85,
+    "core_harvest_executed": 249,
+    "sw_harvest_executed": 11,
+    "core_plant_executed": 166,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 11,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 15,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(3,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97017_pass_seat0": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 433,
+    "core_hard_tasks_completed": 418,
+    "missed_core_deadlines": 15,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 266,
+        "completed": 264,
+        "missed": 2
+      },
+      "FEED": {
+        "due": 133,
+        "completed": 129,
+        "missed": 4
+      },
+      "HARVEST": {
+        "due": 4,
+        "completed": 2,
+        "missed": 2
+      },
+      "OTHER": {
+        "due": 30,
+        "completed": 23,
+        "missed": 7
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7383,
+    "sw_actions_executed": 0,
+    "core_water_executed": 981,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 273,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 168,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97017_pass_seat1": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 483,
+    "core_hard_tasks_completed": 459,
+    "missed_core_deadlines": 24,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 309,
+        "completed": 307,
+        "missed": 2
+      },
+      "FEED": {
+        "due": 134,
+        "completed": 123,
+        "missed": 11
+      },
+      "HARVEST": {
+        "due": 4,
+        "completed": 2,
+        "missed": 2
+      },
+      "OTHER": {
+        "due": 36,
+        "completed": 27,
+        "missed": 9
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7369,
+    "sw_actions_executed": 0,
+    "core_water_executed": 924,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 269,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 164,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97017_pure_wheat_rush_seat0": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 401,
+    "core_hard_tasks_completed": 372,
+    "missed_core_deadlines": 29,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 218,
+        "completed": 217,
+        "missed": 1
+      },
+      "FEED": {
+        "due": 132,
+        "completed": 115,
+        "missed": 17
+      },
+      "HARVEST": {
+        "due": 4,
+        "completed": 4,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 47,
+        "completed": 36,
+        "missed": 11
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7385,
+    "sw_actions_executed": 0,
+    "core_water_executed": 1009,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 272,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 160,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97017_pure_wheat_rush_seat1": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 401,
+    "core_hard_tasks_completed": 372,
+    "missed_core_deadlines": 29,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 218,
+        "completed": 217,
+        "missed": 1
+      },
+      "FEED": {
+        "due": 132,
+        "completed": 115,
+        "missed": 17
+      },
+      "HARVEST": {
+        "due": 4,
+        "completed": 4,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 47,
+        "completed": 36,
+        "missed": 11
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7385,
+    "sw_actions_executed": 0,
+    "core_water_executed": 1009,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 272,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 160,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97017_cow_milk_engine_seat0": {
+    "sw_tasks_proposed": 656,
+    "sw_tasks_admitted": 52,
+    "sw_tasks_deferred": 305,
+    "sw_tasks_eligible_unselected": 299,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 141,
+      "UNASSIGNED_CORE_HARD_TASK": 127,
+      "UNAUTHORIZED_SW_TILE": 34,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 141,
+      "UNASSIGNED_CORE_HARD_TASK": 127,
+      "UNAUTHORIZED_SW_TILE": 34,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3
+    },
+    "sw_candidate_evaluations_proposed": 6491,
+    "sw_candidate_evaluations_admitted": 3628,
+    "sw_candidate_evaluations_deferred": 2863,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1641,
+      "UNASSIGNED_CORE_HARD_TASK": 839,
+      "UNAUTHORIZED_SW_TILE": 287,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 96
+    },
+    "core_hard_tasks_due": 581,
+    "core_hard_tasks_completed": 548,
+    "missed_core_deadlines": 33,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 324,
+        "completed": 316,
+        "missed": 8
+      },
+      "FEED": {
+        "due": 208,
+        "completed": 189,
+        "missed": 19
+      },
+      "HARVEST": {
+        "due": 5,
+        "completed": 5,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 44,
+        "completed": 38,
+        "missed": 6
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7005,
+    "sw_actions_executed": 380,
+    "core_water_executed": 785,
+    "sw_water_executed": 85,
+    "core_harvest_executed": 251,
+    "sw_harvest_executed": 12,
+    "core_plant_executed": 151,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 12,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 17,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(3,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97017_cow_milk_engine_seat1": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 522,
+    "core_hard_tasks_completed": 497,
+    "missed_core_deadlines": 25,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 308,
+        "completed": 304,
+        "missed": 4
+      },
+      "FEED": {
+        "due": 166,
+        "completed": 153,
+        "missed": 13
+      },
+      "HARVEST": {
+        "due": 11,
+        "completed": 9,
+        "missed": 2
+      },
+      "OTHER": {
+        "due": 37,
+        "completed": 31,
+        "missed": 6
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7372,
+    "sw_actions_executed": 4,
+    "core_water_executed": 858,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 262,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 162,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97017_melon_sniper_seat0": {
+    "sw_tasks_proposed": 688,
+    "sw_tasks_admitted": 77,
+    "sw_tasks_deferred": 244,
+    "sw_tasks_eligible_unselected": 367,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 137,
+      "UNASSIGNED_CORE_HARD_TASK": 58,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 6,
+      "UNAUTHORIZED_SW_TILE": 43
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 137,
+      "UNASSIGNED_CORE_HARD_TASK": 58,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 6,
+      "UNAUTHORIZED_SW_TILE": 43
+    },
+    "sw_candidate_evaluations_proposed": 6542,
+    "sw_candidate_evaluations_admitted": 4715,
+    "sw_candidate_evaluations_deferred": 1827,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1211,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 52,
+      "UNASSIGNED_CORE_HARD_TASK": 263,
+      "UNAUTHORIZED_SW_TILE": 301
+    },
+    "core_hard_tasks_due": 457,
+    "core_hard_tasks_completed": 425,
+    "missed_core_deadlines": 32,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 273,
+        "completed": 270,
+        "missed": 3
+      },
+      "FEED": {
+        "due": 144,
+        "completed": 125,
+        "missed": 19
+      },
+      "HARVEST": {
+        "due": 2,
+        "completed": 2,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 38,
+        "completed": 28,
+        "missed": 10
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6950,
+    "sw_actions_executed": 427,
+    "core_water_executed": 951,
+    "sw_water_executed": 99,
+    "core_harvest_executed": 259,
+    "sw_harvest_executed": 13,
+    "core_plant_executed": 163,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 13,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 20,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 11,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97017_melon_sniper_seat1": {
+    "sw_tasks_proposed": 755,
+    "sw_tasks_admitted": 94,
+    "sw_tasks_deferred": 171,
+    "sw_tasks_eligible_unselected": 490,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 75,
+      "UNAUTHORIZED_SW_TILE": 42,
+      "UNASSIGNED_CORE_HARD_TASK": 46,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 8
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 75,
+      "UNAUTHORIZED_SW_TILE": 42,
+      "UNASSIGNED_CORE_HARD_TASK": 46,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 8
+    },
+    "sw_candidate_evaluations_proposed": 8210,
+    "sw_candidate_evaluations_admitted": 6327,
+    "sw_candidate_evaluations_deferred": 1883,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1119,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 145,
+      "UNAUTHORIZED_SW_TILE": 287,
+      "UNASSIGNED_CORE_HARD_TASK": 332
+    },
+    "core_hard_tasks_due": 441,
+    "core_hard_tasks_completed": 410,
+    "missed_core_deadlines": 31,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 273,
+        "completed": 268,
+        "missed": 5
+      },
+      "FEED": {
+        "due": 137,
+        "completed": 117,
+        "missed": 20
+      },
+      "HARVEST": {
+        "due": 3,
+        "completed": 3,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 28,
+        "completed": 22,
+        "missed": 6
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6982,
+    "sw_actions_executed": 413,
+    "core_water_executed": 968,
+    "sw_water_executed": 102,
+    "core_harvest_executed": 258,
+    "sw_harvest_executed": 17,
+    "core_plant_executed": 168,
+    "sw_plant_executed": 11,
+    "sw_weed_executed": 5,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 17,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 27,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 12,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 12,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 15,
+        "harvest_count": 4,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 8,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(0,5)": {
+        "water_count": 12,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97017_full_production_agent_seat0": {
+    "sw_tasks_proposed": 497,
+    "sw_tasks_admitted": 39,
+    "sw_tasks_deferred": 221,
+    "sw_tasks_eligible_unselected": 237,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 83,
+      "UNASSIGNED_CORE_HARD_TASK": 131,
+      "UNAUTHORIZED_SW_TILE": 7
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 83,
+      "UNASSIGNED_CORE_HARD_TASK": 131,
+      "UNAUTHORIZED_SW_TILE": 7
+    },
+    "sw_candidate_evaluations_proposed": 5409,
+    "sw_candidate_evaluations_admitted": 3602,
+    "sw_candidate_evaluations_deferred": 1807,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 988,
+      "UNASSIGNED_CORE_HARD_TASK": 723,
+      "UNAUTHORIZED_SW_TILE": 96
+    },
+    "core_hard_tasks_due": 642,
+    "core_hard_tasks_completed": 590,
+    "missed_core_deadlines": 52,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 332,
+        "completed": 325,
+        "missed": 7
+      },
+      "FEED": {
+        "due": 241,
+        "completed": 205,
+        "missed": 36
+      },
+      "HARVEST": {
+        "due": 12,
+        "completed": 8,
+        "missed": 4
+      },
+      "OTHER": {
+        "due": 57,
+        "completed": 52,
+        "missed": 5
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7022,
+    "sw_actions_executed": 327,
+    "core_water_executed": 737,
+    "sw_water_executed": 82,
+    "core_harvest_executed": 251,
+    "sw_harvest_executed": 12,
+    "core_plant_executed": 152,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 12,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 16,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97017_full_production_agent_seat1": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 440,
+    "core_hard_tasks_completed": 419,
+    "missed_core_deadlines": 21,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 268,
+        "completed": 266,
+        "missed": 2
+      },
+      "FEED": {
+        "due": 140,
+        "completed": 131,
+        "missed": 9
+      },
+      "HARVEST": {
+        "due": 0,
+        "completed": 0,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 32,
+        "completed": 22,
+        "missed": 10
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7362,
+    "sw_actions_executed": 0,
+    "core_water_executed": 954,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 271,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 162,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97018_pass_seat0": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 422,
+    "core_hard_tasks_completed": 399,
+    "missed_core_deadlines": 23,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 254,
+        "completed": 251,
+        "missed": 3
+      },
+      "FEED": {
+        "due": 132,
+        "completed": 119,
+        "missed": 13
+      },
+      "HARVEST": {
+        "due": 2,
+        "completed": 2,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 34,
+        "completed": 27,
+        "missed": 7
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7383,
+    "sw_actions_executed": 0,
+    "core_water_executed": 982,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 282,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 164,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97018_pass_seat1": {
+    "sw_tasks_proposed": 0,
+    "sw_tasks_admitted": 0,
+    "sw_tasks_deferred": 0,
+    "sw_tasks_eligible_unselected": 0,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {},
+    "deferral_reasons": {},
+    "sw_candidate_evaluations_proposed": 0,
+    "sw_candidate_evaluations_admitted": 0,
+    "sw_candidate_evaluations_deferred": 0,
+    "candidate_deferral_reasons": {},
+    "core_hard_tasks_due": 423,
+    "core_hard_tasks_completed": 399,
+    "missed_core_deadlines": 24,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 257,
+        "completed": 253,
+        "missed": 4
+      },
+      "FEED": {
+        "due": 130,
+        "completed": 117,
+        "missed": 13
+      },
+      "HARVEST": {
+        "due": 2,
+        "completed": 2,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 34,
+        "completed": 27,
+        "missed": 7
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7383,
+    "sw_actions_executed": 0,
+    "core_water_executed": 979,
+    "sw_water_executed": 0,
+    "core_harvest_executed": 281,
+    "sw_harvest_executed": 0,
+    "core_plant_executed": 164,
+    "sw_plant_executed": 0,
+    "sw_weed_executed": 0,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 0,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 0,
+      "MELON": 0
+    },
+    "sw_tile_utilization": {}
+  },
+  "s97018_pure_wheat_rush_seat0": {
+    "sw_tasks_proposed": 487,
+    "sw_tasks_admitted": 55,
+    "sw_tasks_deferred": 186,
+    "sw_tasks_eligible_unselected": 246,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 141,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 15,
+      "UNAUTHORIZED_SW_TILE": 2,
+      "UNASSIGNED_CORE_HARD_TASK": 28
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 141,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 15,
+      "UNAUTHORIZED_SW_TILE": 2,
+      "UNASSIGNED_CORE_HARD_TASK": 28
+    },
+    "sw_candidate_evaluations_proposed": 5084,
+    "sw_candidate_evaluations_admitted": 3517,
+    "sw_candidate_evaluations_deferred": 1567,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1228,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 177,
+      "UNAUTHORIZED_SW_TILE": 20,
+      "UNASSIGNED_CORE_HARD_TASK": 142
+    },
+    "core_hard_tasks_due": 450,
+    "core_hard_tasks_completed": 437,
+    "missed_core_deadlines": 13,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 291,
+        "completed": 288,
+        "missed": 3
+      },
+      "FEED": {
+        "due": 132,
+        "completed": 128,
+        "missed": 4
+      },
+      "HARVEST": {
+        "due": 3,
+        "completed": 3,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 24,
+        "completed": 18,
+        "missed": 6
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6988,
+    "sw_actions_executed": 398,
+    "core_water_executed": 945,
+    "sw_water_executed": 94,
+    "core_harvest_executed": 254,
+    "sw_harvest_executed": 10,
+    "core_plant_executed": 168,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 2,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 10,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 13,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97018_pure_wheat_rush_seat1": {
+    "sw_tasks_proposed": 504,
+    "sw_tasks_admitted": 55,
+    "sw_tasks_deferred": 203,
+    "sw_tasks_eligible_unselected": 246,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 141,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 15,
+      "UNAUTHORIZED_SW_TILE": 19,
+      "UNASSIGNED_CORE_HARD_TASK": 28
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 141,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 15,
+      "UNAUTHORIZED_SW_TILE": 19,
+      "UNASSIGNED_CORE_HARD_TASK": 28
+    },
+    "sw_candidate_evaluations_proposed": 5193,
+    "sw_candidate_evaluations_admitted": 3517,
+    "sw_candidate_evaluations_deferred": 1676,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1228,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 177,
+      "UNAUTHORIZED_SW_TILE": 129,
+      "UNASSIGNED_CORE_HARD_TASK": 142
+    },
+    "core_hard_tasks_due": 450,
+    "core_hard_tasks_completed": 437,
+    "missed_core_deadlines": 13,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 291,
+        "completed": 288,
+        "missed": 3
+      },
+      "FEED": {
+        "due": 132,
+        "completed": 128,
+        "missed": 4
+      },
+      "HARVEST": {
+        "due": 3,
+        "completed": 3,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 24,
+        "completed": 18,
+        "missed": 6
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6988,
+    "sw_actions_executed": 398,
+    "core_water_executed": 945,
+    "sw_water_executed": 94,
+    "core_harvest_executed": 254,
+    "sw_harvest_executed": 10,
+    "core_plant_executed": 168,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 2,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 10,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 13,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97018_cow_milk_engine_seat0": {
+    "sw_tasks_proposed": 651,
+    "sw_tasks_admitted": 58,
+    "sw_tasks_deferred": 268,
+    "sw_tasks_eligible_unselected": 325,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 127,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 139,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 2
+    },
+    "deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 127,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 139,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 2
+    },
+    "sw_candidate_evaluations_proposed": 6624,
+    "sw_candidate_evaluations_admitted": 4413,
+    "sw_candidate_evaluations_deferred": 2211,
+    "candidate_deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 718,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1398,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 95
+    },
+    "core_hard_tasks_due": 563,
+    "core_hard_tasks_completed": 522,
+    "missed_core_deadlines": 41,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 319,
+        "completed": 311,
+        "missed": 8
+      },
+      "FEED": {
+        "due": 195,
+        "completed": 171,
+        "missed": 24
+      },
+      "HARVEST": {
+        "due": 3,
+        "completed": 3,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 46,
+        "completed": 37,
+        "missed": 9
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 7008,
+    "sw_actions_executed": 352,
+    "core_water_executed": 829,
+    "sw_water_executed": 87,
+    "core_harvest_executed": 246,
+    "sw_harvest_executed": 12,
+    "core_plant_executed": 157,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 12,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 16,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 11,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97018_cow_milk_engine_seat1": {
+    "sw_tasks_proposed": 753,
+    "sw_tasks_admitted": 58,
+    "sw_tasks_deferred": 415,
+    "sw_tasks_eligible_unselected": 280,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 183,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 116,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 7,
+      "UNAUTHORIZED_SW_TILE": 109
+    },
+    "deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 183,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 116,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 7,
+      "UNAUTHORIZED_SW_TILE": 109
+    },
+    "sw_candidate_evaluations_proposed": 6822,
+    "sw_candidate_evaluations_admitted": 3345,
+    "sw_candidate_evaluations_deferred": 3477,
+    "candidate_deferral_reasons": {
+      "UNASSIGNED_CORE_HARD_TASK": 1220,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1312,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 64,
+      "UNAUTHORIZED_SW_TILE": 881
+    },
+    "core_hard_tasks_due": 586,
+    "core_hard_tasks_completed": 543,
+    "missed_core_deadlines": 43,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 330,
+        "completed": 325,
+        "missed": 5
+      },
+      "FEED": {
+        "due": 191,
+        "completed": 162,
+        "missed": 29
+      },
+      "HARVEST": {
+        "due": 8,
+        "completed": 8,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 57,
+        "completed": 48,
+        "missed": 9
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6989,
+    "sw_actions_executed": 394,
+    "core_water_executed": 814,
+    "sw_water_executed": 88,
+    "core_harvest_executed": 244,
+    "sw_harvest_executed": 11,
+    "core_plant_executed": 158,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 7,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 11,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 15,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,5)": {
+        "water_count": 10,
+        "harvest_count": 1,
+        "plant_count": 1
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97018_melon_sniper_seat0": {
+    "sw_tasks_proposed": 496,
+    "sw_tasks_admitted": 62,
+    "sw_tasks_deferred": 177,
+    "sw_tasks_eligible_unselected": 257,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "UNAUTHORIZED_SW_TILE": 2,
+      "UNASSIGNED_CORE_HARD_TASK": 77,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 93,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "deferral_reasons": {
+      "UNAUTHORIZED_SW_TILE": 2,
+      "UNASSIGNED_CORE_HARD_TASK": 77,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 93,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "sw_candidate_evaluations_proposed": 4567,
+    "sw_candidate_evaluations_admitted": 3071,
+    "sw_candidate_evaluations_deferred": 1496,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 797,
+      "UNAUTHORIZED_SW_TILE": 16,
+      "UNASSIGNED_CORE_HARD_TASK": 660,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 23
+    },
+    "core_hard_tasks_due": 556,
+    "core_hard_tasks_completed": 503,
+    "missed_core_deadlines": 53,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 304,
+        "completed": 301,
+        "missed": 3
+      },
+      "FEED": {
+        "due": 184,
+        "completed": 146,
+        "missed": 38
+      },
+      "HARVEST": {
+        "due": 8,
+        "completed": 8,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 60,
+        "completed": 48,
+        "missed": 12
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6985,
+    "sw_actions_executed": 392,
+    "core_water_executed": 826,
+    "sw_water_executed": 92,
+    "core_harvest_executed": 242,
+    "sw_harvest_executed": 13,
+    "core_plant_executed": 153,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 2,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 13,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 18,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(0,5)": {
+        "water_count": 11,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97018_melon_sniper_seat1": {
+    "sw_tasks_proposed": 689,
+    "sw_tasks_admitted": 62,
+    "sw_tasks_deferred": 370,
+    "sw_tasks_eligible_unselected": 257,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "UNAUTHORIZED_SW_TILE": 195,
+      "UNASSIGNED_CORE_HARD_TASK": 77,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 93,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "deferral_reasons": {
+      "UNAUTHORIZED_SW_TILE": 195,
+      "UNASSIGNED_CORE_HARD_TASK": 77,
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 93,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 5
+    },
+    "sw_candidate_evaluations_proposed": 5858,
+    "sw_candidate_evaluations_admitted": 3071,
+    "sw_candidate_evaluations_deferred": 2787,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 797,
+      "UNAUTHORIZED_SW_TILE": 1307,
+      "UNASSIGNED_CORE_HARD_TASK": 660,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 23
+    },
+    "core_hard_tasks_due": 556,
+    "core_hard_tasks_completed": 503,
+    "missed_core_deadlines": 53,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 304,
+        "completed": 301,
+        "missed": 3
+      },
+      "FEED": {
+        "due": 184,
+        "completed": 146,
+        "missed": 38
+      },
+      "HARVEST": {
+        "due": 8,
+        "completed": 8,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 60,
+        "completed": 48,
+        "missed": 12
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6985,
+    "sw_actions_executed": 392,
+    "core_water_executed": 826,
+    "sw_water_executed": 92,
+    "core_harvest_executed": 242,
+    "sw_harvest_executed": 13,
+    "core_plant_executed": 153,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 2,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 13,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 18,
+      "MELON": 24
+    },
+    "sw_tile_utilization": {
+      "(0,5)": {
+        "water_count": 11,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,6)": {
+        "water_count": 14,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(0,6)": {
+        "water_count": 12,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 13,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97018_full_production_agent_seat0": {
+    "sw_tasks_proposed": 558,
+    "sw_tasks_admitted": 74,
+    "sw_tasks_deferred": 134,
+    "sw_tasks_eligible_unselected": 350,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 73,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3,
+      "UNASSIGNED_CORE_HARD_TASK": 58
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 73,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3,
+      "UNASSIGNED_CORE_HARD_TASK": 58
+    },
+    "sw_candidate_evaluations_proposed": 5292,
+    "sw_candidate_evaluations_admitted": 4164,
+    "sw_candidate_evaluations_deferred": 1128,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 738,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 24,
+      "UNASSIGNED_CORE_HARD_TASK": 366
+    },
+    "core_hard_tasks_due": 463,
+    "core_hard_tasks_completed": 441,
+    "missed_core_deadlines": 22,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 290,
+        "completed": 286,
+        "missed": 4
+      },
+      "FEED": {
+        "due": 131,
+        "completed": 122,
+        "missed": 9
+      },
+      "HARVEST": {
+        "due": 6,
+        "completed": 6,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 36,
+        "completed": 27,
+        "missed": 9
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6986,
+    "sw_actions_executed": 402,
+    "core_water_executed": 965,
+    "sw_water_executed": 102,
+    "core_harvest_executed": 260,
+    "sw_harvest_executed": 14,
+    "core_plant_executed": 171,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 14,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 18,
+      "MELON": 29
+    },
+    "sw_tile_utilization": {
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 17,
+        "harvest_count": 2,
+        "plant_count": 2
+      },
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 16,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  },
+  "s97018_full_production_agent_seat1": {
+    "sw_tasks_proposed": 737,
+    "sw_tasks_admitted": 74,
+    "sw_tasks_deferred": 313,
+    "sw_tasks_eligible_unselected": 350,
+    "sw_tasks_unresolved": 0,
+    "task_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 73,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3,
+      "UNASSIGNED_CORE_HARD_TASK": 58,
+      "UNAUTHORIZED_SW_TILE": 179
+    },
+    "deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 73,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3,
+      "UNASSIGNED_CORE_HARD_TASK": 58,
+      "UNAUTHORIZED_SW_TILE": 179
+    },
+    "sw_candidate_evaluations_proposed": 6690,
+    "sw_candidate_evaluations_admitted": 4164,
+    "sw_candidate_evaluations_deferred": 2526,
+    "candidate_deferral_reasons": {
+      "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 738,
+      "NEAR_TERM_CORE_CAPACITY_DEFICIT": 24,
+      "UNASSIGNED_CORE_HARD_TASK": 366,
+      "UNAUTHORIZED_SW_TILE": 1398
+    },
+    "core_hard_tasks_due": 463,
+    "core_hard_tasks_completed": 441,
+    "missed_core_deadlines": 22,
+    "hard_tasks_by_op": {
+      "WATER": {
+        "due": 290,
+        "completed": 286,
+        "missed": 4
+      },
+      "FEED": {
+        "due": 131,
+        "completed": 122,
+        "missed": 9
+      },
+      "HARVEST": {
+        "due": 6,
+        "completed": 6,
+        "missed": 0
+      },
+      "OTHER": {
+        "due": 36,
+        "completed": 27,
+        "missed": 9
+      }
+    },
+    "core_commands_emitted": 0,
+    "sw_commands_emitted": 0,
+    "core_actions_executed": 6982,
+    "sw_actions_executed": 406,
+    "core_water_executed": 965,
+    "sw_water_executed": 102,
+    "core_harvest_executed": 260,
+    "sw_harvest_executed": 14,
+    "core_plant_executed": 171,
+    "sw_plant_executed": 12,
+    "sw_weed_executed": 4,
+    "attempted_harvest_sw": 0,
+    "executed_harvest_sw": 14,
+    "harvested_crop_units_sw": {
+      "WHEAT": 0,
+      "CARROT": 0,
+      "TOMATO": 0,
+      "STRAWBERRY": 18,
+      "MELON": 29
+    },
+    "sw_tile_utilization": {
+      "(0,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(0,6)": {
+        "water_count": 17,
+        "harvest_count": 2,
+        "plant_count": 2
+      },
+      "(3,5)": {
+        "water_count": 9,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(2,5)": {
+        "water_count": 10,
+        "harvest_count": 2,
+        "plant_count": 1
+      },
+      "(1,5)": {
+        "water_count": 11,
+        "harvest_count": 3,
+        "plant_count": 1
+      },
+      "(3,6)": {
+        "water_count": 16,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(2,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      },
+      "(1,6)": {
+        "water_count": 15,
+        "harvest_count": 1,
+        "plant_count": 2
+      }
+    }
+  }
+}

@@ -1,0 +1,506 @@
+{
+  "summary": {
+    "arm_a": {
+      "mean_animal_rev": 74936.98,
+      "mean_milk_rev": 39976.78,
+      "mean_wool_rev": 18704.22,
+      "mean_fert_rev": 16255.98,
+      "mean_egg_rev": 0.0,
+      "mean_feed_cost": 31875.78,
+      "mean_feed_units": 893.1,
+      "mean_missed_feed_days": 15.4,
+      "total_starvation_deaths": 0
+    },
+    "arm_b": {
+      "mean_animal_rev": 73419.02,
+      "mean_milk_rev": 38419.1,
+      "mean_wool_rev": 18319.62,
+      "mean_fert_rev": 16680.3,
+      "mean_egg_rev": 0.0,
+      "mean_feed_cost": 31866.1,
+      "mean_feed_units": 888.2,
+      "mean_missed_feed_days": 23.3,
+      "total_starvation_deaths": 1
+    },
+    "arm_c": {
+      "mean_animal_rev": 74962.88,
+      "mean_milk_rev": 38836.65,
+      "mean_wool_rev": 19651.45,
+      "mean_fert_rev": 16474.78,
+      "mean_egg_rev": 0.0,
+      "mean_feed_cost": 31465.33,
+      "mean_feed_units": 880.5,
+      "mean_missed_feed_days": 15.2,
+      "total_starvation_deaths": 0
+    },
+    "arm_d": {
+      "mean_animal_rev": 72472.05,
+      "mean_milk_rev": 38037.8,
+      "mean_wool_rev": 17855.95,
+      "mean_fert_rev": 16578.3,
+      "mean_egg_rev": 0.0,
+      "mean_feed_cost": 30954.9,
+      "mean_feed_units": 867.3,
+      "mean_missed_feed_days": 22.7,
+      "total_starvation_deaths": 1
+    }
+  },
+  "starvation_event_trace_s97017_melon_sniper_seat1": {
+    "arm_a": {
+      "final_cash": 115741.0,
+      "animal_losses": [],
+      "shed_wheat_window_steps_360_to_415": [
+        {
+          "step": 360,
+          "day": 15,
+          "hour": 0,
+          "shed_wheat": 60,
+          "held_wheat": 0
+        },
+        {
+          "step": 364,
+          "day": 15,
+          "hour": 4,
+          "shed_wheat": 55,
+          "held_wheat": 13
+        },
+        {
+          "step": 368,
+          "day": 15,
+          "hour": 8,
+          "shed_wheat": 52,
+          "held_wheat": 10
+        },
+        {
+          "step": 372,
+          "day": 15,
+          "hour": 12,
+          "shed_wheat": 52,
+          "held_wheat": 21
+        },
+        {
+          "step": 376,
+          "day": 15,
+          "hour": 16,
+          "shed_wheat": 52,
+          "held_wheat": 27
+        },
+        {
+          "step": 380,
+          "day": 15,
+          "hour": 20,
+          "shed_wheat": 52,
+          "held_wheat": 29
+        },
+        {
+          "step": 384,
+          "day": 16,
+          "hour": 0,
+          "shed_wheat": 80,
+          "held_wheat": 0
+        },
+        {
+          "step": 388,
+          "day": 16,
+          "hour": 4,
+          "shed_wheat": 54,
+          "held_wheat": 13
+        },
+        {
+          "step": 392,
+          "day": 16,
+          "hour": 8,
+          "shed_wheat": 52,
+          "held_wheat": 14
+        },
+        {
+          "step": 396,
+          "day": 16,
+          "hour": 12,
+          "shed_wheat": 52,
+          "held_wheat": 17
+        },
+        {
+          "step": 400,
+          "day": 16,
+          "hour": 16,
+          "shed_wheat": 52,
+          "held_wheat": 14
+        },
+        {
+          "step": 404,
+          "day": 16,
+          "hour": 20,
+          "shed_wheat": 52,
+          "held_wheat": 12
+        },
+        {
+          "step": 408,
+          "day": 17,
+          "hour": 0,
+          "shed_wheat": 64,
+          "held_wheat": 0
+        },
+        {
+          "step": 412,
+          "day": 17,
+          "hour": 4,
+          "shed_wheat": 54,
+          "held_wheat": 13
+        }
+      ],
+      "feed_purchases_cost": 41353.0,
+      "feed_purchases_units": 1036
+    },
+    "arm_b": {
+      "final_cash": 100688.0,
+      "animal_losses": [
+        {
+          "type": "CONFIRMED_STARVATION_DEATH",
+          "step": 408,
+          "day": 17,
+          "pos": [
+            6,
+            4
+          ],
+          "species": "SHEEP",
+          "pre_consecutive_unfed": 1,
+          "post_tile": {
+            "kind": "PASTURE"
+          },
+          "reason": "Animal reached consecutive_unfed >= 2 at rollover from Day 16 to Day 17"
+        }
+      ],
+      "shed_wheat_window_steps_360_to_415": [
+        {
+          "step": 360,
+          "day": 15,
+          "hour": 0,
+          "shed_wheat": 81,
+          "held_wheat": 0
+        },
+        {
+          "step": 364,
+          "day": 15,
+          "hour": 4,
+          "shed_wheat": 44,
+          "held_wheat": 0
+        },
+        {
+          "step": 368,
+          "day": 15,
+          "hour": 8,
+          "shed_wheat": 44,
+          "held_wheat": 0
+        },
+        {
+          "step": 372,
+          "day": 15,
+          "hour": 12,
+          "shed_wheat": 48,
+          "held_wheat": 11
+        },
+        {
+          "step": 376,
+          "day": 15,
+          "hour": 16,
+          "shed_wheat": 44,
+          "held_wheat": 10
+        },
+        {
+          "step": 380,
+          "day": 15,
+          "hour": 20,
+          "shed_wheat": 44,
+          "held_wheat": 9
+        },
+        {
+          "step": 384,
+          "day": 16,
+          "hour": 0,
+          "shed_wheat": 53,
+          "held_wheat": 0
+        },
+        {
+          "step": 388,
+          "day": 16,
+          "hour": 4,
+          "shed_wheat": 44,
+          "held_wheat": 11
+        },
+        {
+          "step": 392,
+          "day": 16,
+          "hour": 8,
+          "shed_wheat": 44,
+          "held_wheat": 10
+        },
+        {
+          "step": 396,
+          "day": 16,
+          "hour": 12,
+          "shed_wheat": 44,
+          "held_wheat": 8
+        },
+        {
+          "step": 400,
+          "day": 16,
+          "hour": 16,
+          "shed_wheat": 44,
+          "held_wheat": 6
+        },
+        {
+          "step": 404,
+          "day": 16,
+          "hour": 20,
+          "shed_wheat": 44,
+          "held_wheat": 3
+        },
+        {
+          "step": 408,
+          "day": 17,
+          "hour": 0,
+          "shed_wheat": 47,
+          "held_wheat": 0
+        },
+        {
+          "step": 412,
+          "day": 17,
+          "hour": 4,
+          "shed_wheat": 40,
+          "held_wheat": 9
+        }
+      ],
+      "feed_purchases_cost": 26712.0,
+      "feed_purchases_units": 735
+    },
+    "arm_c": {
+      "final_cash": 101471.0,
+      "animal_losses": [],
+      "shed_wheat_window_steps_360_to_415": [
+        {
+          "step": 360,
+          "day": 15,
+          "hour": 0,
+          "shed_wheat": 79,
+          "held_wheat": 0
+        },
+        {
+          "step": 364,
+          "day": 15,
+          "hour": 4,
+          "shed_wheat": 41,
+          "held_wheat": 3
+        },
+        {
+          "step": 368,
+          "day": 15,
+          "hour": 8,
+          "shed_wheat": 48,
+          "held_wheat": 9
+        },
+        {
+          "step": 372,
+          "day": 15,
+          "hour": 12,
+          "shed_wheat": 44,
+          "held_wheat": 8
+        },
+        {
+          "step": 376,
+          "day": 15,
+          "hour": 16,
+          "shed_wheat": 44,
+          "held_wheat": 7
+        },
+        {
+          "step": 380,
+          "day": 15,
+          "hour": 20,
+          "shed_wheat": 44,
+          "held_wheat": 6
+        },
+        {
+          "step": 384,
+          "day": 16,
+          "hour": 0,
+          "shed_wheat": 48,
+          "held_wheat": 0
+        },
+        {
+          "step": 388,
+          "day": 16,
+          "hour": 4,
+          "shed_wheat": 44,
+          "held_wheat": 11
+        },
+        {
+          "step": 392,
+          "day": 16,
+          "hour": 8,
+          "shed_wheat": 44,
+          "held_wheat": 11
+        },
+        {
+          "step": 396,
+          "day": 16,
+          "hour": 12,
+          "shed_wheat": 44,
+          "held_wheat": 8
+        },
+        {
+          "step": 400,
+          "day": 16,
+          "hour": 16,
+          "shed_wheat": 44,
+          "held_wheat": 5
+        },
+        {
+          "step": 404,
+          "day": 16,
+          "hour": 20,
+          "shed_wheat": 44,
+          "held_wheat": 4
+        },
+        {
+          "step": 408,
+          "day": 17,
+          "hour": 0,
+          "shed_wheat": 47,
+          "held_wheat": 0
+        },
+        {
+          "step": 412,
+          "day": 17,
+          "hour": 4,
+          "shed_wheat": 44,
+          "held_wheat": 9
+        }
+      ],
+      "feed_purchases_cost": 30940.0,
+      "feed_purchases_units": 769
+    },
+    "arm_d": {
+      "final_cash": 106757.0,
+      "animal_losses": [
+        {
+          "type": "CONFIRMED_STARVATION_DEATH",
+          "step": 408,
+          "day": 17,
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "pre_consecutive_unfed": 1,
+          "post_tile": {
+            "kind": "PASTURE"
+          },
+          "reason": "Animal reached consecutive_unfed >= 2 at rollover from Day 16 to Day 17"
+        }
+      ],
+      "shed_wheat_window_steps_360_to_415": [
+        {
+          "step": 360,
+          "day": 15,
+          "hour": 0,
+          "shed_wheat": 77,
+          "held_wheat": 0
+        },
+        {
+          "step": 364,
+          "day": 15,
+          "hour": 4,
+          "shed_wheat": 44,
+          "held_wheat": 0
+        },
+        {
+          "step": 368,
+          "day": 15,
+          "hour": 8,
+          "shed_wheat": 44,
+          "held_wheat": 0
+        },
+        {
+          "step": 372,
+          "day": 15,
+          "hour": 12,
+          "shed_wheat": 48,
+          "held_wheat": 11
+        },
+        {
+          "step": 376,
+          "day": 15,
+          "hour": 16,
+          "shed_wheat": 44,
+          "held_wheat": 10
+        },
+        {
+          "step": 380,
+          "day": 15,
+          "hour": 20,
+          "shed_wheat": 44,
+          "held_wheat": 9
+        },
+        {
+          "step": 384,
+          "day": 16,
+          "hour": 0,
+          "shed_wheat": 53,
+          "held_wheat": 0
+        },
+        {
+          "step": 388,
+          "day": 16,
+          "hour": 4,
+          "shed_wheat": 44,
+          "held_wheat": 11
+        },
+        {
+          "step": 392,
+          "day": 16,
+          "hour": 8,
+          "shed_wheat": 44,
+          "held_wheat": 11
+        },
+        {
+          "step": 396,
+          "day": 16,
+          "hour": 12,
+          "shed_wheat": 44,
+          "held_wheat": 7
+        },
+        {
+          "step": 400,
+          "day": 16,
+          "hour": 16,
+          "shed_wheat": 44,
+          "held_wheat": 5
+        },
+        {
+          "step": 404,
+          "day": 16,
+          "hour": 20,
+          "shed_wheat": 44,
+          "held_wheat": 3
+        },
+        {
+          "step": 408,
+          "day": 17,
+          "hour": 0,
+          "shed_wheat": 47,
+          "held_wheat": 0
+        },
+        {
+          "step": 412,
+          "day": 17,
+          "hour": 4,
+          "shed_wheat": 40,
+          "held_wheat": 9
+        }
+      ],
+      "feed_purchases_cost": 29438.0,
+      "feed_purchases_units": 796
+    }
+  }
+}

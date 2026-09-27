@@ -234,3 +234,5 @@ class AnimalSurvivalTracker:
             "loss_events_count": len(self.loss_events),
             "loss_events": self.loss_events,
         }
+
+    summary = get_summary

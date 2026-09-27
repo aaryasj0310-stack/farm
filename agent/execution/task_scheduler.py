@@ -1696,6 +1696,30 @@ def assign_tasks(tasks, ctx, extra_units=()):
         home_quads = {u_idx: get_home_quadrant(u_idx, n_units, farm.unlocked) for u_idx in range(n_units)}
     sw_units = {u_idx for u_idx, q in home_quads.items() if q == "SW"}
 
+    day = ctx.get("day", 0) if ctx else 0
+    hour = ctx.get("hour", 0) if ctx else 0
+    step = ctx.get("step", day * 24 + hour) if ctx else (day * 24 + hour)
+
+    try:
+        from execution.sw_task_admission_controller import (
+            is_core_hard_task,
+            get_sw_task_admission_telemetry,
+        )
+        telem = get_sw_task_admission_telemetry()
+        telem.reconcile_hard_deadlines(step)
+        for t in tasks:
+            if is_core_hard_task(t, farm, hour=hour):
+                tgt = tuple(t.get("target") or (0, 0))
+                op = t.get("op", "")
+                kind = t.get("kind", "")
+                entity = (t.get("args") or [None])[0] or kind or op
+                h_task_id = f"CORE_HARD_{day}_{op}_{tgt}_{entity}"
+                telem.register_core_hard_obligation(
+                    h_task_id, op, tgt, str(entity), day, hour, day * 24 + 23
+                )
+    except Exception:
+        pass
+
     # Stage 8B Phase 1F: Separate urgent tasks from regular tasks
     urgent_tasks = []
     regular_tasks = []
@@ -1921,7 +1945,13 @@ def assign_tasks(tasks, ctx, extra_units=()):
                         get_sw_task_admission_telemetry,
                     )
                     telem = get_sw_task_admission_telemetry()
-                    telem.record_task_proposed()
+                    t_op = task.get("op", "")
+                    t_tgt = tuple(task.get("target") or (0, 0))
+                    t_item = (task.get("args") or [None])[0]
+                    task_id = f"SW_{step}_{t_op}_{t_tgt}_{t_item}"
+                    telem.record_sw_task_lifecycle_start(
+                        task_id, step, day, hour, t_op, t_tgt, t_item, prio
+                    )
                     admitted_cands = []
                     last_reason = "REJECTED"
                     for u in cands:
@@ -1941,7 +1971,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
                             last_reason = reason
                     cands = admitted_cands
                     if not cands:
-                        telem.record_task_deferred(last_reason)
+                        telem.record_sw_task_disposition(task_id, "REJECTED_BY_GATE", last_reason)
                         continue
                 except Exception:
                     pass
@@ -2044,7 +2074,11 @@ def assign_tasks(tasks, ctx, extra_units=()):
             ):
                 from execution.sw_task_admission_controller import get_sw_task_admission_telemetry
                 telem = get_sw_task_admission_telemetry()
-                telem.record_task_admitted()
+                c_op = chosen_task.get("op", "")
+                c_tgt = tuple(chosen_task.get("target") or (0, 0))
+                c_item = (chosen_task.get("args") or [None])[0]
+                c_task_id = f"SW_{step}_{c_op}_{c_tgt}_{c_item}"
+                telem.record_sw_task_disposition(c_task_id, "SELECTED_AND_ASSIGNED")
         except Exception:
             pass
 
@@ -2073,6 +2107,15 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 "mission_age": 0,
                 "steps_active": 0,
             }
+
+    try:
+        from execution.sw_task_admission_controller import get_sw_task_admission_telemetry
+        telem = get_sw_task_admission_telemetry()
+        for t_id, rec in telem.sw_lifecycle_records.items():
+            if rec.step == step and rec.disposition is None:
+                telem.record_sw_task_disposition(t_id, "ELIGIBLE_UNSELECTED", "LOWER_BAND_SCORE")
+    except Exception:
+        pass
 
     # Blocked-task diagnostics: detect tasks blocked before assigning fallback idle work
     turn_blocked_diagnostics = {

@@ -56,6 +56,35 @@ REASON_ADMITTED = "ADMITTED"
 
 
 @dataclass
+class HardObligationRecord:
+    task_id: str
+    op: str
+    pos: Tuple[int, int]
+    entity: str
+    day: int
+    hour: int
+    deadline_step: int
+    assigned_worker: Optional[int] = None
+    emitted: bool = False
+    completed_step: Optional[int] = None
+    status: str = "PENDING"  # PENDING, COMPLETED, MISSED
+
+
+@dataclass
+class SWTaskLifecycleRecord:
+    task_id: str
+    step: int
+    day: int
+    hour: int
+    op: str
+    pos: Tuple[int, int]
+    item: Optional[str] = None
+    priority: float = 0.0
+    disposition: Optional[str] = None  # "REJECTED_BY_GATE", "SELECTED_AND_ASSIGNED", "ELIGIBLE_UNSELECTED"
+    reason: Optional[str] = None
+
+
+@dataclass
 class SWTaskAdmissionTelemetry:
     """Rigorous telemetry for SW Task Admission (Core-First & Urgency-Aware)."""
 
@@ -63,7 +92,9 @@ class SWTaskAdmissionTelemetry:
     sw_tasks_proposed: int = 0
     sw_tasks_admitted: int = 0
     sw_tasks_deferred: int = 0
+    sw_tasks_eligible_unselected: int = 0
     task_deferral_reasons: Dict[str, int] = field(default_factory=dict)
+    sw_lifecycle_records: Dict[str, SWTaskLifecycleRecord] = field(default_factory=dict)
 
     # Candidate-level evaluations & outcomes
     sw_candidate_evaluations_proposed: int = 0
@@ -72,13 +103,23 @@ class SWTaskAdmissionTelemetry:
     candidate_deferral_reasons: Dict[str, int] = field(default_factory=dict)
 
     # Core HARD commitment & deadline tracking
+    hard_obligations: Dict[str, HardObligationRecord] = field(default_factory=dict)
     core_hard_tasks_due: int = 0
     core_hard_tasks_completed: int = 0
     missed_core_deadlines: int = 0
+    hard_tasks_by_op: Dict[str, Dict[str, int]] = field(default_factory=lambda: {
+        "WATER": {"due": 0, "completed": 0, "missed": 0},
+        "FEED": {"due": 0, "completed": 0, "missed": 0},
+        "HARVEST": {"due": 0, "completed": 0, "missed": 0},
+        "OTHER": {"due": 0, "completed": 0, "missed": 0},
+    })
 
     # Commands emitted (before engine step)
     core_commands_emitted: int = 0
     sw_commands_emitted: int = 0
+    attempted_harvest_sw: int = 0
+    attempted_water_sw: int = 0
+    attempted_plant_sw: int = 0
 
     # Actions executed (engine-confirmed)
     core_actions_executed: int = 0
@@ -90,9 +131,71 @@ class SWTaskAdmissionTelemetry:
     core_plant_executed: int = 0
     sw_plant_executed: int = 0
     sw_weed_executed: int = 0
+    harvested_crop_units_sw: Dict[str, int] = field(default_factory=lambda: {
+        "WHEAT": 0, "CARROT": 0, "TOMATO": 0, "STRAWBERRY": 0, "MELON": 0
+    })
 
     # SW Productive Tile Utilization: (x, y) -> {water_count, harvest_count, plant_count}
     sw_tile_utilization: Dict[str, Dict[str, int]] = field(default_factory=dict)
+
+    def record_sw_task_lifecycle_start(
+        self,
+        task_id: str,
+        step: int,
+        day: int,
+        hour: int,
+        op: str,
+        pos: Tuple[int, int],
+        item: Optional[str] = None,
+        priority: float = 0.0,
+    ) -> None:
+        if task_id not in self.sw_lifecycle_records:
+            self.sw_tasks_proposed += 1
+            self.sw_lifecycle_records[task_id] = SWTaskLifecycleRecord(
+                task_id=task_id,
+                step=step,
+                day=day,
+                hour=hour,
+                op=op,
+                pos=pos,
+                item=item,
+                priority=priority,
+            )
+
+    def record_sw_task_disposition(
+        self,
+        task_id: str,
+        disposition: str,
+        reason: Optional[str] = None,
+    ) -> None:
+        if task_id in self.sw_lifecycle_records:
+            rec = self.sw_lifecycle_records[task_id]
+            if rec.disposition == "SELECTED_AND_ASSIGNED":
+                return
+            rec.disposition = disposition
+            rec.reason = reason
+        else:
+            self.sw_tasks_proposed += 1
+            rec = SWTaskLifecycleRecord(
+                task_id=task_id,
+                step=0,
+                day=0,
+                hour=0,
+                op="",
+                pos=(0, 0),
+                disposition=disposition,
+                reason=reason,
+            )
+            self.sw_lifecycle_records[task_id] = rec
+
+        if disposition == "SELECTED_AND_ASSIGNED":
+            self.sw_tasks_admitted += 1
+        elif disposition == "REJECTED_BY_GATE":
+            self.sw_tasks_deferred += 1
+            if reason:
+                self.task_deferral_reasons[reason] = self.task_deferral_reasons.get(reason, 0) + 1
+        elif disposition == "ELIGIBLE_UNSELECTED":
+            self.sw_tasks_eligible_unselected += 1
 
     def record_task_proposed(self) -> None:
         self.sw_tasks_proposed += 1
@@ -112,6 +215,62 @@ class SWTaskAdmissionTelemetry:
             self.sw_candidate_evaluations_deferred += 1
             self.candidate_deferral_reasons[reason] = self.candidate_deferral_reasons.get(reason, 0) + 1
 
+    def register_core_hard_obligation(
+        self,
+        task_id: str,
+        op: str,
+        pos: Tuple[int, int],
+        entity: str,
+        day: int,
+        hour: int,
+        deadline_step: int,
+    ) -> bool:
+        if task_id in self.hard_obligations:
+            return False
+        rec = HardObligationRecord(
+            task_id=task_id,
+            op=op,
+            pos=pos,
+            entity=entity,
+            day=day,
+            hour=hour,
+            deadline_step=deadline_step,
+            status="PENDING",
+        )
+        self.hard_obligations[task_id] = rec
+        self.core_hard_tasks_due += 1
+        cat = op if op in self.hard_tasks_by_op else "OTHER"
+        self.hard_tasks_by_op[cat]["due"] += 1
+        return True
+
+    def record_hard_obligation_assigned(self, task_id: str, worker_id: int) -> None:
+        if task_id in self.hard_obligations:
+            self.hard_obligations[task_id].assigned_worker = worker_id
+
+    def record_hard_obligation_emitted(self, task_id: str) -> None:
+        if task_id in self.hard_obligations:
+            self.hard_obligations[task_id].emitted = True
+
+    def record_hard_obligation_executed(self, op: str, pos: Tuple[int, int], step: int) -> None:
+        pos_tuple = (int(pos[0]), int(pos[1]))
+        for rec in self.hard_obligations.values():
+            if rec.status == "PENDING" and rec.op == op and (int(rec.pos[0]), int(rec.pos[1])) == pos_tuple:
+                if step <= rec.deadline_step:
+                    rec.status = "COMPLETED"
+                    rec.completed_step = step
+                    self.core_hard_tasks_completed += 1
+                    cat = op if op in self.hard_tasks_by_op else "OTHER"
+                    self.hard_tasks_by_op[cat]["completed"] += 1
+                    break
+
+    def reconcile_hard_deadlines(self, current_step: int) -> None:
+        for rec in self.hard_obligations.values():
+            if rec.status == "PENDING" and current_step > rec.deadline_step:
+                rec.status = "MISSED"
+                self.missed_core_deadlines += 1
+                cat = rec.op if rec.op in self.hard_tasks_by_op else "OTHER"
+                self.hard_tasks_by_op[cat]["missed"] += 1
+
     def record_core_hard_task_due(self, count: int = 1) -> None:
         self.core_hard_tasks_due += count
 
@@ -121,13 +280,25 @@ class SWTaskAdmissionTelemetry:
     def record_missed_core_deadline(self, count: int = 1) -> None:
         self.missed_core_deadlines += count
 
-    def record_command_emitted(self, region: str) -> None:
+    def record_command_emitted(self, region: str, op: Optional[str] = None) -> None:
         if region == "SW":
             self.sw_commands_emitted += 1
+            if op == "HARVEST":
+                self.attempted_harvest_sw += 1
+            elif op == "WATER":
+                self.attempted_water_sw += 1
+            elif op == "PLANT":
+                self.attempted_plant_sw += 1
         else:
             self.core_commands_emitted += 1
 
-    def record_executed_action(self, region: str, op: str, pos: Tuple[int, int], outcome: Optional[Dict[str, Any]] = None) -> None:
+    def record_executed_action(
+        self,
+        region: str,
+        op: str,
+        pos: Tuple[int, int],
+        outcome: Optional[Dict[str, Any]] = None,
+    ) -> None:
         is_sw = (region == "SW")
         if is_sw:
             self.sw_actions_executed += 1
@@ -148,6 +319,11 @@ class SWTaskAdmissionTelemetry:
                 pos_str = f"({pos[0]},{pos[1]})"
                 u = self.sw_tile_utilization.setdefault(pos_str, {"water_count": 0, "harvest_count": 0, "plant_count": 0})
                 u["harvest_count"] += 1
+                if outcome and outcome.get("yield_units", 0) > 0:
+                    item = outcome.get("item")
+                    units = outcome.get("yield_units", 0)
+                    if item in self.harvested_crop_units_sw:
+                        self.harvested_crop_units_sw[item] += units
             else:
                 self.core_harvest_executed += 1
         elif op == "PLANT":
@@ -163,12 +339,34 @@ class SWTaskAdmissionTelemetry:
                 self.sw_weed_executed += 1
 
     def to_dict(self) -> Dict[str, Any]:
+        self.reconcile_hard_deadlines(current_step=999999)
+
+        if self.sw_lifecycle_records:
+            prop = len(self.sw_lifecycle_records)
+            admit = sum(1 for rec in self.sw_lifecycle_records.values() if rec.disposition == "SELECTED_AND_ASSIGNED")
+            defer = sum(1 for rec in self.sw_lifecycle_records.values() if rec.disposition == "REJECTED_BY_GATE")
+            unsel = sum(1 for rec in self.sw_lifecycle_records.values() if rec.disposition == "ELIGIBLE_UNSELECTED")
+            unres = sum(1 for rec in self.sw_lifecycle_records.values() if rec.disposition is None or rec.disposition not in ("SELECTED_AND_ASSIGNED", "REJECTED_BY_GATE", "ELIGIBLE_UNSELECTED"))
+            deferral_reasons = {}
+            for rec in self.sw_lifecycle_records.values():
+                if rec.disposition == "REJECTED_BY_GATE" and rec.reason:
+                    deferral_reasons[rec.reason] = deferral_reasons.get(rec.reason, 0) + 1
+        else:
+            prop = self.sw_tasks_proposed
+            admit = self.sw_tasks_admitted
+            defer = self.sw_tasks_deferred
+            unsel = self.sw_tasks_eligible_unselected
+            unres = max(0, prop - (admit + defer + unsel))
+            deferral_reasons = dict(self.task_deferral_reasons)
+
         return {
-            "sw_tasks_proposed": self.sw_tasks_proposed,
-            "sw_tasks_admitted": self.sw_tasks_admitted,
-            "sw_tasks_deferred": self.sw_tasks_deferred,
-            "task_deferral_reasons": dict(self.task_deferral_reasons),
-            "deferral_reasons": dict(self.task_deferral_reasons),  # Backward compatibility
+            "sw_tasks_proposed": prop,
+            "sw_tasks_admitted": admit,
+            "sw_tasks_deferred": defer,
+            "sw_tasks_eligible_unselected": unsel,
+            "sw_tasks_unresolved": unres,
+            "task_deferral_reasons": deferral_reasons,
+            "deferral_reasons": deferral_reasons,  # Backward compatibility
             "sw_candidate_evaluations_proposed": self.sw_candidate_evaluations_proposed,
             "sw_candidate_evaluations_admitted": self.sw_candidate_evaluations_admitted,
             "sw_candidate_evaluations_deferred": self.sw_candidate_evaluations_deferred,
@@ -176,6 +374,7 @@ class SWTaskAdmissionTelemetry:
             "core_hard_tasks_due": self.core_hard_tasks_due,
             "core_hard_tasks_completed": self.core_hard_tasks_completed,
             "missed_core_deadlines": self.missed_core_deadlines,
+            "hard_tasks_by_op": {k: dict(v) for k, v in self.hard_tasks_by_op.items()},
             "core_commands_emitted": self.core_commands_emitted,
             "sw_commands_emitted": self.sw_commands_emitted,
             "core_actions_executed": self.core_actions_executed,
@@ -187,6 +386,9 @@ class SWTaskAdmissionTelemetry:
             "core_plant_executed": self.core_plant_executed,
             "sw_plant_executed": self.sw_plant_executed,
             "sw_weed_executed": self.sw_weed_executed,
+            "attempted_harvest_sw": self.attempted_harvest_sw,
+            "executed_harvest_sw": self.sw_harvest_executed,
+            "harvested_crop_units_sw": dict(self.harvested_crop_units_sw),
             "sw_tile_utilization": copy.deepcopy(self.sw_tile_utilization),
         }
 

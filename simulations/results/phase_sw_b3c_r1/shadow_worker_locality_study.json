@@ -1,0 +1,37 @@
+{
+  "daily_worker_budget_actions": 96,
+  "workers_count": 4,
+  "core_service_workload_breakdown": {
+    "core_crop_watering_actions": "25-35 actions/day (40 Core tiles minus fallow/mature)",
+    "livestock_feeding_actions": "10-13 actions/day (1 per animal)",
+    "livestock_care_actions": "8-12 actions/day (caring on production / high-affinity days)",
+    "livestock_harvest_actions": "5-8 actions/day (milking, shearing, egg collection)",
+    "core_crop_harvesting_actions": "5-15 actions/day (Strawberry re-picks, mature Melons)",
+    "core_replanting_actions": "2-6 actions/day",
+    "shed_pickup_drop_actions": "6-12 actions/day (wheat staging, produce deposit)",
+    "total_core_daily_workload": "61-101 actions/day (Mean ~75-80 actions/day; Peak Days 12-25 ~85-95 actions/day)"
+  },
+  "sw_maintenance_workload": {
+    "sw_crop_watering_actions": "8 actions/day (exact 8-tile tranche)",
+    "sw_harvesting_actions": "2-4 actions/day (mature Strawberry/Melon)",
+    "sw_replanting_actions": "0-2 actions/day",
+    "total_sw_daily_workload": "10-14 actions/day"
+  },
+  "dedicated_pinning_analysis": {
+    "sw_pinned_worker_supply": "24 actions/day dedicated in SW",
+    "sw_pinned_worker_demand": "10-14 actions/day",
+    "sw_pinned_worker_idle_waste": "10-14 idle/unproductive actions per day (42-58% capacity wasted)",
+    "core_remaining_capacity": "3 workers * 24 = 72 actions/day",
+    "core_capacity_deficit_under_pinning": "72 actions available vs 75-85 demand = DEFICIT of 3-13 actions/day during peak days!",
+    "conclusion": "Rigid 1-worker SW pinning is mathematically guaranteed to starve Core farm obligations during peak production days (Days 12-25), causing core watering lapses and missed animal feeds!"
+  },
+  "urgency_aware_dispatch_analysis": {
+    "mechanism": "Workers dynamically commute to SW ONLY when Core Tier 0 (HARD) obligations are fully satisfied or committed, and commute back whenever Core deadlines escalate.",
+    "measured_benefit": "Restored SW agriculture (+28.93 harvests/match) with +$932.40 net improvement over B3B while protecting survival commitments.",
+    "unresolved_cost": "Transit overhead: 64 NW->SW transitions and 128 SW->NW transitions per match, creating ~190 commuting actions."
+  },
+  "bounded_locality_hybrid_recommendation": {
+    "concept": "Soft Squad Locality: Worker #3 is preferentially assigned SW tasks during non-peak hours (e.g. Hours 6-16), but is released to Core during morning feeding (Hours 0-5) and evening catch-up (Hours 17-23).",
+    "predicted_transit_saving": "Reduces ping-pong quadrant transitions by 40-50% without creating a hard worker deficit in Core."
+  }
+}

@@ -1,0 +1,331 @@
+{
+  "crops": {
+    "WHEAT": {
+      "mean_rev_arm_a": 38025.28,
+      "mean_rev_arm_b": 38312.6,
+      "mean_rev_arm_d": 37320.97,
+      "delta_rev_d_vs_a": -704.3,
+      "delta_rev_d_vs_b": -991.62,
+      "mean_sales_units_a": 1058.65,
+      "mean_sales_units_b": 1063.95,
+      "mean_sales_units_d": 1044.03,
+      "mean_realized_price_a": 35.92,
+      "mean_realized_price_b": 36.01,
+      "mean_realized_price_d": 35.75,
+      "volume_effect_da": -525.31,
+      "price_effect_da": -178.99,
+      "pct_volume_effect": 74.6,
+      "pct_price_effect": 25.4
+    },
+    "CARROT": {
+      "mean_rev_arm_a": 2532.47,
+      "mean_rev_arm_b": 2412.3,
+      "mean_rev_arm_d": 2483.35,
+      "delta_rev_d_vs_a": -49.12,
+      "delta_rev_d_vs_b": 71.05,
+      "mean_sales_units_a": 67.72,
+      "mean_sales_units_b": 65.65,
+      "mean_sales_units_d": 66.5,
+      "mean_realized_price_a": 37.39,
+      "mean_realized_price_b": 36.74,
+      "mean_realized_price_d": 37.34,
+      "volume_effect_da": -45.81,
+      "price_effect_da": -3.32,
+      "pct_volume_effect": 93.2,
+      "pct_price_effect": 6.8
+    },
+    "TOMATO": {
+      "mean_rev_arm_a": 1933.95,
+      "mean_rev_arm_b": 1624.2,
+      "mean_rev_arm_d": 1656.05,
+      "delta_rev_d_vs_a": -277.9,
+      "delta_rev_d_vs_b": 31.85,
+      "mean_sales_units_a": 28.73,
+      "mean_sales_units_b": 24.12,
+      "mean_sales_units_d": 24.57,
+      "mean_realized_price_a": 67.33,
+      "mean_realized_price_b": 67.32,
+      "mean_realized_price_d": 67.39,
+      "volume_effect_da": -279.4,
+      "price_effect_da": 1.5,
+      "pct_volume_effect": 100.5,
+      "pct_price_effect": -0.5
+    },
+    "STRAWBERRY": {
+      "mean_rev_arm_a": 21776.95,
+      "mean_rev_arm_b": 21264.85,
+      "mean_rev_arm_d": 21328.92,
+      "delta_rev_d_vs_a": -448.03,
+      "delta_rev_d_vs_b": 64.08,
+      "mean_sales_units_a": 84.97,
+      "mean_sales_units_b": 81.53,
+      "mean_sales_units_d": 81.17,
+      "mean_realized_price_a": 256.27,
+      "mean_realized_price_b": 260.84,
+      "mean_realized_price_d": 262.75,
+      "volume_effect_da": -973.84,
+      "price_effect_da": 525.82,
+      "pct_volume_effect": 217.4,
+      "pct_price_effect": -117.4
+    },
+    "MELON": {
+      "mean_rev_arm_a": 21279.78,
+      "mean_rev_arm_b": 22431.12,
+      "mean_rev_arm_d": 22370.3,
+      "delta_rev_d_vs_a": 1090.52,
+      "delta_rev_d_vs_b": -60.83,
+      "mean_sales_units_a": 89.15,
+      "mean_sales_units_b": 94.97,
+      "mean_sales_units_d": 94.6,
+      "mean_realized_price_a": 238.7,
+      "mean_realized_price_b": 236.18,
+      "mean_realized_price_d": 236.47,
+      "volume_effect_da": 1300.89,
+      "price_effect_da": -210.37,
+      "pct_volume_effect": 119.3,
+      "pct_price_effect": -19.3
+    }
+  },
+  "day_trajectories": {
+    "0": {
+      "day": 0,
+      "crop_rev_arm_a": 612.0,
+      "crop_rev_arm_b": 612.0,
+      "crop_rev_arm_d": 612.0,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "1": {
+      "day": 1,
+      "crop_rev_arm_a": 290.0,
+      "crop_rev_arm_b": 290.0,
+      "crop_rev_arm_d": 290.0,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "2": {
+      "day": 2,
+      "crop_rev_arm_a": 290.0,
+      "crop_rev_arm_b": 290.0,
+      "crop_rev_arm_d": 290.0,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "3": {
+      "day": 3,
+      "crop_rev_arm_a": 0.0,
+      "crop_rev_arm_b": 0.0,
+      "crop_rev_arm_d": 0.0,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "4": {
+      "day": 4,
+      "crop_rev_arm_a": 308.5,
+      "crop_rev_arm_b": 308.5,
+      "crop_rev_arm_d": 308.5,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "5": {
+      "day": 5,
+      "crop_rev_arm_a": 841.95,
+      "crop_rev_arm_b": 841.95,
+      "crop_rev_arm_d": 841.95,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "6": {
+      "day": 6,
+      "crop_rev_arm_a": 98.2,
+      "crop_rev_arm_b": 98.2,
+      "crop_rev_arm_d": 98.2,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "7": {
+      "day": 7,
+      "crop_rev_arm_a": 0.0,
+      "crop_rev_arm_b": 0.0,
+      "crop_rev_arm_d": 0.0,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "8": {
+      "day": 8,
+      "crop_rev_arm_a": 0.0,
+      "crop_rev_arm_b": 0.0,
+      "crop_rev_arm_d": 0.0,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "9": {
+      "day": 9,
+      "crop_rev_arm_a": 634.2,
+      "crop_rev_arm_b": 634.2,
+      "crop_rev_arm_d": 634.2,
+      "daily_delta_d_vs_a": 0.0,
+      "daily_delta_d_vs_b": 0.0
+    },
+    "10": {
+      "day": 10,
+      "crop_rev_arm_a": 2215.1,
+      "crop_rev_arm_b": 2054.7,
+      "crop_rev_arm_d": 2056.47,
+      "daily_delta_d_vs_a": -158.63,
+      "daily_delta_d_vs_b": 1.78
+    },
+    "11": {
+      "day": 11,
+      "crop_rev_arm_a": 12229.0,
+      "crop_rev_arm_b": 11472.5,
+      "crop_rev_arm_d": 11426.42,
+      "daily_delta_d_vs_a": -802.58,
+      "daily_delta_d_vs_b": -46.08
+    },
+    "12": {
+      "day": 12,
+      "crop_rev_arm_a": 6737.45,
+      "crop_rev_arm_b": 6599.68,
+      "crop_rev_arm_d": 6612.43,
+      "daily_delta_d_vs_a": -125.02,
+      "daily_delta_d_vs_b": 12.75
+    },
+    "13": {
+      "day": 13,
+      "crop_rev_arm_a": 2951.3,
+      "crop_rev_arm_b": 2625.5,
+      "crop_rev_arm_d": 2488.55,
+      "daily_delta_d_vs_a": -462.75,
+      "daily_delta_d_vs_b": -136.95
+    },
+    "14": {
+      "day": 14,
+      "crop_rev_arm_a": 2022.5,
+      "crop_rev_arm_b": 2231.18,
+      "crop_rev_arm_d": 2054.67,
+      "daily_delta_d_vs_a": 32.17,
+      "daily_delta_d_vs_b": -176.5
+    },
+    "15": {
+      "day": 15,
+      "crop_rev_arm_a": 1596.62,
+      "crop_rev_arm_b": 2043.9,
+      "crop_rev_arm_d": 1949.4,
+      "daily_delta_d_vs_a": 352.78,
+      "daily_delta_d_vs_b": -94.5
+    },
+    "16": {
+      "day": 16,
+      "crop_rev_arm_a": 1757.28,
+      "crop_rev_arm_b": 1747.05,
+      "crop_rev_arm_d": 1481.97,
+      "daily_delta_d_vs_a": -275.3,
+      "daily_delta_d_vs_b": -265.08
+    },
+    "17": {
+      "day": 17,
+      "crop_rev_arm_a": 1228.42,
+      "crop_rev_arm_b": 1088.5,
+      "crop_rev_arm_d": 1156.1,
+      "daily_delta_d_vs_a": -72.33,
+      "daily_delta_d_vs_b": 67.6
+    },
+    "18": {
+      "day": 18,
+      "crop_rev_arm_a": 1113.88,
+      "crop_rev_arm_b": 1138.1,
+      "crop_rev_arm_d": 1148.6,
+      "daily_delta_d_vs_a": 34.72,
+      "daily_delta_d_vs_b": 10.5
+    },
+    "19": {
+      "day": 19,
+      "crop_rev_arm_a": 1577.75,
+      "crop_rev_arm_b": 1495.3,
+      "crop_rev_arm_d": 1382.65,
+      "daily_delta_d_vs_a": -195.1,
+      "daily_delta_d_vs_b": -112.65
+    },
+    "20": {
+      "day": 20,
+      "crop_rev_arm_a": 2483.35,
+      "crop_rev_arm_b": 2063.88,
+      "crop_rev_arm_d": 2074.82,
+      "daily_delta_d_vs_a": -408.53,
+      "daily_delta_d_vs_b": 10.95
+    },
+    "21": {
+      "day": 21,
+      "crop_rev_arm_a": 1231.78,
+      "crop_rev_arm_b": 2528.95,
+      "crop_rev_arm_d": 2348.53,
+      "daily_delta_d_vs_a": 1116.75,
+      "daily_delta_d_vs_b": -180.42
+    },
+    "22": {
+      "day": 22,
+      "crop_rev_arm_a": 3203.55,
+      "crop_rev_arm_b": 3297.2,
+      "crop_rev_arm_d": 3231.93,
+      "daily_delta_d_vs_a": 28.38,
+      "daily_delta_d_vs_b": -65.27
+    },
+    "23": {
+      "day": 23,
+      "crop_rev_arm_a": 2882.32,
+      "crop_rev_arm_b": 3949.52,
+      "crop_rev_arm_d": 3524.72,
+      "daily_delta_d_vs_a": 642.4,
+      "daily_delta_d_vs_b": -424.8
+    },
+    "24": {
+      "day": 24,
+      "crop_rev_arm_a": 3962.83,
+      "crop_rev_arm_b": 4533.32,
+      "crop_rev_arm_d": 4773.68,
+      "daily_delta_d_vs_a": 810.85,
+      "daily_delta_d_vs_b": 240.35
+    },
+    "25": {
+      "day": 25,
+      "crop_rev_arm_a": 2809.2,
+      "crop_rev_arm_b": 2750.62,
+      "crop_rev_arm_d": 2843.97,
+      "daily_delta_d_vs_a": 34.77,
+      "daily_delta_d_vs_b": 93.35
+    },
+    "26": {
+      "day": 26,
+      "crop_rev_arm_a": 3946.9,
+      "crop_rev_arm_b": 3306.1,
+      "crop_rev_arm_d": 3250.53,
+      "daily_delta_d_vs_a": -696.37,
+      "daily_delta_d_vs_b": -55.57
+    },
+    "27": {
+      "day": 27,
+      "crop_rev_arm_a": 4726.7,
+      "crop_rev_arm_b": 3599.65,
+      "crop_rev_arm_d": 3632.7,
+      "daily_delta_d_vs_a": -1094.0,
+      "daily_delta_d_vs_b": 33.05
+    },
+    "28": {
+      "day": 28,
+      "crop_rev_arm_a": 18988.48,
+      "crop_rev_arm_b": 19399.7,
+      "crop_rev_arm_d": 19598.73,
+      "daily_delta_d_vs_a": 610.25,
+      "daily_delta_d_vs_b": 199.03
+    },
+    "29": {
+      "day": 29,
+      "crop_rev_arm_a": 4809.18,
+      "crop_rev_arm_b": 5044.88,
+      "crop_rev_arm_d": 5047.88,
+      "daily_delta_d_vs_a": 238.7,
+      "daily_delta_d_vs_b": 3.0
+    }
+  }
+}
