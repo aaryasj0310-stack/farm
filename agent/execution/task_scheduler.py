@@ -1827,23 +1827,29 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 is_sw_field = (farm.quadrant_of(tgt_tuple) == "SW" and tgt_tuple not in SHED_ACCESS_TILES)
 
             try:
-                from config import get_sw_core_first_task_admission_enabled
-                sw_admission_enabled = get_sw_core_first_task_admission_enabled()
+                from config import (
+                    get_sw_core_first_task_admission_enabled,
+                    get_sw_urgency_aware_admission_enabled,
+                )
+                sw_admission_enabled = (
+                    get_sw_core_first_task_admission_enabled() or
+                    get_sw_urgency_aware_admission_enabled()
+                )
             except Exception:
                 sw_admission_enabled = False
 
             if is_sw_field and sw_admission_enabled:
                 try:
                     from execution.sw_task_admission_controller import (
-                        evaluate_sw_task_admission,
+                        evaluate_active_sw_mission_continuation,
                         get_sw_task_admission_telemetry,
                     )
                     telem = get_sw_task_admission_telemetry()
-                    admit, reason = evaluate_sw_task_admission(
+                    admit, reason = evaluate_active_sw_mission_continuation(
                         ctx=ctx,
                         worker_idx=u,
                         worker_pos=pos_by_idx[u],
-                        task=m_task,
+                        mission=m,
                         current_assignments=assignment,
                         remaining_free_units=[fu for fu in pos_by_idx if fu not in busy and fu != u],
                         all_tasks=tasks,
@@ -1853,8 +1859,6 @@ def assign_tasks(tasks, ctx, extra_units=()):
                         del _ACTIVE_MISSIONS[u]
                         telem.record_task_deferred(reason)
                         continue
-                    else:
-                        telem.record_task_admitted()
                 except Exception:
                     pass
 
@@ -1899,8 +1903,14 @@ def assign_tasks(tasks, ctx, extra_units=()):
             prio = task.get("priority", 0)
 
             try:
-                from config import get_sw_core_first_task_admission_enabled
-                sw_admission_enabled = get_sw_core_first_task_admission_enabled()
+                from config import (
+                    get_sw_core_first_task_admission_enabled,
+                    get_sw_urgency_aware_admission_enabled,
+                )
+                sw_admission_enabled = (
+                    get_sw_core_first_task_admission_enabled() or
+                    get_sw_urgency_aware_admission_enabled()
+                )
             except Exception:
                 sw_admission_enabled = False
 
@@ -1911,6 +1921,7 @@ def assign_tasks(tasks, ctx, extra_units=()):
                         get_sw_task_admission_telemetry,
                     )
                     telem = get_sw_task_admission_telemetry()
+                    telem.record_task_proposed()
                     admitted_cands = []
                     last_reason = "REJECTED"
                     for u in cands:
@@ -2024,8 +2035,13 @@ def assign_tasks(tasks, ctx, extra_units=()):
             unassigned_home_tasks[t_quad] = max(0, unassigned_home_tasks[t_quad] - 1)
 
         try:
-            from config import get_sw_core_first_task_admission_enabled
-            if t_quad == "SW" and chosen_task.get("target") not in SHED_ACCESS_TILES and get_sw_core_first_task_admission_enabled():
+            from config import (
+                get_sw_core_first_task_admission_enabled,
+                get_sw_urgency_aware_admission_enabled,
+            )
+            if t_quad == "SW" and chosen_task.get("target") not in SHED_ACCESS_TILES and (
+                get_sw_core_first_task_admission_enabled() or get_sw_urgency_aware_admission_enabled()
+            ):
                 from execution.sw_task_admission_controller import get_sw_task_admission_telemetry
                 telem = get_sw_task_admission_telemetry()
                 telem.record_task_admitted()

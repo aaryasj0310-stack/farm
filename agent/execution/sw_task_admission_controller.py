@@ -1,17 +1,15 @@
-"""Core-First SW Task Admission Controller (Phase SW-B3B).
+"""Urgency-Aware SW Task Admission Controller (Phase SW-B3C).
 
-Provides a configurable experimental gate (SW_CORE_FIRST_TASK_ADMISSION) to
-prevent SW operations from consuming worker execution capacity that is needed
-for urgent NW/NE or livestock obligations.
-
-When enabled:
-- Evaluates actual current farm execution state and near-term core commitments.
-- Protects animal feeding deadlines, core crop watering windows, mature/decaying
-  harvests, and essential worker/shed logistics.
-- Allows SW work only when core workload is adequately covered with spare capacity.
-- Accurately records task proposals, admissions, deferrals, and exact reasons.
-- Preserves the 8-tile SW tranche invariant.
-- Re-evaluates deferred tasks dynamically on future turns.
+Provides configurable experimental gates for SW Task Admission:
+- SW_URGENCY_AWARE_ADMISSION (Phase SW-B3C Treatment, Arm D):
+  Evaluates 3-tier task hierarchy (Tier 0 Survival/HARD, Tier 1 Deadline-Sensitive,
+  Tier 2 Routine/Postponable). Preserves core survival obligations while enabling
+  bounded, commitment-aware SW agricultural operations and preventing ping-pong
+  mission cancellation during travel.
+- SW_CORE_FIRST_TASK_ADMISSION (Phase SW-B3B Baseline, Arm C):
+  Original strict core-first admission policy.
+- When both are False:
+  Admission is completely bypassed (original Gate 2 LIVE SW, Arm B).
 """
 from __future__ import annotations
 
@@ -53,35 +51,58 @@ REASON_UNASSIGNED_CORE_STANDARD_TASK = "UNASSIGNED_CORE_STANDARD_TASK"
 REASON_CORE_WORKER_DEFICIT = "CORE_WORKER_DEFICIT"
 REASON_NEAR_TERM_CORE_CAPACITY_DEFICIT = "NEAR_TERM_CORE_CAPACITY_DEFICIT"
 REASON_LATE_DAY_TRANSIT_OVERHEAD = "LATE_DAY_TRANSIT_OVERHEAD"
+REASON_INSUFFICIENT_HORIZON_FOR_COMMITMENT = "INSUFFICIENT_HORIZON_FOR_COMMITMENT"
 REASON_ADMITTED = "ADMITTED"
 
 
 @dataclass
 class SWTaskAdmissionTelemetry:
-    """Rigorous telemetry for Core-First SW Task Admission."""
+    """Rigorous telemetry for SW Task Admission (Core-First & Urgency-Aware)."""
+
+    # Unique task proposals & outcomes
     sw_tasks_proposed: int = 0
     sw_tasks_admitted: int = 0
     sw_tasks_deferred: int = 0
+    task_deferral_reasons: Dict[str, int] = field(default_factory=dict)
+
+    # Candidate-level evaluations & outcomes
     sw_candidate_evaluations_proposed: int = 0
     sw_candidate_evaluations_admitted: int = 0
     sw_candidate_evaluations_deferred: int = 0
-    deferral_reasons: Dict[str, int] = field(default_factory=dict)
+    candidate_deferral_reasons: Dict[str, int] = field(default_factory=dict)
 
-    # Core HARD commitment tracking
+    # Core HARD commitment & deadline tracking
     core_hard_tasks_due: int = 0
     core_hard_tasks_completed: int = 0
     missed_core_deadlines: int = 0
 
-    # Regional execution counts
+    # Commands emitted (before engine step)
+    core_commands_emitted: int = 0
+    sw_commands_emitted: int = 0
+
+    # Actions executed (engine-confirmed)
+    core_actions_executed: int = 0
+    sw_actions_executed: int = 0
     core_water_executed: int = 0
     sw_water_executed: int = 0
     core_harvest_executed: int = 0
     sw_harvest_executed: int = 0
     core_plant_executed: int = 0
     sw_plant_executed: int = 0
+    sw_weed_executed: int = 0
 
-    # SW Productive Tile Utilization: (x, y) -> {planted_steps, water_count, harvest_count}
+    # SW Productive Tile Utilization: (x, y) -> {water_count, harvest_count, plant_count}
     sw_tile_utilization: Dict[str, Dict[str, int]] = field(default_factory=dict)
+
+    def record_task_proposed(self) -> None:
+        self.sw_tasks_proposed += 1
+
+    def record_task_admitted(self) -> None:
+        self.sw_tasks_admitted += 1
+
+    def record_task_deferred(self, reason: str) -> None:
+        self.sw_tasks_deferred += 1
+        self.task_deferral_reasons[reason] = self.task_deferral_reasons.get(reason, 0) + 1
 
     def record_candidate_evaluation(self, admitted: bool, reason: str) -> None:
         self.sw_candidate_evaluations_proposed += 1
@@ -89,19 +110,30 @@ class SWTaskAdmissionTelemetry:
             self.sw_candidate_evaluations_admitted += 1
         else:
             self.sw_candidate_evaluations_deferred += 1
-            self.deferral_reasons[reason] = self.deferral_reasons.get(reason, 0) + 1
+            self.candidate_deferral_reasons[reason] = self.candidate_deferral_reasons.get(reason, 0) + 1
 
-    def record_task_deferred(self, reason: str) -> None:
-        self.sw_tasks_proposed += 1
-        self.sw_tasks_deferred += 1
-        self.deferral_reasons[reason] = self.deferral_reasons.get(reason, 0) + 1
+    def record_core_hard_task_due(self, count: int = 1) -> None:
+        self.core_hard_tasks_due += count
 
-    def record_task_admitted(self) -> None:
-        self.sw_tasks_proposed += 1
-        self.sw_tasks_admitted += 1
+    def record_core_hard_task_completed(self, count: int = 1) -> None:
+        self.core_hard_tasks_completed += count
+
+    def record_missed_core_deadline(self, count: int = 1) -> None:
+        self.missed_core_deadlines += count
+
+    def record_command_emitted(self, region: str) -> None:
+        if region == "SW":
+            self.sw_commands_emitted += 1
+        else:
+            self.core_commands_emitted += 1
 
     def record_executed_action(self, region: str, op: str, pos: Tuple[int, int], outcome: Optional[Dict[str, Any]] = None) -> None:
         is_sw = (region == "SW")
+        if is_sw:
+            self.sw_actions_executed += 1
+        else:
+            self.core_actions_executed += 1
+
         if op == "WATER":
             if is_sw:
                 self.sw_water_executed += 1
@@ -126,25 +158,35 @@ class SWTaskAdmissionTelemetry:
                 u["plant_count"] += 1
             else:
                 self.core_plant_executed += 1
+        elif op in ("DIG", "WEED"):
+            if is_sw:
+                self.sw_weed_executed += 1
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "sw_tasks_proposed": self.sw_tasks_proposed,
             "sw_tasks_admitted": self.sw_tasks_admitted,
             "sw_tasks_deferred": self.sw_tasks_deferred,
+            "task_deferral_reasons": dict(self.task_deferral_reasons),
+            "deferral_reasons": dict(self.task_deferral_reasons),  # Backward compatibility
             "sw_candidate_evaluations_proposed": self.sw_candidate_evaluations_proposed,
             "sw_candidate_evaluations_admitted": self.sw_candidate_evaluations_admitted,
             "sw_candidate_evaluations_deferred": self.sw_candidate_evaluations_deferred,
-            "deferral_reasons": dict(self.deferral_reasons),
+            "candidate_deferral_reasons": dict(self.candidate_deferral_reasons),
             "core_hard_tasks_due": self.core_hard_tasks_due,
             "core_hard_tasks_completed": self.core_hard_tasks_completed,
             "missed_core_deadlines": self.missed_core_deadlines,
+            "core_commands_emitted": self.core_commands_emitted,
+            "sw_commands_emitted": self.sw_commands_emitted,
+            "core_actions_executed": self.core_actions_executed,
+            "sw_actions_executed": self.sw_actions_executed,
             "core_water_executed": self.core_water_executed,
             "sw_water_executed": self.sw_water_executed,
             "core_harvest_executed": self.core_harvest_executed,
             "sw_harvest_executed": self.sw_harvest_executed,
             "core_plant_executed": self.core_plant_executed,
             "sw_plant_executed": self.sw_plant_executed,
+            "sw_weed_executed": self.sw_weed_executed,
             "sw_tile_utilization": copy.deepcopy(self.sw_tile_utilization),
         }
 
@@ -183,6 +225,38 @@ def is_core_task(task: Dict[str, Any], farm: Any) -> bool:
     return not is_sw_agricultural_task(task, farm)
 
 
+def is_core_hard_task(task: Dict[str, Any], farm: Any, hour: int = 0) -> bool:
+    """Determine whether a task represents a Tier 0 survival/hard core obligation."""
+    if not is_core_task(task, farm):
+        return False
+    prio = task.get("priority", 0)
+    kind = task.get("kind", "")
+    op = task.get("op", "")
+    args = task.get("args") or [None]
+
+    # Priority >= 100 is always PRIORITY_URGENT_SURVIVAL
+    if prio >= 100:
+        return True
+
+    # Critical survival kinds
+    if kind in ("feed_rescue", "harvest_decay"):
+        return True
+
+    # Placing livestock immediately upon delivery
+    if op == "PLACE" and args[0] in ("COW", "SHEEP", "CHICKEN", "GOOSE"):
+        return True
+
+    # Animal feeding late in the day (hour >= 18) before starvation / escape
+    if op == "FEED" and hour >= 18:
+        return True
+
+    # Crop watering when crop is in drought danger (days_without_water >= 1)
+    if op == "WATER" and task.get("days_without_water", 0) >= 1:
+        return True
+
+    return False
+
+
 def evaluate_sw_task_admission(
     ctx: Dict[str, Any],
     worker_idx: int,
@@ -192,11 +266,22 @@ def evaluate_sw_task_admission(
     remaining_free_units: List[int],
     all_tasks: List[Dict[str, Any]],
 ) -> Tuple[bool, str]:
-    """Evaluate whether an SW agricultural task should be admitted to a worker.
+    """Evaluate whether an SW agricultural task should be admitted to a worker candidate.
 
     Returns:
         (can_admit: bool, reason: str)
     """
+    try:
+        from config import (
+            get_sw_core_first_task_admission_enabled,
+            get_sw_urgency_aware_admission_enabled,
+        )
+        urgency_aware = get_sw_urgency_aware_admission_enabled()
+        strict_core_first = get_sw_core_first_task_admission_enabled()
+    except Exception:
+        urgency_aware = False
+        strict_core_first = False
+
     farm = ctx.get("farm")
     day = ctx.get("day", 0)
     hour = ctx.get("hour", 0)
@@ -211,8 +296,8 @@ def evaluate_sw_task_admission(
     try:
         from strategy.sw_tranche_controller import get_sw_tranche_controller
         ctrl = get_sw_tranche_controller()
-        if ctrl.is_treatment_active() and ctrl.state.sw_purchase_approved:
-            if t_pos not in ctrl.state.admitted_sw_tiles:
+        if ctrl.state.sw_purchase_approved:
+            if ctrl.state.admitted_sw_tiles and t_pos not in ctrl.state.admitted_sw_tiles:
                 return False, REASON_UNAUTHORIZED_SW_TILE
     except Exception:
         pass
@@ -224,99 +309,265 @@ def evaluate_sw_task_admission(
         if tgt is not None:
             assigned_targets.add(tuple(tgt))
 
-    # Gate 2: Check Immediate Unassigned Core HARD Tasks
-    for t in all_tasks:
-        if is_core_task(t, farm):
-            tgt = t.get("target")
-            if tgt is not None and tuple(tgt) in assigned_targets:
-                continue
-            prio = t.get("priority", 0)
-            kind = t.get("kind", "")
-            is_hard = (
-                prio >= 100  # PRIORITY_URGENT_SURVIVAL
-                or kind in ("feed_rescue", "harvest_decay", "feed_prod", "pickup_wheat")
-                or (t.get("op") == "PLACE" and (t.get("args") or [None])[0] in ("COW", "SHEEP", "CHICKEN"))
-            )
-            if is_hard:
-                return False, REASON_UNASSIGNED_CORE_HARD_TASK
-
-    # Gate 3: Check Immediate Unassigned Core STANDARD Tasks
-    unassigned_core_standard = []
-    for t in all_tasks:
-        if is_core_task(t, farm):
-            tgt = t.get("target")
-            if tgt is not None and tuple(tgt) in assigned_targets:
-                continue
-            if t.get("op") in ("WATER", "HARVEST", "FEED", "PICKUP"):
-                unassigned_core_standard.append(t)
+    # Helper: count available core workers
+    total_workers = 1 + (len(farm.hands) if (farm and hasattr(farm, "hands")) else 0)
+    free_core_workers = 0
+    if farm:
+        for u in remaining_free_units:
+            pos = None
+            if u == 0:
+                pos = tuple(farm.farmer)
+            elif hasattr(farm, "hands") and u - 1 < len(farm.hands):
+                pos = tuple(farm.hands[u - 1])
+            if pos and (pos[0] >= 5 or pos[1] < 5):
+                free_core_workers += 1
 
     is_worker_in_core = (worker_pos[0] >= 5 or worker_pos[1] < 5)
-    if is_worker_in_core and unassigned_core_standard:
-        # Worker is physically in Core while Core standard obligations await workers
-        return False, REASON_UNASSIGNED_CORE_STANDARD_TASK
 
-    if not is_worker_in_core and unassigned_core_standard:
-        # Worker is in SW: check if Core has enough free workers in Core to take them
-        free_core_workers = 0
-        if farm:
-            for u in remaining_free_units:
-                # Approximate position or quadrant
-                pos = None
-                if u == 0:
-                    pos = tuple(farm.farmer)
-                elif hasattr(farm, "hands") and u - 1 < len(farm.hands):
-                    pos = tuple(farm.hands[u - 1])
-                if pos and (pos[0] >= 5 or pos[1] < 5):
-                    free_core_workers += 1
-        if free_core_workers < len(unassigned_core_standard):
-            return False, REASON_CORE_WORKER_DEFICIT
+    if urgency_aware:
+        # ====================================================================
+        # Phase SW-B3C Urgency-Aware Admission Policy (Arm D)
+        # ====================================================================
 
-    # Gate 4: Near-Term Core Capacity Horizon Check (Day remaining capacity)
-    rem_hours = max(1, 24 - hour)
-    macro = ctx.get("plan") or ctx.get("macro")
+        # Tier 0 Check: Survival / HARD core obligations
+        unassigned_hard_core = []
+        for t in all_tasks:
+            if is_core_hard_task(t, farm, hour=hour):
+                tgt = t.get("target")
+                if tgt is not None and tuple(tgt) in assigned_targets:
+                    continue
+                unassigned_hard_core.append(t)
 
-    # Count remaining core unwatered plants
-    core_unwatered = 0
-    core_mature_harvest = 0
-    if farm and hasattr(farm, "iter_tiles"):
-        for tile in farm.iter_tiles():
-            pos = tuple(tile.pos)
-            is_tile_core = (pos[0] >= 5 or pos[1] < 5)
-            if not is_tile_core:
-                continue
-            if tile.is_plant:
-                if not tile.watered_today and pos not in assigned_targets:
-                    core_unwatered += 1
-                if tile.yield_units > 0 and pos not in assigned_targets:
-                    # Check maturity
-                    core_mature_harvest += 1
+        if unassigned_hard_core:
+            # If worker is in Core, must reserve it if Core workers are needed for Tier 0
+            if is_worker_in_core and free_core_workers <= len(unassigned_hard_core):
+                return False, REASON_UNASSIGNED_CORE_HARD_TASK
+            # If worker is in SW, recall only if Core literally cannot cover Tier 0
+            if not is_worker_in_core and (total_workers - 1) < len(unassigned_hard_core):
+                return False, REASON_UNASSIGNED_CORE_HARD_TASK
 
-    # Count remaining unfed animals
-    core_unfed_animals = 0
-    if farm and hasattr(farm, "iter_tiles"):
-        for tile in farm.iter_tiles():
-            if tile.is_animal:
+        # Tier 1 & Tier 2: Commitment Horizon & Near-Term Capacity Feasibility
+        rem_hours = max(1, 24 - hour)
+        dist_to_sw = abs(worker_pos[0] - t_pos[0]) + abs(worker_pos[1] - t_pos[1])
+        expected_cost = dist_to_sw + 1  # travel + 1 execution step
+
+        # Horizon check: cannot commit if worker cannot reach and finish before night
+        if is_worker_in_core and expected_cost >= rem_hours:
+            return False, REASON_INSUFFICIENT_HORIZON_FOR_COMMITMENT
+
+        # Near-Term Core Workload Horizon Check
+        # Count remaining unserviced core items
+        core_unwatered = 0
+        core_mature_harvest = 0
+        core_unfed_animals = 0
+
+        if farm and hasattr(farm, "iter_tiles"):
+            for tile in farm.iter_tiles():
                 pos = tuple(tile.pos)
-                if not tile.fed_today and pos not in assigned_targets:
-                    core_unfed_animals += 1
+                is_tile_core = (pos[0] >= 5 or pos[1] < 5)
+                if not is_tile_core:
+                    continue
+                if tile.is_plant:
+                    if not tile.watered_today and pos not in assigned_targets:
+                        core_unwatered += 1
+                    if tile.yield_units > 0 and pos not in assigned_targets:
+                        core_mature_harvest += 1
+                elif tile.is_animal:
+                    if not tile.fed_today and pos not in assigned_targets:
+                        core_unfed_animals += 1
 
-    actions_needed = (
-        (core_unwatered * 2.0)
-        + (core_mature_harvest * 2.0)
-        + (core_unfed_animals * 2.5)
-    )
+        actions_needed = (
+            (core_unwatered * 1.5)
+            + (core_mature_harvest * 1.5)
+            + (core_unfed_animals * 2.0)
+        )
 
-    if actions_needed > 0:
-        total_workers = 1 + (len(farm.hands) if (farm and hasattr(farm, "hands")) else 0)
-        core_workers_available = max(1, total_workers - 1)
-        core_capacity_actions = core_workers_available * rem_hours
-        required_buffered_capacity = actions_needed * 1.25 + 2.0
-        if core_capacity_actions < required_buffered_capacity:
-            return False, REASON_NEAR_TERM_CORE_CAPACITY_DEFICIT
+        if actions_needed > 0:
+            core_workers_available = max(1, total_workers - 1)
+            core_capacity_actions = core_workers_available * rem_hours
+            required_buffered_capacity = actions_needed * 1.15 + 1.0
+            if core_capacity_actions < required_buffered_capacity:
+                return False, REASON_NEAR_TERM_CORE_CAPACITY_DEFICIT
 
-    # Gate 5: Late-Day Long-Distance Commute Overhead Protection
-    dist_to_sw = abs(worker_pos[0] - t_pos[0]) + abs(worker_pos[1] - t_pos[1])
-    if is_worker_in_core and dist_to_sw >= 5 and hour >= 18:
-        return False, REASON_LATE_DAY_TRANSIT_OVERHEAD
+        # Late-Day Commute Overhead Protection
+        if is_worker_in_core and dist_to_sw >= 5 and hour >= 18:
+            return False, REASON_LATE_DAY_TRANSIT_OVERHEAD
 
-    return True, REASON_ADMITTED
+        return True, REASON_ADMITTED
+
+    else:
+        # ====================================================================
+        # Phase SW-B3B Strict Core-First Admission Policy (Arm C Reproduction)
+        # ====================================================================
+
+        # Gate 2: Check Immediate Unassigned Core HARD Tasks
+        for t in all_tasks:
+            if is_core_task(t, farm):
+                tgt = t.get("target")
+                if tgt is not None and tuple(tgt) in assigned_targets:
+                    continue
+                prio = t.get("priority", 0)
+                kind = t.get("kind", "")
+                is_hard = (
+                    prio >= 100
+                    or kind in ("feed_rescue", "harvest_decay", "feed_prod", "pickup_wheat")
+                    or (t.get("op") == "PLACE" and (t.get("args") or [None])[0] in ("COW", "SHEEP", "CHICKEN"))
+                )
+                if is_hard:
+                    return False, REASON_UNASSIGNED_CORE_HARD_TASK
+
+        # Gate 3: Check Immediate Unassigned Core STANDARD Tasks
+        unassigned_core_standard = []
+        for t in all_tasks:
+            if is_core_task(t, farm):
+                tgt = t.get("target")
+                if tgt is not None and tuple(tgt) in assigned_targets:
+                    continue
+                if t.get("op") in ("WATER", "HARVEST", "FEED", "PICKUP"):
+                    unassigned_core_standard.append(t)
+
+        if is_worker_in_core and unassigned_core_standard:
+            return False, REASON_UNASSIGNED_CORE_STANDARD_TASK
+
+        if not is_worker_in_core and unassigned_core_standard:
+            if free_core_workers < len(unassigned_core_standard):
+                return False, REASON_CORE_WORKER_DEFICIT
+
+        # Gate 4: Near-Term Core Capacity Horizon Check
+        rem_hours = max(1, 24 - hour)
+        core_unwatered = 0
+        core_mature_harvest = 0
+        core_unfed_animals = 0
+        if farm and hasattr(farm, "iter_tiles"):
+            for tile in farm.iter_tiles():
+                pos = tuple(tile.pos)
+                is_tile_core = (pos[0] >= 5 or pos[1] < 5)
+                if not is_tile_core:
+                    continue
+                if tile.is_plant:
+                    if not tile.watered_today and pos not in assigned_targets:
+                        core_unwatered += 1
+                    if tile.yield_units > 0 and pos not in assigned_targets:
+                        core_mature_harvest += 1
+                elif tile.is_animal:
+                    if not tile.fed_today and pos not in assigned_targets:
+                        core_unfed_animals += 1
+
+        actions_needed = (
+            (core_unwatered * 2.0)
+            + (core_mature_harvest * 2.0)
+            + (core_unfed_animals * 2.5)
+        )
+        if actions_needed > 0:
+            core_workers_available = max(1, total_workers - 1)
+            core_capacity_actions = core_workers_available * rem_hours
+            required_buffered_capacity = actions_needed * 1.25 + 2.0
+            if core_capacity_actions < required_buffered_capacity:
+                return False, REASON_NEAR_TERM_CORE_CAPACITY_DEFICIT
+
+        # Gate 5: Late-Day Commute Overhead Protection
+        dist_to_sw = abs(worker_pos[0] - t_pos[0]) + abs(worker_pos[1] - t_pos[1])
+        if is_worker_in_core and dist_to_sw >= 5 and hour >= 18:
+            return False, REASON_LATE_DAY_TRANSIT_OVERHEAD
+
+        return True, REASON_ADMITTED
+
+
+def evaluate_active_sw_mission_continuation(
+    ctx: Dict[str, Any],
+    worker_idx: int,
+    worker_pos: Tuple[int, int],
+    mission: Dict[str, Any],
+    current_assignments: Dict[int, Dict[str, Any]],
+    remaining_free_units: List[int],
+    all_tasks: List[Dict[str, Any]],
+) -> Tuple[bool, str]:
+    """Evaluate whether an ongoing SW active mission should continue or be preempted.
+
+    In Urgency-Aware mode (Arm D):
+    - Continuity is strictly preserved unless an urgent Tier 0 Survival emergency arises
+      and Core lacks sufficient workers to handle it.
+    - Eliminates ping-pong travel cancellation that crippled Arm C.
+
+    In Strict Core-First mode (Arm C):
+    - Uses original evaluate_sw_task_admission check for exact reproduction.
+    """
+    try:
+        from config import (
+            get_sw_core_first_task_admission_enabled,
+            get_sw_urgency_aware_admission_enabled,
+        )
+        urgency_aware = get_sw_urgency_aware_admission_enabled()
+        strict_core_first = get_sw_core_first_task_admission_enabled()
+    except Exception:
+        urgency_aware = False
+        strict_core_first = False
+
+    if not urgency_aware and not strict_core_first:
+        # Admission OFF -> continue active mission
+        return True, REASON_ADMITTED
+
+    farm = ctx.get("farm")
+    hour = ctx.get("hour", 0)
+    task = mission.get("task", {})
+    target = mission.get("target")
+    if target is None:
+        return False, "NO_TARGET"
+
+    if urgency_aware:
+        # Check if target is still valid
+        t_pos = (int(target[0]), int(target[1]))
+        if farm and hasattr(farm, "tile"):
+            tile = farm.tile(t_pos)
+            op = mission.get("op")
+            if op == "WATER" and (tile is None or not getattr(tile, "is_plant", False) or getattr(tile, "watered_today", False)):
+                return False, "TARGET_NO_LONGER_NEEDS_WATER"
+            if op == "HARVEST" and (tile is None or getattr(tile, "yield_units", 0) <= 0):
+                return False, "TARGET_NO_LONGER_HARVESTABLE"
+
+        # Check for urgent Tier 0 Survival emergencies
+        assigned_targets = set()
+        for asg_task in current_assignments.values():
+            tgt = asg_task.get("target")
+            if tgt is not None:
+                assigned_targets.add(tuple(tgt))
+
+        unassigned_hard_core = []
+        for t in all_tasks:
+            if is_core_hard_task(t, farm, hour=hour):
+                tgt = t.get("target")
+                if tgt is not None and tuple(tgt) in assigned_targets:
+                    continue
+                unassigned_hard_core.append(t)
+
+        if unassigned_hard_core:
+            # Count free workers in core
+            free_core_workers = 0
+            if farm:
+                for u in remaining_free_units:
+                    pos = None
+                    if u == 0:
+                        pos = tuple(farm.farmer)
+                    elif hasattr(farm, "hands") and u - 1 < len(farm.hands):
+                        pos = tuple(farm.hands[u - 1])
+                    if pos and (pos[0] >= 5 or pos[1] < 5):
+                        free_core_workers += 1
+
+            if free_core_workers < len(unassigned_hard_core):
+                # Core literally has a worker deficit for a life-or-death emergency: preempt!
+                return False, REASON_UNASSIGNED_CORE_HARD_TASK
+
+        # Routine tasks in core DO NOT preempt an in-flight SW mission
+        return True, REASON_ADMITTED
+
+    else:
+        # Strict core first: re-evaluate full admission
+        return evaluate_sw_task_admission(
+            ctx=ctx,
+            worker_idx=worker_idx,
+            worker_pos=worker_pos,
+            task=task,
+            current_assignments=current_assignments,
+            remaining_free_units=remaining_free_units,
+            all_tasks=all_tasks,
+        )

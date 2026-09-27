@@ -1721,3 +1721,31 @@ def get_sw_core_first_task_admission_enabled() -> bool:
     return SW_CORE_FIRST_TASK_ADMISSION
 
 
+# ====================================================================
+# Phase SW-B3C: Urgency-Aware SW Task Admission Gate
+# ====================================================================
+SW_URGENCY_AWARE_ADMISSION: bool = False
+
+
+def set_sw_urgency_aware_admission_enabled(enabled: bool) -> None:
+    """Configure Phase SW-B3C Urgency-Aware SW Task Admission gate."""
+    global SW_URGENCY_AWARE_ADMISSION
+    SW_URGENCY_AWARE_ADMISSION = bool(enabled)
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.execution.sw_task_admission_controller", "execution.sw_task_admission_controller", "sw_task_admission_controller",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_URGENCY_AWARE_ADMISSION", SW_URGENCY_AWARE_ADMISSION)
+            except Exception:
+                pass
+
+
+def get_sw_urgency_aware_admission_enabled() -> bool:
+    """Return whether Phase SW-B3C Urgency-Aware SW Task Admission gate is enabled."""
+    return SW_URGENCY_AWARE_ADMISSION
+
+
+
