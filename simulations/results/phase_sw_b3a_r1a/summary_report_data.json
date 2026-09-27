@@ -1,0 +1,279 @@
+{
+  "phase": "SW-B3A-R1A",
+  "description": "Evidence Consistency & Final Diagnostic Closure Tournament",
+  "stats": {
+    "sample_structure": "Panel of 20 pairs across 2 independent seed clusters (10 pairs per seed). Descriptive only; small sample precludes asymptotic clustered hypothesis testing.",
+    "pooled": {
+      "pairs": 20,
+      "control_mean_cash": 109444.3,
+      "treatment_mean_cash": 108437.05,
+      "mean_paired_delta": -1007.25,
+      "median_paired_delta": 0.0,
+      "std_paired_delta": 7102.8,
+      "min_paired_delta": -14387.0,
+      "max_paired_delta": 10153.0,
+      "record": "8W / 8L / 4T",
+      "purchasing_pairs": 16,
+      "purchasing_mean_delta": -1259.06
+    },
+    "seed_97013": {
+      "pairs": 10,
+      "control_mean_cash": 107148.4,
+      "treatment_mean_cash": 105724.3,
+      "mean_paired_delta": -1424.1,
+      "median_paired_delta": 0.0,
+      "std_paired_delta": 5562.43,
+      "record": "4W / 4L / 2T",
+      "purchasing_pairs": 8,
+      "purchasing_mean_delta": -1780.12
+    },
+    "seed_97014": {
+      "pairs": 10,
+      "control_mean_cash": 111740.2,
+      "treatment_mean_cash": 111149.8,
+      "mean_paired_delta": -590.4,
+      "median_paired_delta": 0.0,
+      "std_paired_delta": 8670.54,
+      "record": "4W / 4L / 2T",
+      "purchasing_pairs": 8,
+      "purchasing_mean_delta": -738.0
+    }
+  },
+  "parity_audit": [
+    {
+      "pair_id": "s97013_pass_seat0",
+      "control_cash": 107571.0,
+      "gate2_control_cash": 107571.0,
+      "control_diff": 0.0,
+      "treatment_cash": 101428.0,
+      "gate2_treatment_cash": 101428.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_pass_seat1",
+      "control_cash": 107571.0,
+      "gate2_control_cash": 107571.0,
+      "control_diff": 0.0,
+      "treatment_cash": 98882.0,
+      "gate2_treatment_cash": 98882.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_pure_wheat_rush_seat0",
+      "control_cash": 106006.0,
+      "gate2_control_cash": 106006.0,
+      "control_diff": 0.0,
+      "treatment_cash": 106006.0,
+      "gate2_treatment_cash": 106006.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_pure_wheat_rush_seat1",
+      "control_cash": 106006.0,
+      "gate2_control_cash": 106006.0,
+      "control_diff": 0.0,
+      "treatment_cash": 106006.0,
+      "gate2_treatment_cash": 106006.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_cow_milk_engine_seat0",
+      "control_cash": 105320.0,
+      "gate2_control_cash": 105320.0,
+      "control_diff": 0.0,
+      "treatment_cash": 106882.0,
+      "gate2_treatment_cash": 106882.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_cow_milk_engine_seat1",
+      "control_cash": 105320.0,
+      "gate2_control_cash": 105320.0,
+      "control_diff": 0.0,
+      "treatment_cash": 108336.0,
+      "gate2_treatment_cash": 108336.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_melon_sniper_seat0",
+      "control_cash": 105220.0,
+      "gate2_control_cash": 105220.0,
+      "control_diff": 0.0,
+      "treatment_cash": 110636.0,
+      "gate2_treatment_cash": 110636.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_melon_sniper_seat1",
+      "control_cash": 105220.0,
+      "gate2_control_cash": 105220.0,
+      "control_diff": 0.0,
+      "treatment_cash": 110749.0,
+      "gate2_treatment_cash": 110749.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_full_production_agent_seat0",
+      "control_cash": 111625.0,
+      "gate2_control_cash": 111625.0,
+      "control_diff": 0.0,
+      "treatment_cash": 103021.0,
+      "gate2_treatment_cash": 103021.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97013_full_production_agent_seat1",
+      "control_cash": 111625.0,
+      "gate2_control_cash": 111625.0,
+      "control_diff": 0.0,
+      "treatment_cash": 105297.0,
+      "gate2_treatment_cash": 105297.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_pass_seat0",
+      "control_cash": 117399.0,
+      "gate2_control_cash": 117399.0,
+      "control_diff": 0.0,
+      "treatment_cash": 117399.0,
+      "gate2_treatment_cash": 117399.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_pass_seat1",
+      "control_cash": 117399.0,
+      "gate2_control_cash": 117399.0,
+      "control_diff": 0.0,
+      "treatment_cash": 117399.0,
+      "gate2_treatment_cash": 117399.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_pure_wheat_rush_seat0",
+      "control_cash": 119335.0,
+      "gate2_control_cash": 119335.0,
+      "control_diff": 0.0,
+      "treatment_cash": 123794.0,
+      "gate2_treatment_cash": 123794.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_pure_wheat_rush_seat1",
+      "control_cash": 119335.0,
+      "gate2_control_cash": 119335.0,
+      "control_diff": 0.0,
+      "treatment_cash": 123794.0,
+      "gate2_treatment_cash": 123794.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_cow_milk_engine_seat0",
+      "control_cash": 85543.0,
+      "gate2_control_cash": 85543.0,
+      "control_diff": 0.0,
+      "treatment_cash": 95696.0,
+      "gate2_treatment_cash": 95696.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_cow_milk_engine_seat1",
+      "control_cash": 85543.0,
+      "gate2_control_cash": 85543.0,
+      "control_diff": 0.0,
+      "treatment_cash": 95696.0,
+      "gate2_treatment_cash": 95696.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_melon_sniper_seat0",
+      "control_cash": 118853.0,
+      "gate2_control_cash": 118853.0,
+      "control_diff": 0.0,
+      "treatment_cash": 115676.0,
+      "gate2_treatment_cash": 115676.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_melon_sniper_seat1",
+      "control_cash": 118853.0,
+      "gate2_control_cash": 118853.0,
+      "control_diff": 0.0,
+      "treatment_cash": 115676.0,
+      "gate2_treatment_cash": 115676.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_full_production_agent_seat0",
+      "control_cash": 117571.0,
+      "gate2_control_cash": 117571.0,
+      "control_diff": 0.0,
+      "treatment_cash": 103184.0,
+      "gate2_treatment_cash": 103184.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    },
+    {
+      "pair_id": "s97014_full_production_agent_seat1",
+      "control_cash": 117571.0,
+      "gate2_control_cash": 117571.0,
+      "control_diff": 0.0,
+      "treatment_cash": 103184.0,
+      "gate2_treatment_cash": 103184.0,
+      "treatment_diff": 0.0,
+      "exact_parity": true
+    }
+  ],
+  "waterfalls_summary": {
+    "mean_sw_net_margin": 5658.18,
+    "mean_core_crop_delta": -6249.68,
+    "mean_core_seed_cost_delta": -71.0,
+    "mean_animal_rev_delta": 222.8,
+    "mean_feed_cost_delta": 479.55,
+    "mean_fertilizer_expenditure_delta": 0.0,
+    "mean_animal_purchase_delta": 230.0,
+    "mean_hiring_cost_delta": 0.0,
+    "mean_wages_delta": 0.0,
+    "observed_paired_delta": -1007.25,
+    "accounted_delta": -1007.25,
+    "waterfall_residual": 0.0,
+    "all_waterfalls_zero_residual": true
+  },
+  "storage_discard_panel_summary": {
+    "control_total_discarded_units": 392,
+    "treatment_total_discarded_units": 340,
+    "control_total_discard_events": 80,
+    "treatment_total_discard_events": 77,
+    "control_total_rescue_units": 1828,
+    "treatment_total_rescue_units": 2049
+  },
+  "worker_action_panel_summary": {
+    "mean_move_actions_delta": 198.5,
+    "mean_water_actions_delta": 7.6,
+    "mean_actions_in_core_delta": -349.75,
+    "mean_actions_in_sw_delta": 347.65
+  },
+  "latency_audit_summary": {
+    "act_timeout_ms": 1000.0,
+    "all_matches_compliant": false,
+    "treatment_p95_latency_ms": 198.48,
+    "treatment_max_latency_ms": 2476.54
+  }
+}
