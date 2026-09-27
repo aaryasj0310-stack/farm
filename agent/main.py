@@ -466,6 +466,11 @@ def reset_agent_state() -> None:
         reset_midnight_storage_telemetry()
     except Exception:
         pass
+    try:
+        from execution.sw_task_admission_controller import reset_sw_task_admission_telemetry
+        reset_sw_task_admission_telemetry()
+    except Exception:
+        pass
 
 
 def get_crop_pipeline_telemetry():
@@ -955,6 +960,8 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             reset_rotation_manager()
             from strategy.sw_tranche_controller import reset_sw_tranche_controller
             reset_sw_tranche_controller()
+            from execution.sw_task_admission_controller import reset_sw_task_admission_telemetry
+            reset_sw_task_admission_telemetry()
         except Exception:
             pass
 

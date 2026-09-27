@@ -1693,3 +1693,31 @@ def set_opponent_intelligence_mode(mode: str) -> None:
 def get_opponent_intelligence_mode() -> str:
     return OPPONENT_INTELLIGENCE_MODE
 
+
+# ====================================================================
+# Phase SW-B3B: Core-First SW Task Admission Gate
+# ====================================================================
+SW_CORE_FIRST_TASK_ADMISSION: bool = False
+
+
+def set_sw_core_first_task_admission_enabled(enabled: bool) -> None:
+    """Configure Phase SW-B3B Core-First SW Task Admission gate."""
+    global SW_CORE_FIRST_TASK_ADMISSION
+    SW_CORE_FIRST_TASK_ADMISSION = bool(enabled)
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.execution.sw_task_admission_controller", "execution.sw_task_admission_controller", "sw_task_admission_controller",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_CORE_FIRST_TASK_ADMISSION", SW_CORE_FIRST_TASK_ADMISSION)
+            except Exception:
+                pass
+
+
+def get_sw_core_first_task_admission_enabled() -> bool:
+    """Return whether Phase SW-B3B Core-First SW Task Admission gate is enabled."""
+    return SW_CORE_FIRST_TASK_ADMISSION
+
+

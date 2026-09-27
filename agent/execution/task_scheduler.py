@@ -1820,6 +1820,44 @@ def assign_tasks(tasks, ctx, extra_units=()):
         if u not in busy:
             m = _ACTIVE_MISSIONS[u]
             m_task = dict(m["task"])
+            tgt = m_task.get("target")
+            is_sw_field = False
+            if tgt is not None:
+                tgt_tuple = tuple(tgt)
+                is_sw_field = (farm.quadrant_of(tgt_tuple) == "SW" and tgt_tuple not in SHED_ACCESS_TILES)
+
+            try:
+                from config import get_sw_core_first_task_admission_enabled
+                sw_admission_enabled = get_sw_core_first_task_admission_enabled()
+            except Exception:
+                sw_admission_enabled = False
+
+            if is_sw_field and sw_admission_enabled:
+                try:
+                    from execution.sw_task_admission_controller import (
+                        evaluate_sw_task_admission,
+                        get_sw_task_admission_telemetry,
+                    )
+                    telem = get_sw_task_admission_telemetry()
+                    admit, reason = evaluate_sw_task_admission(
+                        ctx=ctx,
+                        worker_idx=u,
+                        worker_pos=pos_by_idx[u],
+                        task=m_task,
+                        current_assignments=assignment,
+                        remaining_free_units=[fu for fu in pos_by_idx if fu not in busy and fu != u],
+                        all_tasks=tasks,
+                    )
+                    telem.record_candidate_evaluation(admit, reason)
+                    if not admit:
+                        del _ACTIVE_MISSIONS[u]
+                        telem.record_task_deferred(reason)
+                        continue
+                    else:
+                        telem.record_task_admitted()
+                except Exception:
+                    pass
+
             m_task["unit_pos"] = pos_by_idx[u]
             assignment[u] = m_task
             busy.add(u)
@@ -1859,6 +1897,43 @@ def assign_tasks(tasks, ctx, extra_units=()):
             target = task.get("target") or tuple(farm.farmer)
             target_quad = farm.quadrant_of(target)
             prio = task.get("priority", 0)
+
+            try:
+                from config import get_sw_core_first_task_admission_enabled
+                sw_admission_enabled = get_sw_core_first_task_admission_enabled()
+            except Exception:
+                sw_admission_enabled = False
+
+            if target_quad == "SW" and task.get("target") not in SHED_ACCESS_TILES and sw_admission_enabled:
+                try:
+                    from execution.sw_task_admission_controller import (
+                        evaluate_sw_task_admission,
+                        get_sw_task_admission_telemetry,
+                    )
+                    telem = get_sw_task_admission_telemetry()
+                    admitted_cands = []
+                    last_reason = "REJECTED"
+                    for u in cands:
+                        admit, reason = evaluate_sw_task_admission(
+                            ctx=ctx,
+                            worker_idx=u,
+                            worker_pos=pos_by_idx[u],
+                            task=task,
+                            current_assignments=assignment,
+                            remaining_free_units=[fu for fu in free_units if fu != u],
+                            all_tasks=tasks,
+                        )
+                        telem.record_candidate_evaluation(admit, reason)
+                        if admit:
+                            admitted_cands.append(u)
+                        else:
+                            last_reason = reason
+                    cands = admitted_cands
+                    if not cands:
+                        telem.record_task_deferred(last_reason)
+                        continue
+                except Exception:
+                    pass
 
             if not soft_locality_on:
                 # C2 Zonal Eligibility (Baseline)
@@ -1947,6 +2022,15 @@ def assign_tasks(tasks, ctx, extra_units=()):
         remaining_tasks.remove(chosen_task)
         if t_quad in unassigned_home_tasks:
             unassigned_home_tasks[t_quad] = max(0, unassigned_home_tasks[t_quad] - 1)
+
+        try:
+            from config import get_sw_core_first_task_admission_enabled
+            if t_quad == "SW" and chosen_task.get("target") not in SHED_ACCESS_TILES and get_sw_core_first_task_admission_enabled():
+                from execution.sw_task_admission_controller import get_sw_task_admission_telemetry
+                telem = get_sw_task_admission_telemetry()
+                telem.record_task_admitted()
+        except Exception:
+            pass
 
         # Rule W2: SW squad hands anchor shed PICKUP at PORT_SW
         if chosen_u in sw_units and chosen_task.get("op") == "PICKUP" and chosen_task.get("target") in SHED_ACCESS_TILES:

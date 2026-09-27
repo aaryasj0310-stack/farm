@@ -1,0 +1,184 @@
+{
+  "phase": "SW-B3B",
+  "description": "Core-First SW Task Admission Experiment",
+  "discovery_summary": {
+    "sample_name": "Discovery",
+    "sw_purchased_count": 16,
+    "total_pairs": 20,
+    "primary_c_vs_b": {
+      "mean_paired_delta": -3925.35,
+      "median_paired_delta": -2946.5,
+      "std_paired_delta": 6346.63,
+      "min_delta": -19946.0,
+      "max_delta": 3567.0,
+      "record": "5W / 11L / 4T",
+      "wins": 5,
+      "losses": 11,
+      "ties": 4
+    },
+    "secondary_c_vs_a": {
+      "mean_paired_delta": -4932.6,
+      "median_paired_delta": -4369.0,
+      "record": "2W / 14L / 4T"
+    },
+    "control_b_vs_a": {
+      "mean_paired_delta": -1007.25,
+      "median_paired_delta": 0.0
+    },
+    "waterfall_c_vs_b": {
+      "mean_sw_net_margin_delta": -7652.18,
+      "mean_core_crop_revenue_delta": 2691.13,
+      "mean_core_seed_cost_delta": 49.5,
+      "mean_core_land_cost_delta": 0.0,
+      "mean_animal_revenue_delta": -208.1,
+      "mean_animal_purchase_delta": -140.0,
+      "mean_feed_expenditure_delta": -1153.3,
+      "mean_fertilizer_expenditure_delta": 0.0,
+      "mean_hiring_cost_delta": 0.0,
+      "mean_wages_delta": 0.0,
+      "mean_observed_delta": -3925.35,
+      "mean_accounted_delta": -3925.35,
+      "mean_residual": 0.0,
+      "all_reconciled": 1
+    },
+    "worker_action_deltas_c_minus_b": {
+      "mean_move_delta": -109.25,
+      "mean_core_actions_delta": 295.6,
+      "mean_sw_actions_delta": -297.95,
+      "mean_water_actions_delta": 1.85
+    },
+    "task_admission_summary": {
+      "mean_tasks_proposed": 7623.3,
+      "mean_tasks_admitted": 10.0,
+      "mean_tasks_deferred": 7613.3,
+      "total_deferral_reasons": {
+        "UNASSIGNED_CORE_HARD_TASK": 130605,
+        "UNASSIGNED_CORE_STANDARD_TASK": 504113,
+        "CORE_WORKER_DEFICIT": 11518,
+        "LATE_DAY_TRANSIT_OVERHEAD": 67,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 527,
+        "UNAUTHORIZED_SW_TILE": 4725
+      }
+    }
+  },
+  "confirmation_summary": {
+    "sample_name": "Confirmation",
+    "sw_purchased_count": 12,
+    "total_pairs": 20,
+    "primary_c_vs_b": {
+      "mean_paired_delta": 874.3,
+      "median_paired_delta": 0.0,
+      "std_paired_delta": 2819.67,
+      "min_delta": -4576.0,
+      "max_delta": 7195.0,
+      "record": "8W / 4L / 8T",
+      "wins": 8,
+      "losses": 4,
+      "ties": 8
+    },
+    "secondary_c_vs_a": {
+      "mean_paired_delta": -3874.15,
+      "median_paired_delta": -1731.5,
+      "record": "0W / 12L / 8T"
+    },
+    "control_b_vs_a": {
+      "mean_paired_delta": -4748.45,
+      "median_paired_delta": -4160.0
+    },
+    "waterfall_c_vs_b": {
+      "mean_sw_net_margin_delta": -5782.46,
+      "mean_core_crop_revenue_delta": 1642.11,
+      "mean_core_seed_cost_delta": 45.5,
+      "mean_core_land_cost_delta": 0.0,
+      "mean_animal_revenue_delta": 3620.45,
+      "mean_animal_purchase_delta": -35.0,
+      "mean_feed_expenditure_delta": -1404.7,
+      "mean_fertilizer_expenditure_delta": 0.0,
+      "mean_hiring_cost_delta": 0.0,
+      "mean_wages_delta": 0.0,
+      "mean_observed_delta": 874.3,
+      "mean_accounted_delta": 874.3,
+      "mean_residual": 0.0,
+      "all_reconciled": 1
+    },
+    "worker_action_deltas_c_minus_b": {
+      "mean_move_delta": -115.6,
+      "mean_core_actions_delta": 231.45,
+      "mean_sw_actions_delta": -234.35,
+      "mean_water_actions_delta": 18.3
+    },
+    "task_admission_summary": {
+      "mean_tasks_proposed": 5618.2,
+      "mean_tasks_admitted": 10.8,
+      "mean_tasks_deferred": 5607.4,
+      "total_deferral_reasons": {
+        "UNASSIGNED_CORE_STANDARD_TASK": 369517,
+        "UNASSIGNED_CORE_HARD_TASK": 91496,
+        "CORE_WORKER_DEFICIT": 8698,
+        "UNAUTHORIZED_SW_TILE": 11390,
+        "LATE_DAY_TRANSIT_OVERHEAD": 211,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 2209
+      }
+    }
+  },
+  "combined_summary": {
+    "sample_name": "Combined_40_Pairs",
+    "sw_purchased_count": 28,
+    "total_pairs": 40,
+    "primary_c_vs_b": {
+      "mean_paired_delta": -1525.53,
+      "median_paired_delta": 0.0,
+      "std_paired_delta": 5422.51,
+      "min_delta": -19946.0,
+      "max_delta": 7195.0,
+      "record": "13W / 15L / 12T",
+      "wins": 13,
+      "losses": 15,
+      "ties": 12
+    },
+    "secondary_c_vs_a": {
+      "mean_paired_delta": -4403.38,
+      "median_paired_delta": -2660.0,
+      "record": "2W / 26L / 12T"
+    },
+    "control_b_vs_a": {
+      "mean_paired_delta": -2877.85,
+      "median_paired_delta": 0.0
+    },
+    "waterfall_c_vs_b": {
+      "mean_sw_net_margin_delta": -6717.32,
+      "mean_core_crop_revenue_delta": 2166.62,
+      "mean_core_seed_cost_delta": 47.5,
+      "mean_core_land_cost_delta": 0.0,
+      "mean_animal_revenue_delta": 1706.17,
+      "mean_animal_purchase_delta": -87.5,
+      "mean_feed_expenditure_delta": -1279.0,
+      "mean_fertilizer_expenditure_delta": 0.0,
+      "mean_hiring_cost_delta": 0.0,
+      "mean_wages_delta": 0.0,
+      "mean_observed_delta": -1525.53,
+      "mean_accounted_delta": -1525.53,
+      "mean_residual": 0.0,
+      "all_reconciled": 1
+    },
+    "worker_action_deltas_c_minus_b": {
+      "mean_move_delta": -112.43,
+      "mean_core_actions_delta": 263.52,
+      "mean_sw_actions_delta": -266.15,
+      "mean_water_actions_delta": 10.08
+    },
+    "task_admission_summary": {
+      "mean_tasks_proposed": 6620.75,
+      "mean_tasks_admitted": 10.4,
+      "mean_tasks_deferred": 6610.35,
+      "total_deferral_reasons": {
+        "UNASSIGNED_CORE_HARD_TASK": 222101,
+        "UNASSIGNED_CORE_STANDARD_TASK": 873630,
+        "CORE_WORKER_DEFICIT": 20216,
+        "LATE_DAY_TRANSIT_OVERHEAD": 278,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 2736,
+        "UNAUTHORIZED_SW_TILE": 16115
+      }
+    }
+  }
+}
