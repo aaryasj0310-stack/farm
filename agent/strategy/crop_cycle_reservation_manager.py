@@ -283,60 +283,11 @@ class CropCycleReservationManager:
             return CropCycleTrialResult(feasible=False, binding_resource="WHEAT_FEED", binding_day_hour=f"D{plant_day}H0", rejection_reason=reason, certificates=certs)
         certs["feed_buffer_protected"] = True
 
-        # 5. Labor capacity envelope across active days
-        total_daily_worker_hours = max(1, active_workers) * TURNS_PER_DAY
-        max_allowable_actions = MAX_WORKER_LOAD_THRESHOLD * total_daily_worker_hours
-
-        # Existing SW acreage already committed
-        current_committed_acreage = sum(len(r.tiles) for r in self.active_reservations.values() if r.is_committed())
-        # Planting day load: 4 PLANT + 4 WATER + existing chores
-        plant_day_workload = num_animals + (0.6 * core_planted_tiles) + (0.6 * current_committed_acreage) + (2 * n_tiles)
-        if plant_day_workload > max_allowable_actions:
-            reason = f"Labor overload on Day {plant_day}: estimated {plant_day_workload:.1f} > max allowable {max_allowable_actions:.1f}"
-            self._record_rejection(reason)
-            return CropCycleTrialResult(feasible=False, binding_resource="LABOR", binding_day_hour=f"D{plant_day}", rejection_reason=reason, certificates=certs)
-
-        # Harvest days load check
-        for h_day in harvest_days:
-            h_workload = num_animals + (0.6 * core_planted_tiles) + (0.6 * current_committed_acreage) + (1.5 * n_tiles)
-            if h_workload > max_allowable_actions:
-                reason = f"Labor overload on harvest Day {h_day}: estimated {h_workload:.1f} > max allowable {max_allowable_actions:.1f}"
-                self._record_rejection(reason)
-                return CropCycleTrialResult(feasible=False, binding_resource="LABOR", binding_day_hour=f"D{h_day}", rejection_reason=reason, certificates=certs)
-        certs["labor_capacity_feasible"] = True
-
-        # 6. Storage headroom check
-        # Peak shed room required on harvest days
-        available_shed_room = max(0, SHED_CAPACITY - current_shed_occupancy)
-        if current_shed_occupancy >= 75 and total_yield_units > available_shed_room:
-            reason = f"Storage congestion: peak harvest {total_yield_units} units exceeds available shed room {available_shed_room}"
-            self._record_rejection(reason)
-            return CropCycleTrialResult(feasible=False, binding_resource="STORAGE_SLOT", rejection_reason=reason, certificates=certs)
-        certs["storage_headroom_feasible"] = True
-
-        # 7. Whole-farm incremental economics evaluation
-        m_inv = market_inventories or {}
-        crop_market_inv = m_inv.get(candidate_crop, MARKET_I0)
-        gross_revenue = float(total_revenue_estimate(candidate_crop, crop_market_inv, total_yield_units))
-        net_margin = gross_revenue - seed_cost
-
-        if net_margin < SW_RESERVATION_SAFETY_MARGIN:
-            reason = f"Economic margin ${net_margin:.1f} below required safety margin ${SW_RESERVATION_SAFETY_MARGIN:.1f}"
-            self._record_rejection(reason)
-            return CropCycleTrialResult(
-                feasible=False,
-                expected_whole_farm_delta=net_margin,
-                binding_resource="MARGIN",
-                rejection_reason=reason,
-                certificates=certs,
-            )
-
-        # Trial successfully passed all feasibility checks!
+        # Build detailed obligations for the candidate reservation
         self._counter += 1
         res_id = f"RES_SW_C{len(candidate_tiles)}_{candidate_crop}_D{plant_day}_{self._counter}"
         cycle_id = f"CYCLE_SW_{candidate_crop}_D{plant_day}_{self._counter}"
 
-        # Build detailed obligations for the reservation
         obligations: List[ServiceObligation] = []
         for tile in candidate_tiles:
             # 1. PLANT obligation
@@ -352,7 +303,7 @@ class CropCycleReservationManager:
                 required_item_qty=1,
                 release_step=plant_day * 24,
                 deadline_step=plant_day * 24 + 23,
-                economic_value=net_margin / n_tiles,
+                economic_value=0.0,
             ))
             # 2. WATER obligations
             for w_day in watering_days:
@@ -366,7 +317,7 @@ class CropCycleReservationManager:
                     cohort_id=cycle_id,
                     release_step=w_day * 24,
                     deadline_step=w_day * 24 + 23,
-                    economic_value=net_margin / (n_tiles * max(1, len(watering_days))),
+                    economic_value=0.0,
                 ))
             # 3. HARVEST obligations
             for h_day in harvest_days:
@@ -380,8 +331,93 @@ class CropCycleReservationManager:
                     cohort_id=cycle_id,
                     release_step=h_day * 24,
                     deadline_step=h_day * 24 + 23,
-                    economic_value=gross_revenue / (n_tiles * max(1, len(harvest_days))),
+                    economic_value=0.0,
                 ))
+
+        # 5. Labor capacity envelope via shared WorkforceCapacityForecaster
+        labor_passed = True
+        labor_fail_reason = ""
+        try:
+            from execution.workforce_capacity_forecast import get_workforce_capacity_forecaster
+            from execution.service_obligation_ledger import get_service_obligation_ledger
+            fc = get_workforce_capacity_forecaster()
+            led = get_service_obligation_ledger()
+            mock_hands = list(range(max(0, active_workers - 1)))
+            feasible, labor_reason, _ = fc.evaluate_candidate_schedule(
+                candidate_obligations=obligations,
+                current_step=plant_day * 24,
+                obs_farm={"farmer": (4, 4), "hands": mock_hands},
+                private={"shed": {"WHEAT": wheat_inventory}, "inventories": []},
+                ledger=led,
+                max_load_threshold=MAX_WORKER_LOAD_THRESHOLD,
+            )
+            if not feasible:
+                labor_passed = False
+                labor_fail_reason = labor_reason
+        except Exception:
+            # Fallback to direct time-dependent capacity envelope check
+            daily_supply = 24.0 + (18.0 * max(0, active_workers - 1))
+            current_committed_acreage = sum(len(r.tiles) for r in self.active_reservations.values() if r.is_committed())
+            plant_day_workload = num_animals + (0.6 * core_planted_tiles) + (0.6 * current_committed_acreage) + (2.0 * n_tiles)
+            if plant_day_workload > daily_supply * MAX_WORKER_LOAD_THRESHOLD:
+                labor_passed = False
+                labor_fail_reason = f"Labor overload on Day {plant_day}: estimated {plant_day_workload:.1f} > allowable {daily_supply * MAX_WORKER_LOAD_THRESHOLD:.1f}"
+
+        if not labor_passed:
+            self._record_rejection(labor_fail_reason)
+            return CropCycleTrialResult(feasible=False, binding_resource="LABOR", binding_day_hour=f"D{plant_day}", rejection_reason=labor_fail_reason, certificates=certs)
+        certs["labor_capacity_feasible"] = True
+
+        # 6. Storage headroom check
+        # Peak shed room required on harvest days
+        available_shed_room = max(0, SHED_CAPACITY - current_shed_occupancy)
+        if current_shed_occupancy >= 75 and total_yield_units > available_shed_room:
+            reason = f"Storage congestion: peak harvest {total_yield_units} units exceeds available shed room {available_shed_room}"
+            self._record_rejection(reason)
+            return CropCycleTrialResult(feasible=False, binding_resource="STORAGE_SLOT", rejection_reason=reason, certificates=certs)
+        certs["storage_headroom_feasible"] = True
+
+        # 7. Defensible incremental whole-farm economics evaluation
+        # Accounts for:
+        # - Realized sales revenue under market inventory price curve
+        # - Direct seed costs
+        # - Displaced internal feed production (worker-hours spent in SW require purchasing market feed)
+        m_inv = market_inventories or {}
+        crop_market_inv = m_inv.get(candidate_crop, MARKET_I0)
+        gross_revenue = float(total_revenue_estimate(candidate_crop, crop_market_inv, total_yield_units))
+
+        # SW labor hours across lifecycle: planting, watering sweeps, and harvest sweeps
+        sw_cycle_hours = n_tiles + (len(watering_days) * n_tiles) + (len(harvest_days) * n_tiles) + (len(watering_days) + 2) * 2.0
+        # Displaced wheat cost: ~0.12 units of core wheat displaced per worker-hour diverted to SW
+        raw_wheat_inv = m_inv.get("WHEAT", MARKET_I0) if isinstance(m_inv, dict) else MARKET_I0
+        w_inv_val = float(raw_wheat_inv if isinstance(raw_wheat_inv, (int, float)) else 100.0)
+        wheat_price_est = max(20.0, min(50.0, 100.0 / (1.0 + w_inv_val / 100.0)))
+        feed_displacement_cost = sw_cycle_hours * 0.12 * wheat_price_est
+
+        net_margin = gross_revenue - seed_cost - feed_displacement_cost
+
+        if net_margin < SW_RESERVATION_SAFETY_MARGIN:
+            reason = (
+                f"Economic whole-farm delta ${net_margin:.1f} (gross ${gross_revenue:.1f} - seed ${seed_cost:.1f} - "
+                f"feed displacement ${feed_displacement_cost:.1f}) below required safety margin ${SW_RESERVATION_SAFETY_MARGIN:.1f}"
+            )
+            self._record_rejection(reason)
+            return CropCycleTrialResult(
+                feasible=False,
+                expected_whole_farm_delta=net_margin,
+                binding_resource="MARGIN",
+                rejection_reason=reason,
+                certificates=certs,
+            )
+
+        # Update economic values on generated obligations
+        for obl in obligations:
+            if obl.op == "PLANT":
+                obl.economic_value = net_margin / n_tiles
+            elif obl.op == "WATER":
+                obl.economic_value = net_margin / (n_tiles * max(1, len(watering_days)))
+            elif obl.op == "HARVEST":
+                obl.economic_value = gross_revenue / (n_tiles * max(1, len(harvest_days)))
 
         res = CropCycleReservation(
             reservation_id=res_id,
@@ -402,6 +438,7 @@ class CropCycleReservationManager:
                 "certificates": certs,
                 "active_workers": active_workers,
                 "cash_at_trial": current_cash,
+                "feed_displacement_cost": feed_displacement_cost,
             },
         )
 
@@ -439,7 +476,11 @@ class CropCycleReservationManager:
         return res.reservation_id
 
     def reconcile_turn(self, ctx: Dict[str, Any], ledger: Optional[Any] = None) -> None:
-        """Reconcile active reservations against game observation."""
+        """Reconcile active reservations against game observation.
+        
+        Requires actual physical tile clearing or executed harvest obligations
+        before establishing fulfillment. Passing the date alone does not assume success.
+        """
         farm = ctx.get("farm")
         day = ctx.get("day", 0)
         hour = ctx.get("hour", 0)
@@ -449,14 +490,42 @@ class CropCycleReservationManager:
             if res.state != ReservationState.COMMITTED:
                 continue
 
-            # Check if all harvest days have passed and harvest was completed
             last_harvest_day = max(res.harvest_days) if res.harvest_days else res.plant_day
             if day > last_harvest_day:
-                # Mark as fulfilled
-                res.state = ReservationState.FULFILLED
-                self._telemetry["reservations_fulfilled"] += 1
-                del self.active_reservations[res_id]
-                logger.info(f"[CropCycleReservationManager] FULFILLED {res_id}")
+                harvest_successful = False
+                if farm and "tiles" in farm:
+                    tiles = farm["tiles"]
+                    # If tiles are cleared of the mature crop, harvest executed
+                    tiles_cleared = True
+                    for (x, y) in res.tiles:
+                        if 0 <= y < len(tiles) and 0 <= x < len(tiles[0]):
+                            t_info = tiles[y][x]
+                            # If tile still holds unharvested mature or decaying crop, harvest did not establish
+                            if t_info.get("crop") == res.crop and t_info.get("stage") == "mature":
+                                tiles_cleared = False
+                                break
+                    harvest_successful = tiles_cleared
+                else:
+                    if ledger is not None:
+                        h_obls = [o for o in res.obligations if o.op == "HARVEST"]
+                        if h_obls:
+                            completed_h = [
+                                o for o in h_obls
+                                if ledger.get_obligation(o.obligation_id) and
+                                ledger.get_obligation(o.obligation_id).lifecycle == ObligationLifecycle.COMPLETED
+                            ]
+                            harvest_successful = (len(completed_h) >= len(h_obls) * 0.5)
+
+                if harvest_successful:
+                    res.state = ReservationState.FULFILLED
+                    self._telemetry["reservations_fulfilled"] += 1
+                    del self.active_reservations[res_id]
+                    logger.info(f"[CropCycleReservationManager] FULFILLED {res_id}")
+                else:
+                    res.state = ReservationState.FAILED
+                    self._telemetry["reservations_failed"] += 1
+                    del self.active_reservations[res_id]
+                    logger.warning(f"[CropCycleReservationManager] UNHARVESTED/EXPIRED {res_id}: harvest was not established")
 
     def _record_rejection(self, reason: str) -> None:
         self._telemetry["trials_rejected"] += 1
