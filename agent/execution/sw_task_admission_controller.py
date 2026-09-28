@@ -113,10 +113,10 @@ class SWTaskAdmissionTelemetry:
     core_hard_tasks_invalidated: int = 0
     core_hard_tasks_superseded: int = 0
     hard_tasks_by_op: Dict[str, Dict[str, int]] = field(default_factory=lambda: {
-        "WATER": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0},
-        "FEED": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0},
-        "HARVEST": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0},
-        "OTHER": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0},
+        "WATER": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0, "superseded": 0},
+        "FEED": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0, "superseded": 0},
+        "HARVEST": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0, "superseded": 0},
+        "OTHER": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0, "superseded": 0},
     })
 
     # Commands emitted (before engine step)
@@ -289,6 +289,30 @@ class SWTaskAdmissionTelemetry:
                         cat = op if op in self.hard_tasks_by_op else "OTHER"
                         self.hard_tasks_by_op[cat]["completed"] += 1
                         break
+
+    def invalidate_hard_obligation_at_pos(self, op: str, pos: Tuple[int, int], reason: str = "") -> None:
+        pos_tuple = (int(pos[0]), int(pos[1]))
+        for rec in self.hard_obligations.values():
+            if rec.status == "PENDING" and rec.op == op and (int(rec.pos[0]), int(rec.pos[1])) == pos_tuple:
+                rec.status = "INVALIDATED"
+                rec.terminal_reason = reason
+                self.core_hard_tasks_invalidated += 1
+                cat = op if op in self.hard_tasks_by_op else "OTHER"
+                if "invalidated" in self.hard_tasks_by_op[cat]:
+                    self.hard_tasks_by_op[cat]["invalidated"] += 1
+                break
+
+    def supersede_hard_obligation_at_pos(self, op: str, pos: Tuple[int, int], reason: str = "") -> None:
+        pos_tuple = (int(pos[0]), int(pos[1]))
+        for rec in self.hard_obligations.values():
+            if rec.status == "PENDING" and rec.op == op and (int(rec.pos[0]), int(rec.pos[1])) == pos_tuple:
+                rec.status = "SUPERSEDED"
+                rec.terminal_reason = reason
+                self.core_hard_tasks_superseded += 1
+                cat = op if op in self.hard_tasks_by_op else "OTHER"
+                if "superseded" in self.hard_tasks_by_op[cat]:
+                    self.hard_tasks_by_op[cat]["superseded"] += 1
+                break
 
     def reconcile_hard_deadlines(self, current_step: int) -> None:
         for rec in self.hard_obligations.values():

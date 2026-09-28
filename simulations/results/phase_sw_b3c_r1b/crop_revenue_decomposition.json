@@ -1,0 +1,73 @@
+{
+  "crops": {
+    "WHEAT": {
+      "mean_rev_a": 38025.28,
+      "mean_rev_d": 37320.97,
+      "delta_rev_d_vs_a": -704.3,
+      "mean_units_a": 1058.65,
+      "mean_units_d": 1044.03,
+      "mean_realized_px_a": 35.92,
+      "mean_realized_px_d": 35.75,
+      "volume_effect": -525.31,
+      "price_effect": -178.99
+    },
+    "CARROT": {
+      "mean_rev_a": 2532.47,
+      "mean_rev_d": 2483.35,
+      "delta_rev_d_vs_a": -49.12,
+      "mean_units_a": 67.72,
+      "mean_units_d": 66.5,
+      "mean_realized_px_a": 37.39,
+      "mean_realized_px_d": 37.34,
+      "volume_effect": -45.81,
+      "price_effect": -3.32
+    },
+    "TOMATO": {
+      "mean_rev_a": 1933.95,
+      "mean_rev_d": 1656.05,
+      "delta_rev_d_vs_a": -277.9,
+      "mean_units_a": 28.73,
+      "mean_units_d": 24.57,
+      "mean_realized_px_a": 67.33,
+      "mean_realized_px_d": 67.39,
+      "volume_effect": -279.4,
+      "price_effect": 1.5
+    },
+    "STRAWBERRY": {
+      "mean_rev_a": 21776.95,
+      "mean_rev_d": 21328.92,
+      "delta_rev_d_vs_a": -448.03,
+      "mean_units_a": 84.97,
+      "mean_units_d": 81.17,
+      "mean_realized_px_a": 256.27,
+      "mean_realized_px_d": 262.75,
+      "volume_effect": -973.84,
+      "price_effect": 525.82
+    },
+    "MELON": {
+      "mean_rev_a": 21279.78,
+      "mean_rev_d": 22370.3,
+      "delta_rev_d_vs_a": 1090.52,
+      "mean_units_a": 89.15,
+      "mean_units_d": 94.6,
+      "mean_realized_px_a": 238.7,
+      "mean_realized_px_d": 236.47,
+      "volume_effect": 1300.89,
+      "price_effect": -210.37
+    }
+  },
+  "whole_farm_identity_reconciliation": {
+    "observed_crop_sales_arm_a": 85548.43,
+    "observed_crop_sales_arm_d": 85159.59,
+    "observed_crop_sales_delta_d_vs_a": -388.84,
+    "attributed_sw_crop_revenue_arm_d": 7012.86,
+    "attributed_core_crop_revenue_arm_d": 78146.74,
+    "attributed_core_crop_revenue_delta_d_vs_a": -7401.68,
+    "identity_check": {
+      "core_plus_sw_arm_d": 85159.6,
+      "matches_total_crop_arm_d": 1,
+      "formula": "Observed Crop Delta (D vs A) = Core Crop Delta + SW Crop Delta",
+      "numerical_verification": "-7401.68 + +7012.86 = -388.82"
+    }
+  }
+}

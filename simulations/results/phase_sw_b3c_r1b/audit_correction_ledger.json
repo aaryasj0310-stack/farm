@@ -1,0 +1,41 @@
+{
+  "audit_version": "SW-B3C-R1B",
+  "corrections": [
+    {
+      "defect_id": "DEFECT_1_ACTION_EMISSION_RECONCILIATION",
+      "r1a_error": "Iterated over action dict top-level keys ('farmer', 'hands', 'market'), causing emitted count to fall far below executed actions (all_matches_satisfy_invariant = 0).",
+      "r1b_repair": "Properly decomposed action dictionary, preserved worker indexing (0: farmer, 1..n: hands), isolated market orders, and verified executed <= accepted <= emitted across 100% of matches.",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_2_ENGINE_CONFIRMED_WATER_TRACKING",
+      "r1a_error": "Failed to capture WATER outcome dict in unit action hook, causing all 11,420 WATER obligations to be reported as completed: 0 and missed: 11,420.",
+      "r1b_repair": "Implemented tile pre/post state transition detection for WATER. Properly recorded completed WATER obligations and invalidations upon plant harvest.",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_3_WORKFORCE_CAPACITY_MODELING",
+      "r1a_error": "Narrative claimed an average of 3.58 workers/turn based on an unsupported 4-worker assumption, contradicting the engine roster and the committed 10.26 workers / 7,380 actions.",
+      "r1b_repair": "Reconstructed empirical worker roster directly from engine observations, proving hands reset every midnight and scale from 4 to 10+ hands/day (mean ~10.24 workers, ~7,366 worker-turns).",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_4_CROP_FEASIBILITY_SEASON_BOUNDARIES",
+      "r1a_error": "Included Day 30 in Strawberry harvest schedules and claimed an unsupported 83.3% retained yield for Day 12 planting.",
+      "r1b_repair": "Enforced strict 720-step season boundary (Days 0..29 only). Corrected Strawberry Day 10 schedule to 5 harvests and Day 12 schedule to 4 harvests (80.0% retention).",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_5_SW_PURCHASE_TIMESTAMPS",
+      "r1a_error": "Calculated timestamps inconsistently between integer day conversions and event step averages.",
+      "r1b_repair": "Derived timestamps directly from individual match step timestamps (mean SW purchase step: 245.46, first plant step: 253.14, lockup: 7.68 steps / 0.32 days).",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_6_STARVATION_FORENSIC_SPECIES_AND_DISPATCH",
+      "r1a_error": "Lacked precise action emission telemetry to verify whether workers attempted to feed the cow in s97017.",
+      "r1b_repair": "Confirmed Arm D lost COW at (6,4) at step 408. Telemetry confirmed shed wheat was 42-53 units, and zero FEED actions were executed on (6,4) during Day 16 Hours 0-5.",
+      "status": "REPAIRED"
+    }
+  ]
+}

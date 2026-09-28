@@ -1,0 +1,7420 @@
+{
+  "invariant": "Successfully executed <= Engine accepted <= Emitted",
+  "all_matches_satisfy_invariant": 1,
+  "panel_totals_arm_d": {
+    "PLANT": {
+      "emitted": 6858,
+      "accepted": 6799,
+      "executed": 6799,
+      "core_emitted": 6523,
+      "core_accepted": 6464,
+      "core_executed": 6464,
+      "sw_emitted": 335,
+      "sw_accepted": 335,
+      "sw_executed": 335
+    },
+    "WATER": {
+      "emitted": 38998,
+      "accepted": 38998,
+      "executed": 38984,
+      "core_emitted": 36400,
+      "core_accepted": 36400,
+      "core_executed": 36386,
+      "sw_emitted": 2598,
+      "sw_accepted": 2598,
+      "sw_executed": 2598
+    },
+    "HARVEST": {
+      "emitted": 10653,
+      "accepted": 10653,
+      "executed": 10653,
+      "core_emitted": 10308,
+      "core_accepted": 10308,
+      "core_executed": 10308,
+      "sw_emitted": 345,
+      "sw_accepted": 345,
+      "sw_executed": 345
+    },
+    "FEED": {
+      "emitted": 8988,
+      "accepted": 8988,
+      "executed": 8973,
+      "core_emitted": 8988,
+      "core_accepted": 8988,
+      "core_executed": 8973,
+      "sw_emitted": 0,
+      "sw_accepted": 0,
+      "sw_executed": 0
+    },
+    "MOVE": {
+      "emitted": 190607,
+      "accepted": 190607,
+      "executed": 190607,
+      "core_emitted": 183204,
+      "core_accepted": 183204,
+      "core_executed": 183204,
+      "sw_emitted": 7403,
+      "sw_accepted": 7403,
+      "sw_executed": 7403
+    },
+    "DROP": {
+      "emitted": 835,
+      "accepted": 835,
+      "executed": 0,
+      "core_emitted": 835,
+      "core_accepted": 835,
+      "core_executed": 0,
+      "sw_emitted": 0,
+      "sw_accepted": 0,
+      "sw_executed": 0
+    },
+    "PICKUP": {
+      "emitted": 4856,
+      "accepted": 4856,
+      "executed": 0,
+      "core_emitted": 4856,
+      "core_accepted": 4856,
+      "core_executed": 0,
+      "sw_emitted": 0,
+      "sw_accepted": 0,
+      "sw_executed": 0
+    },
+    "PLACE": {
+      "emitted": 813,
+      "accepted": 813,
+      "executed": 485,
+      "core_emitted": 813,
+      "core_accepted": 813,
+      "core_executed": 485,
+      "sw_emitted": 0,
+      "sw_accepted": 0,
+      "sw_executed": 0
+    },
+    "FERTILIZE": {
+      "emitted": 764,
+      "accepted": 764,
+      "executed": 764,
+      "core_emitted": 731,
+      "core_accepted": 731,
+      "core_executed": 731,
+      "sw_emitted": 33,
+      "sw_accepted": 33,
+      "sw_executed": 33
+    },
+    "COLLECT_FERTILIZER": {
+      "emitted": 9306,
+      "accepted": 9306,
+      "executed": 9306,
+      "core_emitted": 9306,
+      "core_accepted": 9306,
+      "core_executed": 9306,
+      "sw_emitted": 0,
+      "sw_accepted": 0,
+      "sw_executed": 0
+    },
+    "DIG": {
+      "emitted": 675,
+      "accepted": 675,
+      "executed": 675,
+      "core_emitted": 588,
+      "core_accepted": 588,
+      "core_executed": 588,
+      "sw_emitted": 87,
+      "sw_accepted": 87,
+      "sw_executed": 87
+    },
+    "BUILD_COOP": {
+      "emitted": 0,
+      "accepted": 0,
+      "executed": 0,
+      "core_emitted": 0,
+      "core_accepted": 0,
+      "core_executed": 0,
+      "sw_emitted": 0,
+      "sw_accepted": 0,
+      "sw_executed": 0
+    },
+    "BUILD_PASTURE": {
+      "emitted": 485,
+      "accepted": 485,
+      "executed": 485,
+      "core_emitted": 485,
+      "core_accepted": 485,
+      "core_executed": 485,
+      "sw_emitted": 0,
+      "sw_accepted": 0,
+      "sw_executed": 0
+    },
+    "PASS": {
+      "emitted": 12819,
+      "accepted": 12819,
+      "executed": 12819,
+      "core_emitted": 12784,
+      "core_accepted": 12784,
+      "core_executed": 12784,
+      "sw_emitted": 35,
+      "sw_accepted": 35,
+      "sw_executed": 35
+    },
+    "OTHER": {
+      "emitted": 8536,
+      "accepted": 8536,
+      "executed": 0,
+      "core_emitted": 8536,
+      "core_accepted": 8536,
+      "core_executed": 0,
+      "sw_emitted": 0,
+      "sw_accepted": 0,
+      "sw_executed": 0
+    }
+  },
+  "roster_reconciliation": {
+    "total_worker_turns": 295193,
+    "farmer_turns": 28760,
+    "hands_turns": 266433,
+    "commands_matched_to_roster": 295193,
+    "commands_dropped_no_worker": 0
+  },
+  "per_cell": {
+    "s97013_pass_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 169,
+          "accepted": 169,
+          "executed": 169,
+          "core_emitted": 157,
+          "core_accepted": 157,
+          "core_executed": 157,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 932,
+          "accepted": 932,
+          "executed": 932,
+          "core_emitted": 845,
+          "core_accepted": 845,
+          "core_executed": 845,
+          "sw_emitted": 87,
+          "sw_accepted": 87,
+          "sw_executed": 87
+        },
+        "HARVEST": {
+          "emitted": 260,
+          "accepted": 260,
+          "executed": 260,
+          "core_emitted": 248,
+          "core_accepted": 248,
+          "core_executed": 248,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "FEED": {
+          "emitted": 229,
+          "accepted": 229,
+          "executed": 229,
+          "core_emitted": 229,
+          "core_accepted": 229,
+          "core_executed": 229,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4852,
+          "accepted": 4852,
+          "executed": 4852,
+          "core_emitted": 4593,
+          "core_accepted": 4593,
+          "core_executed": 4593,
+          "sw_emitted": 259,
+          "sw_accepted": 259,
+          "sw_executed": 259
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 129,
+          "accepted": 129,
+          "executed": 0,
+          "core_emitted": 129,
+          "core_accepted": 129,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 13,
+          "core_emitted": 20,
+          "core_accepted": 20,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 240,
+          "accepted": 240,
+          "executed": 240,
+          "core_emitted": 240,
+          "core_accepted": 240,
+          "core_executed": 240,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 16,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 275,
+          "accepted": 275,
+          "executed": 275,
+          "core_emitted": 275,
+          "core_accepted": 275,
+          "core_executed": 275,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 216,
+          "accepted": 216,
+          "executed": 0,
+          "core_emitted": 216,
+          "core_accepted": 216,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 715,
+        "executed": 2800
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7389,
+        "farmer_turns": 719,
+        "hands_turns": 6670,
+        "commands_matched_to_roster": 7389,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_pass_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 169,
+          "accepted": 169,
+          "executed": 169,
+          "core_emitted": 157,
+          "core_accepted": 157,
+          "core_executed": 157,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 932,
+          "accepted": 932,
+          "executed": 932,
+          "core_emitted": 845,
+          "core_accepted": 845,
+          "core_executed": 845,
+          "sw_emitted": 87,
+          "sw_accepted": 87,
+          "sw_executed": 87
+        },
+        "HARVEST": {
+          "emitted": 260,
+          "accepted": 260,
+          "executed": 260,
+          "core_emitted": 248,
+          "core_accepted": 248,
+          "core_executed": 248,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "FEED": {
+          "emitted": 229,
+          "accepted": 229,
+          "executed": 229,
+          "core_emitted": 229,
+          "core_accepted": 229,
+          "core_executed": 229,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4857,
+          "accepted": 4857,
+          "executed": 4857,
+          "core_emitted": 4598,
+          "core_accepted": 4598,
+          "core_executed": 4598,
+          "sw_emitted": 259,
+          "sw_accepted": 259,
+          "sw_executed": 259
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 129,
+          "accepted": 129,
+          "executed": 0,
+          "core_emitted": 129,
+          "core_accepted": 129,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 13,
+          "core_emitted": 20,
+          "core_accepted": 20,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 240,
+          "accepted": 240,
+          "executed": 240,
+          "core_emitted": 240,
+          "core_accepted": 240,
+          "core_executed": 240,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 271,
+          "accepted": 271,
+          "executed": 271,
+          "core_emitted": 271,
+          "core_accepted": 271,
+          "core_executed": 271,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 216,
+          "accepted": 216,
+          "executed": 0,
+          "core_emitted": 216,
+          "core_accepted": 216,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 715,
+        "executed": 2800
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7389,
+        "farmer_turns": 719,
+        "hands_turns": 6670,
+        "commands_matched_to_roster": 7389,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_pure_wheat_rush_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 162,
+          "accepted": 162,
+          "executed": 162,
+          "core_emitted": 162,
+          "core_accepted": 162,
+          "core_executed": 162,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 1012,
+          "accepted": 1012,
+          "executed": 1012,
+          "core_emitted": 1012,
+          "core_accepted": 1012,
+          "core_executed": 1012,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 263,
+          "accepted": 263,
+          "executed": 263,
+          "core_emitted": 263,
+          "core_accepted": 263,
+          "core_executed": 263,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 210,
+          "accepted": 210,
+          "executed": 210,
+          "core_emitted": 210,
+          "core_accepted": 210,
+          "core_executed": 210,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4361,
+          "accepted": 4361,
+          "executed": 4361,
+          "core_emitted": 4361,
+          "core_accepted": 4361,
+          "core_executed": 4361,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 117,
+          "accepted": 117,
+          "executed": 0,
+          "core_emitted": 117,
+          "core_accepted": 117,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 11,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 31,
+          "accepted": 31,
+          "executed": 31,
+          "core_emitted": 31,
+          "core_accepted": 31,
+          "core_executed": 31,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 220,
+          "accepted": 220,
+          "executed": 220,
+          "core_emitted": 220,
+          "core_accepted": 220,
+          "core_executed": 220,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 19,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 19,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 721,
+          "accepted": 721,
+          "executed": 721,
+          "core_emitted": 721,
+          "core_accepted": 721,
+          "core_executed": 721,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 0,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 698,
+        "executed": 2506
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7379,
+        "farmer_turns": 719,
+        "hands_turns": 6660,
+        "commands_matched_to_roster": 7379,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_pure_wheat_rush_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 162,
+          "accepted": 162,
+          "executed": 162,
+          "core_emitted": 162,
+          "core_accepted": 162,
+          "core_executed": 162,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 1012,
+          "accepted": 1012,
+          "executed": 1012,
+          "core_emitted": 1012,
+          "core_accepted": 1012,
+          "core_executed": 1012,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 263,
+          "accepted": 263,
+          "executed": 263,
+          "core_emitted": 263,
+          "core_accepted": 263,
+          "core_executed": 263,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 210,
+          "accepted": 210,
+          "executed": 210,
+          "core_emitted": 210,
+          "core_accepted": 210,
+          "core_executed": 210,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4356,
+          "accepted": 4356,
+          "executed": 4356,
+          "core_emitted": 4356,
+          "core_accepted": 4356,
+          "core_executed": 4356,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 117,
+          "accepted": 117,
+          "executed": 0,
+          "core_emitted": 117,
+          "core_accepted": 117,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 11,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 31,
+          "accepted": 31,
+          "executed": 31,
+          "core_emitted": 31,
+          "core_accepted": 31,
+          "core_executed": 31,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 220,
+          "accepted": 220,
+          "executed": 220,
+          "core_emitted": 220,
+          "core_accepted": 220,
+          "core_executed": 220,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 18,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 727,
+          "accepted": 727,
+          "executed": 727,
+          "core_emitted": 727,
+          "core_accepted": 727,
+          "core_executed": 727,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 0,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 698,
+        "executed": 2506
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7379,
+        "farmer_turns": 719,
+        "hands_turns": 6660,
+        "commands_matched_to_roster": 7379,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_cow_milk_engine_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 166,
+          "accepted": 166,
+          "executed": 166,
+          "core_emitted": 154,
+          "core_accepted": 154,
+          "core_executed": 154,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 960,
+          "accepted": 960,
+          "executed": 960,
+          "core_emitted": 867,
+          "core_accepted": 867,
+          "core_executed": 867,
+          "sw_emitted": 93,
+          "sw_accepted": 93,
+          "sw_executed": 93
+        },
+        "HARVEST": {
+          "emitted": 264,
+          "accepted": 264,
+          "executed": 264,
+          "core_emitted": 250,
+          "core_accepted": 250,
+          "core_executed": 250,
+          "sw_emitted": 14,
+          "sw_accepted": 14,
+          "sw_executed": 14
+        },
+        "FEED": {
+          "emitted": 233,
+          "accepted": 233,
+          "executed": 232,
+          "core_emitted": 233,
+          "core_accepted": 233,
+          "core_executed": 232,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4765,
+          "accepted": 4765,
+          "executed": 4765,
+          "core_emitted": 4503,
+          "core_accepted": 4503,
+          "core_executed": 4503,
+          "sw_emitted": 262,
+          "sw_accepted": 262,
+          "sw_executed": 262
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 134,
+          "accepted": 134,
+          "executed": 0,
+          "core_emitted": 134,
+          "core_accepted": 134,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 13,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 17,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 248,
+          "accepted": 248,
+          "executed": 248,
+          "core_emitted": 248,
+          "core_accepted": 248,
+          "core_executed": 248,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 297,
+          "accepted": 297,
+          "executed": 297,
+          "core_emitted": 297,
+          "core_accepted": 297,
+          "core_executed": 297,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 224,
+          "accepted": 224,
+          "executed": 0,
+          "core_emitted": 224,
+          "core_accepted": 224,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 727,
+        "executed": 3001
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7372,
+        "farmer_turns": 719,
+        "hands_turns": 6653,
+        "commands_matched_to_roster": 7372,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_cow_milk_engine_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 166,
+          "accepted": 166,
+          "executed": 166,
+          "core_emitted": 154,
+          "core_accepted": 154,
+          "core_executed": 154,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 960,
+          "accepted": 960,
+          "executed": 960,
+          "core_emitted": 867,
+          "core_accepted": 867,
+          "core_executed": 867,
+          "sw_emitted": 93,
+          "sw_accepted": 93,
+          "sw_executed": 93
+        },
+        "HARVEST": {
+          "emitted": 264,
+          "accepted": 264,
+          "executed": 264,
+          "core_emitted": 250,
+          "core_accepted": 250,
+          "core_executed": 250,
+          "sw_emitted": 14,
+          "sw_accepted": 14,
+          "sw_executed": 14
+        },
+        "FEED": {
+          "emitted": 233,
+          "accepted": 233,
+          "executed": 232,
+          "core_emitted": 233,
+          "core_accepted": 233,
+          "core_executed": 232,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4769,
+          "accepted": 4769,
+          "executed": 4769,
+          "core_emitted": 4507,
+          "core_accepted": 4507,
+          "core_executed": 4507,
+          "sw_emitted": 262,
+          "sw_accepted": 262,
+          "sw_executed": 262
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 134,
+          "accepted": 134,
+          "executed": 0,
+          "core_emitted": 134,
+          "core_accepted": 134,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 13,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 17,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 248,
+          "accepted": 248,
+          "executed": 248,
+          "core_emitted": 248,
+          "core_accepted": 248,
+          "core_executed": 248,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 293,
+          "accepted": 293,
+          "executed": 293,
+          "core_emitted": 293,
+          "core_accepted": 293,
+          "core_executed": 293,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 224,
+          "accepted": 224,
+          "executed": 0,
+          "core_emitted": 224,
+          "core_accepted": 224,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 727,
+        "executed": 3001
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7372,
+        "farmer_turns": 719,
+        "hands_turns": 6653,
+        "commands_matched_to_roster": 7372,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_melon_sniper_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 178,
+          "accepted": 175,
+          "executed": 175,
+          "core_emitted": 166,
+          "core_accepted": 163,
+          "core_executed": 163,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1016,
+          "accepted": 1016,
+          "executed": 1015,
+          "core_emitted": 918,
+          "core_accepted": 918,
+          "core_executed": 917,
+          "sw_emitted": 98,
+          "sw_accepted": 98,
+          "sw_executed": 98
+        },
+        "HARVEST": {
+          "emitted": 261,
+          "accepted": 261,
+          "executed": 261,
+          "core_emitted": 248,
+          "core_accepted": 248,
+          "core_executed": 248,
+          "sw_emitted": 13,
+          "sw_accepted": 13,
+          "sw_executed": 13
+        },
+        "FEED": {
+          "emitted": 193,
+          "accepted": 193,
+          "executed": 193,
+          "core_emitted": 193,
+          "core_accepted": 193,
+          "core_executed": 193,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4838,
+          "accepted": 4838,
+          "executed": 4838,
+          "core_emitted": 4561,
+          "core_accepted": 4561,
+          "core_executed": 4561,
+          "sw_emitted": 277,
+          "sw_accepted": 277,
+          "sw_executed": 277
+        },
+        "DROP": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 0,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 116,
+          "accepted": 116,
+          "executed": 0,
+          "core_emitted": 116,
+          "core_accepted": 116,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 11,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 208,
+          "accepted": 208,
+          "executed": 208,
+          "core_emitted": 208,
+          "core_accepted": 208,
+          "core_executed": 208,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 22,
+          "accepted": 22,
+          "executed": 22,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 294,
+          "accepted": 294,
+          "executed": 294,
+          "core_emitted": 290,
+          "core_accepted": 290,
+          "core_executed": 290,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "OTHER": {
+          "emitted": 190,
+          "accepted": 190,
+          "executed": 0,
+          "core_emitted": 190,
+          "core_accepted": 190,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 733,
+        "executed": 2630
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7375,
+        "farmer_turns": 719,
+        "hands_turns": 6656,
+        "commands_matched_to_roster": 7375,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_melon_sniper_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 180,
+          "accepted": 177,
+          "executed": 177,
+          "core_emitted": 168,
+          "core_accepted": 165,
+          "core_executed": 165,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1024,
+          "accepted": 1024,
+          "executed": 1023,
+          "core_emitted": 927,
+          "core_accepted": 927,
+          "core_executed": 926,
+          "sw_emitted": 97,
+          "sw_accepted": 97,
+          "sw_executed": 97
+        },
+        "HARVEST": {
+          "emitted": 264,
+          "accepted": 264,
+          "executed": 264,
+          "core_emitted": 251,
+          "core_accepted": 251,
+          "core_executed": 251,
+          "sw_emitted": 13,
+          "sw_accepted": 13,
+          "sw_executed": 13
+        },
+        "FEED": {
+          "emitted": 193,
+          "accepted": 193,
+          "executed": 193,
+          "core_emitted": 193,
+          "core_accepted": 193,
+          "core_executed": 193,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4843,
+          "accepted": 4843,
+          "executed": 4843,
+          "core_emitted": 4557,
+          "core_accepted": 4557,
+          "core_executed": 4557,
+          "sw_emitted": 286,
+          "sw_accepted": 286,
+          "sw_executed": 286
+        },
+        "DROP": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 0,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 116,
+          "accepted": 116,
+          "executed": 0,
+          "core_emitted": 116,
+          "core_accepted": 116,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 11,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 209,
+          "accepted": 209,
+          "executed": 209,
+          "core_emitted": 209,
+          "core_accepted": 209,
+          "core_executed": 209,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 21,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 17,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 283,
+          "accepted": 283,
+          "executed": 283,
+          "core_emitted": 283,
+          "core_accepted": 283,
+          "core_executed": 283,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 192,
+          "accepted": 192,
+          "executed": 0,
+          "core_emitted": 192,
+          "core_accepted": 192,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 733,
+        "executed": 2608
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7386,
+        "farmer_turns": 719,
+        "hands_turns": 6667,
+        "commands_matched_to_roster": 7386,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_full_production_agent_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 177,
+          "accepted": 176,
+          "executed": 176,
+          "core_emitted": 165,
+          "core_accepted": 164,
+          "core_executed": 164,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1019,
+          "accepted": 1019,
+          "executed": 1018,
+          "core_emitted": 923,
+          "core_accepted": 923,
+          "core_executed": 922,
+          "sw_emitted": 96,
+          "sw_accepted": 96,
+          "sw_executed": 96
+        },
+        "HARVEST": {
+          "emitted": 263,
+          "accepted": 263,
+          "executed": 263,
+          "core_emitted": 251,
+          "core_accepted": 251,
+          "core_executed": 251,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "FEED": {
+          "emitted": 196,
+          "accepted": 196,
+          "executed": 196,
+          "core_emitted": 196,
+          "core_accepted": 196,
+          "core_executed": 196,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4891,
+          "accepted": 4891,
+          "executed": 4891,
+          "core_emitted": 4617,
+          "core_accepted": 4617,
+          "core_executed": 4617,
+          "sw_emitted": 274,
+          "sw_accepted": 274,
+          "sw_executed": 274
+        },
+        "DROP": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 0,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 115,
+          "accepted": 115,
+          "executed": 0,
+          "core_emitted": 115,
+          "core_accepted": 115,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 11,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 17,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 17,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 212,
+          "accepted": 212,
+          "executed": 212,
+          "core_emitted": 212,
+          "core_accepted": 212,
+          "core_executed": 212,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 19,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 241,
+          "accepted": 241,
+          "executed": 241,
+          "core_emitted": 235,
+          "core_accepted": 235,
+          "core_executed": 235,
+          "sw_emitted": 6,
+          "sw_accepted": 6,
+          "sw_executed": 6
+        },
+        "OTHER": {
+          "emitted": 197,
+          "accepted": 197,
+          "executed": 0,
+          "core_emitted": 197,
+          "core_accepted": 197,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 737,
+        "executed": 2634
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7394,
+        "farmer_turns": 719,
+        "hands_turns": 6675,
+        "commands_matched_to_roster": 7394,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97013_full_production_agent_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 176,
+          "accepted": 175,
+          "executed": 175,
+          "core_emitted": 164,
+          "core_accepted": 163,
+          "core_executed": 163,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1020,
+          "accepted": 1020,
+          "executed": 1020,
+          "core_emitted": 926,
+          "core_accepted": 926,
+          "core_executed": 926,
+          "sw_emitted": 94,
+          "sw_accepted": 94,
+          "sw_executed": 94
+        },
+        "HARVEST": {
+          "emitted": 263,
+          "accepted": 263,
+          "executed": 263,
+          "core_emitted": 251,
+          "core_accepted": 251,
+          "core_executed": 251,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "FEED": {
+          "emitted": 199,
+          "accepted": 199,
+          "executed": 199,
+          "core_emitted": 199,
+          "core_accepted": 199,
+          "core_executed": 199,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4893,
+          "accepted": 4893,
+          "executed": 4893,
+          "core_emitted": 4615,
+          "core_accepted": 4615,
+          "core_executed": 4615,
+          "sw_emitted": 278,
+          "sw_accepted": 278,
+          "sw_executed": 278
+        },
+        "DROP": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 0,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 114,
+          "accepted": 114,
+          "executed": 0,
+          "core_emitted": 114,
+          "core_accepted": 114,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 11,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 18,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 213,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 213,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 22,
+          "accepted": 22,
+          "executed": 22,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 17,
+          "sw_emitted": 5,
+          "sw_accepted": 5,
+          "sw_executed": 5
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 232,
+          "accepted": 232,
+          "executed": 232,
+          "core_emitted": 232,
+          "core_accepted": 232,
+          "core_executed": 232,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 197,
+          "accepted": 197,
+          "executed": 0,
+          "core_emitted": 197,
+          "core_accepted": 197,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 735,
+        "executed": 2522
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7391,
+        "farmer_turns": 719,
+        "hands_turns": 6672,
+        "commands_matched_to_roster": 7391,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_pass_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 161,
+          "accepted": 161,
+          "executed": 161,
+          "core_emitted": 161,
+          "core_accepted": 161,
+          "core_executed": 161,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 932,
+          "accepted": 932,
+          "executed": 932,
+          "core_emitted": 932,
+          "core_accepted": 932,
+          "core_executed": 932,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 272,
+          "accepted": 272,
+          "executed": 272,
+          "core_emitted": 272,
+          "core_accepted": 272,
+          "core_executed": 272,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 253,
+          "accepted": 253,
+          "executed": 252,
+          "core_emitted": 253,
+          "core_accepted": 253,
+          "core_executed": 252,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4680,
+          "accepted": 4680,
+          "executed": 4680,
+          "core_emitted": 4680,
+          "core_accepted": 4680,
+          "core_executed": 4680,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 135,
+          "accepted": 135,
+          "executed": 0,
+          "core_emitted": 135,
+          "core_accepted": 135,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 13,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 28,
+          "accepted": 28,
+          "executed": 28,
+          "core_emitted": 28,
+          "core_accepted": 28,
+          "core_executed": 28,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 257,
+          "accepted": 257,
+          "executed": 257,
+          "core_emitted": 257,
+          "core_accepted": 257,
+          "core_executed": 257,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 336,
+          "accepted": 336,
+          "executed": 336,
+          "core_emitted": 336,
+          "core_accepted": 336,
+          "core_executed": 336,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 244,
+          "accepted": 244,
+          "executed": 0,
+          "core_emitted": 244,
+          "core_accepted": 244,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 742,
+        "executed": 2992
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7366,
+        "farmer_turns": 719,
+        "hands_turns": 6647,
+        "commands_matched_to_roster": 7366,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_pass_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 161,
+          "accepted": 161,
+          "executed": 161,
+          "core_emitted": 161,
+          "core_accepted": 161,
+          "core_executed": 161,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 932,
+          "accepted": 932,
+          "executed": 932,
+          "core_emitted": 932,
+          "core_accepted": 932,
+          "core_executed": 932,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 272,
+          "accepted": 272,
+          "executed": 272,
+          "core_emitted": 272,
+          "core_accepted": 272,
+          "core_executed": 272,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 253,
+          "accepted": 253,
+          "executed": 252,
+          "core_emitted": 253,
+          "core_accepted": 253,
+          "core_executed": 252,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4680,
+          "accepted": 4680,
+          "executed": 4680,
+          "core_emitted": 4680,
+          "core_accepted": 4680,
+          "core_executed": 4680,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 135,
+          "accepted": 135,
+          "executed": 0,
+          "core_emitted": 135,
+          "core_accepted": 135,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 13,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 28,
+          "accepted": 28,
+          "executed": 28,
+          "core_emitted": 28,
+          "core_accepted": 28,
+          "core_executed": 28,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 257,
+          "accepted": 257,
+          "executed": 257,
+          "core_emitted": 257,
+          "core_accepted": 257,
+          "core_executed": 257,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 336,
+          "accepted": 336,
+          "executed": 336,
+          "core_emitted": 336,
+          "core_accepted": 336,
+          "core_executed": 336,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 244,
+          "accepted": 244,
+          "executed": 0,
+          "core_emitted": 244,
+          "core_accepted": 244,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 742,
+        "executed": 2992
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7366,
+        "farmer_turns": 719,
+        "hands_turns": 6647,
+        "commands_matched_to_roster": 7366,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_pure_wheat_rush_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 172,
+          "accepted": 172,
+          "executed": 172,
+          "core_emitted": 160,
+          "core_accepted": 160,
+          "core_executed": 160,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 967,
+          "accepted": 967,
+          "executed": 967,
+          "core_emitted": 873,
+          "core_accepted": 873,
+          "core_executed": 873,
+          "sw_emitted": 94,
+          "sw_accepted": 94,
+          "sw_executed": 94
+        },
+        "HARVEST": {
+          "emitted": 264,
+          "accepted": 264,
+          "executed": 264,
+          "core_emitted": 254,
+          "core_accepted": 254,
+          "core_executed": 254,
+          "sw_emitted": 10,
+          "sw_accepted": 10,
+          "sw_executed": 10
+        },
+        "FEED": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 213,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 213,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4953,
+          "accepted": 4953,
+          "executed": 4953,
+          "core_emitted": 4677,
+          "core_accepted": 4677,
+          "core_executed": 4677,
+          "sw_emitted": 276,
+          "sw_accepted": 276,
+          "sw_executed": 276
+        },
+        "DROP": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 0,
+          "core_emitted": 20,
+          "core_accepted": 20,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 101,
+          "accepted": 101,
+          "executed": 0,
+          "core_emitted": 101,
+          "core_accepted": 101,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 12,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 219,
+          "accepted": 219,
+          "executed": 219,
+          "core_emitted": 219,
+          "core_accepted": 219,
+          "core_executed": 219,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 21,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 17,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 226,
+          "accepted": 226,
+          "executed": 226,
+          "core_emitted": 224,
+          "core_accepted": 224,
+          "core_executed": 224,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "OTHER": {
+          "emitted": 186,
+          "accepted": 186,
+          "executed": 0,
+          "core_emitted": 186,
+          "core_accepted": 186,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 728,
+        "executed": 2556
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7388,
+        "farmer_turns": 719,
+        "hands_turns": 6669,
+        "commands_matched_to_roster": 7388,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_pure_wheat_rush_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 172,
+          "accepted": 172,
+          "executed": 172,
+          "core_emitted": 160,
+          "core_accepted": 160,
+          "core_executed": 160,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 967,
+          "accepted": 967,
+          "executed": 967,
+          "core_emitted": 873,
+          "core_accepted": 873,
+          "core_executed": 873,
+          "sw_emitted": 94,
+          "sw_accepted": 94,
+          "sw_executed": 94
+        },
+        "HARVEST": {
+          "emitted": 264,
+          "accepted": 264,
+          "executed": 264,
+          "core_emitted": 254,
+          "core_accepted": 254,
+          "core_executed": 254,
+          "sw_emitted": 10,
+          "sw_accepted": 10,
+          "sw_executed": 10
+        },
+        "FEED": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 213,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 213,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4953,
+          "accepted": 4953,
+          "executed": 4953,
+          "core_emitted": 4677,
+          "core_accepted": 4677,
+          "core_executed": 4677,
+          "sw_emitted": 276,
+          "sw_accepted": 276,
+          "sw_executed": 276
+        },
+        "DROP": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 0,
+          "core_emitted": 20,
+          "core_accepted": 20,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 101,
+          "accepted": 101,
+          "executed": 0,
+          "core_emitted": 101,
+          "core_accepted": 101,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 12,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 219,
+          "accepted": 219,
+          "executed": 219,
+          "core_emitted": 219,
+          "core_accepted": 219,
+          "core_executed": 219,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 21,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 17,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 226,
+          "accepted": 226,
+          "executed": 226,
+          "core_emitted": 224,
+          "core_accepted": 224,
+          "core_executed": 224,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "OTHER": {
+          "emitted": 186,
+          "accepted": 186,
+          "executed": 0,
+          "core_emitted": 186,
+          "core_accepted": 186,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 728,
+        "executed": 2556
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7388,
+        "farmer_turns": 719,
+        "hands_turns": 6669,
+        "commands_matched_to_roster": 7388,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_cow_milk_engine_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 184,
+          "accepted": 178,
+          "executed": 178,
+          "core_emitted": 172,
+          "core_accepted": 166,
+          "core_executed": 166,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1061,
+          "accepted": 1061,
+          "executed": 1061,
+          "core_emitted": 959,
+          "core_accepted": 959,
+          "core_executed": 959,
+          "sw_emitted": 102,
+          "sw_accepted": 102,
+          "sw_executed": 102
+        },
+        "HARVEST": {
+          "emitted": 273,
+          "accepted": 273,
+          "executed": 273,
+          "core_emitted": 259,
+          "core_accepted": 259,
+          "core_executed": 259,
+          "sw_emitted": 14,
+          "sw_accepted": 14,
+          "sw_executed": 14
+        },
+        "FEED": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 212,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 212,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4729,
+          "accepted": 4729,
+          "executed": 4729,
+          "core_emitted": 4475,
+          "core_accepted": 4475,
+          "core_executed": 4475,
+          "sw_emitted": 254,
+          "sw_accepted": 254,
+          "sw_executed": 254
+        },
+        "DROP": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 0,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 114,
+          "accepted": 114,
+          "executed": 0,
+          "core_emitted": 114,
+          "core_accepted": 114,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 11,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 23,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 21,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 220,
+          "accepted": 220,
+          "executed": 220,
+          "core_emitted": 220,
+          "core_accepted": 220,
+          "core_executed": 220,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 19,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 16,
+          "sw_emitted": 3,
+          "sw_accepted": 3,
+          "sw_executed": 3
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 290,
+          "accepted": 290,
+          "executed": 290,
+          "core_emitted": 286,
+          "core_accepted": 286,
+          "core_executed": 286,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "OTHER": {
+          "emitted": 205,
+          "accepted": 205,
+          "executed": 0,
+          "core_emitted": 205,
+          "core_accepted": 205,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 774,
+        "executed": 2738
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7379,
+        "farmer_turns": 719,
+        "hands_turns": 6660,
+        "commands_matched_to_roster": 7379,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_cow_milk_engine_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 184,
+          "accepted": 178,
+          "executed": 178,
+          "core_emitted": 172,
+          "core_accepted": 166,
+          "core_executed": 166,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1061,
+          "accepted": 1061,
+          "executed": 1061,
+          "core_emitted": 959,
+          "core_accepted": 959,
+          "core_executed": 959,
+          "sw_emitted": 102,
+          "sw_accepted": 102,
+          "sw_executed": 102
+        },
+        "HARVEST": {
+          "emitted": 273,
+          "accepted": 273,
+          "executed": 273,
+          "core_emitted": 259,
+          "core_accepted": 259,
+          "core_executed": 259,
+          "sw_emitted": 14,
+          "sw_accepted": 14,
+          "sw_executed": 14
+        },
+        "FEED": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 212,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 212,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4729,
+          "accepted": 4729,
+          "executed": 4729,
+          "core_emitted": 4475,
+          "core_accepted": 4475,
+          "core_executed": 4475,
+          "sw_emitted": 254,
+          "sw_accepted": 254,
+          "sw_executed": 254
+        },
+        "DROP": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 0,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 114,
+          "accepted": 114,
+          "executed": 0,
+          "core_emitted": 114,
+          "core_accepted": 114,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 11,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 23,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 21,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 220,
+          "accepted": 220,
+          "executed": 220,
+          "core_emitted": 220,
+          "core_accepted": 220,
+          "core_executed": 220,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 19,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 16,
+          "sw_emitted": 3,
+          "sw_accepted": 3,
+          "sw_executed": 3
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 290,
+          "accepted": 290,
+          "executed": 290,
+          "core_emitted": 286,
+          "core_accepted": 286,
+          "core_executed": 286,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "OTHER": {
+          "emitted": 205,
+          "accepted": 205,
+          "executed": 0,
+          "core_emitted": 205,
+          "core_accepted": 205,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 774,
+        "executed": 2738
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7379,
+        "farmer_turns": 719,
+        "hands_turns": 6660,
+        "commands_matched_to_roster": 7379,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_melon_sniper_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 172,
+          "accepted": 172,
+          "executed": 172,
+          "core_emitted": 160,
+          "core_accepted": 160,
+          "core_executed": 160,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 949,
+          "accepted": 949,
+          "executed": 948,
+          "core_emitted": 863,
+          "core_accepted": 863,
+          "core_executed": 862,
+          "sw_emitted": 86,
+          "sw_accepted": 86,
+          "sw_executed": 86
+        },
+        "HARVEST": {
+          "emitted": 268,
+          "accepted": 268,
+          "executed": 268,
+          "core_emitted": 257,
+          "core_accepted": 257,
+          "core_executed": 257,
+          "sw_emitted": 11,
+          "sw_accepted": 11,
+          "sw_executed": 11
+        },
+        "FEED": {
+          "emitted": 254,
+          "accepted": 254,
+          "executed": 254,
+          "core_emitted": 254,
+          "core_accepted": 254,
+          "core_executed": 254,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4811,
+          "accepted": 4811,
+          "executed": 4811,
+          "core_emitted": 4561,
+          "core_accepted": 4561,
+          "core_executed": 4561,
+          "sw_emitted": 250,
+          "sw_accepted": 250,
+          "sw_executed": 250
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 131,
+          "accepted": 131,
+          "executed": 0,
+          "core_emitted": 131,
+          "core_accepted": 131,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 29,
+          "accepted": 29,
+          "executed": 14,
+          "core_emitted": 29,
+          "core_accepted": 29,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 269,
+          "accepted": 269,
+          "executed": 269,
+          "core_emitted": 269,
+          "core_accepted": 269,
+          "core_executed": 269,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 7,
+          "accepted": 7,
+          "executed": 7,
+          "core_emitted": 7,
+          "core_accepted": 7,
+          "core_executed": 7,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 208,
+          "accepted": 208,
+          "executed": 208,
+          "core_emitted": 208,
+          "core_accepted": 208,
+          "core_executed": 208,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 236,
+          "accepted": 236,
+          "executed": 0,
+          "core_emitted": 236,
+          "core_accepted": 236,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 760,
+        "executed": 3220
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7383,
+        "farmer_turns": 719,
+        "hands_turns": 6664,
+        "commands_matched_to_roster": 7383,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_melon_sniper_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 172,
+          "accepted": 172,
+          "executed": 172,
+          "core_emitted": 160,
+          "core_accepted": 160,
+          "core_executed": 160,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 949,
+          "accepted": 949,
+          "executed": 948,
+          "core_emitted": 863,
+          "core_accepted": 863,
+          "core_executed": 862,
+          "sw_emitted": 86,
+          "sw_accepted": 86,
+          "sw_executed": 86
+        },
+        "HARVEST": {
+          "emitted": 268,
+          "accepted": 268,
+          "executed": 268,
+          "core_emitted": 257,
+          "core_accepted": 257,
+          "core_executed": 257,
+          "sw_emitted": 11,
+          "sw_accepted": 11,
+          "sw_executed": 11
+        },
+        "FEED": {
+          "emitted": 254,
+          "accepted": 254,
+          "executed": 254,
+          "core_emitted": 254,
+          "core_accepted": 254,
+          "core_executed": 254,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4811,
+          "accepted": 4811,
+          "executed": 4811,
+          "core_emitted": 4561,
+          "core_accepted": 4561,
+          "core_executed": 4561,
+          "sw_emitted": 250,
+          "sw_accepted": 250,
+          "sw_executed": 250
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 131,
+          "accepted": 131,
+          "executed": 0,
+          "core_emitted": 131,
+          "core_accepted": 131,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 29,
+          "accepted": 29,
+          "executed": 14,
+          "core_emitted": 29,
+          "core_accepted": 29,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 269,
+          "accepted": 269,
+          "executed": 269,
+          "core_emitted": 269,
+          "core_accepted": 269,
+          "core_executed": 269,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 7,
+          "accepted": 7,
+          "executed": 7,
+          "core_emitted": 7,
+          "core_accepted": 7,
+          "core_executed": 7,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 208,
+          "accepted": 208,
+          "executed": 208,
+          "core_emitted": 208,
+          "core_accepted": 208,
+          "core_executed": 208,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 236,
+          "accepted": 236,
+          "executed": 0,
+          "core_emitted": 236,
+          "core_accepted": 236,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 760,
+        "executed": 3220
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7383,
+        "farmer_turns": 719,
+        "hands_turns": 6664,
+        "commands_matched_to_roster": 7383,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_full_production_agent_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 178,
+          "accepted": 178,
+          "executed": 178,
+          "core_emitted": 166,
+          "core_accepted": 166,
+          "core_executed": 166,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 961,
+          "accepted": 961,
+          "executed": 961,
+          "core_emitted": 876,
+          "core_accepted": 876,
+          "core_executed": 876,
+          "sw_emitted": 85,
+          "sw_accepted": 85,
+          "sw_executed": 85
+        },
+        "HARVEST": {
+          "emitted": 260,
+          "accepted": 260,
+          "executed": 260,
+          "core_emitted": 249,
+          "core_accepted": 249,
+          "core_executed": 249,
+          "sw_emitted": 11,
+          "sw_accepted": 11,
+          "sw_executed": 11
+        },
+        "FEED": {
+          "emitted": 229,
+          "accepted": 229,
+          "executed": 228,
+          "core_emitted": 229,
+          "core_accepted": 229,
+          "core_executed": 228,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4865,
+          "accepted": 4865,
+          "executed": 4865,
+          "core_emitted": 4623,
+          "core_accepted": 4623,
+          "core_executed": 4623,
+          "sw_emitted": 242,
+          "sw_accepted": 242,
+          "sw_executed": 242
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 116,
+          "accepted": 116,
+          "executed": 0,
+          "core_emitted": 116,
+          "core_accepted": 116,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 24,
+          "accepted": 24,
+          "executed": 12,
+          "core_emitted": 24,
+          "core_accepted": 24,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 8,
+          "accepted": 8,
+          "executed": 8,
+          "core_emitted": 8,
+          "core_accepted": 8,
+          "core_executed": 8,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 224,
+          "accepted": 224,
+          "executed": 224,
+          "core_emitted": 224,
+          "core_accepted": 224,
+          "core_executed": 224,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 18,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 261,
+          "accepted": 261,
+          "executed": 261,
+          "core_emitted": 259,
+          "core_accepted": 259,
+          "core_executed": 259,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "OTHER": {
+          "emitted": 200,
+          "accepted": 200,
+          "executed": 0,
+          "core_emitted": 200,
+          "core_accepted": 200,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 739,
+        "executed": 2771
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7379,
+        "farmer_turns": 719,
+        "hands_turns": 6660,
+        "commands_matched_to_roster": 7379,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97014_full_production_agent_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 178,
+          "accepted": 178,
+          "executed": 178,
+          "core_emitted": 166,
+          "core_accepted": 166,
+          "core_executed": 166,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 961,
+          "accepted": 961,
+          "executed": 961,
+          "core_emitted": 876,
+          "core_accepted": 876,
+          "core_executed": 876,
+          "sw_emitted": 85,
+          "sw_accepted": 85,
+          "sw_executed": 85
+        },
+        "HARVEST": {
+          "emitted": 260,
+          "accepted": 260,
+          "executed": 260,
+          "core_emitted": 249,
+          "core_accepted": 249,
+          "core_executed": 249,
+          "sw_emitted": 11,
+          "sw_accepted": 11,
+          "sw_executed": 11
+        },
+        "FEED": {
+          "emitted": 229,
+          "accepted": 229,
+          "executed": 228,
+          "core_emitted": 229,
+          "core_accepted": 229,
+          "core_executed": 228,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4865,
+          "accepted": 4865,
+          "executed": 4865,
+          "core_emitted": 4623,
+          "core_accepted": 4623,
+          "core_executed": 4623,
+          "sw_emitted": 242,
+          "sw_accepted": 242,
+          "sw_executed": 242
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 116,
+          "accepted": 116,
+          "executed": 0,
+          "core_emitted": 116,
+          "core_accepted": 116,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 24,
+          "accepted": 24,
+          "executed": 12,
+          "core_emitted": 24,
+          "core_accepted": 24,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 8,
+          "accepted": 8,
+          "executed": 8,
+          "core_emitted": 8,
+          "core_accepted": 8,
+          "core_executed": 8,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 224,
+          "accepted": 224,
+          "executed": 224,
+          "core_emitted": 224,
+          "core_accepted": 224,
+          "core_executed": 224,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 18,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 261,
+          "accepted": 261,
+          "executed": 261,
+          "core_emitted": 259,
+          "core_accepted": 259,
+          "core_executed": 259,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "OTHER": {
+          "emitted": 200,
+          "accepted": 200,
+          "executed": 0,
+          "core_emitted": 200,
+          "core_accepted": 200,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 739,
+        "executed": 2771
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7379,
+        "farmer_turns": 719,
+        "hands_turns": 6660,
+        "commands_matched_to_roster": 7379,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_pass_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 168,
+          "accepted": 168,
+          "executed": 168,
+          "core_emitted": 168,
+          "core_accepted": 168,
+          "core_executed": 168,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 981,
+          "accepted": 981,
+          "executed": 981,
+          "core_emitted": 981,
+          "core_accepted": 981,
+          "core_executed": 981,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 273,
+          "accepted": 273,
+          "executed": 273,
+          "core_emitted": 273,
+          "core_accepted": 273,
+          "core_executed": 273,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 240,
+          "accepted": 240,
+          "executed": 240,
+          "core_emitted": 240,
+          "core_accepted": 240,
+          "core_executed": 240,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4622,
+          "accepted": 4622,
+          "executed": 4622,
+          "core_emitted": 4622,
+          "core_accepted": 4622,
+          "core_executed": 4622,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 120,
+          "accepted": 120,
+          "executed": 0,
+          "core_emitted": 120,
+          "core_accepted": 120,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 12,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 27,
+          "accepted": 27,
+          "executed": 27,
+          "core_emitted": 27,
+          "core_accepted": 27,
+          "core_executed": 27,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 236,
+          "accepted": 236,
+          "executed": 236,
+          "core_emitted": 236,
+          "core_accepted": 236,
+          "core_executed": 236,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 423,
+          "accepted": 423,
+          "executed": 423,
+          "core_emitted": 423,
+          "core_accepted": 423,
+          "core_executed": 423,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 227,
+          "accepted": 227,
+          "executed": 0,
+          "core_emitted": 227,
+          "core_accepted": 227,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 733,
+        "executed": 2820
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7383,
+        "farmer_turns": 719,
+        "hands_turns": 6664,
+        "commands_matched_to_roster": 7383,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_pass_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 164,
+          "accepted": 164,
+          "executed": 164,
+          "core_emitted": 164,
+          "core_accepted": 164,
+          "core_executed": 164,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 924,
+          "accepted": 924,
+          "executed": 924,
+          "core_emitted": 924,
+          "core_accepted": 924,
+          "core_executed": 924,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 269,
+          "accepted": 269,
+          "executed": 269,
+          "core_emitted": 269,
+          "core_accepted": 269,
+          "core_executed": 269,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 235,
+          "accepted": 235,
+          "executed": 235,
+          "core_emitted": 235,
+          "core_accepted": 235,
+          "core_executed": 235,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4767,
+          "accepted": 4767,
+          "executed": 4767,
+          "core_emitted": 4767,
+          "core_accepted": 4767,
+          "core_executed": 4767,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 113,
+          "accepted": 113,
+          "executed": 0,
+          "core_emitted": 113,
+          "core_accepted": 113,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 12,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 21,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 21,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 237,
+          "accepted": 237,
+          "executed": 237,
+          "core_emitted": 237,
+          "core_accepted": 237,
+          "core_executed": 237,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 18,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 344,
+          "accepted": 344,
+          "executed": 344,
+          "core_emitted": 344,
+          "core_accepted": 344,
+          "core_executed": 344,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 224,
+          "accepted": 224,
+          "executed": 0,
+          "core_emitted": 224,
+          "core_accepted": 224,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 745,
+        "executed": 2878
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7369,
+        "farmer_turns": 719,
+        "hands_turns": 6650,
+        "commands_matched_to_roster": 7369,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_pure_wheat_rush_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 160,
+          "accepted": 160,
+          "executed": 160,
+          "core_emitted": 160,
+          "core_accepted": 160,
+          "core_executed": 160,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 1009,
+          "accepted": 1009,
+          "executed": 1008,
+          "core_emitted": 1009,
+          "core_accepted": 1009,
+          "core_executed": 1008,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 272,
+          "accepted": 272,
+          "executed": 272,
+          "core_emitted": 272,
+          "core_accepted": 272,
+          "core_executed": 272,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 212,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 212,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4470,
+          "accepted": 4470,
+          "executed": 4470,
+          "core_emitted": 4470,
+          "core_accepted": 4470,
+          "core_executed": 4470,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 113,
+          "accepted": 113,
+          "executed": 0,
+          "core_emitted": 113,
+          "core_accepted": 113,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 11,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 37,
+          "accepted": 37,
+          "executed": 37,
+          "core_emitted": 37,
+          "core_accepted": 37,
+          "core_executed": 37,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 222,
+          "accepted": 222,
+          "executed": 222,
+          "core_emitted": 222,
+          "core_accepted": 222,
+          "core_executed": 222,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 18,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 604,
+          "accepted": 604,
+          "executed": 604,
+          "core_emitted": 604,
+          "core_accepted": 604,
+          "core_executed": 604,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 217,
+          "accepted": 217,
+          "executed": 0,
+          "core_emitted": 217,
+          "core_accepted": 217,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 726,
+        "executed": 2676
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7385,
+        "farmer_turns": 719,
+        "hands_turns": 6666,
+        "commands_matched_to_roster": 7385,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_pure_wheat_rush_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 160,
+          "accepted": 160,
+          "executed": 160,
+          "core_emitted": 160,
+          "core_accepted": 160,
+          "core_executed": 160,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 1009,
+          "accepted": 1009,
+          "executed": 1008,
+          "core_emitted": 1009,
+          "core_accepted": 1009,
+          "core_executed": 1008,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 272,
+          "accepted": 272,
+          "executed": 272,
+          "core_emitted": 272,
+          "core_accepted": 272,
+          "core_executed": 272,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 212,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 212,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4470,
+          "accepted": 4470,
+          "executed": 4470,
+          "core_emitted": 4470,
+          "core_accepted": 4470,
+          "core_executed": 4470,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 113,
+          "accepted": 113,
+          "executed": 0,
+          "core_emitted": 113,
+          "core_accepted": 113,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 11,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 37,
+          "accepted": 37,
+          "executed": 37,
+          "core_emitted": 37,
+          "core_accepted": 37,
+          "core_executed": 37,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 222,
+          "accepted": 222,
+          "executed": 222,
+          "core_emitted": 222,
+          "core_accepted": 222,
+          "core_executed": 222,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 18,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 604,
+          "accepted": 604,
+          "executed": 604,
+          "core_emitted": 604,
+          "core_accepted": 604,
+          "core_executed": 604,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 217,
+          "accepted": 217,
+          "executed": 0,
+          "core_emitted": 217,
+          "core_accepted": 217,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 726,
+        "executed": 2676
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7385,
+        "farmer_turns": 719,
+        "hands_turns": 6666,
+        "commands_matched_to_roster": 7385,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_cow_milk_engine_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 163,
+          "accepted": 163,
+          "executed": 163,
+          "core_emitted": 151,
+          "core_accepted": 151,
+          "core_executed": 151,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 870,
+          "accepted": 870,
+          "executed": 870,
+          "core_emitted": 785,
+          "core_accepted": 785,
+          "core_executed": 785,
+          "sw_emitted": 85,
+          "sw_accepted": 85,
+          "sw_executed": 85
+        },
+        "HARVEST": {
+          "emitted": 263,
+          "accepted": 263,
+          "executed": 263,
+          "core_emitted": 251,
+          "core_accepted": 251,
+          "core_executed": 251,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "FEED": {
+          "emitted": 263,
+          "accepted": 263,
+          "executed": 263,
+          "core_emitted": 263,
+          "core_accepted": 263,
+          "core_executed": 263,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4895,
+          "accepted": 4895,
+          "executed": 4895,
+          "core_emitted": 4630,
+          "core_accepted": 4630,
+          "core_executed": 4630,
+          "sw_emitted": 265,
+          "sw_accepted": 265,
+          "sw_executed": 265
+        },
+        "DROP": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 0,
+          "core_emitted": 20,
+          "core_accepted": 20,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 127,
+          "accepted": 127,
+          "executed": 0,
+          "core_emitted": 127,
+          "core_accepted": 127,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 28,
+          "accepted": 28,
+          "executed": 14,
+          "core_emitted": 28,
+          "core_accepted": 28,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 5,
+          "accepted": 5,
+          "executed": 5,
+          "core_emitted": 4,
+          "core_accepted": 4,
+          "core_executed": 4,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 268,
+          "accepted": 268,
+          "executed": 268,
+          "core_emitted": 268,
+          "core_accepted": 268,
+          "core_executed": 268,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 17,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 222,
+          "accepted": 222,
+          "executed": 222,
+          "core_emitted": 221,
+          "core_accepted": 221,
+          "core_executed": 221,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "OTHER": {
+          "emitted": 230,
+          "accepted": 230,
+          "executed": 0,
+          "core_emitted": 230,
+          "core_accepted": 230,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 766,
+        "executed": 3459
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7385,
+        "farmer_turns": 719,
+        "hands_turns": 6666,
+        "commands_matched_to_roster": 7385,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_cow_milk_engine_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 174,
+          "accepted": 162,
+          "executed": 162,
+          "core_emitted": 174,
+          "core_accepted": 162,
+          "core_executed": 162,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 858,
+          "accepted": 858,
+          "executed": 858,
+          "core_emitted": 858,
+          "core_accepted": 858,
+          "core_executed": 858,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 262,
+          "accepted": 262,
+          "executed": 262,
+          "core_emitted": 262,
+          "core_accepted": 262,
+          "core_executed": 262,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 266,
+          "accepted": 266,
+          "executed": 266,
+          "core_emitted": 266,
+          "core_accepted": 266,
+          "core_executed": 266,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4789,
+          "accepted": 4789,
+          "executed": 4789,
+          "core_emitted": 4785,
+          "core_accepted": 4785,
+          "core_executed": 4785,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 131,
+          "accepted": 131,
+          "executed": 0,
+          "core_emitted": 131,
+          "core_accepted": 131,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 27,
+          "accepted": 27,
+          "executed": 14,
+          "core_emitted": 27,
+          "core_accepted": 27,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 268,
+          "accepted": 268,
+          "executed": 268,
+          "core_emitted": 268,
+          "core_accepted": 268,
+          "core_executed": 268,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 289,
+          "accepted": 289,
+          "executed": 289,
+          "core_emitted": 289,
+          "core_accepted": 289,
+          "core_executed": 289,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 246,
+          "accepted": 246,
+          "executed": 0,
+          "core_emitted": 246,
+          "core_accepted": 246,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 756,
+        "executed": 3353
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7376,
+        "farmer_turns": 719,
+        "hands_turns": 6657,
+        "commands_matched_to_roster": 7376,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_melon_sniper_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 186,
+          "accepted": 175,
+          "executed": 175,
+          "core_emitted": 174,
+          "core_accepted": 163,
+          "core_executed": 163,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1050,
+          "accepted": 1050,
+          "executed": 1049,
+          "core_emitted": 951,
+          "core_accepted": 951,
+          "core_executed": 950,
+          "sw_emitted": 99,
+          "sw_accepted": 99,
+          "sw_executed": 99
+        },
+        "HARVEST": {
+          "emitted": 272,
+          "accepted": 272,
+          "executed": 272,
+          "core_emitted": 259,
+          "core_accepted": 259,
+          "core_executed": 259,
+          "sw_emitted": 13,
+          "sw_accepted": 13,
+          "sw_executed": 13
+        },
+        "FEED": {
+          "emitted": 202,
+          "accepted": 202,
+          "executed": 201,
+          "core_emitted": 202,
+          "core_accepted": 202,
+          "core_executed": 201,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4761,
+          "accepted": 4761,
+          "executed": 4761,
+          "core_emitted": 4470,
+          "core_accepted": 4470,
+          "core_executed": 4470,
+          "sw_emitted": 291,
+          "sw_accepted": 291,
+          "sw_executed": 291
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 119,
+          "accepted": 119,
+          "executed": 0,
+          "core_emitted": 119,
+          "core_accepted": 119,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 11,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 24,
+          "accepted": 24,
+          "executed": 24,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 21,
+          "sw_emitted": 3,
+          "sw_accepted": 3,
+          "sw_executed": 3
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 212,
+          "accepted": 212,
+          "executed": 212,
+          "core_emitted": 212,
+          "core_accepted": 212,
+          "core_executed": 212,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 22,
+          "accepted": 22,
+          "executed": 22,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 283,
+          "accepted": 283,
+          "executed": 283,
+          "core_emitted": 278,
+          "core_accepted": 278,
+          "core_executed": 278,
+          "sw_emitted": 5,
+          "sw_accepted": 5,
+          "sw_executed": 5
+        },
+        "OTHER": {
+          "emitted": 195,
+          "accepted": 195,
+          "executed": 0,
+          "core_emitted": 195,
+          "core_accepted": 195,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 747,
+        "executed": 2591
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7377,
+        "farmer_turns": 719,
+        "hands_turns": 6658,
+        "commands_matched_to_roster": 7377,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_melon_sniper_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 179,
+          "accepted": 179,
+          "executed": 179,
+          "core_emitted": 168,
+          "core_accepted": 168,
+          "core_executed": 168,
+          "sw_emitted": 11,
+          "sw_accepted": 11,
+          "sw_executed": 11
+        },
+        "WATER": {
+          "emitted": 1070,
+          "accepted": 1070,
+          "executed": 1070,
+          "core_emitted": 968,
+          "core_accepted": 968,
+          "core_executed": 968,
+          "sw_emitted": 102,
+          "sw_accepted": 102,
+          "sw_executed": 102
+        },
+        "HARVEST": {
+          "emitted": 275,
+          "accepted": 275,
+          "executed": 275,
+          "core_emitted": 258,
+          "core_accepted": 258,
+          "core_executed": 258,
+          "sw_emitted": 17,
+          "sw_accepted": 17,
+          "sw_executed": 17
+        },
+        "FEED": {
+          "emitted": 188,
+          "accepted": 188,
+          "executed": 188,
+          "core_emitted": 188,
+          "core_accepted": 188,
+          "core_executed": 188,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4754,
+          "accepted": 4754,
+          "executed": 4754,
+          "core_emitted": 4482,
+          "core_accepted": 4482,
+          "core_executed": 4482,
+          "sw_emitted": 272,
+          "sw_accepted": 272,
+          "sw_executed": 272
+        },
+        "DROP": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 0,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 117,
+          "accepted": 117,
+          "executed": 0,
+          "core_emitted": 117,
+          "core_accepted": 117,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 11,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 24,
+          "accepted": 24,
+          "executed": 24,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 6,
+          "sw_accepted": 6,
+          "sw_executed": 6
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 199,
+          "accepted": 199,
+          "executed": 199,
+          "core_emitted": 199,
+          "core_accepted": 199,
+          "core_executed": 199,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 24,
+          "accepted": 24,
+          "executed": 24,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 19,
+          "sw_emitted": 5,
+          "sw_accepted": 5,
+          "sw_executed": 5
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 327,
+          "accepted": 327,
+          "executed": 327,
+          "core_emitted": 327,
+          "core_accepted": 327,
+          "core_executed": 327,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 189,
+          "accepted": 189,
+          "executed": 0,
+          "core_emitted": 189,
+          "core_accepted": 189,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 762,
+        "executed": 2704
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7395,
+        "farmer_turns": 719,
+        "hands_turns": 6676,
+        "commands_matched_to_roster": 7395,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_full_production_agent_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 164,
+          "accepted": 164,
+          "executed": 164,
+          "core_emitted": 152,
+          "core_accepted": 152,
+          "core_executed": 152,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 819,
+          "accepted": 819,
+          "executed": 818,
+          "core_emitted": 737,
+          "core_accepted": 737,
+          "core_executed": 736,
+          "sw_emitted": 82,
+          "sw_accepted": 82,
+          "sw_executed": 82
+        },
+        "HARVEST": {
+          "emitted": 263,
+          "accepted": 263,
+          "executed": 263,
+          "core_emitted": 251,
+          "core_accepted": 251,
+          "core_executed": 251,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "FEED": {
+          "emitted": 268,
+          "accepted": 268,
+          "executed": 268,
+          "core_emitted": 268,
+          "core_accepted": 268,
+          "core_executed": 268,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4934,
+          "accepted": 4934,
+          "executed": 4934,
+          "core_emitted": 4713,
+          "core_accepted": 4713,
+          "core_executed": 4713,
+          "sw_emitted": 221,
+          "sw_accepted": 221,
+          "sw_executed": 221
+        },
+        "DROP": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 0,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 137,
+          "accepted": 137,
+          "executed": 0,
+          "core_emitted": 137,
+          "core_accepted": 137,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 28,
+          "accepted": 28,
+          "executed": 15,
+          "core_emitted": 28,
+          "core_accepted": 28,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 9,
+          "accepted": 9,
+          "executed": 9,
+          "core_emitted": 9,
+          "core_accepted": 9,
+          "core_executed": 9,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 266,
+          "accepted": 266,
+          "executed": 266,
+          "core_emitted": 266,
+          "core_accepted": 266,
+          "core_executed": 266,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 3,
+          "accepted": 3,
+          "executed": 3,
+          "core_emitted": 3,
+          "core_accepted": 3,
+          "core_executed": 3,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 205,
+          "accepted": 205,
+          "executed": 205,
+          "core_emitted": 205,
+          "core_accepted": 205,
+          "core_executed": 205,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 221,
+          "accepted": 221,
+          "executed": 0,
+          "core_emitted": 221,
+          "core_accepted": 221,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 745,
+        "executed": 3302
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7349,
+        "farmer_turns": 719,
+        "hands_turns": 6630,
+        "commands_matched_to_roster": 7349,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97017_full_production_agent_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 162,
+          "accepted": 162,
+          "executed": 162,
+          "core_emitted": 162,
+          "core_accepted": 162,
+          "core_executed": 162,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 954,
+          "accepted": 954,
+          "executed": 954,
+          "core_emitted": 954,
+          "core_accepted": 954,
+          "core_executed": 954,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 271,
+          "accepted": 271,
+          "executed": 271,
+          "core_emitted": 271,
+          "core_accepted": 271,
+          "core_executed": 271,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 238,
+          "accepted": 238,
+          "executed": 237,
+          "core_emitted": 238,
+          "core_accepted": 238,
+          "core_executed": 237,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4674,
+          "accepted": 4674,
+          "executed": 4674,
+          "core_emitted": 4674,
+          "core_accepted": 4674,
+          "core_executed": 4674,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 0,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 121,
+          "accepted": 121,
+          "executed": 0,
+          "core_emitted": 121,
+          "core_accepted": 121,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 12,
+          "core_emitted": 21,
+          "core_accepted": 21,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 28,
+          "accepted": 28,
+          "executed": 28,
+          "core_emitted": 28,
+          "core_accepted": 28,
+          "core_executed": 28,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 236,
+          "accepted": 236,
+          "executed": 236,
+          "core_emitted": 236,
+          "core_accepted": 236,
+          "core_executed": 236,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 379,
+          "accepted": 379,
+          "executed": 379,
+          "core_emitted": 379,
+          "core_accepted": 379,
+          "core_executed": 379,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 230,
+          "accepted": 230,
+          "executed": 0,
+          "core_emitted": 230,
+          "core_accepted": 230,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 728,
+        "executed": 2862
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7362,
+        "farmer_turns": 719,
+        "hands_turns": 6643,
+        "commands_matched_to_roster": 7362,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_pass_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 164,
+          "accepted": 164,
+          "executed": 164,
+          "core_emitted": 164,
+          "core_accepted": 164,
+          "core_executed": 164,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 982,
+          "accepted": 982,
+          "executed": 982,
+          "core_emitted": 982,
+          "core_accepted": 982,
+          "core_executed": 982,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 282,
+          "accepted": 282,
+          "executed": 282,
+          "core_emitted": 282,
+          "core_accepted": 282,
+          "core_executed": 282,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 238,
+          "accepted": 238,
+          "executed": 237,
+          "core_emitted": 238,
+          "core_accepted": 238,
+          "core_executed": 237,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4497,
+          "accepted": 4497,
+          "executed": 4497,
+          "core_emitted": 4497,
+          "core_accepted": 4497,
+          "core_executed": 4497,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 0,
+          "core_emitted": 20,
+          "core_accepted": 20,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 120,
+          "accepted": 120,
+          "executed": 0,
+          "core_emitted": 120,
+          "core_accepted": 120,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 26,
+          "accepted": 26,
+          "executed": 12,
+          "core_emitted": 26,
+          "core_accepted": 26,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 28,
+          "accepted": 28,
+          "executed": 28,
+          "core_emitted": 28,
+          "core_accepted": 28,
+          "core_executed": 28,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 240,
+          "accepted": 240,
+          "executed": 240,
+          "core_emitted": 240,
+          "core_accepted": 240,
+          "core_executed": 240,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 524,
+          "accepted": 524,
+          "executed": 524,
+          "core_emitted": 524,
+          "core_accepted": 524,
+          "core_executed": 524,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 235,
+          "accepted": 235,
+          "executed": 0,
+          "core_emitted": 235,
+          "core_accepted": 235,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 729,
+        "executed": 2841
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7383,
+        "farmer_turns": 719,
+        "hands_turns": 6664,
+        "commands_matched_to_roster": 7383,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_pass_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 164,
+          "accepted": 164,
+          "executed": 164,
+          "core_emitted": 164,
+          "core_accepted": 164,
+          "core_executed": 164,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "WATER": {
+          "emitted": 979,
+          "accepted": 979,
+          "executed": 979,
+          "core_emitted": 979,
+          "core_accepted": 979,
+          "core_executed": 979,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "HARVEST": {
+          "emitted": 281,
+          "accepted": 281,
+          "executed": 281,
+          "core_emitted": 281,
+          "core_accepted": 281,
+          "core_executed": 281,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FEED": {
+          "emitted": 239,
+          "accepted": 239,
+          "executed": 237,
+          "core_emitted": 239,
+          "core_accepted": 239,
+          "core_executed": 237,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4508,
+          "accepted": 4508,
+          "executed": 4508,
+          "core_emitted": 4508,
+          "core_accepted": 4508,
+          "core_executed": 4508,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DROP": {
+          "emitted": 19,
+          "accepted": 19,
+          "executed": 0,
+          "core_emitted": 19,
+          "core_accepted": 19,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 120,
+          "accepted": 120,
+          "executed": 0,
+          "core_emitted": 120,
+          "core_accepted": 120,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 26,
+          "accepted": 26,
+          "executed": 12,
+          "core_emitted": 26,
+          "core_accepted": 26,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 28,
+          "accepted": 28,
+          "executed": 28,
+          "core_emitted": 28,
+          "core_accepted": 28,
+          "core_executed": 28,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 240,
+          "accepted": 240,
+          "executed": 240,
+          "core_emitted": 240,
+          "core_accepted": 240,
+          "core_executed": 240,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 17,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 17,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 515,
+          "accepted": 515,
+          "executed": 515,
+          "core_emitted": 515,
+          "core_accepted": 515,
+          "core_executed": 515,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 235,
+          "accepted": 235,
+          "executed": 0,
+          "core_emitted": 235,
+          "core_accepted": 235,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 729,
+        "executed": 2841
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7383,
+        "farmer_turns": 719,
+        "hands_turns": 6664,
+        "commands_matched_to_roster": 7383,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_pure_wheat_rush_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 182,
+          "accepted": 180,
+          "executed": 180,
+          "core_emitted": 170,
+          "core_accepted": 168,
+          "core_executed": 168,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1039,
+          "accepted": 1039,
+          "executed": 1039,
+          "core_emitted": 945,
+          "core_accepted": 945,
+          "core_executed": 945,
+          "sw_emitted": 94,
+          "sw_accepted": 94,
+          "sw_executed": 94
+        },
+        "HARVEST": {
+          "emitted": 264,
+          "accepted": 264,
+          "executed": 264,
+          "core_emitted": 254,
+          "core_accepted": 254,
+          "core_executed": 254,
+          "sw_emitted": 10,
+          "sw_accepted": 10,
+          "sw_executed": 10
+        },
+        "FEED": {
+          "emitted": 214,
+          "accepted": 214,
+          "executed": 214,
+          "core_emitted": 214,
+          "core_accepted": 214,
+          "core_executed": 214,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4859,
+          "accepted": 4859,
+          "executed": 4859,
+          "core_emitted": 4580,
+          "core_accepted": 4580,
+          "core_executed": 4580,
+          "sw_emitted": 279,
+          "sw_accepted": 279,
+          "sw_executed": 279
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 107,
+          "accepted": 107,
+          "executed": 0,
+          "core_emitted": 107,
+          "core_accepted": 107,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 11,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 211,
+          "accepted": 211,
+          "executed": 211,
+          "core_emitted": 211,
+          "core_accepted": 211,
+          "core_executed": 211,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 17,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 227,
+          "accepted": 227,
+          "executed": 227,
+          "core_emitted": 227,
+          "core_accepted": 227,
+          "core_executed": 227,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 201,
+          "accepted": 201,
+          "executed": 0,
+          "core_emitted": 201,
+          "core_accepted": 201,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 752,
+        "executed": 2646
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7386,
+        "farmer_turns": 719,
+        "hands_turns": 6667,
+        "commands_matched_to_roster": 7386,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_pure_wheat_rush_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 182,
+          "accepted": 180,
+          "executed": 180,
+          "core_emitted": 170,
+          "core_accepted": 168,
+          "core_executed": 168,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1039,
+          "accepted": 1039,
+          "executed": 1039,
+          "core_emitted": 945,
+          "core_accepted": 945,
+          "core_executed": 945,
+          "sw_emitted": 94,
+          "sw_accepted": 94,
+          "sw_executed": 94
+        },
+        "HARVEST": {
+          "emitted": 264,
+          "accepted": 264,
+          "executed": 264,
+          "core_emitted": 254,
+          "core_accepted": 254,
+          "core_executed": 254,
+          "sw_emitted": 10,
+          "sw_accepted": 10,
+          "sw_executed": 10
+        },
+        "FEED": {
+          "emitted": 214,
+          "accepted": 214,
+          "executed": 214,
+          "core_emitted": 214,
+          "core_accepted": 214,
+          "core_executed": 214,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4861,
+          "accepted": 4861,
+          "executed": 4861,
+          "core_emitted": 4582,
+          "core_accepted": 4582,
+          "core_executed": 4582,
+          "sw_emitted": 279,
+          "sw_accepted": 279,
+          "sw_executed": 279
+        },
+        "DROP": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 0,
+          "core_emitted": 23,
+          "core_accepted": 23,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 107,
+          "accepted": 107,
+          "executed": 0,
+          "core_emitted": 107,
+          "core_accepted": 107,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 11,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 15,
+          "accepted": 15,
+          "executed": 15,
+          "core_emitted": 14,
+          "core_accepted": 14,
+          "core_executed": 14,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 211,
+          "accepted": 211,
+          "executed": 211,
+          "core_emitted": 211,
+          "core_accepted": 211,
+          "core_executed": 211,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 17,
+          "core_emitted": 15,
+          "core_accepted": 15,
+          "core_executed": 15,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 225,
+          "accepted": 225,
+          "executed": 225,
+          "core_emitted": 225,
+          "core_accepted": 225,
+          "core_executed": 225,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 201,
+          "accepted": 201,
+          "executed": 0,
+          "core_emitted": 201,
+          "core_accepted": 201,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 752,
+        "executed": 2646
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7386,
+        "farmer_turns": 719,
+        "hands_turns": 6667,
+        "commands_matched_to_roster": 7386,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_cow_milk_engine_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 169,
+          "accepted": 169,
+          "executed": 169,
+          "core_emitted": 157,
+          "core_accepted": 157,
+          "core_executed": 157,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 916,
+          "accepted": 916,
+          "executed": 915,
+          "core_emitted": 829,
+          "core_accepted": 829,
+          "core_executed": 828,
+          "sw_emitted": 87,
+          "sw_accepted": 87,
+          "sw_executed": 87
+        },
+        "HARVEST": {
+          "emitted": 258,
+          "accepted": 258,
+          "executed": 258,
+          "core_emitted": 246,
+          "core_accepted": 246,
+          "core_executed": 246,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "FEED": {
+          "emitted": 231,
+          "accepted": 231,
+          "executed": 231,
+          "core_emitted": 231,
+          "core_accepted": 231,
+          "core_executed": 231,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4889,
+          "accepted": 4889,
+          "executed": 4889,
+          "core_emitted": 4654,
+          "core_accepted": 4654,
+          "core_executed": 4654,
+          "sw_emitted": 235,
+          "sw_accepted": 235,
+          "sw_executed": 235
+        },
+        "DROP": {
+          "emitted": 22,
+          "accepted": 22,
+          "executed": 0,
+          "core_emitted": 22,
+          "core_accepted": 22,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 131,
+          "accepted": 131,
+          "executed": 0,
+          "core_emitted": 131,
+          "core_accepted": 131,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 18,
+          "accepted": 18,
+          "executed": 13,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 12,
+          "accepted": 12,
+          "executed": 12,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 246,
+          "accepted": 246,
+          "executed": 246,
+          "core_emitted": 246,
+          "core_accepted": 246,
+          "core_executed": 246,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 17,
+          "accepted": 17,
+          "executed": 17,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 229,
+          "accepted": 229,
+          "executed": 229,
+          "core_emitted": 228,
+          "core_accepted": 228,
+          "core_executed": 228,
+          "sw_emitted": 1,
+          "sw_accepted": 1,
+          "sw_executed": 1
+        },
+        "OTHER": {
+          "emitted": 209,
+          "accepted": 209,
+          "executed": 0,
+          "core_emitted": 209,
+          "core_accepted": 209,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 760,
+        "executed": 2988
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7360,
+        "farmer_turns": 719,
+        "hands_turns": 6641,
+        "commands_matched_to_roster": 7360,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_cow_milk_engine_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 170,
+          "accepted": 170,
+          "executed": 170,
+          "core_emitted": 158,
+          "core_accepted": 158,
+          "core_executed": 158,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 902,
+          "accepted": 902,
+          "executed": 902,
+          "core_emitted": 814,
+          "core_accepted": 814,
+          "core_executed": 814,
+          "sw_emitted": 88,
+          "sw_accepted": 88,
+          "sw_executed": 88
+        },
+        "HARVEST": {
+          "emitted": 255,
+          "accepted": 255,
+          "executed": 255,
+          "core_emitted": 244,
+          "core_accepted": 244,
+          "core_executed": 244,
+          "sw_emitted": 11,
+          "sw_accepted": 11,
+          "sw_executed": 11
+        },
+        "FEED": {
+          "emitted": 227,
+          "accepted": 227,
+          "executed": 227,
+          "core_emitted": 227,
+          "core_accepted": 227,
+          "core_executed": 227,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4911,
+          "accepted": 4911,
+          "executed": 4911,
+          "core_emitted": 4635,
+          "core_accepted": 4635,
+          "core_executed": 4635,
+          "sw_emitted": 276,
+          "sw_accepted": 276,
+          "sw_executed": 276
+        },
+        "DROP": {
+          "emitted": 22,
+          "accepted": 22,
+          "executed": 0,
+          "core_emitted": 22,
+          "core_accepted": 22,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 133,
+          "accepted": 133,
+          "executed": 0,
+          "core_emitted": 133,
+          "core_accepted": 133,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 24,
+          "accepted": 24,
+          "executed": 13,
+          "core_emitted": 24,
+          "core_accepted": 24,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 6,
+          "accepted": 6,
+          "executed": 6,
+          "core_emitted": 6,
+          "core_accepted": 6,
+          "core_executed": 6,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 246,
+          "accepted": 246,
+          "executed": 246,
+          "core_emitted": 246,
+          "core_accepted": 246,
+          "core_executed": 246,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 23,
+          "accepted": 23,
+          "executed": 23,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 16,
+          "sw_emitted": 7,
+          "sw_accepted": 7,
+          "sw_executed": 7
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 244,
+          "accepted": 244,
+          "executed": 244,
+          "core_emitted": 244,
+          "core_accepted": 244,
+          "core_executed": 244,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 207,
+          "accepted": 207,
+          "executed": 0,
+          "core_emitted": 207,
+          "core_accepted": 207,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 733,
+        "executed": 2698
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7383,
+        "farmer_turns": 719,
+        "hands_turns": 6664,
+        "commands_matched_to_roster": 7383,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_melon_sniper_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 165,
+          "accepted": 165,
+          "executed": 165,
+          "core_emitted": 153,
+          "core_accepted": 153,
+          "core_executed": 153,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 918,
+          "accepted": 918,
+          "executed": 917,
+          "core_emitted": 826,
+          "core_accepted": 826,
+          "core_executed": 825,
+          "sw_emitted": 92,
+          "sw_accepted": 92,
+          "sw_executed": 92
+        },
+        "HARVEST": {
+          "emitted": 255,
+          "accepted": 255,
+          "executed": 255,
+          "core_emitted": 242,
+          "core_accepted": 242,
+          "core_executed": 242,
+          "sw_emitted": 13,
+          "sw_accepted": 13,
+          "sw_executed": 13
+        },
+        "FEED": {
+          "emitted": 215,
+          "accepted": 215,
+          "executed": 215,
+          "core_emitted": 215,
+          "core_accepted": 215,
+          "core_executed": 215,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4912,
+          "accepted": 4912,
+          "executed": 4912,
+          "core_emitted": 4641,
+          "core_accepted": 4641,
+          "core_executed": 4641,
+          "sw_emitted": 271,
+          "sw_accepted": 271,
+          "sw_executed": 271
+        },
+        "DROP": {
+          "emitted": 24,
+          "accepted": 24,
+          "executed": 0,
+          "core_emitted": 24,
+          "core_accepted": 24,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 144,
+          "accepted": 144,
+          "executed": 0,
+          "core_emitted": 144,
+          "core_accepted": 144,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 22,
+          "accepted": 22,
+          "executed": 13,
+          "core_emitted": 22,
+          "core_accepted": 22,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 242,
+          "accepted": 242,
+          "executed": 242,
+          "core_emitted": 242,
+          "core_accepted": 242,
+          "core_executed": 242,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 224,
+          "accepted": 224,
+          "executed": 224,
+          "core_emitted": 224,
+          "core_accepted": 224,
+          "core_executed": 224,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 215,
+          "accepted": 215,
+          "executed": 0,
+          "core_emitted": 215,
+          "core_accepted": 215,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 727,
+        "executed": 2740
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7377,
+        "farmer_turns": 719,
+        "hands_turns": 6658,
+        "commands_matched_to_roster": 7377,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_melon_sniper_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 165,
+          "accepted": 165,
+          "executed": 165,
+          "core_emitted": 153,
+          "core_accepted": 153,
+          "core_executed": 153,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 918,
+          "accepted": 918,
+          "executed": 917,
+          "core_emitted": 826,
+          "core_accepted": 826,
+          "core_executed": 825,
+          "sw_emitted": 92,
+          "sw_accepted": 92,
+          "sw_executed": 92
+        },
+        "HARVEST": {
+          "emitted": 255,
+          "accepted": 255,
+          "executed": 255,
+          "core_emitted": 242,
+          "core_accepted": 242,
+          "core_executed": 242,
+          "sw_emitted": 13,
+          "sw_accepted": 13,
+          "sw_executed": 13
+        },
+        "FEED": {
+          "emitted": 215,
+          "accepted": 215,
+          "executed": 215,
+          "core_emitted": 215,
+          "core_accepted": 215,
+          "core_executed": 215,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4923,
+          "accepted": 4923,
+          "executed": 4923,
+          "core_emitted": 4652,
+          "core_accepted": 4652,
+          "core_executed": 4652,
+          "sw_emitted": 271,
+          "sw_accepted": 271,
+          "sw_executed": 271
+        },
+        "DROP": {
+          "emitted": 24,
+          "accepted": 24,
+          "executed": 0,
+          "core_emitted": 24,
+          "core_accepted": 24,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 144,
+          "accepted": 144,
+          "executed": 0,
+          "core_emitted": 144,
+          "core_accepted": 144,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 22,
+          "accepted": 22,
+          "executed": 13,
+          "core_emitted": 22,
+          "core_accepted": 22,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 242,
+          "accepted": 242,
+          "executed": 242,
+          "core_emitted": 242,
+          "core_accepted": 242,
+          "core_executed": 242,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 14,
+          "accepted": 14,
+          "executed": 14,
+          "core_emitted": 12,
+          "core_accepted": 12,
+          "core_executed": 12,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 13,
+          "accepted": 13,
+          "executed": 13,
+          "core_emitted": 13,
+          "core_accepted": 13,
+          "core_executed": 13,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 213,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 213,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 215,
+          "accepted": 215,
+          "executed": 0,
+          "core_emitted": 215,
+          "core_accepted": 215,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 727,
+        "executed": 2740
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7377,
+        "farmer_turns": 719,
+        "hands_turns": 6658,
+        "commands_matched_to_roster": 7377,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_full_production_agent_seat0": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 189,
+          "accepted": 183,
+          "executed": 183,
+          "core_emitted": 177,
+          "core_accepted": 171,
+          "core_executed": 171,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1067,
+          "accepted": 1067,
+          "executed": 1066,
+          "core_emitted": 965,
+          "core_accepted": 965,
+          "core_executed": 964,
+          "sw_emitted": 102,
+          "sw_accepted": 102,
+          "sw_executed": 102
+        },
+        "HARVEST": {
+          "emitted": 274,
+          "accepted": 274,
+          "executed": 274,
+          "core_emitted": 260,
+          "core_accepted": 260,
+          "core_executed": 260,
+          "sw_emitted": 14,
+          "sw_accepted": 14,
+          "sw_executed": 14
+        },
+        "FEED": {
+          "emitted": 210,
+          "accepted": 210,
+          "executed": 210,
+          "core_emitted": 210,
+          "core_accepted": 210,
+          "core_executed": 210,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4791,
+          "accepted": 4791,
+          "executed": 4791,
+          "core_emitted": 4525,
+          "core_accepted": 4525,
+          "core_executed": 4525,
+          "sw_emitted": 266,
+          "sw_accepted": 266,
+          "sw_executed": 266
+        },
+        "DROP": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 0,
+          "core_emitted": 20,
+          "core_accepted": 20,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 112,
+          "accepted": 112,
+          "executed": 0,
+          "core_emitted": 112,
+          "core_accepted": 112,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 11,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 20,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 213,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 213,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 21,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 17,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 245,
+          "accepted": 245,
+          "executed": 245,
+          "core_emitted": 243,
+          "core_accepted": 243,
+          "core_executed": 243,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "OTHER": {
+          "emitted": 199,
+          "accepted": 199,
+          "executed": 0,
+          "core_emitted": 199,
+          "core_accepted": 199,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 758,
+        "executed": 2689
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7388,
+        "farmer_turns": 719,
+        "hands_turns": 6669,
+        "commands_matched_to_roster": 7388,
+        "commands_dropped_no_worker": 0
+      }
+    },
+    "s97018_full_production_agent_seat1": {
+      "satisfies_invariant": 1,
+      "operations": {
+        "PLANT": {
+          "emitted": 189,
+          "accepted": 183,
+          "executed": 183,
+          "core_emitted": 177,
+          "core_accepted": 171,
+          "core_executed": 171,
+          "sw_emitted": 12,
+          "sw_accepted": 12,
+          "sw_executed": 12
+        },
+        "WATER": {
+          "emitted": 1067,
+          "accepted": 1067,
+          "executed": 1066,
+          "core_emitted": 965,
+          "core_accepted": 965,
+          "core_executed": 964,
+          "sw_emitted": 102,
+          "sw_accepted": 102,
+          "sw_executed": 102
+        },
+        "HARVEST": {
+          "emitted": 274,
+          "accepted": 274,
+          "executed": 274,
+          "core_emitted": 260,
+          "core_accepted": 260,
+          "core_executed": 260,
+          "sw_emitted": 14,
+          "sw_accepted": 14,
+          "sw_executed": 14
+        },
+        "FEED": {
+          "emitted": 210,
+          "accepted": 210,
+          "executed": 210,
+          "core_emitted": 210,
+          "core_accepted": 210,
+          "core_executed": 210,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "MOVE": {
+          "emitted": 4819,
+          "accepted": 4819,
+          "executed": 4819,
+          "core_emitted": 4547,
+          "core_accepted": 4547,
+          "core_executed": 4547,
+          "sw_emitted": 272,
+          "sw_accepted": 272,
+          "sw_executed": 272
+        },
+        "DROP": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 0,
+          "core_emitted": 20,
+          "core_accepted": 20,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PICKUP": {
+          "emitted": 112,
+          "accepted": 112,
+          "executed": 0,
+          "core_emitted": 112,
+          "core_accepted": 112,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PLACE": {
+          "emitted": 16,
+          "accepted": 16,
+          "executed": 11,
+          "core_emitted": 16,
+          "core_accepted": 16,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "FERTILIZE": {
+          "emitted": 20,
+          "accepted": 20,
+          "executed": 20,
+          "core_emitted": 18,
+          "core_accepted": 18,
+          "core_executed": 18,
+          "sw_emitted": 2,
+          "sw_accepted": 2,
+          "sw_executed": 2
+        },
+        "COLLECT_FERTILIZER": {
+          "emitted": 213,
+          "accepted": 213,
+          "executed": 213,
+          "core_emitted": 213,
+          "core_accepted": 213,
+          "core_executed": 213,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "DIG": {
+          "emitted": 21,
+          "accepted": 21,
+          "executed": 21,
+          "core_emitted": 17,
+          "core_accepted": 17,
+          "core_executed": 17,
+          "sw_emitted": 4,
+          "sw_accepted": 4,
+          "sw_executed": 4
+        },
+        "BUILD_COOP": {
+          "emitted": 0,
+          "accepted": 0,
+          "executed": 0,
+          "core_emitted": 0,
+          "core_accepted": 0,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "BUILD_PASTURE": {
+          "emitted": 11,
+          "accepted": 11,
+          "executed": 11,
+          "core_emitted": 11,
+          "core_accepted": 11,
+          "core_executed": 11,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "PASS": {
+          "emitted": 217,
+          "accepted": 217,
+          "executed": 217,
+          "core_emitted": 217,
+          "core_accepted": 217,
+          "core_executed": 217,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        },
+        "OTHER": {
+          "emitted": 199,
+          "accepted": 199,
+          "executed": 0,
+          "core_emitted": 199,
+          "core_accepted": 199,
+          "core_executed": 0,
+          "sw_emitted": 0,
+          "sw_accepted": 0,
+          "sw_executed": 0
+        }
+      },
+      "market_orders": {
+        "emitted": 758,
+        "executed": 2689
+      },
+      "roster_tracking": {
+        "total_worker_turns": 7388,
+        "farmer_turns": 719,
+        "hands_turns": 6669,
+        "commands_matched_to_roster": 7388,
+        "commands_dropped_no_worker": 0
+      }
+    }
+  }
+}
