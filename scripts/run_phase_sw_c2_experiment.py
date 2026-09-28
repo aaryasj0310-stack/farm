@@ -425,6 +425,7 @@ def configure_arm(arm: str) -> None:
     config.QUADRANT_HARD_BLOCK = {4}
     config.set_sw_p1_mission_ownership_enabled(False)
     config.set_sw_p2_coordinated_dispatch_enabled(False)
+    config.set_sw_p3_transactional_reservations_enabled(False)
 
     if arm == "ARM_A":
         # Canonical production reference
@@ -435,6 +436,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_max_adaptive_acreage(24)
         config.set_sw_p1_mission_ownership_enabled(False)
         config.set_sw_p2_coordinated_dispatch_enabled(False)
+        config.set_sw_p3_transactional_reservations_enabled(False)
     elif arm == "ARM_B":
         # Frozen B3C 8-tile control
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
@@ -444,6 +446,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_max_adaptive_acreage(24)
         config.set_sw_p1_mission_ownership_enabled(False)
         config.set_sw_p2_coordinated_dispatch_enabled(False)
+        config.set_sw_p3_transactional_reservations_enabled(False)
     elif arm == "ARM_C":
         # Adaptive architecture control capped at 8 tiles
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
@@ -453,6 +456,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_max_adaptive_acreage(8)
         config.set_sw_p1_mission_ownership_enabled(False)
         config.set_sw_p2_coordinated_dispatch_enabled(False)
+        config.set_sw_p3_transactional_reservations_enabled(False)
     elif arm == "ARM_D":
         # P1 Mission Ownership & Resource Chains (8 tiles)
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
@@ -462,6 +466,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_max_adaptive_acreage(8)
         config.set_sw_p1_mission_ownership_enabled(True)
         config.set_sw_p2_coordinated_dispatch_enabled(False)
+        config.set_sw_p3_transactional_reservations_enabled(False)
     elif arm == "ARM_E":
         # P2 Coordinated Dispatch (8 tiles)
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
@@ -471,6 +476,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_max_adaptive_acreage(8)
         config.set_sw_p1_mission_ownership_enabled(True)
         config.set_sw_p2_coordinated_dispatch_enabled(True)
+        config.set_sw_p3_transactional_reservations_enabled(False)
     elif arm == "ARM_F":
         # P3 Reservations + Coordinated Dispatch (8 tiles)
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
@@ -478,30 +484,45 @@ def configure_arm(arm: str) -> None:
         config.set_sw_urgency_aware_admission_enabled(True)
         config.set_sw_adaptive_acreage_enabled(True)
         config.set_sw_max_adaptive_acreage(8)
+        config.set_sw_p1_mission_ownership_enabled(True)
+        config.set_sw_p2_coordinated_dispatch_enabled(True)
+        config.set_sw_p3_transactional_reservations_enabled(True)
     elif arm == "ARM_G12":
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
         config.set_sw_core_first_task_admission_enabled(False)
         config.set_sw_urgency_aware_admission_enabled(True)
         config.set_sw_adaptive_acreage_enabled(True)
         config.set_sw_max_adaptive_acreage(12)
+        config.set_sw_p1_mission_ownership_enabled(True)
+        config.set_sw_p2_coordinated_dispatch_enabled(True)
+        config.set_sw_p3_transactional_reservations_enabled(True)
     elif arm == "ARM_G16":
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
         config.set_sw_core_first_task_admission_enabled(False)
         config.set_sw_urgency_aware_admission_enabled(True)
         config.set_sw_adaptive_acreage_enabled(True)
         config.set_sw_max_adaptive_acreage(16)
+        config.set_sw_p1_mission_ownership_enabled(True)
+        config.set_sw_p2_coordinated_dispatch_enabled(True)
+        config.set_sw_p3_transactional_reservations_enabled(True)
     elif arm == "ARM_G20":
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
         config.set_sw_core_first_task_admission_enabled(False)
         config.set_sw_urgency_aware_admission_enabled(True)
         config.set_sw_adaptive_acreage_enabled(True)
         config.set_sw_max_adaptive_acreage(20)
+        config.set_sw_p1_mission_ownership_enabled(True)
+        config.set_sw_p2_coordinated_dispatch_enabled(True)
+        config.set_sw_p3_transactional_reservations_enabled(True)
     elif arm == "ARM_G24":
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
         config.set_sw_core_first_task_admission_enabled(False)
         config.set_sw_urgency_aware_admission_enabled(True)
         config.set_sw_adaptive_acreage_enabled(True)
         config.set_sw_max_adaptive_acreage(24)
+        config.set_sw_p1_mission_ownership_enabled(True)
+        config.set_sw_p2_coordinated_dispatch_enabled(True)
+        config.set_sw_p3_transactional_reservations_enabled(True)
     else:
         raise ValueError(f"Unknown arm: {arm}")
 
@@ -519,6 +540,7 @@ def run_single_match(args_tuple: Tuple[int, str, int, str]) -> Dict[str, Any]:
         reset_sw_tranche_controller,
     )
     from agent.strategy.adaptive_acreage_planner import reset_adaptive_acreage_planner
+    from agent.strategy.crop_cycle_reservation_manager import reset_crop_cycle_reservation_manager
     from agent.execution.midnight_storage_controller import (
         reset_midnight_storage_telemetry,
     )
@@ -527,6 +549,7 @@ def run_single_match(args_tuple: Tuple[int, str, int, str]) -> Dict[str, Any]:
         get_sw_task_admission_telemetry,
     )
     from agent.execution.service_obligation_ledger import reset_service_obligation_ledger
+    from agent.execution.mission_ownership_tracker import reset_mission_ownership_tracker
     from agent.execution.workforce_capacity_forecast import reset_workforce_capacity_forecaster
     from agent.execution.coordinated_dispatch_controller import reset_coordinated_dispatch_controller
     from agent.diagnostics.animal_tracker import AnimalSurvivalTracker
@@ -538,9 +561,11 @@ def run_single_match(args_tuple: Tuple[int, str, int, str]) -> Dict[str, Any]:
     reset_whole_farm_planner()
     reset_sw_tranche_controller()
     reset_adaptive_acreage_planner()
+    reset_crop_cycle_reservation_manager()
     reset_midnight_storage_telemetry()
     reset_sw_task_admission_telemetry()
     reset_service_obligation_ledger()
+    reset_mission_ownership_tracker()
     reset_workforce_capacity_forecaster()
     reset_coordinated_dispatch_controller()
 

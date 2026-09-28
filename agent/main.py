@@ -421,6 +421,11 @@ def reset_agent_state() -> None:
     except Exception:
         pass
     try:
+        from strategy.crop_cycle_reservation_manager import reset_crop_cycle_reservation_manager
+        reset_crop_cycle_reservation_manager()
+    except Exception:
+        pass
+    try:
         from execution.crop_pipeline_controller import reset_crop_pipeline_telemetry
         reset_crop_pipeline_telemetry()
     except Exception:

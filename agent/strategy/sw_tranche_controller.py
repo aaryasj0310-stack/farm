@@ -571,8 +571,84 @@ class SWTrancheController:
                 max_acreage_cap=max_acreage_cap,
             )
 
-            if decision.approved:
-                # Increment admitted tiles and crop targets
+            try:
+                from config import get_sw_p3_transactional_reservations_enabled
+                p3_enabled = bool(get_sw_p3_transactional_reservations_enabled())
+            except Exception:
+                try:
+                    from agent.config import get_sw_p3_transactional_reservations_enabled
+                    p3_enabled = bool(get_sw_p3_transactional_reservations_enabled())
+                except Exception:
+                    p3_enabled = False
+
+            if p3_enabled and decision.approved:
+                try:
+                    from strategy.crop_cycle_reservation_manager import get_crop_cycle_reservation_manager
+                except ImportError:
+                    from agent.strategy.crop_cycle_reservation_manager import get_crop_cycle_reservation_manager
+                res_mgr = get_crop_cycle_reservation_manager()
+                trial = res_mgr.evaluate_complete_crop_cycle(
+                    candidate_tiles=[(int(t[0]), int(t[1])) for t in decision.new_tiles],
+                    candidate_crop=decision.selected_crop,
+                    plant_day=day,
+                    current_cash=current_cash,
+                    active_workers=active_workers,
+                    num_animals=num_animals,
+                    wheat_inventory=wheat_inventory,
+                    current_shed_occupancy=shed_units,
+                    core_planted_tiles=core_planted,
+                    market_inventories=market_inv,
+                )
+                if trial.feasible and trial.expected_whole_farm_delta > 0:
+                    res_id = res_mgr.commit_reservation(trial)
+                    for tile in decision.new_tiles:
+                        tile_t = (int(tile[0]), int(tile[1]))
+                        self.state.admitted_sw_tiles.add(tile_t)
+                        self.state.admitted_sw_crop_targets[tile_t] = decision.selected_crop
+
+                    self.state.max_admitted_acreage = len(self.state.admitted_sw_tiles)
+                    self.state.last_expansion_day = day
+
+                    event_rec = {
+                        "day": day,
+                        "hour": hour,
+                        "from_acreage": decision.current_acreage,
+                        "to_acreage": decision.target_acreage,
+                        "crop": decision.selected_crop,
+                        "new_tiles": [list(t) for t in decision.new_tiles],
+                        "marginal_delta_fc": decision.marginal_delta_fc,
+                        "seed_cost": decision.seed_cost,
+                        "projected_revenue": decision.projected_revenue,
+                        "cash_at_expansion": current_cash,
+                        "workers": active_workers,
+                        "reservation_id": res_id,
+                    }
+                    self.state.adaptive_expansion_history.append(event_rec)
+                    logger.info(
+                        f"[SWTrancheController] P3 RESERVATION COMMITTED on Day {day}: "
+                        f"{decision.current_acreage} -> {decision.target_acreage} tiles "
+                        f"with {decision.selected_crop} (Res: {res_id}, Margin: +${trial.expected_whole_farm_delta:.2f})"
+                    )
+                    return decision
+                else:
+                    # Binding rejection: no mutation of admitted tiles or crop targets
+                    rej_rec = {
+                        "day": day,
+                        "hour": hour,
+                        "current_acreage": decision.current_acreage,
+                        "target_acreage": decision.target_acreage,
+                        "reason": trial.rejection_reason,
+                        "passed_certificates": trial.certificates,
+                    }
+                    self.state.expansion_rejections.append(rej_rec)
+                    decision.approved = False
+                    decision.rejection_reason = trial.rejection_reason
+                    logger.info(
+                        f"[SWTrancheController] P3 RESERVATION REJECTED on Day {day}: {trial.rejection_reason}"
+                    )
+                    return decision
+            elif decision.approved:
+                # Increment admitted tiles and crop targets (Baseline path when P3 is OFF)
                 for tile in decision.new_tiles:
                     tile_t = (int(tile[0]), int(tile[1]))
                     self.state.admitted_sw_tiles.add(tile_t)
@@ -1094,3 +1170,12 @@ def reset_sw_tranche_controller() -> None:
         _SW_TRANCHE_CONTROLLER.reset()
     else:
         _SW_TRANCHE_CONTROLLER = SWTrancheController()
+    try:
+        from strategy.crop_cycle_reservation_manager import reset_crop_cycle_reservation_manager
+        reset_crop_cycle_reservation_manager()
+    except Exception:
+        try:
+            from agent.strategy.crop_cycle_reservation_manager import reset_crop_cycle_reservation_manager
+            reset_crop_cycle_reservation_manager()
+        except Exception:
+            pass

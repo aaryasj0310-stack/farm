@@ -99,6 +99,7 @@ def test_runtime_sync_from_agent_to_submission(repo_paths):
         os.path.join("execution", "sw_task_admission_controller.py"),
         os.path.join("execution", "workforce_capacity_forecast.py"),
         os.path.join("strategy", "adaptive_acreage_planner.py"),
+        os.path.join("strategy", "crop_cycle_reservation_manager.py"),
     }
     missing_in_sub = [
         rel for rel in agent_runtime_files

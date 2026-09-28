@@ -1852,3 +1852,31 @@ def get_sw_p2_coordinated_dispatch_enabled() -> bool:
     """Return whether Phase SW-C2 P2 Global Coordinated Regional Dispatch is enabled."""
     return SW_P2_COORDINATED_DISPATCH_ENABLED
 
+
+# ====================================================================
+# Phase SW-C2: P3 Transactional Acreage and Complete Crop-Cycle Reservations
+# ====================================================================
+SW_P3_TRANSACTIONAL_RESERVATIONS_ENABLED: bool = False
+
+
+def set_sw_p3_transactional_reservations_enabled(enabled: bool) -> None:
+    """Configure Phase SW-C2 P3 Transactional Reservations flag."""
+    global SW_P3_TRANSACTIONAL_RESERVATIONS_ENABLED
+    SW_P3_TRANSACTIONAL_RESERVATIONS_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.strategy.sw_tranche_controller", "strategy.sw_tranche_controller", "sw_tranche_controller",
+        "agent.strategy.crop_cycle_reservation_manager", "strategy.crop_cycle_reservation_manager", "crop_cycle_reservation_manager",
+        "agent.strategy.adaptive_acreage_planner", "strategy.adaptive_acreage_planner", "adaptive_acreage_planner",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_P3_TRANSACTIONAL_RESERVATIONS_ENABLED", SW_P3_TRANSACTIONAL_RESERVATIONS_ENABLED)
+            except Exception:
+                pass
+
+
+def get_sw_p3_transactional_reservations_enabled() -> bool:
+    """Return whether Phase SW-C2 P3 Transactional Reservations is enabled."""
+    return SW_P3_TRANSACTIONAL_RESERVATIONS_ENABLED
+
