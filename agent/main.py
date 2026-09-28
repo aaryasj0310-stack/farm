@@ -446,6 +446,11 @@ def reset_agent_state() -> None:
     except Exception:
         pass
     try:
+        from execution.mission_ownership_tracker import reset_mission_ownership_tracker
+        reset_mission_ownership_tracker()
+    except Exception:
+        pass
+    try:
         from execution.same_turn_deposit_controller import reset_same_turn_deposit_telemetry
         reset_same_turn_deposit_telemetry()
     except Exception:

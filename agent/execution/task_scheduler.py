@@ -90,6 +90,15 @@ def reset_sticky_missions():
     """Reset active sticky missions."""
     global _ACTIVE_MISSIONS
     _ACTIVE_MISSIONS = {}
+    try:
+        from execution.mission_ownership_tracker import reset_mission_ownership_tracker
+        reset_mission_ownership_tracker()
+    except Exception:
+        try:
+            from agent.execution.mission_ownership_tracker import reset_mission_ownership_tracker
+            reset_mission_ownership_tracker()
+        except Exception:
+            pass
 
 def get_blocked_task_tracker():
     """Return copy of active blocked task tracker."""
@@ -1001,7 +1010,28 @@ def build_tasks(ctx, macro):
     # Distribute wheat across multiple workers in small chunks (2-3 wheat)
     # so multiple workers can feed animals simultaneously!
     if feeds_due > 0:
-        held = sum(int(inv.get("WHEAT", 0)) for inv in ctx["private"].inventories)
+        try:
+            from config import get_sw_p1_mission_ownership_enabled
+            p1_enabled = bool(get_sw_p1_mission_ownership_enabled())
+        except Exception:
+            p1_enabled = False
+
+        if p1_enabled:
+            # P1-C: Distant worker-held wheat is not counted as proof all animals can be fed.
+            # Only count wheat held by workers currently in or near NW/NE (or within 6 tiles of shed).
+            farm = ctx["farm"]
+            all_unit_positions = [tuple(farm.farmer)] + [tuple(h) for h in farm.hands]
+            accessible_held = 0
+            for u_idx, inv in enumerate(ctx["private"].inventories):
+                if u_idx < len(all_unit_positions):
+                    u_pos = all_unit_positions[u_idx]
+                    u_quad = farm.quadrant_of(u_pos) if hasattr(farm, "quadrant_of") else "NW"
+                    shed_dist = min(abs(u_pos[0] - sx) + abs(u_pos[1] - sy) for sx, sy in SHED_ACCESS_TILES)
+                    if u_quad != "SW" or shed_dist <= 6:
+                        accessible_held += int(inv.get("WHEAT", 0))
+            held = accessible_held
+        else:
+            held = sum(int(inv.get("WHEAT", 0)) for inv in ctx["private"].inventories)
         shed_wheat = int(ctx["private"].shed.get("WHEAT", 0))
         needed = min(shed_wheat, max(feeds_due - held, 0))
         if needed > 0:
@@ -1012,7 +1042,7 @@ def build_tasks(ctx, macro):
                 take = min(chunk_size, needed - c_idx * chunk_size)
                 target = SHED_ACCESS_TILES[c_idx % len(SHED_ACCESS_TILES)]
                 add(staging_prio, "PICKUP", tuple(target),
-                    args=["WHEAT", int(take)], kind="pickup_wheat")
+                    args=["WHEAT", int(take)], kind="pickup_wheat", meta={"chunk_idx": c_idx})
 
     # ---------------- harvested-product realization ----------------
     # HARVEST puts goods on the acting worker, while SELL reads only the shed.
@@ -1752,10 +1782,43 @@ def assign_tasks(tasks, ctx, extra_units=()):
     assignment = {}          # unit_idx -> task
     deferred_place = []
 
+    try:
+        from config import get_sw_p1_mission_ownership_enabled
+        p1_enabled = bool(get_sw_p1_mission_ownership_enabled())
+    except Exception:
+        p1_enabled = False
+
+    tracker = None
+    if p1_enabled:
+        try:
+            from execution.mission_ownership_tracker import (
+                get_mission_ownership_tracker,
+                compute_task_obligation_id,
+            )
+            tracker = get_mission_ownership_tracker()
+        except Exception:
+            try:
+                from agent.execution.mission_ownership_tracker import (
+                    get_mission_ownership_tracker,
+                    compute_task_obligation_id,
+                )
+                tracker = get_mission_ownership_tracker()
+            except Exception:
+                tracker = None
+                p1_enabled = False
+
+    step = ctx.get("step", 0)
+    day = ctx.get("day", 0)
+
     # Step 0: Validate active sticky missions
     global _ACTIVE_MISSIONS
+    if p1_enabled and tracker is not None and ctx.get("hour", 0) == 0 and step > 0:
+        tracker.handle_midnight_rollover(day)
+
     for u, m in list(_ACTIVE_MISSIONS.items()):
         if u >= n_units:
+            if p1_enabled and tracker is not None:
+                tracker.preempt_worker_mission(u, reason="WORKER_REMOVED", step=step)
             del _ACTIVE_MISSIONS[u]
             continue
         curr_pos = pos_by_idx[u]
@@ -1771,6 +1834,9 @@ def assign_tasks(tasks, ctx, extra_units=()):
             m["consecutive_no_progress"] = m.get("consecutive_no_progress", 0) + 1
 
         if not _is_mission_valid(m, u, ctx, pos_by_idx, holders, tasks=tasks):
+            if p1_enabled and tracker is not None:
+                obl_id = compute_task_obligation_id(day, m["op"], m["target"], m.get("kind", ""), m.get("args"))
+                tracker.invalidate_mission(obl_id, reason="VALIDATION_FAILED", step=step)
             del _ACTIVE_MISSIONS[u]
 
     # 1. Tier 1: Urgent survival tasks dispatched immediately to closest capable worker
@@ -1782,20 +1848,39 @@ def assign_tasks(tasks, ctx, extra_units=()):
         if not free_units:
             continue
         target = task.get("target") or tuple(farm.farmer)
-        # Prefer free units without an active mission
-        non_mission = [u for u in free_units if u not in _ACTIVE_MISSIONS]
-        pool = non_mission if non_mission else free_units
-        best = min(pool, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+        
+        best = None
+        obl_id = None
+        if p1_enabled and tracker is not None:
+            obl_id = compute_task_obligation_id(
+                day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta")
+            )
+            # P1-A & P1-B: Retain worker already actively traveling on this obligation if eligible and free
+            existing_m = tracker.get_mission_for_obligation(obl_id)
+            if existing_m and existing_m.worker_idx in free_units:
+                best = existing_m.worker_idx
+
+        if best is None:
+            # Prefer free units without an active mission
+            non_mission = [u for u in free_units if u not in _ACTIVE_MISSIONS]
+            pool = non_mission if non_mission else free_units
+            best = min(pool, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+
         if best in _ACTIVE_MISSIONS:
+            if p1_enabled and tracker is not None:
+                tracker.preempt_worker_mission(best, reason="PREEMPTED_BY_URGENT_SURVIVAL", step=step)
             del _ACTIVE_MISSIONS[best]  # Preempted by urgent survival task!
         busy.add(best)
         task["unit_pos"] = pos_by_idx[best]
         assignment[best] = task
 
         # Keep livestock delivery sticky until PLACE succeeds or is invalidated
-        if (task.get("op") == "PLACE" and
-            task.get("args") and task["args"][0] in ANIMALS and
-            pos_by_idx[best] != tuple(task.get("target", (-1, -1)))):
+        is_multi_turn = (pos_by_idx[best] != tuple(task.get("target", (-1, -1))))
+        should_stick = (task.get("op") == "PLACE" and task.get("args") and task["args"][0] in ANIMALS and is_multi_turn)
+        if p1_enabled and is_multi_turn and task.get("op") != "PASS":
+            should_stick = True
+
+        if should_stick:
             tgt_pos = task.get("target") or pos_by_idx[best]
             init_d = abs(pos_by_idx[best][0] - tgt_pos[0]) + abs(pos_by_idx[best][1] - tgt_pos[1])
             _ACTIVE_MISSIONS[best] = {
@@ -1810,6 +1895,12 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 "mission_age": 0,
                 "steps_active": 0,
             }
+            if p1_enabled and tracker is not None:
+                if obl_id is None:
+                    obl_id = compute_task_obligation_id(
+                        day, task.get("op", "PASS"), tgt_pos, task.get("kind", ""), task.get("args"), task.get("meta")
+                    )
+                tracker.claim_or_continue_mission(best, obl_id, task, pos_by_idx[best], step)
 
     # 1b. Kaggriculture Phase M0-A: Same-Turn Crop Pipeline (HARVEST -> PLANT -> WATER)
     try:
@@ -1889,6 +1980,9 @@ def assign_tasks(tasks, ctx, extra_units=()):
             m_task["unit_pos"] = pos_by_idx[u]
             assignment[u] = m_task
             busy.add(u)
+            if p1_enabled and tracker is not None:
+                obl_id = compute_task_obligation_id(day, m["op"], m["target"], m.get("kind", ""), m.get("args"))
+                tracker.claim_or_continue_mission(u, obl_id, m_task, pos_by_idx[u], step)
             for rt in list(regular_tasks):
                 if rt.get("op") == m["op"] and tuple(rt.get("target", (-1, -1))) == tuple(m["target"]):
                     regular_tasks.remove(rt)
@@ -1994,6 +2088,12 @@ def assign_tasks(tasks, ctx, extra_units=()):
                                     eval_cands.append((u, True))
 
                 for u, is_spillover in eval_cands:
+                    if p1_enabled and tracker is not None:
+                        obl_id = compute_task_obligation_id(day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta"))
+                        if tracker.is_obligation_owned_by_other(obl_id, u):
+                            tracker._telemetry["duplicate_pursuits_blocked"] += 1
+                            continue
+
                     d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
                     cluster_bonus = 0
                     if d <= C6_CLUSTER_RADIUS:
@@ -2019,6 +2119,12 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 target_needs_assistance = (rem_target_tasks > free_in_target)
 
                 for u in cands:
+                    if p1_enabled and tracker is not None:
+                        obl_id = compute_task_obligation_id(day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta"))
+                        if tracker.is_obligation_owned_by_other(obl_id, u):
+                            tracker._telemetry["duplicate_pursuits_blocked"] += 1
+                            continue
+
                     u_pos = pos_by_idx[u]
                     u_phys_quad = farm.quadrant_of(u_pos)
 
@@ -2107,6 +2213,11 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 "mission_age": 0,
                 "steps_active": 0,
             }
+            if p1_enabled and tracker is not None:
+                obl_id = compute_task_obligation_id(
+                    day, chosen_task.get("op", "PASS"), tgt_pos, chosen_task.get("kind", ""), chosen_task.get("args"), chosen_task.get("meta")
+                )
+                tracker.claim_or_continue_mission(chosen_u, obl_id, chosen_task, pos_by_idx[chosen_u], step)
 
     try:
         from execution.sw_task_admission_controller import get_sw_task_admission_telemetry
@@ -2223,6 +2334,17 @@ def assign_tasks(tasks, ctx, extra_units=()):
         targeted_positions = {tuple(t["target"]) for t in assignment.values() if t.get("target")}
 
         def _pick_best_unit(cands, target_pos):
+            if p1_enabled and tracker is not None:
+                # P1-D: Core protection filter: don't pull NW/NE workers to SW for low-value fallback
+                tgt_quad = farm.quadrant_of(target_pos) if hasattr(farm, "quadrant_of") else "NW"
+                if tgt_quad == "SW":
+                    filtered = [u for u in cands if (farm.quadrant_of(pos_by_idx[u]) if hasattr(farm, "quadrant_of") else "NW") == "SW"]
+                    if not filtered:
+                        tracker._telemetry["fallback_discretionary_blocked"] += 1
+                        return None
+                    cands = filtered
+            if not cands:
+                return None
             return min(cands, key=lambda u: abs(pos_by_idx[u][0] - target_pos[0]) + abs(pos_by_idx[u][1] - target_pos[1]))
 
         # 1. Fallback: collect any available fertilizer (prefer local home zone)
@@ -2235,6 +2357,8 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
                 if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
+                if best_u is None:
+                    continue
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 assignment[best_u] = {"priority": 10, "op": "COLLECT_FERTILIZER", "target": tuple(t.pos),
@@ -2251,6 +2375,8 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
                 if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
+                if best_u is None:
+                    continue
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 assignment[best_u] = {"priority": 10, "op": "WATER", "target": tuple(t.pos),
@@ -2267,6 +2393,8 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 cands = pref if pref else [u for u in unassigned_units if not ((home_quads[u] == "SW" and t_quad == "NE") or (home_quads[u] == "NE" and t_quad == "SW"))]
                 if not cands: cands = unassigned_units
                 best_u = _pick_best_unit(cands, t.pos)
+                if best_u is None:
+                    continue
                 unassigned_units.remove(best_u)
                 busy.add(best_u)
                 assignment[best_u] = {"priority": 5, "op": "DIG", "target": tuple(t.pos),
@@ -2288,6 +2416,12 @@ def assign_tasks(tasks, ctx, extra_units=()):
     actions = {idx: ["PASS"] for idx in range(len(units))}
     for idx, task in assignment.items():
         actions[idx] = emit(task)
+        if p1_enabled and tracker is not None:
+            tgt = task.get("target")
+            act = actions.get(idx, ["PASS"])
+            if tgt and pos_by_idx.get(idx) == tuple(tgt) and act != ["PASS"]:
+                obl_id = compute_task_obligation_id(day, task.get("op", "PASS"), tgt, task.get("kind", ""), task.get("args"), task.get("meta"))
+                tracker.complete_mission(obl_id, step)
 
     turn_sw_tasks_created = 0
     if farm and hasattr(farm, "quadrant_of"):

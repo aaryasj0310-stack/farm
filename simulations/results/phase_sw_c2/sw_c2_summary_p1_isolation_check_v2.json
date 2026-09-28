@@ -1,0 +1,66 @@
+{
+  "tag": "p1_isolation_check_v2",
+  "seeds": [
+    97013
+  ],
+  "opponents": [
+    "pass"
+  ],
+  "seats": [
+    0
+  ],
+  "arms_evaluated": [
+    "ARM_B",
+    "ARM_C",
+    "ARM_D"
+  ],
+  "num_matches": 3,
+  "elapsed_seconds": 64.49109172821045,
+  "arm_metrics": {
+    "ARM_B": {
+      "count": 1,
+      "mean_final_cash": 102960.0,
+      "median_final_cash": 102960.0,
+      "std_final_cash": 0.0,
+      "min_final_cash": 102960.0,
+      "max_final_cash": 102960.0,
+      "win_rate": 1.0,
+      "sw_purchase_rate": 1.0,
+      "mean_sw_revenue": 9355.15,
+      "mean_sw_net_margin": 8315.15,
+      "mean_core_crop_revenue": 75017.85,
+      "mean_core_livestock_revenue": 71065.0,
+      "all_cash_reconciled_zero_residual": 1
+    },
+    "ARM_C": {
+      "count": 1,
+      "mean_final_cash": 102960.0,
+      "median_final_cash": 102960.0,
+      "std_final_cash": 0.0,
+      "min_final_cash": 102960.0,
+      "max_final_cash": 102960.0,
+      "win_rate": 1.0,
+      "sw_purchase_rate": 1.0,
+      "mean_sw_revenue": 9355.15,
+      "mean_sw_net_margin": 8315.15,
+      "mean_core_crop_revenue": 75017.85,
+      "mean_core_livestock_revenue": 71065.0,
+      "all_cash_reconciled_zero_residual": 1
+    },
+    "ARM_D": {
+      "count": 1,
+      "mean_final_cash": 102308.0,
+      "median_final_cash": 102308.0,
+      "std_final_cash": 0.0,
+      "min_final_cash": 102308.0,
+      "max_final_cash": 102308.0,
+      "win_rate": 1.0,
+      "sw_purchase_rate": 1.0,
+      "mean_sw_revenue": 9678.380000000001,
+      "mean_sw_net_margin": 8638.38,
+      "mean_core_crop_revenue": 78462.62,
+      "mean_core_livestock_revenue": 65259.0,
+      "all_cash_reconciled_zero_residual": 1
+    }
+  }
+}

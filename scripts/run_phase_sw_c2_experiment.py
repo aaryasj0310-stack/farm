@@ -423,6 +423,7 @@ def configure_arm(arm: str) -> None:
     config.SOFT_WORKER_LOCALITY_MODE = "ON"
     config.MIDNIGHT_STORAGE_DUMP_MODE = "RESCUE"
     config.QUADRANT_HARD_BLOCK = {4}
+    config.set_sw_p1_mission_ownership_enabled(False)
 
     if arm == "ARM_A":
         # Canonical production reference
@@ -431,6 +432,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_urgency_aware_admission_enabled(False)
         config.set_sw_adaptive_acreage_enabled(False)
         config.set_sw_max_adaptive_acreage(24)
+        config.set_sw_p1_mission_ownership_enabled(False)
     elif arm == "ARM_B":
         # Frozen B3C 8-tile control
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
@@ -438,6 +440,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_urgency_aware_admission_enabled(True)
         config.set_sw_adaptive_acreage_enabled(False)
         config.set_sw_max_adaptive_acreage(24)
+        config.set_sw_p1_mission_ownership_enabled(False)
     elif arm == "ARM_C":
         # Adaptive architecture control capped at 8 tiles
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
@@ -445,6 +448,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_urgency_aware_admission_enabled(True)
         config.set_sw_adaptive_acreage_enabled(True)
         config.set_sw_max_adaptive_acreage(8)
+        config.set_sw_p1_mission_ownership_enabled(False)
     elif arm == "ARM_D":
         # P1 Mission Ownership & Resource Chains (8 tiles)
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
@@ -452,6 +456,7 @@ def configure_arm(arm: str) -> None:
         config.set_sw_urgency_aware_admission_enabled(True)
         config.set_sw_adaptive_acreage_enabled(True)
         config.set_sw_max_adaptive_acreage(8)
+        config.set_sw_p1_mission_ownership_enabled(True)
     elif arm == "ARM_E":
         # P2 Coordinated Dispatch (8 tiles)
         config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"

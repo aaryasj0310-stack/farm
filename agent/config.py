@@ -1799,4 +1799,28 @@ def get_sw_max_adaptive_acreage() -> int:
     return SW_MAX_ADAPTIVE_ACREAGE
 
 
+# ====================================================================
+# Phase SW-C2: P1 Mission Ownership & Executable Resource Chains
+# ====================================================================
+SW_P1_MISSION_OWNERSHIP_ENABLED: bool = False
 
+
+def set_sw_p1_mission_ownership_enabled(enabled: bool) -> None:
+    """Configure Phase SW-C2 P1 Mission Ownership & Executable Resource Chains flag."""
+    global SW_P1_MISSION_OWNERSHIP_ENABLED
+    SW_P1_MISSION_OWNERSHIP_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.execution.mission_ownership_tracker", "execution.mission_ownership_tracker", "mission_ownership_tracker",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_P1_MISSION_OWNERSHIP_ENABLED", SW_P1_MISSION_OWNERSHIP_ENABLED)
+            except Exception:
+                pass
+
+
+def get_sw_p1_mission_ownership_enabled() -> bool:
+    """Return whether Phase SW-C2 P1 Mission Ownership is enabled."""
+    return SW_P1_MISSION_OWNERSHIP_ENABLED

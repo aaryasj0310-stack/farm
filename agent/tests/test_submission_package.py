@@ -92,6 +92,7 @@ def test_runtime_sync_from_agent_to_submission(repo_paths):
                 agent_runtime_files.append(rel)
 
     EXPERIMENTAL_MODULES = {
+        os.path.join("execution", "mission_ownership_tracker.py"),
         os.path.join("execution", "obligation_types.py"),
         os.path.join("execution", "service_obligation_ledger.py"),
         os.path.join("execution", "sw_task_admission_controller.py"),
