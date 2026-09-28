@@ -1,0 +1,2523 @@
+[
+  {
+    "match_id": "97013_pass_0_ARM_F",
+    "seed": 97013,
+    "opponent": "pass",
+    "seat": 0,
+    "arm": "ARM_F",
+    "final_cash": 100079.0,
+    "opp_final_cash": 3000.0,
+    "win": 1,
+    "reconciled_cash": 100079.0,
+    "cash_residual": 0.0,
+    "crop_sales_rev": {
+      "WHEAT": 44005.0,
+      "CARROT": 2446.0,
+      "TOMATO": 1516.0,
+      "STRAWBERRY": 17959.0,
+      "MELON": 21434.0
+    },
+    "animal_sales_rev": {
+      "MILK": 11872.0,
+      "WOOL": 40598.0,
+      "FERTILIZER": 17787.0,
+      "EGG": 0.0,
+      "CHICKEN_MEAT": 0.0,
+      "COW_MEAT": 0.0
+    },
+    "total_crop_revenue": 87360.0,
+    "total_animal_revenue": 70257.0,
+    "core_crop_revenue": 78409.7,
+    "sw_total_crop_revenue": 8950.3,
+    "sw_total_seed_cost": 1040.0,
+    "sw_net_crop_margin": 7910.3,
+    "crop_provenance": {
+      "STRAWBERRY": {
+        "harvested_core": 64,
+        "harvested_sw": 16,
+        "total_sold": 74,
+        "total_revenue": 17959.0,
+        "sw_attributed_revenue": 3591.8,
+        "core_attributed_revenue": 14367.2,
+        "sw_planted": 4,
+        "sw_seed_cost": 400
+      },
+      "MELON": {
+        "harvested_core": 72,
+        "harvested_sw": 24,
+        "total_sold": 90,
+        "total_revenue": 21434.0,
+        "sw_attributed_revenue": 5358.5,
+        "core_attributed_revenue": 16075.5,
+        "sw_planted": 8,
+        "sw_seed_cost": 640
+      },
+      "TOMATO": {
+        "harvested_core": 26,
+        "harvested_sw": 0,
+        "total_sold": 26,
+        "total_revenue": 1516.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 1516.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      },
+      "WHEAT": {
+        "harvested_core": 369,
+        "harvested_sw": 0,
+        "total_sold": 1134,
+        "total_revenue": 44005.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 44005.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      },
+      "CARROT": {
+        "harvested_core": 65,
+        "harvested_sw": 0,
+        "total_sold": 65,
+        "total_revenue": 2446.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 2446.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      }
+    },
+    "land_purchases_cost": 3000.0,
+    "land_purchases_count": 2,
+    "seed_purchases_cost": {
+      "WHEAT": 1040.0,
+      "CARROT": 540.0,
+      "TOMATO": 200.0,
+      "STRAWBERRY": 1700.0,
+      "MELON": 1600.0
+    },
+    "feed_purchases_cost": 38613.0,
+    "fertilizer_purchases_cost": 0.0,
+    "hiring_costs": 7545.0,
+    "hires_count": 294,
+    "action_counts": {
+      "total_actions": 7373,
+      "actions_in_core": 7009,
+      "actions_in_sw": 364,
+      "move_actions": 4863,
+      "water_actions": 918,
+      "harvest_actions": 258,
+      "plant_actions": 165,
+      "feed_actions": 238,
+      "care_actions": 215,
+      "collect_fertilizer_actions": 253,
+      "fertilize_actions": 16,
+      "place_actions": 23,
+      "pickup_actions": 139,
+      "drop_actions": 21,
+      "dig_actions": 12,
+      "build_actions": 0,
+      "idle_actions": 239,
+      "quadrant_transitions_nw_to_sw": 66,
+      "quadrant_transitions_sw_to_nw": 132,
+      "sw_water_executed": 81,
+      "core_water_executed": 837,
+      "sw_harvest_executed": 12,
+      "core_harvest_executed": 246,
+      "sw_plant_executed": 12,
+      "core_plant_executed": 153
+    },
+    "inventory_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "harvested_core": 369,
+        "harvested_sw": 0,
+        "purchased": 1008,
+        "produced_animal": 0,
+        "sold": 1134,
+        "consumed_feed": 238,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 5,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CARROT": {
+        "opening": 0,
+        "harvested_core": 65,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 65,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "TOMATO": {
+        "opening": 0,
+        "harvested_core": 26,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 26,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "harvested_core": 64,
+        "harvested_sw": 16,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 74,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 6,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "harvested_core": 72,
+        "harvested_sw": 24,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 90,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 6,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MILK": {
+        "opening": 0,
+        "harvested_core": 67,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 67,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "WOOL": {
+        "opening": 0,
+        "harvested_core": 170,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 166,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 4,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "FERTILIZER": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 253,
+        "sold": 231,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 16,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 3,
+        "ending_shed": 0,
+        "ending_worker": 3
+      },
+      "EGG": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CHICKEN_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "COW_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      }
+    },
+    "seed_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "purchased": 104,
+        "planted_core": 99,
+        "planted_sw": 0,
+        "ending": 5
+      },
+      "CARROT": {
+        "opening": 0,
+        "purchased": 27,
+        "planted_core": 25,
+        "planted_sw": 0,
+        "ending": 2
+      },
+      "TOMATO": {
+        "opening": 0,
+        "purchased": 4,
+        "planted_core": 4,
+        "planted_sw": 0,
+        "ending": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "purchased": 17,
+        "planted_core": 13,
+        "planted_sw": 4,
+        "ending": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "purchased": 20,
+        "planted_core": 12,
+        "planted_sw": 8,
+        "ending": 0
+      }
+    },
+    "sw_task_admission_telemetry": {
+      "sw_tasks_proposed": 657,
+      "sw_tasks_admitted": 38,
+      "sw_tasks_deferred": 303,
+      "sw_tasks_eligible_unselected": 316,
+      "sw_tasks_unresolved": 0,
+      "task_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 167,
+        "UNASSIGNED_CORE_HARD_TASK": 112,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3,
+        "UNAUTHORIZED_SW_TILE": 21
+      },
+      "deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 167,
+        "UNASSIGNED_CORE_HARD_TASK": 112,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 3,
+        "UNAUTHORIZED_SW_TILE": 21
+      },
+      "sw_candidate_evaluations_proposed": 7108,
+      "sw_candidate_evaluations_admitted": 4822,
+      "sw_candidate_evaluations_deferred": 2286,
+      "candidate_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 1586,
+        "UNASSIGNED_CORE_HARD_TASK": 501,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 34,
+        "UNAUTHORIZED_SW_TILE": 165
+      },
+      "core_hard_tasks_due": 559,
+      "core_hard_tasks_completed": 509,
+      "missed_core_deadlines": 50,
+      "hard_tasks_by_op": {
+        "WATER": {
+          "due": 294,
+          "completed": 285,
+          "missed": 9,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "FEED": {
+          "due": 190,
+          "completed": 167,
+          "missed": 23,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "HARVEST": {
+          "due": 9,
+          "completed": 3,
+          "missed": 6,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "OTHER": {
+          "due": 66,
+          "completed": 54,
+          "missed": 12,
+          "invalidated": 0,
+          "superseded": 0
+        }
+      },
+      "core_commands_emitted": 0,
+      "sw_commands_emitted": 0,
+      "core_actions_executed": 7009,
+      "sw_actions_executed": 364,
+      "core_water_executed": 837,
+      "sw_water_executed": 81,
+      "core_harvest_executed": 246,
+      "sw_harvest_executed": 12,
+      "core_plant_executed": 153,
+      "sw_plant_executed": 12,
+      "core_feed_executed": 238,
+      "sw_feed_executed": 0,
+      "core_hard_tasks_invalidated": 0,
+      "core_hard_tasks_superseded": 0,
+      "attempted_harvest_sw": 0,
+      "attempted_water_sw": 0,
+      "attempted_plant_sw": 0,
+      "attempted_feed_sw": 0,
+      "attempted_harvest_core": 0,
+      "attempted_water_core": 0,
+      "attempted_plant_core": 0,
+      "attempted_feed_core": 0,
+      "executed_harvest_sw": 12,
+      "harvested_crop_units_sw": {
+        "WHEAT": 0,
+        "CARROT": 0,
+        "TOMATO": 0,
+        "STRAWBERRY": 16,
+        "MELON": 24
+      },
+      "sw_weed_executed": 0,
+      "sw_tile_utilization": {
+        "(3,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(3,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,6)": {
+          "water_count": 12,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(0,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        }
+      }
+    },
+    "sw_expansion_history": [],
+    "sw_expansion_rejections": [],
+    "animal_survival": {
+      "monitored_seat": 0,
+      "total_turns": 719,
+      "peak_herd_size": 13,
+      "final_herd_size": 13,
+      "confirmed_starvation_deaths": 0,
+      "confirmed_escapes": 0,
+      "ambiguous_disappearances": 0,
+      "total_animal_losses": 0,
+      "missed_feeding_days": 30,
+      "hourly_unfed_observations": 4077,
+      "rollover_reconciliations_count": 29,
+      "min_shed_wheat_observed": 0,
+      "min_total_feed_wheat_observed": 0,
+      "feed_floor_breach_turns": 102,
+      "continuous_feed_floor_preserved": 0,
+      "loss_events_count": 0,
+      "loss_events": []
+    },
+    "min_cash_seen": 251.0,
+    "peak_shed_occupancy": 100,
+    "latency_p95_ms": 112.24137000390328,
+    "latency_max_ms": 762.5372000038624,
+    "latency_mean_ms": 50.600919471767874
+  },
+  {
+    "match_id": "97013_pass_0_ARM_G12",
+    "seed": 97013,
+    "opponent": "pass",
+    "seat": 0,
+    "arm": "ARM_G12",
+    "final_cash": 95234.0,
+    "opp_final_cash": 3000.0,
+    "win": 1,
+    "reconciled_cash": 95234.0,
+    "cash_residual": 0.0,
+    "crop_sales_rev": {
+      "WHEAT": 46629.0,
+      "CARROT": 1926.0,
+      "TOMATO": 1516.0,
+      "STRAWBERRY": 17510.0,
+      "MELON": 25778.0
+    },
+    "animal_sales_rev": {
+      "MILK": 10011.0,
+      "WOOL": 36670.0,
+      "FERTILIZER": 17625.0,
+      "EGG": 0.0,
+      "CHICKEN_MEAT": 0.0,
+      "COW_MEAT": 0.0
+    },
+    "total_crop_revenue": 93359.0,
+    "total_animal_revenue": 64306.0,
+    "core_crop_revenue": 80032.57,
+    "sw_total_crop_revenue": 13326.43,
+    "sw_total_seed_cost": 1520.0,
+    "sw_net_crop_margin": 11806.43,
+    "crop_provenance": {
+      "STRAWBERRY": {
+        "harvested_core": 52,
+        "harvested_sw": 16,
+        "total_sold": 68,
+        "total_revenue": 17510.0,
+        "sw_attributed_revenue": 4120.0,
+        "core_attributed_revenue": 13390.0,
+        "sw_planted": 4,
+        "sw_seed_cost": 400
+      },
+      "MELON": {
+        "harvested_core": 72,
+        "harvested_sw": 40,
+        "total_sold": 112,
+        "total_revenue": 25778.0,
+        "sw_attributed_revenue": 9206.43,
+        "core_attributed_revenue": 16571.57,
+        "sw_planted": 14,
+        "sw_seed_cost": 1120
+      },
+      "TOMATO": {
+        "harvested_core": 26,
+        "harvested_sw": 0,
+        "total_sold": 26,
+        "total_revenue": 1516.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 1516.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      },
+      "WHEAT": {
+        "harvested_core": 317,
+        "harvested_sw": 0,
+        "total_sold": 1181,
+        "total_revenue": 46629.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 46629.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      },
+      "CARROT": {
+        "harvested_core": 55,
+        "harvested_sw": 0,
+        "total_sold": 55,
+        "total_revenue": 1926.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 1926.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      }
+    },
+    "land_purchases_cost": 3000.0,
+    "land_purchases_count": 2,
+    "seed_purchases_cost": {
+      "WHEAT": 930.0,
+      "CARROT": 480.0,
+      "TOMATO": 200.0,
+      "STRAWBERRY": 1700.0,
+      "MELON": 2160.0
+    },
+    "feed_purchases_cost": 43116.0,
+    "fertilizer_purchases_cost": 0.0,
+    "hiring_costs": 7545.0,
+    "hires_count": 294,
+    "action_counts": {
+      "total_actions": 7388,
+      "actions_in_core": 6842,
+      "actions_in_sw": 546,
+      "move_actions": 5024,
+      "water_actions": 878,
+      "harvest_actions": 241,
+      "plant_actions": 158,
+      "feed_actions": 232,
+      "care_actions": 196,
+      "collect_fertilizer_actions": 239,
+      "fertilize_actions": 9,
+      "place_actions": 16,
+      "pickup_actions": 124,
+      "drop_actions": 17,
+      "dig_actions": 15,
+      "build_actions": 0,
+      "idle_actions": 226,
+      "quadrant_transitions_nw_to_sw": 85,
+      "quadrant_transitions_sw_to_nw": 150,
+      "sw_water_executed": 113,
+      "core_water_executed": 765,
+      "sw_harvest_executed": 15,
+      "core_harvest_executed": 226,
+      "sw_plant_executed": 18,
+      "core_plant_executed": 140
+    },
+    "inventory_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "harvested_core": 317,
+        "harvested_sw": 0,
+        "purchased": 1104,
+        "produced_animal": 0,
+        "sold": 1181,
+        "consumed_feed": 232,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 4,
+        "ending_shed": 0,
+        "ending_worker": 4
+      },
+      "CARROT": {
+        "opening": 0,
+        "harvested_core": 55,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 55,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "TOMATO": {
+        "opening": 0,
+        "harvested_core": 26,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 26,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "harvested_core": 52,
+        "harvested_sw": 16,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 68,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "harvested_core": 72,
+        "harvested_sw": 40,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 112,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MILK": {
+        "opening": 0,
+        "harvested_core": 65,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 65,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "WOOL": {
+        "opening": 0,
+        "harvested_core": 154,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 150,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 4
+      },
+      "FERTILIZER": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 239,
+        "sold": 228,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 9,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 2
+      },
+      "EGG": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CHICKEN_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "COW_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      }
+    },
+    "seed_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "purchased": 93,
+        "planted_core": 92,
+        "planted_sw": 0,
+        "ending": 1
+      },
+      "CARROT": {
+        "opening": 0,
+        "purchased": 24,
+        "planted_core": 19,
+        "planted_sw": 0,
+        "ending": 5
+      },
+      "TOMATO": {
+        "opening": 0,
+        "purchased": 4,
+        "planted_core": 4,
+        "planted_sw": 0,
+        "ending": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "purchased": 17,
+        "planted_core": 13,
+        "planted_sw": 4,
+        "ending": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "purchased": 27,
+        "planted_core": 12,
+        "planted_sw": 14,
+        "ending": 1
+      }
+    },
+    "sw_task_admission_telemetry": {
+      "sw_tasks_proposed": 822,
+      "sw_tasks_admitted": 51,
+      "sw_tasks_deferred": 445,
+      "sw_tasks_eligible_unselected": 326,
+      "sw_tasks_unresolved": 0,
+      "task_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 210,
+        "UNASSIGNED_CORE_HARD_TASK": 221,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 2,
+        "UNAUTHORIZED_SW_TILE": 12
+      },
+      "deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 210,
+        "UNASSIGNED_CORE_HARD_TASK": 221,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 2,
+        "UNAUTHORIZED_SW_TILE": 12
+      },
+      "sw_candidate_evaluations_proposed": 8490,
+      "sw_candidate_evaluations_admitted": 4304,
+      "sw_candidate_evaluations_deferred": 4186,
+      "candidate_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 2103,
+        "UNASSIGNED_CORE_HARD_TASK": 1897,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 85,
+        "UNAUTHORIZED_SW_TILE": 101
+      },
+      "core_hard_tasks_due": 584,
+      "core_hard_tasks_completed": 518,
+      "missed_core_deadlines": 66,
+      "hard_tasks_by_op": {
+        "WATER": {
+          "due": 297,
+          "completed": 283,
+          "missed": 14,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "FEED": {
+          "due": 207,
+          "completed": 179,
+          "missed": 28,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "HARVEST": {
+          "due": 17,
+          "completed": 3,
+          "missed": 14,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "OTHER": {
+          "due": 63,
+          "completed": 53,
+          "missed": 10,
+          "invalidated": 0,
+          "superseded": 0
+        }
+      },
+      "core_commands_emitted": 0,
+      "sw_commands_emitted": 0,
+      "core_actions_executed": 6842,
+      "sw_actions_executed": 546,
+      "core_water_executed": 765,
+      "sw_water_executed": 113,
+      "core_harvest_executed": 226,
+      "sw_harvest_executed": 15,
+      "core_plant_executed": 140,
+      "sw_plant_executed": 18,
+      "core_feed_executed": 232,
+      "sw_feed_executed": 0,
+      "core_hard_tasks_invalidated": 0,
+      "core_hard_tasks_superseded": 0,
+      "attempted_harvest_sw": 0,
+      "attempted_water_sw": 0,
+      "attempted_plant_sw": 0,
+      "attempted_feed_sw": 0,
+      "attempted_harvest_core": 0,
+      "attempted_water_core": 0,
+      "attempted_plant_core": 0,
+      "attempted_feed_core": 0,
+      "executed_harvest_sw": 15,
+      "harvested_crop_units_sw": {
+        "WHEAT": 0,
+        "CARROT": 0,
+        "TOMATO": 0,
+        "STRAWBERRY": 16,
+        "MELON": 40
+      },
+      "sw_weed_executed": 0,
+      "sw_tile_utilization": {
+        "(3,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(3,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,6)": {
+          "water_count": 12,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(0,6)": {
+          "water_count": 7,
+          "harvest_count": 0,
+          "plant_count": 1
+        },
+        "(4,6)": {
+          "water_count": 8,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(2,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,7)": {
+          "water_count": 9,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,7)": {
+          "water_count": 9,
+          "harvest_count": 1,
+          "plant_count": 2
+        }
+      }
+    },
+    "sw_expansion_history": [],
+    "sw_expansion_rejections": [],
+    "animal_survival": {
+      "monitored_seat": 0,
+      "total_turns": 719,
+      "peak_herd_size": 13,
+      "final_herd_size": 13,
+      "confirmed_starvation_deaths": 0,
+      "confirmed_escapes": 0,
+      "ambiguous_disappearances": 0,
+      "total_animal_losses": 0,
+      "missed_feeding_days": 37,
+      "hourly_unfed_observations": 4259,
+      "rollover_reconciliations_count": 29,
+      "min_shed_wheat_observed": 0,
+      "min_total_feed_wheat_observed": 0,
+      "feed_floor_breach_turns": 103,
+      "continuous_feed_floor_preserved": 0,
+      "loss_events_count": 0,
+      "loss_events": []
+    },
+    "min_cash_seen": 251.0,
+    "peak_shed_occupancy": 100,
+    "latency_p95_ms": 113.54992999258687,
+    "latency_max_ms": 798.8324000034481,
+    "latency_mean_ms": 50.16967260102034
+  },
+  {
+    "match_id": "97013_pass_0_ARM_G16",
+    "seed": 97013,
+    "opponent": "pass",
+    "seat": 0,
+    "arm": "ARM_G16",
+    "final_cash": 90139.0,
+    "opp_final_cash": 3000.0,
+    "win": 1,
+    "reconciled_cash": 90139.0,
+    "cash_residual": 0.0,
+    "crop_sales_rev": {
+      "WHEAT": 46475.0,
+      "CARROT": 1926.0,
+      "TOMATO": 1792.0,
+      "STRAWBERRY": 16011.0,
+      "MELON": 26971.0
+    },
+    "animal_sales_rev": {
+      "MILK": 9368.0,
+      "WOOL": 33042.0,
+      "FERTILIZER": 16842.0,
+      "EGG": 0.0,
+      "CHICKEN_MEAT": 0.0,
+      "COW_MEAT": 0.0
+    },
+    "total_crop_revenue": 93175.0,
+    "total_animal_revenue": 59252.0,
+    "core_crop_revenue": 78151.79,
+    "sw_total_crop_revenue": 15023.21,
+    "sw_total_seed_cost": 1880.0,
+    "sw_net_crop_margin": 13143.21,
+    "crop_provenance": {
+      "STRAWBERRY": {
+        "harvested_core": 46,
+        "harvested_sw": 16,
+        "total_sold": 62,
+        "total_revenue": 16011.0,
+        "sw_attributed_revenue": 4131.87,
+        "core_attributed_revenue": 11879.13,
+        "sw_planted": 4,
+        "sw_seed_cost": 400
+      },
+      "MELON": {
+        "harvested_core": 72,
+        "harvested_sw": 47,
+        "total_sold": 119,
+        "total_revenue": 26971.0,
+        "sw_attributed_revenue": 10652.41,
+        "core_attributed_revenue": 16318.59,
+        "sw_planted": 16,
+        "sw_seed_cost": 1280
+      },
+      "TOMATO": {
+        "harvested_core": 26,
+        "harvested_sw": 4,
+        "total_sold": 30,
+        "total_revenue": 1792.0,
+        "sw_attributed_revenue": 238.93,
+        "core_attributed_revenue": 1553.07,
+        "sw_planted": 4,
+        "sw_seed_cost": 200
+      },
+      "WHEAT": {
+        "harvested_core": 309,
+        "harvested_sw": 0,
+        "total_sold": 1191,
+        "total_revenue": 46475.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 46475.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      },
+      "CARROT": {
+        "harvested_core": 55,
+        "harvested_sw": 0,
+        "total_sold": 55,
+        "total_revenue": 1926.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 1926.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      }
+    },
+    "land_purchases_cost": 3000.0,
+    "land_purchases_count": 2,
+    "seed_purchases_cost": {
+      "WHEAT": 890.0,
+      "CARROT": 440.0,
+      "TOMATO": 400.0,
+      "STRAWBERRY": 1700.0,
+      "MELON": 2240.0
+    },
+    "feed_purchases_cost": 42773.0,
+    "fertilizer_purchases_cost": 0.0,
+    "hiring_costs": 7545.0,
+    "hires_count": 294,
+    "action_counts": {
+      "total_actions": 7376,
+      "actions_in_core": 6670,
+      "actions_in_sw": 706,
+      "move_actions": 5027,
+      "water_actions": 893,
+      "harvest_actions": 238,
+      "plant_actions": 162,
+      "feed_actions": 222,
+      "care_actions": 176,
+      "collect_fertilizer_actions": 230,
+      "fertilize_actions": 10,
+      "place_actions": 18,
+      "pickup_actions": 130,
+      "drop_actions": 14,
+      "dig_actions": 17,
+      "build_actions": 0,
+      "idle_actions": 226,
+      "quadrant_transitions_nw_to_sw": 92,
+      "quadrant_transitions_sw_to_nw": 161,
+      "sw_water_executed": 141,
+      "core_water_executed": 752,
+      "sw_harvest_executed": 20,
+      "core_harvest_executed": 218,
+      "sw_plant_executed": 24,
+      "core_plant_executed": 138
+    },
+    "inventory_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "harvested_core": 309,
+        "harvested_sw": 0,
+        "purchased": 1108,
+        "produced_animal": 0,
+        "sold": 1191,
+        "consumed_feed": 222,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 4,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CARROT": {
+        "opening": 0,
+        "harvested_core": 55,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 55,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "TOMATO": {
+        "opening": 0,
+        "harvested_core": 26,
+        "harvested_sw": 4,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 30,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "harvested_core": 46,
+        "harvested_sw": 16,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 62,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "harvested_core": 72,
+        "harvested_sw": 47,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 119,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MILK": {
+        "opening": 0,
+        "harvested_core": 61,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 61,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "WOOL": {
+        "opening": 0,
+        "harvested_core": 138,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 135,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 3,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "FERTILIZER": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 230,
+        "sold": 214,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 10,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 3,
+        "ending_shed": 0,
+        "ending_worker": 3
+      },
+      "EGG": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CHICKEN_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "COW_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      }
+    },
+    "seed_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "purchased": 89,
+        "planted_core": 89,
+        "planted_sw": 0,
+        "ending": 0
+      },
+      "CARROT": {
+        "opening": 0,
+        "purchased": 22,
+        "planted_core": 20,
+        "planted_sw": 0,
+        "ending": 2
+      },
+      "TOMATO": {
+        "opening": 0,
+        "purchased": 8,
+        "planted_core": 4,
+        "planted_sw": 4,
+        "ending": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "purchased": 17,
+        "planted_core": 13,
+        "planted_sw": 4,
+        "ending": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "purchased": 28,
+        "planted_core": 12,
+        "planted_sw": 16,
+        "ending": 0
+      }
+    },
+    "sw_task_admission_telemetry": {
+      "sw_tasks_proposed": 927,
+      "sw_tasks_admitted": 70,
+      "sw_tasks_deferred": 455,
+      "sw_tasks_eligible_unselected": 402,
+      "sw_tasks_unresolved": 0,
+      "task_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 251,
+        "UNASSIGNED_CORE_HARD_TASK": 185,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 19
+      },
+      "deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 251,
+        "UNASSIGNED_CORE_HARD_TASK": 185,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 19
+      },
+      "sw_candidate_evaluations_proposed": 9220,
+      "sw_candidate_evaluations_admitted": 4790,
+      "sw_candidate_evaluations_deferred": 4430,
+      "candidate_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 3086,
+        "UNASSIGNED_CORE_HARD_TASK": 1231,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 113
+      },
+      "core_hard_tasks_due": 597,
+      "core_hard_tasks_completed": 526,
+      "missed_core_deadlines": 71,
+      "hard_tasks_by_op": {
+        "WATER": {
+          "due": 297,
+          "completed": 287,
+          "missed": 10,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "FEED": {
+          "due": 213,
+          "completed": 175,
+          "missed": 38,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "HARVEST": {
+          "due": 16,
+          "completed": 6,
+          "missed": 10,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "OTHER": {
+          "due": 71,
+          "completed": 58,
+          "missed": 13,
+          "invalidated": 0,
+          "superseded": 0
+        }
+      },
+      "core_commands_emitted": 0,
+      "sw_commands_emitted": 0,
+      "core_actions_executed": 6670,
+      "sw_actions_executed": 706,
+      "core_water_executed": 752,
+      "sw_water_executed": 141,
+      "core_harvest_executed": 218,
+      "sw_harvest_executed": 20,
+      "core_plant_executed": 138,
+      "sw_plant_executed": 24,
+      "core_feed_executed": 222,
+      "sw_feed_executed": 0,
+      "core_hard_tasks_invalidated": 0,
+      "core_hard_tasks_superseded": 0,
+      "attempted_harvest_sw": 0,
+      "attempted_water_sw": 0,
+      "attempted_plant_sw": 0,
+      "attempted_feed_sw": 0,
+      "attempted_harvest_core": 0,
+      "attempted_water_core": 0,
+      "attempted_plant_core": 0,
+      "attempted_feed_core": 0,
+      "executed_harvest_sw": 20,
+      "harvested_crop_units_sw": {
+        "WHEAT": 0,
+        "CARROT": 0,
+        "TOMATO": 4,
+        "STRAWBERRY": 16,
+        "MELON": 47
+      },
+      "sw_weed_executed": 4,
+      "sw_tile_utilization": {
+        "(3,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(3,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,6)": {
+          "water_count": 12,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(0,6)": {
+          "water_count": 12,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(4,6)": {
+          "water_count": 9,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(2,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(3,7)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(4,7)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(1,8)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(0,8)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        }
+      }
+    },
+    "sw_expansion_history": [],
+    "sw_expansion_rejections": [],
+    "animal_survival": {
+      "monitored_seat": 0,
+      "total_turns": 719,
+      "peak_herd_size": 13,
+      "final_herd_size": 13,
+      "confirmed_starvation_deaths": 0,
+      "confirmed_escapes": 0,
+      "ambiguous_disappearances": 0,
+      "total_animal_losses": 0,
+      "missed_feeding_days": 41,
+      "hourly_unfed_observations": 4256,
+      "rollover_reconciliations_count": 29,
+      "min_shed_wheat_observed": 0,
+      "min_total_feed_wheat_observed": 0,
+      "feed_floor_breach_turns": 102,
+      "continuous_feed_floor_preserved": 0,
+      "loss_events_count": 0,
+      "loss_events": []
+    },
+    "min_cash_seen": 251.0,
+    "peak_shed_occupancy": 100,
+    "latency_p95_ms": 111.23560000269211,
+    "latency_max_ms": 689.9579000019003,
+    "latency_mean_ms": 50.317750208723254
+  },
+  {
+    "match_id": "97013_pass_0_ARM_G20",
+    "seed": 97013,
+    "opponent": "pass",
+    "seat": 0,
+    "arm": "ARM_G20",
+    "final_cash": 90139.0,
+    "opp_final_cash": 3000.0,
+    "win": 1,
+    "reconciled_cash": 90139.0,
+    "cash_residual": 0.0,
+    "crop_sales_rev": {
+      "WHEAT": 46475.0,
+      "CARROT": 1926.0,
+      "TOMATO": 1792.0,
+      "STRAWBERRY": 16011.0,
+      "MELON": 26971.0
+    },
+    "animal_sales_rev": {
+      "MILK": 9368.0,
+      "WOOL": 33042.0,
+      "FERTILIZER": 16842.0,
+      "EGG": 0.0,
+      "CHICKEN_MEAT": 0.0,
+      "COW_MEAT": 0.0
+    },
+    "total_crop_revenue": 93175.0,
+    "total_animal_revenue": 59252.0,
+    "core_crop_revenue": 78151.79,
+    "sw_total_crop_revenue": 15023.21,
+    "sw_total_seed_cost": 1880.0,
+    "sw_net_crop_margin": 13143.21,
+    "crop_provenance": {
+      "STRAWBERRY": {
+        "harvested_core": 46,
+        "harvested_sw": 16,
+        "total_sold": 62,
+        "total_revenue": 16011.0,
+        "sw_attributed_revenue": 4131.87,
+        "core_attributed_revenue": 11879.13,
+        "sw_planted": 4,
+        "sw_seed_cost": 400
+      },
+      "MELON": {
+        "harvested_core": 72,
+        "harvested_sw": 47,
+        "total_sold": 119,
+        "total_revenue": 26971.0,
+        "sw_attributed_revenue": 10652.41,
+        "core_attributed_revenue": 16318.59,
+        "sw_planted": 16,
+        "sw_seed_cost": 1280
+      },
+      "TOMATO": {
+        "harvested_core": 26,
+        "harvested_sw": 4,
+        "total_sold": 30,
+        "total_revenue": 1792.0,
+        "sw_attributed_revenue": 238.93,
+        "core_attributed_revenue": 1553.07,
+        "sw_planted": 4,
+        "sw_seed_cost": 200
+      },
+      "WHEAT": {
+        "harvested_core": 309,
+        "harvested_sw": 0,
+        "total_sold": 1191,
+        "total_revenue": 46475.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 46475.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      },
+      "CARROT": {
+        "harvested_core": 55,
+        "harvested_sw": 0,
+        "total_sold": 55,
+        "total_revenue": 1926.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 1926.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      }
+    },
+    "land_purchases_cost": 3000.0,
+    "land_purchases_count": 2,
+    "seed_purchases_cost": {
+      "WHEAT": 890.0,
+      "CARROT": 440.0,
+      "TOMATO": 400.0,
+      "STRAWBERRY": 1700.0,
+      "MELON": 2240.0
+    },
+    "feed_purchases_cost": 42773.0,
+    "fertilizer_purchases_cost": 0.0,
+    "hiring_costs": 7545.0,
+    "hires_count": 294,
+    "action_counts": {
+      "total_actions": 7376,
+      "actions_in_core": 6670,
+      "actions_in_sw": 706,
+      "move_actions": 5027,
+      "water_actions": 893,
+      "harvest_actions": 238,
+      "plant_actions": 162,
+      "feed_actions": 222,
+      "care_actions": 176,
+      "collect_fertilizer_actions": 230,
+      "fertilize_actions": 10,
+      "place_actions": 18,
+      "pickup_actions": 130,
+      "drop_actions": 14,
+      "dig_actions": 17,
+      "build_actions": 0,
+      "idle_actions": 226,
+      "quadrant_transitions_nw_to_sw": 92,
+      "quadrant_transitions_sw_to_nw": 161,
+      "sw_water_executed": 141,
+      "core_water_executed": 752,
+      "sw_harvest_executed": 20,
+      "core_harvest_executed": 218,
+      "sw_plant_executed": 24,
+      "core_plant_executed": 138
+    },
+    "inventory_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "harvested_core": 309,
+        "harvested_sw": 0,
+        "purchased": 1108,
+        "produced_animal": 0,
+        "sold": 1191,
+        "consumed_feed": 222,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 4,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CARROT": {
+        "opening": 0,
+        "harvested_core": 55,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 55,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "TOMATO": {
+        "opening": 0,
+        "harvested_core": 26,
+        "harvested_sw": 4,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 30,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "harvested_core": 46,
+        "harvested_sw": 16,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 62,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "harvested_core": 72,
+        "harvested_sw": 47,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 119,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MILK": {
+        "opening": 0,
+        "harvested_core": 61,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 61,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "WOOL": {
+        "opening": 0,
+        "harvested_core": 138,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 135,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 3,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "FERTILIZER": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 230,
+        "sold": 214,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 10,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 3,
+        "ending_shed": 0,
+        "ending_worker": 3
+      },
+      "EGG": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CHICKEN_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "COW_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      }
+    },
+    "seed_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "purchased": 89,
+        "planted_core": 89,
+        "planted_sw": 0,
+        "ending": 0
+      },
+      "CARROT": {
+        "opening": 0,
+        "purchased": 22,
+        "planted_core": 20,
+        "planted_sw": 0,
+        "ending": 2
+      },
+      "TOMATO": {
+        "opening": 0,
+        "purchased": 8,
+        "planted_core": 4,
+        "planted_sw": 4,
+        "ending": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "purchased": 17,
+        "planted_core": 13,
+        "planted_sw": 4,
+        "ending": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "purchased": 28,
+        "planted_core": 12,
+        "planted_sw": 16,
+        "ending": 0
+      }
+    },
+    "sw_task_admission_telemetry": {
+      "sw_tasks_proposed": 927,
+      "sw_tasks_admitted": 70,
+      "sw_tasks_deferred": 455,
+      "sw_tasks_eligible_unselected": 402,
+      "sw_tasks_unresolved": 0,
+      "task_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 251,
+        "UNASSIGNED_CORE_HARD_TASK": 185,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 19
+      },
+      "deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 251,
+        "UNASSIGNED_CORE_HARD_TASK": 185,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 19
+      },
+      "sw_candidate_evaluations_proposed": 9220,
+      "sw_candidate_evaluations_admitted": 4790,
+      "sw_candidate_evaluations_deferred": 4430,
+      "candidate_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 3086,
+        "UNASSIGNED_CORE_HARD_TASK": 1231,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 113
+      },
+      "core_hard_tasks_due": 597,
+      "core_hard_tasks_completed": 526,
+      "missed_core_deadlines": 71,
+      "hard_tasks_by_op": {
+        "WATER": {
+          "due": 297,
+          "completed": 287,
+          "missed": 10,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "FEED": {
+          "due": 213,
+          "completed": 175,
+          "missed": 38,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "HARVEST": {
+          "due": 16,
+          "completed": 6,
+          "missed": 10,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "OTHER": {
+          "due": 71,
+          "completed": 58,
+          "missed": 13,
+          "invalidated": 0,
+          "superseded": 0
+        }
+      },
+      "core_commands_emitted": 0,
+      "sw_commands_emitted": 0,
+      "core_actions_executed": 6670,
+      "sw_actions_executed": 706,
+      "core_water_executed": 752,
+      "sw_water_executed": 141,
+      "core_harvest_executed": 218,
+      "sw_harvest_executed": 20,
+      "core_plant_executed": 138,
+      "sw_plant_executed": 24,
+      "core_feed_executed": 222,
+      "sw_feed_executed": 0,
+      "core_hard_tasks_invalidated": 0,
+      "core_hard_tasks_superseded": 0,
+      "attempted_harvest_sw": 0,
+      "attempted_water_sw": 0,
+      "attempted_plant_sw": 0,
+      "attempted_feed_sw": 0,
+      "attempted_harvest_core": 0,
+      "attempted_water_core": 0,
+      "attempted_plant_core": 0,
+      "attempted_feed_core": 0,
+      "executed_harvest_sw": 20,
+      "harvested_crop_units_sw": {
+        "WHEAT": 0,
+        "CARROT": 0,
+        "TOMATO": 4,
+        "STRAWBERRY": 16,
+        "MELON": 47
+      },
+      "sw_weed_executed": 4,
+      "sw_tile_utilization": {
+        "(3,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(3,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,6)": {
+          "water_count": 12,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(0,6)": {
+          "water_count": 12,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(4,6)": {
+          "water_count": 9,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(2,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(3,7)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(4,7)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(1,8)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(0,8)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        }
+      }
+    },
+    "sw_expansion_history": [],
+    "sw_expansion_rejections": [],
+    "animal_survival": {
+      "monitored_seat": 0,
+      "total_turns": 719,
+      "peak_herd_size": 13,
+      "final_herd_size": 13,
+      "confirmed_starvation_deaths": 0,
+      "confirmed_escapes": 0,
+      "ambiguous_disappearances": 0,
+      "total_animal_losses": 0,
+      "missed_feeding_days": 41,
+      "hourly_unfed_observations": 4256,
+      "rollover_reconciliations_count": 29,
+      "min_shed_wheat_observed": 0,
+      "min_total_feed_wheat_observed": 0,
+      "feed_floor_breach_turns": 102,
+      "continuous_feed_floor_preserved": 0,
+      "loss_events_count": 0,
+      "loss_events": []
+    },
+    "min_cash_seen": 251.0,
+    "peak_shed_occupancy": 100,
+    "latency_p95_ms": 109.66233999351972,
+    "latency_max_ms": 801.8986999959452,
+    "latency_mean_ms": 50.06834478448233
+  },
+  {
+    "match_id": "97013_pass_0_ARM_G24",
+    "seed": 97013,
+    "opponent": "pass",
+    "seat": 0,
+    "arm": "ARM_G24",
+    "final_cash": 90139.0,
+    "opp_final_cash": 3000.0,
+    "win": 1,
+    "reconciled_cash": 90139.0,
+    "cash_residual": 0.0,
+    "crop_sales_rev": {
+      "WHEAT": 46475.0,
+      "CARROT": 1926.0,
+      "TOMATO": 1792.0,
+      "STRAWBERRY": 16011.0,
+      "MELON": 26971.0
+    },
+    "animal_sales_rev": {
+      "MILK": 9368.0,
+      "WOOL": 33042.0,
+      "FERTILIZER": 16842.0,
+      "EGG": 0.0,
+      "CHICKEN_MEAT": 0.0,
+      "COW_MEAT": 0.0
+    },
+    "total_crop_revenue": 93175.0,
+    "total_animal_revenue": 59252.0,
+    "core_crop_revenue": 78151.79,
+    "sw_total_crop_revenue": 15023.21,
+    "sw_total_seed_cost": 1880.0,
+    "sw_net_crop_margin": 13143.21,
+    "crop_provenance": {
+      "STRAWBERRY": {
+        "harvested_core": 46,
+        "harvested_sw": 16,
+        "total_sold": 62,
+        "total_revenue": 16011.0,
+        "sw_attributed_revenue": 4131.87,
+        "core_attributed_revenue": 11879.13,
+        "sw_planted": 4,
+        "sw_seed_cost": 400
+      },
+      "MELON": {
+        "harvested_core": 72,
+        "harvested_sw": 47,
+        "total_sold": 119,
+        "total_revenue": 26971.0,
+        "sw_attributed_revenue": 10652.41,
+        "core_attributed_revenue": 16318.59,
+        "sw_planted": 16,
+        "sw_seed_cost": 1280
+      },
+      "TOMATO": {
+        "harvested_core": 26,
+        "harvested_sw": 4,
+        "total_sold": 30,
+        "total_revenue": 1792.0,
+        "sw_attributed_revenue": 238.93,
+        "core_attributed_revenue": 1553.07,
+        "sw_planted": 4,
+        "sw_seed_cost": 200
+      },
+      "WHEAT": {
+        "harvested_core": 309,
+        "harvested_sw": 0,
+        "total_sold": 1191,
+        "total_revenue": 46475.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 46475.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      },
+      "CARROT": {
+        "harvested_core": 55,
+        "harvested_sw": 0,
+        "total_sold": 55,
+        "total_revenue": 1926.0,
+        "sw_attributed_revenue": 0.0,
+        "core_attributed_revenue": 1926.0,
+        "sw_planted": 0,
+        "sw_seed_cost": 0
+      }
+    },
+    "land_purchases_cost": 3000.0,
+    "land_purchases_count": 2,
+    "seed_purchases_cost": {
+      "WHEAT": 890.0,
+      "CARROT": 440.0,
+      "TOMATO": 400.0,
+      "STRAWBERRY": 1700.0,
+      "MELON": 2240.0
+    },
+    "feed_purchases_cost": 42773.0,
+    "fertilizer_purchases_cost": 0.0,
+    "hiring_costs": 7545.0,
+    "hires_count": 294,
+    "action_counts": {
+      "total_actions": 7376,
+      "actions_in_core": 6670,
+      "actions_in_sw": 706,
+      "move_actions": 5027,
+      "water_actions": 893,
+      "harvest_actions": 238,
+      "plant_actions": 162,
+      "feed_actions": 222,
+      "care_actions": 176,
+      "collect_fertilizer_actions": 230,
+      "fertilize_actions": 10,
+      "place_actions": 18,
+      "pickup_actions": 130,
+      "drop_actions": 14,
+      "dig_actions": 17,
+      "build_actions": 0,
+      "idle_actions": 226,
+      "quadrant_transitions_nw_to_sw": 92,
+      "quadrant_transitions_sw_to_nw": 161,
+      "sw_water_executed": 141,
+      "core_water_executed": 752,
+      "sw_harvest_executed": 20,
+      "core_harvest_executed": 218,
+      "sw_plant_executed": 24,
+      "core_plant_executed": 138
+    },
+    "inventory_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "harvested_core": 309,
+        "harvested_sw": 0,
+        "purchased": 1108,
+        "produced_animal": 0,
+        "sold": 1191,
+        "consumed_feed": 222,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 4,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CARROT": {
+        "opening": 0,
+        "harvested_core": 55,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 55,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "TOMATO": {
+        "opening": 0,
+        "harvested_core": 26,
+        "harvested_sw": 4,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 30,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "harvested_core": 46,
+        "harvested_sw": 16,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 62,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "harvested_core": 72,
+        "harvested_sw": 47,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 119,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "MILK": {
+        "opening": 0,
+        "harvested_core": 61,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 61,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "WOOL": {
+        "opening": 0,
+        "harvested_core": 138,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 135,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 3,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "FERTILIZER": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 230,
+        "sold": 214,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 10,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 3,
+        "ending_shed": 0,
+        "ending_worker": 3
+      },
+      "EGG": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "CHICKEN_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      },
+      "COW_MEAT": {
+        "opening": 0,
+        "harvested_core": 0,
+        "harvested_sw": 0,
+        "purchased": 0,
+        "produced_animal": 0,
+        "sold": 0,
+        "consumed_feed": 0,
+        "consumed_fertilizer": 0,
+        "consumed_animal_place": 0,
+        "discarded_overflow": 0,
+        "ending_shed": 0,
+        "ending_worker": 0
+      }
+    },
+    "seed_ledger": {
+      "WHEAT": {
+        "opening": 0,
+        "purchased": 89,
+        "planted_core": 89,
+        "planted_sw": 0,
+        "ending": 0
+      },
+      "CARROT": {
+        "opening": 0,
+        "purchased": 22,
+        "planted_core": 20,
+        "planted_sw": 0,
+        "ending": 2
+      },
+      "TOMATO": {
+        "opening": 0,
+        "purchased": 8,
+        "planted_core": 4,
+        "planted_sw": 4,
+        "ending": 0
+      },
+      "STRAWBERRY": {
+        "opening": 0,
+        "purchased": 17,
+        "planted_core": 13,
+        "planted_sw": 4,
+        "ending": 0
+      },
+      "MELON": {
+        "opening": 0,
+        "purchased": 28,
+        "planted_core": 12,
+        "planted_sw": 16,
+        "ending": 0
+      }
+    },
+    "sw_task_admission_telemetry": {
+      "sw_tasks_proposed": 927,
+      "sw_tasks_admitted": 70,
+      "sw_tasks_deferred": 455,
+      "sw_tasks_eligible_unselected": 402,
+      "sw_tasks_unresolved": 0,
+      "task_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 251,
+        "UNASSIGNED_CORE_HARD_TASK": 185,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 19
+      },
+      "deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 251,
+        "UNASSIGNED_CORE_HARD_TASK": 185,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 19
+      },
+      "sw_candidate_evaluations_proposed": 9220,
+      "sw_candidate_evaluations_admitted": 4790,
+      "sw_candidate_evaluations_deferred": 4430,
+      "candidate_deferral_reasons": {
+        "INSUFFICIENT_HORIZON_FOR_COMMITMENT": 3086,
+        "UNASSIGNED_CORE_HARD_TASK": 1231,
+        "NEAR_TERM_CORE_CAPACITY_DEFICIT": 113
+      },
+      "core_hard_tasks_due": 597,
+      "core_hard_tasks_completed": 526,
+      "missed_core_deadlines": 71,
+      "hard_tasks_by_op": {
+        "WATER": {
+          "due": 297,
+          "completed": 287,
+          "missed": 10,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "FEED": {
+          "due": 213,
+          "completed": 175,
+          "missed": 38,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "HARVEST": {
+          "due": 16,
+          "completed": 6,
+          "missed": 10,
+          "invalidated": 0,
+          "superseded": 0
+        },
+        "OTHER": {
+          "due": 71,
+          "completed": 58,
+          "missed": 13,
+          "invalidated": 0,
+          "superseded": 0
+        }
+      },
+      "core_commands_emitted": 0,
+      "sw_commands_emitted": 0,
+      "core_actions_executed": 6670,
+      "sw_actions_executed": 706,
+      "core_water_executed": 752,
+      "sw_water_executed": 141,
+      "core_harvest_executed": 218,
+      "sw_harvest_executed": 20,
+      "core_plant_executed": 138,
+      "sw_plant_executed": 24,
+      "core_feed_executed": 222,
+      "sw_feed_executed": 0,
+      "core_hard_tasks_invalidated": 0,
+      "core_hard_tasks_superseded": 0,
+      "attempted_harvest_sw": 0,
+      "attempted_water_sw": 0,
+      "attempted_plant_sw": 0,
+      "attempted_feed_sw": 0,
+      "attempted_harvest_core": 0,
+      "attempted_water_core": 0,
+      "attempted_plant_core": 0,
+      "attempted_feed_core": 0,
+      "executed_harvest_sw": 20,
+      "harvested_crop_units_sw": {
+        "WHEAT": 0,
+        "CARROT": 0,
+        "TOMATO": 4,
+        "STRAWBERRY": 16,
+        "MELON": 47
+      },
+      "sw_weed_executed": 4,
+      "sw_tile_utilization": {
+        "(3,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(3,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(2,6)": {
+          "water_count": 11,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,6)": {
+          "water_count": 12,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,5)": {
+          "water_count": 9,
+          "harvest_count": 2,
+          "plant_count": 1
+        },
+        "(0,6)": {
+          "water_count": 12,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(4,6)": {
+          "water_count": 9,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(2,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(0,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(1,7)": {
+          "water_count": 10,
+          "harvest_count": 1,
+          "plant_count": 2
+        },
+        "(3,7)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(4,7)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(1,8)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        },
+        "(0,8)": {
+          "water_count": 5,
+          "harvest_count": 1,
+          "plant_count": 1
+        }
+      }
+    },
+    "sw_expansion_history": [],
+    "sw_expansion_rejections": [],
+    "animal_survival": {
+      "monitored_seat": 0,
+      "total_turns": 719,
+      "peak_herd_size": 13,
+      "final_herd_size": 13,
+      "confirmed_starvation_deaths": 0,
+      "confirmed_escapes": 0,
+      "ambiguous_disappearances": 0,
+      "total_animal_losses": 0,
+      "missed_feeding_days": 41,
+      "hourly_unfed_observations": 4256,
+      "rollover_reconciliations_count": 29,
+      "min_shed_wheat_observed": 0,
+      "min_total_feed_wheat_observed": 0,
+      "feed_floor_breach_turns": 102,
+      "continuous_feed_floor_preserved": 0,
+      "loss_events_count": 0,
+      "loss_events": []
+    },
+    "min_cash_seen": 251.0,
+    "peak_shed_occupancy": 100,
+    "latency_p95_ms": 70.54790999536635,
+    "latency_max_ms": 655.688500002725,
+    "latency_mean_ms": 30.0887205843985
+  }
+]
