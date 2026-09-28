@@ -359,12 +359,16 @@ class SWTaskAdmissionTelemetry:
         op: str,
         pos: Tuple[int, int],
         outcome: Optional[Dict[str, Any]] = None,
+        step: Optional[int] = None,
     ) -> None:
         is_sw = (region == "SW")
         if is_sw:
             self.sw_actions_executed += 1
         else:
             self.core_actions_executed += 1
+
+        if step is not None:
+            self.record_hard_obligation_executed(op, pos, step, outcome)
 
         if op == "WATER":
             if is_sw:

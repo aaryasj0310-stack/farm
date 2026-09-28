@@ -1,0 +1,37 @@
+{
+  "phase": "P0-A",
+  "timestamp": "2026-09-28T22:49:00+05:30",
+  "branch": "experiment/sw-c2-workforce-coordinator",
+  "source_sha": "ec16d96fa19efc5f7f7f33bb416ff9778bccb0d7",
+  "protected_production_commit": "faa6cb99f66b2066e639806d0eabc72a0c7d7982",
+  "protected_submission_sha256": "E7FF7C5A4B91364C10898CB8A22E4680C9330F1E30171593DA2D1EED7DD4ED41",
+  "engine": {
+    "framework": "kaggle_environments",
+    "version": "1.32.7",
+    "python_version": "3.12.10",
+    "kaggriculture_path": "C:\\Users\\rohit\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\kaggle_environments\\envs\\kaggriculture\\kaggriculture.py",
+    "kaggriculture_sha256": "BC8A54879EF02C7EA64B8B333D6A976F0EA65C4949149D01F463F23BCCEE653E"
+  },
+  "verified_engine_mechanics": {
+    "last_executable_step": 718,
+    "last_executable_day_hour": "D29H22",
+    "step_719_called": false,
+    "execution_ordering": "unit_actions -> process_market -> town_consume -> decay_plants -> end_of_day",
+    "hiring_availability": "order at Hour 0 -> settles in market -> hands appear and act at Hour 1",
+    "midnight_worker_behavior": "hands disappear -> farmer returns to spawn (4,4) -> inventories drop to shed up to shedCapacity(100)",
+    "melon_yield_semantics": "accumulates yield by watering in window age [6, 12], +1 per watered day (+2 if fertilized), capped at max_yield=6, legal harvest starting first_yield_day=10",
+    "animal_escape_rule": "consecutive_unfed >= 2 at midnight triggers escape, structure remains",
+    "held_yield_saturation": "yield_units capped at max_held (4 for goose, 6 for cow/sheep); excess production lost"
+  },
+  "historical_controls": {
+    "arm_a_canonical": 113368.88,
+    "arm_b_frozen_b3c_8tile": 109302.50,
+    "arm_c_adaptive_8tile_parity": 109302.50,
+    "arm_d_adaptive_12tile": 106449.05,
+    "arm_e_adaptive_16tile": 103794.80,
+    "arm_f_adaptive_20tile": 102013.50,
+    "arm_g_adaptive_24tile": 99915.12,
+    "panel": "40 matched pairs (4 seeds x 5 opponents x 2 seats)",
+    "target_cash_goal": 130000.0
+  }
+}

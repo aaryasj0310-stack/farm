@@ -240,43 +240,7 @@ def reset_opponent_model_state():
         pass
 
 
-def reset_agent_state():
-    """Reset module-level singletons and persistent state between matches."""
-    global _FC, _PLANNER, _BUILDER, _BRAIN, _LIQUIDATOR, _CENTRAL_PLANNER
-    _FC = None
-    _PLANNER = None
-    _BUILDER = None
-    _BRAIN = None
-    _LIQUIDATOR = None
-    _CENTRAL_PLANNER = None
-    reset_opponent_model_state()
-    try:
-        from execution.midnight_storage_controller import reset_midnight_storage_telemetry
-        reset_midnight_storage_telemetry()
-    except Exception:
-        try:
-            from agent.execution.midnight_storage_controller import reset_midnight_storage_telemetry
-            reset_midnight_storage_telemetry()
-        except Exception:
-            pass
-    try:
-        from execution.same_turn_deposit_controller import reset_same_turn_deposit_telemetry
-        reset_same_turn_deposit_telemetry()
-    except Exception:
-        try:
-            from agent.execution.same_turn_deposit_controller import reset_same_turn_deposit_telemetry
-            reset_same_turn_deposit_telemetry()
-        except Exception:
-            pass
-    try:
-        from strategy.animal_service_economics import reset_animal_service_telemetry
-        reset_animal_service_telemetry()
-    except Exception:
-        try:
-            from agent.strategy.animal_service_economics import reset_animal_service_telemetry
-            reset_animal_service_telemetry()
-        except Exception:
-            pass
+
 
 
 try:
@@ -469,6 +433,26 @@ def reset_agent_state() -> None:
     try:
         from execution.sw_task_admission_controller import reset_sw_task_admission_telemetry
         reset_sw_task_admission_telemetry()
+    except Exception:
+        pass
+    try:
+        from execution.service_obligation_ledger import reset_service_obligation_ledger
+        reset_service_obligation_ledger()
+    except Exception:
+        pass
+    try:
+        from execution.workforce_capacity_forecast import reset_workforce_capacity_forecaster
+        reset_workforce_capacity_forecaster()
+    except Exception:
+        pass
+    try:
+        from execution.same_turn_deposit_controller import reset_same_turn_deposit_telemetry
+        reset_same_turn_deposit_telemetry()
+    except Exception:
+        pass
+    try:
+        from strategy.animal_service_economics import reset_animal_service_telemetry
+        reset_animal_service_telemetry()
     except Exception:
         pass
 
@@ -990,6 +974,26 @@ def _agent_decision(obs: Dict[str, Any]) -> Dict[str, Any]:
             if next_q in _qhb:
                 plan.intents["buy_land"] = False  # force block
         tasks = build_tasks(ctx, plan)
+        try:
+            from execution.service_obligation_ledger import get_service_obligation_ledger
+            from execution.workforce_capacity_forecast import get_workforce_capacity_forecaster
+            _obl_ledger = get_service_obligation_ledger()
+            _step = ctx.get("step", ctx.get("day", 0) * 24 + ctx.get("hour", 0))
+            if ctx.get("hour") == 0:
+                _obl_ledger.handle_midnight_rollover(ctx.get("day", 0))
+            if isinstance(ctx, dict) and "farm" in ctx:
+                _f_dict = ctx["farm"].__dict__ if hasattr(ctx["farm"], "__dict__") else ctx["farm"]
+                _p_dict = ctx.get("private_raw") or (ctx["private"].__dict__ if hasattr(ctx.get("private"), "__dict__") else {})
+                _obl_ledger.reconcile_with_observation(_step, _f_dict, _p_dict)
+            _obl_ledger.register_tasks_from_scheduler(tasks, ctx)
+            _forecaster = get_workforce_capacity_forecaster()
+            _f_dict = ctx["farm"].__dict__ if hasattr(ctx["farm"], "__dict__") else ctx["farm"]
+            _p_dict = ctx.get("private_raw") or (ctx["private"].__dict__ if hasattr(ctx.get("private"), "__dict__") else {})
+            _fc_res = _forecaster.generate_forecast(_step, _f_dict, _p_dict, _obl_ledger)
+            if isinstance(ctx, dict):
+                ctx["shadow_capacity_forecast"] = _fc_res
+        except Exception:
+            pass
         asg = assign_tasks(tasks, ctx)
         scheduled_product_deposits = _predict_same_turn_product_deposits(ctx, asg)
         if isinstance(ctx, dict):
