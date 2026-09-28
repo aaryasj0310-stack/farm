@@ -1,0 +1,213 @@
+{
+  "engine_parameters": {
+    "STRAWBERRY": {
+      "first_yield_day": 10,
+      "max_yield_day": 10,
+      "interval": 2,
+      "max_yield": 4,
+      "ongoing": 1,
+      "planner_planting_deadline": 13
+    },
+    "MELON": {
+      "first_yield_day": 10,
+      "max_yield_day": 12,
+      "interval": 0,
+      "max_yield": 6,
+      "ongoing": 0,
+      "planner_planting_deadline": 17
+    }
+  },
+  "strawberry_planting_horizon_table": [
+    {
+      "plant_day": 10,
+      "first_yield_day": 20,
+      "harvest_days": [
+        20,
+        22,
+        24,
+        26,
+        28,
+        30
+      ],
+      "harvest_count": 6,
+      "total_units_potential": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 11,
+      "first_yield_day": 21,
+      "harvest_days": [
+        21,
+        23,
+        25,
+        27,
+        29
+      ],
+      "harvest_count": 5,
+      "total_units_potential": 5,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 12,
+      "first_yield_day": 22,
+      "harvest_days": [
+        22,
+        24,
+        26,
+        28,
+        30
+      ],
+      "harvest_count": 5,
+      "total_units_potential": 5,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 13,
+      "first_yield_day": 23,
+      "harvest_days": [
+        23,
+        25,
+        27,
+        29
+      ],
+      "harvest_count": 4,
+      "total_units_potential": 4,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 14,
+      "first_yield_day": 24,
+      "harvest_days": [
+        24,
+        26,
+        28,
+        30
+      ],
+      "harvest_count": 4,
+      "total_units_potential": 4,
+      "planner_permitted": 0
+    },
+    {
+      "plant_day": 15,
+      "first_yield_day": 25,
+      "harvest_days": [
+        25,
+        27,
+        29
+      ],
+      "harvest_count": 3,
+      "total_units_potential": 3,
+      "planner_permitted": 0
+    },
+    {
+      "plant_day": 16,
+      "first_yield_day": 26,
+      "harvest_days": [
+        26,
+        28,
+        30
+      ],
+      "harvest_count": 3,
+      "total_units_potential": 3,
+      "planner_permitted": 0
+    }
+  ],
+  "melon_planting_horizon_table": [
+    {
+      "plant_day": 10,
+      "first_yield_day": 20,
+      "max_yield_day": 22,
+      "optimal_harvest_day": 22,
+      "yield_units": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 11,
+      "first_yield_day": 21,
+      "max_yield_day": 23,
+      "optimal_harvest_day": 23,
+      "yield_units": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 12,
+      "first_yield_day": 22,
+      "max_yield_day": 24,
+      "optimal_harvest_day": 24,
+      "yield_units": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 13,
+      "first_yield_day": 23,
+      "max_yield_day": 25,
+      "optimal_harvest_day": 25,
+      "yield_units": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 14,
+      "first_yield_day": 24,
+      "max_yield_day": 26,
+      "optimal_harvest_day": 26,
+      "yield_units": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 15,
+      "first_yield_day": 25,
+      "max_yield_day": 27,
+      "optimal_harvest_day": 27,
+      "yield_units": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 16,
+      "first_yield_day": 26,
+      "max_yield_day": 28,
+      "optimal_harvest_day": 28,
+      "yield_units": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 17,
+      "first_yield_day": 27,
+      "max_yield_day": 29,
+      "optimal_harvest_day": 29,
+      "yield_units": 6,
+      "planner_permitted": 1
+    },
+    {
+      "plant_day": 18,
+      "first_yield_day": 28,
+      "max_yield_day": 30,
+      "optimal_harvest_day": 30,
+      "yield_units": 6,
+      "planner_permitted": 0
+    }
+  ],
+  "feasibility_assessment_for_b3d": {
+    "delay_to_day_12": {
+      "sw_purchase_day": 12,
+      "first_plant_day": 12,
+      "strawberry_impact": "Yields 5 times (Days 22, 24, 26, 28, 30) instead of 6 times. Still captures 83.3% of maximum yield.",
+      "melon_impact": "Full 6-unit harvest at Day 24. 100% yield efficiency preserved.",
+      "capital_preservation": "$2,000 cash retained for Core operations during critical Days 10-12 compounding window.",
+      "verdict": "Highly feasible and economically sound."
+    },
+    "delay_to_day_13": {
+      "sw_purchase_day": 13,
+      "first_plant_day": 13,
+      "strawberry_impact": "Yields 4 times (Days 23, 25, 27, 29). Captures 66.7% yield.",
+      "melon_impact": "Full 6-unit harvest at Day 25. 100% yield efficiency preserved.",
+      "capital_preservation": "$2,000 cash retained through Day 13.",
+      "verdict": "Feasible, but Strawberry deadline (Day 13) leaves zero buffer for weather/delays."
+    },
+    "delay_to_day_14_plus": {
+      "sw_purchase_day": 14,
+      "strawberry_impact": "STRAWBERRY_PLANT_DEADLINE = 13 blocks Strawberry entirely (0 plantings).",
+      "melon_impact": "Melon remains fully viable up to Day 17.",
+      "verdict": "Eliminates SW multi-crop diversification; SW becomes melon-only."
+    }
+  }
+}

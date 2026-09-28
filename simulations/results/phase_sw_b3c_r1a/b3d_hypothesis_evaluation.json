@@ -1,0 +1,30 @@
+{
+  "evaluation_scope": "Phase SW-B3D Single Isolated Intervention Candidate Selection",
+  "candidate_hypotheses": {
+    "hypothesis_1_delayed_sw_purchase": {
+      "name": "Delayed SW Land Purchase (Day 12/13)",
+      "mechanism": "Postpone SW land unlock until Day 12. Retain $2,000 capital in Core during Days 10-12 compounding window.",
+      "engine_feasibility": "Strawberry yields 5 times (vs 6). Melon matures on Day 24 with full 6 units. High feasibility.",
+      "expected_financial_gain": "+$1,200 to +$1,800 whole-farm cash.",
+      "risk": "Compressed planting window; leaving Day 13 for Strawberry allows 0 buffer."
+    },
+    "hypothesis_2_protected_morning_feeding": {
+      "name": "Protected Morning Feeding Window (Hours 0-5)",
+      "mechanism": "Strictly prohibit any SW task admission, SW candidate evaluation, or SW quadrant transit during morning hours (0-5) until all Tier 0 Core animal feeding obligations are fully committed or completed.",
+      "engine_feasibility": "100% compliant with engine rules. Livestock hunger ticks at step boundaries; morning feeding guarantees 0 hunger escalation.",
+      "expected_financial_gain": "+$450 to +$750 panel-wide; completely recovers $12,000 COW loss in starvation cell s97017.",
+      "risk": "Near zero. Minimal SW impact since crops can be watered/harvested mid-day."
+    },
+    "hypothesis_3_dedicated_worker_locality": {
+      "name": "Dedicated SW Worker Locality (1 worker pinned)",
+      "mechanism": "Pin 1 worker permanently in SW to eliminate 190 quadrant transitions.",
+      "engine_feasibility": "SW only requires 10-14 actions/day. Pinned worker is idle 42-58% of the day, while Core farm faces a 3-13 action deficit during peak production (Days 12-25).",
+      "expected_financial_gain": "-$500 to +$200 (high risk of net loss).",
+      "risk": "Severe Core crop neglect and missed harvests during peak production days."
+    }
+  },
+  "single_isolated_recommendation": {
+    "recommended_hypothesis": "Hypothesis 2: Protected Morning Feeding Window",
+    "justification": "Protected morning feeding directly addresses the single fatal vulnerability observed in the panel (COW starvation in s97017) with zero algorithmic risk to core crop operations and zero SW crop yield impairment. It provides the cleanest, most verifiable, and safest foundation for whole-farm profitability before attempting timing or locality shifts."
+  }
+}

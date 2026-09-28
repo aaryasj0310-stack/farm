@@ -2113,7 +2113,8 @@ def assign_tasks(tasks, ctx, extra_units=()):
         telem = get_sw_task_admission_telemetry()
         for t_id, rec in telem.sw_lifecycle_records.items():
             if rec.step == step and rec.disposition is None:
-                telem.record_sw_task_disposition(t_id, "ELIGIBLE_UNSELECTED", "LOWER_BAND_SCORE")
+                reason = "CAPACITY_EXHAUSTED" if len(busy) >= n_units else "LOWER_BAND_SCORE"
+                telem.record_sw_task_disposition(t_id, "ELIGIBLE_UNSELECTED", reason)
     except Exception:
         pass
 

@@ -67,7 +67,8 @@ class HardObligationRecord:
     assigned_worker: Optional[int] = None
     emitted: bool = False
     completed_step: Optional[int] = None
-    status: str = "PENDING"  # PENDING, COMPLETED, MISSED
+    status: str = "PENDING"  # PENDING, COMPLETED, MISSED, INVALIDATED, SUPERSEDED
+    terminal_reason: Optional[str] = None
 
 
 @dataclass
@@ -82,6 +83,8 @@ class SWTaskLifecycleRecord:
     priority: float = 0.0
     disposition: Optional[str] = None  # "REJECTED_BY_GATE", "SELECTED_AND_ASSIGNED", "ELIGIBLE_UNSELECTED"
     reason: Optional[str] = None
+    executed: bool = False
+    completed_step: Optional[int] = None
 
 
 @dataclass
@@ -107,11 +110,13 @@ class SWTaskAdmissionTelemetry:
     core_hard_tasks_due: int = 0
     core_hard_tasks_completed: int = 0
     missed_core_deadlines: int = 0
+    core_hard_tasks_invalidated: int = 0
+    core_hard_tasks_superseded: int = 0
     hard_tasks_by_op: Dict[str, Dict[str, int]] = field(default_factory=lambda: {
-        "WATER": {"due": 0, "completed": 0, "missed": 0},
-        "FEED": {"due": 0, "completed": 0, "missed": 0},
-        "HARVEST": {"due": 0, "completed": 0, "missed": 0},
-        "OTHER": {"due": 0, "completed": 0, "missed": 0},
+        "WATER": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0},
+        "FEED": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0},
+        "HARVEST": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0},
+        "OTHER": {"due": 0, "completed": 0, "missed": 0, "invalidated": 0},
     })
 
     # Commands emitted (before engine step)
@@ -120,6 +125,11 @@ class SWTaskAdmissionTelemetry:
     attempted_harvest_sw: int = 0
     attempted_water_sw: int = 0
     attempted_plant_sw: int = 0
+    attempted_feed_sw: int = 0
+    attempted_harvest_core: int = 0
+    attempted_water_core: int = 0
+    attempted_plant_core: int = 0
+    attempted_feed_core: int = 0
 
     # Actions executed (engine-confirmed)
     core_actions_executed: int = 0
@@ -130,6 +140,8 @@ class SWTaskAdmissionTelemetry:
     sw_harvest_executed: int = 0
     core_plant_executed: int = 0
     sw_plant_executed: int = 0
+    core_feed_executed: int = 0
+    sw_feed_executed: int = 0
     sw_weed_executed: int = 0
     harvested_crop_units_sw: Dict[str, int] = field(default_factory=lambda: {
         "WHEAT": 0, "CARROT": 0, "TOMATO": 0, "STRAWBERRY": 0, "MELON": 0
@@ -251,17 +263,32 @@ class SWTaskAdmissionTelemetry:
         if task_id in self.hard_obligations:
             self.hard_obligations[task_id].emitted = True
 
-    def record_hard_obligation_executed(self, op: str, pos: Tuple[int, int], step: int) -> None:
+    def record_hard_obligation_executed(
+        self,
+        op: str,
+        pos: Tuple[int, int],
+        step: int,
+        outcome: Optional[Dict[str, Any]] = None,
+    ) -> None:
         pos_tuple = (int(pos[0]), int(pos[1]))
         for rec in self.hard_obligations.values():
             if rec.status == "PENDING" and rec.op == op and (int(rec.pos[0]), int(rec.pos[1])) == pos_tuple:
                 if step <= rec.deadline_step:
-                    rec.status = "COMPLETED"
-                    rec.completed_step = step
-                    self.core_hard_tasks_completed += 1
-                    cat = op if op in self.hard_tasks_by_op else "OTHER"
-                    self.hard_tasks_by_op[cat]["completed"] += 1
-                    break
+                    confirmed = True
+                    if outcome is not None:
+                        if op == "FEED":
+                            confirmed = bool(outcome.get("fed", False))
+                        elif op == "WATER":
+                            confirmed = bool(outcome.get("watered", False))
+                        elif op == "HARVEST":
+                            confirmed = (outcome.get("yield_units", 0) > 0)
+                    if confirmed:
+                        rec.status = "COMPLETED"
+                        rec.completed_step = step
+                        self.core_hard_tasks_completed += 1
+                        cat = op if op in self.hard_tasks_by_op else "OTHER"
+                        self.hard_tasks_by_op[cat]["completed"] += 1
+                        break
 
     def reconcile_hard_deadlines(self, current_step: int) -> None:
         for rec in self.hard_obligations.values():
@@ -289,8 +316,18 @@ class SWTaskAdmissionTelemetry:
                 self.attempted_water_sw += 1
             elif op == "PLANT":
                 self.attempted_plant_sw += 1
+            elif op == "FEED":
+                self.attempted_feed_sw += 1
         else:
             self.core_commands_emitted += 1
+            if op == "HARVEST":
+                self.attempted_harvest_core += 1
+            elif op == "WATER":
+                self.attempted_water_core += 1
+            elif op == "PLANT":
+                self.attempted_plant_core += 1
+            elif op == "FEED":
+                self.attempted_feed_core += 1
 
     def record_executed_action(
         self,
@@ -334,12 +371,17 @@ class SWTaskAdmissionTelemetry:
                 u["plant_count"] += 1
             else:
                 self.core_plant_executed += 1
+        elif op == "FEED":
+            if is_sw:
+                self.sw_feed_executed += 1
+            else:
+                self.core_feed_executed += 1
         elif op in ("DIG", "WEED"):
             if is_sw:
                 self.sw_weed_executed += 1
 
     def to_dict(self) -> Dict[str, Any]:
-        self.reconcile_hard_deadlines(current_step=999999)
+        self.reconcile_hard_deadlines(current_step=720)
 
         if self.sw_lifecycle_records:
             prop = len(self.sw_lifecycle_records)
@@ -385,10 +427,21 @@ class SWTaskAdmissionTelemetry:
             "sw_harvest_executed": self.sw_harvest_executed,
             "core_plant_executed": self.core_plant_executed,
             "sw_plant_executed": self.sw_plant_executed,
-            "sw_weed_executed": self.sw_weed_executed,
+            "core_feed_executed": self.core_feed_executed,
+            "sw_feed_executed": self.sw_feed_executed,
+            "core_hard_tasks_invalidated": self.core_hard_tasks_invalidated,
+            "core_hard_tasks_superseded": self.core_hard_tasks_superseded,
             "attempted_harvest_sw": self.attempted_harvest_sw,
+            "attempted_water_sw": self.attempted_water_sw,
+            "attempted_plant_sw": self.attempted_plant_sw,
+            "attempted_feed_sw": self.attempted_feed_sw,
+            "attempted_harvest_core": self.attempted_harvest_core,
+            "attempted_water_core": self.attempted_water_core,
+            "attempted_plant_core": self.attempted_plant_core,
+            "attempted_feed_core": self.attempted_feed_core,
             "executed_harvest_sw": self.sw_harvest_executed,
             "harvested_crop_units_sw": dict(self.harvested_crop_units_sw),
+            "sw_weed_executed": self.sw_weed_executed,
             "sw_tile_utilization": copy.deepcopy(self.sw_tile_utilization),
         }
 

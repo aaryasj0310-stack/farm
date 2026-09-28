@@ -1,0 +1,23 @@
+{
+  "mean_active_workers": {
+    "arm_a": 10.26,
+    "arm_b": 10.26,
+    "arm_c": 10.26,
+    "arm_d": 10.26
+  },
+  "mean_total_labor_units": {
+    "arm_a": 7380.1,
+    "arm_b": 7378.8,
+    "arm_c": 7377.4,
+    "arm_d": 7379.8
+  },
+  "theoretical_model_4_workers_constant": 2880,
+  "capacity_deficit_vs_4_worker_assumption": -4499.8,
+  "explanation": "Agent begins Day 0 with 1 worker, hires worker 2 on Day 2, worker 3 on Day 5, and worker 4 around Day 10. Assuming constant 4 workers overestimates available match labor by ~300 worker-turns (10.4%).",
+  "labor_allocation_arm_d_mean": {
+    "core_actions": 7108.9,
+    "sw_actions": 270.9,
+    "quadrant_transitions": 157.0,
+    "idle_actions": 321.9
+  }
+}

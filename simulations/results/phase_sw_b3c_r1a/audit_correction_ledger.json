@@ -1,0 +1,59 @@
+{
+  "audit_version": "SW-B3C-R1A",
+  "corrections": [
+    {
+      "defect_id": "DEFECT_1_SW_LAND_COST_ATTRIBUTION",
+      "r1_error": "Charged $3,000 total land cost to SW ($1,000 NE + $2,000 SW), depressing SW net margin by $700 per match to $4,298.86.",
+      "r1a_correction": "Derived SW purchase from engine unlocked quadrants ('SW' in unlocked_quadrants), attributing exactly $2,000 for SW and $1,000 for NE. Restored true SW net margin to $4,998.86.",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_2_LAND_PURCHASE_TIMESTAMPS",
+      "r1_error": "Selected land_purchase_events[0] (NE at Day 5.92) as SW purchase, calculating a false 4.85-day capital lockup.",
+      "r1a_correction": "Filtered land purchase events by quadrant item == 'SW' (Day 10.60), showing true capital lockup is only 0.26 days (6.2 steps) to first planting.",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_3_CROP_FEASIBILITY_MODEL",
+      "r1_error": "Assumed fictitious 6/7-day crop cycles.",
+      "r1a_correction": "Rebuilt exact feasibility model grounded in official engine rules (Strawberry: 10 days to first yield + 2-day recurring; Melon: 10 days to first yield, 12 days to 6 units max yield) with planner deadlines (Day 13 and 17).",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_4_CORE_CROP_REVENUE_RECONCILIATION",
+      "r1_error": "Conflated observed crop revenue with attributed revenue without explicit identity check.",
+      "r1a_correction": "Proved exact mathematical identity: Total Observed Crop Sales = Core Crop Revenue + SW Crop Revenue ($13,678.93 = $6,666.07 + $7,012.86). Proved Observed Delta (-$388.84) = Core Delta (-$7,096.80) + SW Delta (+$6,707.96).",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_5_HARD_OBLIGATION_TELEMETRY",
+      "r1_error": "Did not verify outcome dict in record_hard_obligation_executed and ran reconcile_hard_deadlines at step 999999, creating 1,280 false missed deadlines.",
+      "r1a_correction": "Verified engine-confirmed outcomes (fed, watered, yield_units > 0) and reconciled at step 720. Result: 1,357 completed, exactly 1 missed (s97017 starvation), 0 invalidated, 0 superseded.",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_6_ACTION_EMISSION_TELEMETRY",
+      "r1_error": "Lacked emitted command telemetry, unable to verify invariant executed <= accepted <= emitted.",
+      "r1a_correction": "Implemented command emission hooks before engine step for both Core and SW. Verified successful executed <= accepted <= emitted across 100% of matches.",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_7_SW_TASK_LIFECYCLE_DISPOSITIONS",
+      "r1_error": "Had unresolved task proposals.",
+      "r1a_correction": "Classified 100% of proposals with explicit terminal dispositions (selected/assigned, rejected by gate, unassigned lower score, unassigned capacity exhausted). Result: 0 unresolved proposals.",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_8_STARVATION_FORENSIC_SPECIES",
+      "r1_error": "Reported both Arm B and Arm D lost a sheep in s97017.",
+      "r1a_correction": "Discovered Arm B lost a SHEEP and Arm D lost a COW at (6,4) at step 408. Confirmed shed wheat was never empty (42-53 wheat available). Causal factor was morning dispatch failure.",
+      "status": "REPAIRED"
+    },
+    {
+      "defect_id": "DEFECT_9_EMPIRICAL_WORKER_CAPACITY",
+      "r1_error": "Assumed static 4 workers * 720 = 2,880 actions.",
+      "r1a_correction": "Reconstructed empirical dynamic worker capacity from engine turns (mean 3.58 workers, 2,580 labor units).",
+      "status": "REPAIRED"
+    }
+  ]
+}

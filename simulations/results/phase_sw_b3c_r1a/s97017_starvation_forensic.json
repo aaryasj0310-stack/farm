@@ -1,0 +1,3301 @@
+{
+  "cell": "s97017_melon_sniper_seat1",
+  "animal_loss_arm_b": [
+    {
+      "type": "CONFIRMED_STARVATION_DEATH",
+      "step": 408,
+      "day": 17,
+      "pos": [
+        6,
+        4
+      ],
+      "species": "SHEEP",
+      "pre_consecutive_unfed": 1,
+      "post_tile": {
+        "kind": "PASTURE"
+      },
+      "reason": "Animal reached consecutive_unfed >= 2 at rollover from Day 16 to Day 17"
+    }
+  ],
+  "animal_loss_arm_d": [
+    {
+      "type": "CONFIRMED_STARVATION_DEATH",
+      "step": 408,
+      "day": 17,
+      "pos": [
+        6,
+        4
+      ],
+      "species": "COW",
+      "pre_consecutive_unfed": 1,
+      "post_tile": {
+        "kind": "PASTURE"
+      },
+      "reason": "Animal reached consecutive_unfed >= 2 at rollover from Day 16 to Day 17"
+    }
+  ],
+  "audit_correction": {
+    "r1_statement": "Arm B lost sheep, Arm D lost sheep",
+    "r1a_truth": "Arm B lost SHEEP at (6,4) at step 408; Arm D lost COW at (6,4) at step 408",
+    "species_difference": "Arm D had a COW at (6,4) while Arm B had a SHEEP at (6,4). Both starved at exactly step 408 due to morning window dispatch failure."
+  },
+  "wheat_inventory_during_critical_window": [
+    {
+      "step": 360,
+      "day": 15,
+      "hour": 0,
+      "shed_wheat": 77,
+      "held_wheat": 0
+    },
+    {
+      "step": 366,
+      "day": 15,
+      "hour": 6,
+      "shed_wheat": 44,
+      "held_wheat": 0
+    },
+    {
+      "step": 372,
+      "day": 15,
+      "hour": 12,
+      "shed_wheat": 48,
+      "held_wheat": 11
+    },
+    {
+      "step": 378,
+      "day": 15,
+      "hour": 18,
+      "shed_wheat": 44,
+      "held_wheat": 9
+    },
+    {
+      "step": 384,
+      "day": 16,
+      "hour": 0,
+      "shed_wheat": 53,
+      "held_wheat": 0
+    },
+    {
+      "step": 390,
+      "day": 16,
+      "hour": 6,
+      "shed_wheat": 44,
+      "held_wheat": 11
+    },
+    {
+      "step": 396,
+      "day": 16,
+      "hour": 12,
+      "shed_wheat": 44,
+      "held_wheat": 7
+    },
+    {
+      "step": 402,
+      "day": 16,
+      "hour": 18,
+      "shed_wheat": 44,
+      "held_wheat": 5
+    },
+    {
+      "step": 408,
+      "day": 17,
+      "hour": 0,
+      "shed_wheat": 47,
+      "held_wheat": 0
+    },
+    {
+      "step": 414,
+      "day": 17,
+      "hour": 6,
+      "shed_wheat": 40,
+      "held_wheat": 8
+    }
+  ],
+  "findings": {
+    "physical_wheat_exhausted": 0,
+    "min_shed_wheat_seen_days_15_17": 33,
+    "root_cause": "Worker dispatch failure during morning feeding hours (Hours 0-6). Workers were assigned to SW agricultural tasks and travel, causing feeding obligations in Core at (6,4) to be deferred until hunger reached the fatal threshold (48 turns).",
+    "cure": "Protected Morning Feeding Window (Hypothesis 2): strictly reserve worker capacity during Hours 0-5 for Core Tier 0 feeding obligations before allowing any SW task dispatch."
+  },
+  "sample_step_trace": [
+    {
+      "step": 336,
+      "day": 14,
+      "hour": 0,
+      "cash": 16413.0,
+      "shed_wheat": 76,
+      "held_wheat": 0,
+      "farmer_pos": [
+        4,
+        4
+      ],
+      "hands_pos": [],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 337,
+      "day": 14,
+      "hour": 1,
+      "cash": 19105.0,
+      "shed_wheat": 44,
+      "held_wheat": 0,
+      "farmer_pos": [
+        4,
+        3
+      ],
+      "hands_pos": [
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          5
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 338,
+      "day": 14,
+      "hour": 2,
+      "cash": 18736.0,
+      "shed_wheat": 44,
+      "held_wheat": 0,
+      "farmer_pos": [
+        4,
+        2
+      ],
+      "hands_pos": [
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 339,
+      "day": 14,
+      "hour": 3,
+      "cash": 18736.0,
+      "shed_wheat": 36,
+      "held_wheat": 8,
+      "farmer_pos": [
+        4,
+        1
+      ],
+      "hands_pos": [
+        [
+          3,
+          5
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 340,
+      "day": 14,
+      "hour": 4,
+      "cash": 17088.0,
+      "shed_wheat": 79,
+      "held_wheat": 11,
+      "farmer_pos": [
+        4,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          5
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 341,
+      "day": 14,
+      "hour": 5,
+      "cash": 18032.0,
+      "shed_wheat": 53,
+      "held_wheat": 11,
+      "farmer_pos": [
+        5,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          4
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 342,
+      "day": 14,
+      "hour": 6,
+      "cash": 18176.0,
+      "shed_wheat": 49,
+      "held_wheat": 11,
+      "farmer_pos": [
+        6,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          4
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 343,
+      "day": 14,
+      "hour": 7,
+      "cash": 18176.0,
+      "shed_wheat": 49,
+      "held_wheat": 11,
+      "farmer_pos": [
+        7,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          3
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 344,
+      "day": 14,
+      "hour": 8,
+      "cash": 18176.0,
+      "shed_wheat": 49,
+      "held_wheat": 19,
+      "farmer_pos": [
+        8,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          3
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          4,
+          2
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 345,
+      "day": 14,
+      "hour": 9,
+      "cash": 18156.0,
+      "shed_wheat": 49,
+      "held_wheat": 27,
+      "farmer_pos": [
+        9,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          3
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 346,
+      "day": 14,
+      "hour": 10,
+      "cash": 18280.0,
+      "shed_wheat": 45,
+      "held_wheat": 35,
+      "farmer_pos": [
+        9,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          3
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 347,
+      "day": 14,
+      "hour": 11,
+      "cash": 18260.0,
+      "shed_wheat": 45,
+      "held_wheat": 43,
+      "farmer_pos": [
+        8,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          3
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 348,
+      "day": 14,
+      "hour": 12,
+      "cash": 18275.0,
+      "shed_wheat": 44,
+      "held_wheat": 47,
+      "farmer_pos": [
+        8,
+        0
+      ],
+      "hands_pos": [
+        [
+          3,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 349,
+      "day": 14,
+      "hour": 13,
+      "cash": 18265.0,
+      "shed_wheat": 44,
+      "held_wheat": 51,
+      "farmer_pos": [
+        8,
+        1
+      ],
+      "hands_pos": [
+        [
+          2,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 350,
+      "day": 14,
+      "hour": 14,
+      "cash": 18255.0,
+      "shed_wheat": 44,
+      "held_wheat": 51,
+      "farmer_pos": [
+        8,
+        2
+      ],
+      "hands_pos": [
+        [
+          1,
+          2
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          4,
+          0
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 351,
+      "day": 14,
+      "hour": 15,
+      "cash": 18255.0,
+      "shed_wheat": 44,
+      "held_wheat": 55,
+      "farmer_pos": [
+        8,
+        2
+      ],
+      "hands_pos": [
+        [
+          1,
+          1
+        ],
+        [
+          7,
+          1
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 352,
+      "day": 14,
+      "hour": 16,
+      "cash": 18245.0,
+      "shed_wheat": 44,
+      "held_wheat": 53,
+      "farmer_pos": [
+        8,
+        2
+      ],
+      "hands_pos": [
+        [
+          1,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          4,
+          2
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 353,
+      "day": 14,
+      "hour": 17,
+      "cash": 18245.0,
+      "shed_wheat": 44,
+      "held_wheat": 50,
+      "farmer_pos": [
+        8,
+        3
+      ],
+      "hands_pos": [
+        [
+          0,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 354,
+      "day": 14,
+      "hour": 18,
+      "cash": 18245.0,
+      "shed_wheat": 44,
+      "held_wheat": 47,
+      "farmer_pos": [
+        8,
+        4
+      ],
+      "hands_pos": [
+        [
+          0,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    },
+    {
+      "step": 355,
+      "day": 14,
+      "hour": 19,
+      "cash": 18245.0,
+      "shed_wheat": 44,
+      "held_wheat": 47,
+      "farmer_pos": [
+        7,
+        4
+      ],
+      "hands_pos": [
+        [
+          0,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          4,
+          2
+        ]
+      ],
+      "animals": [
+        {
+          "pos": [
+            0,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            3,
+            0
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            5,
+            0
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            1,
+            1
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            6,
+            1
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            1,
+            2
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            4,
+            3
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            5,
+            3
+          ],
+          "species": "SHEEP",
+          "hunger_count": 0,
+          "fed_today": 1
+        },
+        {
+          "pos": [
+            0,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            3,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        },
+        {
+          "pos": [
+            6,
+            4
+          ],
+          "species": "COW",
+          "hunger_count": 0,
+          "fed_today": 0
+        }
+      ]
+    }
+  ]
+}
