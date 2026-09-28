@@ -1824,3 +1824,31 @@ def set_sw_p1_mission_ownership_enabled(enabled: bool) -> None:
 def get_sw_p1_mission_ownership_enabled() -> bool:
     """Return whether Phase SW-C2 P1 Mission Ownership is enabled."""
     return SW_P1_MISSION_OWNERSHIP_ENABLED
+
+
+# ====================================================================
+# Phase SW-C2: P2 Global Coordinated Regional Dispatch
+# ====================================================================
+SW_P2_COORDINATED_DISPATCH_ENABLED: bool = False
+
+
+def set_sw_p2_coordinated_dispatch_enabled(enabled: bool) -> None:
+    """Configure Phase SW-C2 P2 Global Coordinated Regional Dispatch flag."""
+    global SW_P2_COORDINATED_DISPATCH_ENABLED
+    SW_P2_COORDINATED_DISPATCH_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.execution.task_scheduler", "execution.task_scheduler", "task_scheduler",
+        "agent.execution.coordinated_dispatch_controller", "execution.coordinated_dispatch_controller", "coordinated_dispatch_controller",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_P2_COORDINATED_DISPATCH_ENABLED", SW_P2_COORDINATED_DISPATCH_ENABLED)
+            except Exception:
+                pass
+
+
+def get_sw_p2_coordinated_dispatch_enabled() -> bool:
+    """Return whether Phase SW-C2 P2 Global Coordinated Regional Dispatch is enabled."""
+    return SW_P2_COORDINATED_DISPATCH_ENABLED
+

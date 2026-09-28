@@ -99,6 +99,15 @@ def reset_sticky_missions():
             reset_mission_ownership_tracker()
         except Exception:
             pass
+    try:
+        from execution.coordinated_dispatch_controller import reset_coordinated_dispatch_controller
+        reset_coordinated_dispatch_controller()
+    except Exception:
+        try:
+            from agent.execution.coordinated_dispatch_controller import reset_coordinated_dispatch_controller
+            reset_coordinated_dispatch_controller()
+        except Exception:
+            pass
 
 def get_blocked_task_tracker():
     """Return copy of active blocked task tracker."""
@@ -1839,385 +1848,412 @@ def assign_tasks(tasks, ctx, extra_units=()):
                 tracker.invalidate_mission(obl_id, reason="VALIDATION_FAILED", step=step)
             del _ACTIVE_MISSIONS[u]
 
-    # 1. Tier 1: Urgent survival tasks dispatched immediately to closest capable worker
-    for task in sorted(urgent_tasks, key=lambda t: -t.get("priority", 0)):
-        eligible = _eligible(task)
-        free_units = [u[0] for u in units if u[0] not in busy]
-        if eligible is not None:
-            free_units = [u for u in free_units if u in eligible]
-        if not free_units:
-            continue
-        target = task.get("target") or tuple(farm.farmer)
-        
-        best = None
-        obl_id = None
-        if p1_enabled and tracker is not None:
-            obl_id = compute_task_obligation_id(
-                day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta")
-            )
-            # P1-A & P1-B: Retain worker already actively traveling on this obligation if eligible and free
-            existing_m = tracker.get_mission_for_obligation(obl_id)
-            if existing_m and existing_m.worker_idx in free_units:
-                best = existing_m.worker_idx
-
-        if best is None:
-            # Prefer free units without an active mission
-            non_mission = [u for u in free_units if u not in _ACTIVE_MISSIONS]
-            pool = non_mission if non_mission else free_units
-            best = min(pool, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
-
-        if best in _ACTIVE_MISSIONS:
-            if p1_enabled and tracker is not None:
-                tracker.preempt_worker_mission(best, reason="PREEMPTED_BY_URGENT_SURVIVAL", step=step)
-            del _ACTIVE_MISSIONS[best]  # Preempted by urgent survival task!
-        busy.add(best)
-        task["unit_pos"] = pos_by_idx[best]
-        assignment[best] = task
-
-        # Keep livestock delivery sticky until PLACE succeeds or is invalidated
-        is_multi_turn = (pos_by_idx[best] != tuple(task.get("target", (-1, -1))))
-        should_stick = (task.get("op") == "PLACE" and task.get("args") and task["args"][0] in ANIMALS and is_multi_turn)
-        if p1_enabled and is_multi_turn and task.get("op") != "PASS":
-            should_stick = True
-
-        if should_stick:
-            tgt_pos = task.get("target") or pos_by_idx[best]
-            init_d = abs(pos_by_idx[best][0] - tgt_pos[0]) + abs(pos_by_idx[best][1] - tgt_pos[1])
-            _ACTIVE_MISSIONS[best] = {
-                "task": dict(task),
-                "target": task.get("target"),
-                "op": task["op"],
-                "kind": task.get("kind", ""),
-                "args": task.get("args", []),
-                "priority": task.get("priority", 0),
-                "prev_distance": init_d,
-                "consecutive_no_progress": 0,
-                "mission_age": 0,
-                "steps_active": 0,
-            }
-            if p1_enabled and tracker is not None:
-                if obl_id is None:
-                    obl_id = compute_task_obligation_id(
-                        day, task.get("op", "PASS"), tgt_pos, task.get("kind", ""), task.get("args"), task.get("meta")
-                    )
-                tracker.claim_or_continue_mission(best, obl_id, task, pos_by_idx[best], step)
-
-    # 1b. Kaggriculture Phase M0-A: Same-Turn Crop Pipeline (HARVEST -> PLANT -> WATER)
     try:
-        from execution.crop_pipeline_controller import evaluate_and_assign_pipelines, is_pipeline_enabled
-    except ImportError:
+        from config import get_sw_p2_coordinated_dispatch_enabled
+        p2_coord_enabled = bool(get_sw_p2_coordinated_dispatch_enabled())
+    except Exception:
         try:
-            from agent.execution.crop_pipeline_controller import evaluate_and_assign_pipelines, is_pipeline_enabled
+            from agent.config import get_sw_p2_coordinated_dispatch_enabled
+            p2_coord_enabled = bool(get_sw_p2_coordinated_dispatch_enabled())
+        except Exception:
+            p2_coord_enabled = False
+
+    if p2_coord_enabled:
+        try:
+            from execution.coordinated_dispatch_controller import get_coordinated_dispatch_controller
         except ImportError:
-            is_pipeline_enabled = lambda: False
-
-    if is_pipeline_enabled():
-        free_cands = {u[0] for u in units if u[0] not in busy}
-        if len(free_cands) >= 3:
-            reserved_seeds = {}
-            for t in assignment.values():
-                if t.get("op") == "PLANT" and t.get("args"):
-                    c = t["args"][0]
-                    reserved_seeds[c] = reserved_seeds.get(c, 0) + 1
-
-            macro = ctx.get("plan") or ctx.get("macro")
-            p_asg, p_busy, p_removed = evaluate_and_assign_pipelines(
-                ctx, farm, pos_by_idx, free_cands, regular_tasks, macro, reserved_seeds
-            )
-            for u, t in p_asg.items():
-                assignment[u] = t
-                busy.add(u)
-                if u in _ACTIVE_MISSIONS:
-                    del _ACTIVE_MISSIONS[u]
-
-    # 1c. Re-assign surviving active missions to their sticky workers
-    for u in list(_ACTIVE_MISSIONS.keys()):
-        if u not in busy:
-            m = _ACTIVE_MISSIONS[u]
-            m_task = dict(m["task"])
-            tgt = m_task.get("target")
-            is_sw_field = False
-            if tgt is not None:
-                tgt_tuple = tuple(tgt)
-                is_sw_field = (farm.quadrant_of(tgt_tuple) == "SW" and tgt_tuple not in SHED_ACCESS_TILES)
-
-            try:
-                from config import (
-                    get_sw_core_first_task_admission_enabled,
-                    get_sw_urgency_aware_admission_enabled,
-                )
-                sw_admission_enabled = (
-                    get_sw_core_first_task_admission_enabled() or
-                    get_sw_urgency_aware_admission_enabled()
-                )
-            except Exception:
-                sw_admission_enabled = False
-
-            if is_sw_field and sw_admission_enabled:
-                try:
-                    from execution.sw_task_admission_controller import (
-                        evaluate_active_sw_mission_continuation,
-                        get_sw_task_admission_telemetry,
-                    )
-                    telem = get_sw_task_admission_telemetry()
-                    admit, reason = evaluate_active_sw_mission_continuation(
-                        ctx=ctx,
-                        worker_idx=u,
-                        worker_pos=pos_by_idx[u],
-                        mission=m,
-                        current_assignments=assignment,
-                        remaining_free_units=[fu for fu in pos_by_idx if fu not in busy and fu != u],
-                        all_tasks=tasks,
-                    )
-                    telem.record_candidate_evaluation(admit, reason)
-                    if not admit:
-                        del _ACTIVE_MISSIONS[u]
-                        telem.record_task_deferred(reason)
-                        continue
-                except Exception:
-                    pass
-
-            m_task["unit_pos"] = pos_by_idx[u]
-            assignment[u] = m_task
-            busy.add(u)
-            if p1_enabled and tracker is not None:
-                obl_id = compute_task_obligation_id(day, m["op"], m["target"], m.get("kind", ""), m.get("args"))
-                tracker.claim_or_continue_mission(u, obl_id, m_task, pos_by_idx[u], step)
-            for rt in list(regular_tasks):
-                if rt.get("op") == m["op"] and tuple(rt.get("target", (-1, -1))) == tuple(m["target"]):
-                    regular_tasks.remove(rt)
-                    break
-
-    # 2. Tier 2: Regular tasks with C2 Zonal Hierarchy + C6 Clustered Dispatch
-    tasks_by_quad = {"NW": 0, "NE": 0, "SW": 0, "SE": 0}
-    for t in regular_tasks:
-        tgt = t.get("target") or tuple(farm.farmer)
-        q = farm.quadrant_of(tgt)
-        tasks_by_quad[q] = tasks_by_quad.get(q, 0) + 1
-    unassigned_home_tasks = dict(tasks_by_quad)
-
-    remaining_tasks = list(regular_tasks)
-
-    while remaining_tasks and len(busy) < len(units):
-        free_units = [u[0] for u in units if u[0] not in busy]
-        if not free_units:
-            break
-
-        max_prio = max(t.get("priority", 0) for t in remaining_tasks)
-        band_tasks = [t for t in remaining_tasks if t.get("priority", 0) >= max_prio - C6_PRIORITY_BAND]
-
-        best_match = None  # (score, d, target, u, task, target_quad)
-
-        for task in band_tasks:
+            from agent.execution.coordinated_dispatch_controller import get_coordinated_dispatch_controller
+        coord_ctl = get_coordinated_dispatch_controller()
+        assignment, busy, remaining_tasks = coord_ctl.plan_coordinated_dispatch(
+            tasks=tasks,
+            ctx=ctx,
+            units=units,
+            holders=holders,
+            eligible_fn=_eligible,
+            home_quads=home_quads,
+            active_missions=_ACTIVE_MISSIONS,
+            tracker=tracker,
+        )
+    else:
+        # 1. Tier 1: Urgent survival tasks dispatched immediately to closest capable worker
+        for task in sorted(urgent_tasks, key=lambda t: -t.get("priority", 0)):
             eligible = _eligible(task)
-            if eligible is not None and not eligible:
-                deferred_place.append(task)
-                continue
-            cands = [u for u in free_units if eligible is None or u in eligible]
-            if not cands:
+            free_units = [u[0] for u in units if u[0] not in busy]
+            if eligible is not None:
+                free_units = [u for u in free_units if u in eligible]
+            if not free_units:
                 continue
             target = task.get("target") or tuple(farm.farmer)
-            target_quad = farm.quadrant_of(target)
-            prio = task.get("priority", 0)
+        
+            best = None
+            obl_id = None
+            if p1_enabled and tracker is not None:
+                obl_id = compute_task_obligation_id(
+                    day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta")
+                )
+                # P1-A & P1-B: Retain worker already actively traveling on this obligation if eligible and free
+                existing_m = tracker.get_mission_for_obligation(obl_id)
+                if existing_m and existing_m.worker_idx in free_units:
+                    best = existing_m.worker_idx
 
+            if best is None:
+                # Prefer free units without an active mission
+                non_mission = [u for u in free_units if u not in _ACTIVE_MISSIONS]
+                pool = non_mission if non_mission else free_units
+                best = min(pool, key=lambda u: abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1]))
+
+            if best in _ACTIVE_MISSIONS:
+                if p1_enabled and tracker is not None:
+                    tracker.preempt_worker_mission(best, reason="PREEMPTED_BY_URGENT_SURVIVAL", step=step)
+                del _ACTIVE_MISSIONS[best]  # Preempted by urgent survival task!
+            busy.add(best)
+            task["unit_pos"] = pos_by_idx[best]
+            assignment[best] = task
+
+            # Keep livestock delivery sticky until PLACE succeeds or is invalidated
+            is_multi_turn = (pos_by_idx[best] != tuple(task.get("target", (-1, -1))))
+            should_stick = (task.get("op") == "PLACE" and task.get("args") and task["args"][0] in ANIMALS and is_multi_turn)
+            if p1_enabled and is_multi_turn and task.get("op") != "PASS":
+                should_stick = True
+
+            if should_stick:
+                tgt_pos = task.get("target") or pos_by_idx[best]
+                init_d = abs(pos_by_idx[best][0] - tgt_pos[0]) + abs(pos_by_idx[best][1] - tgt_pos[1])
+                _ACTIVE_MISSIONS[best] = {
+                    "task": dict(task),
+                    "target": task.get("target"),
+                    "op": task["op"],
+                    "kind": task.get("kind", ""),
+                    "args": task.get("args", []),
+                    "priority": task.get("priority", 0),
+                    "prev_distance": init_d,
+                    "consecutive_no_progress": 0,
+                    "mission_age": 0,
+                    "steps_active": 0,
+                }
+                if p1_enabled and tracker is not None:
+                    if obl_id is None:
+                        obl_id = compute_task_obligation_id(
+                            day, task.get("op", "PASS"), tgt_pos, task.get("kind", ""), task.get("args"), task.get("meta")
+                        )
+                    tracker.claim_or_continue_mission(best, obl_id, task, pos_by_idx[best], step)
+
+        # 1b. Kaggriculture Phase M0-A: Same-Turn Crop Pipeline (HARVEST -> PLANT -> WATER)
+        try:
+            from execution.crop_pipeline_controller import evaluate_and_assign_pipelines, is_pipeline_enabled
+        except ImportError:
             try:
-                from config import (
-                    get_sw_core_first_task_admission_enabled,
-                    get_sw_urgency_aware_admission_enabled,
-                )
-                sw_admission_enabled = (
-                    get_sw_core_first_task_admission_enabled() or
-                    get_sw_urgency_aware_admission_enabled()
-                )
-            except Exception:
-                sw_admission_enabled = False
+                from agent.execution.crop_pipeline_controller import evaluate_and_assign_pipelines, is_pipeline_enabled
+            except ImportError:
+                is_pipeline_enabled = lambda: False
 
-            if target_quad == "SW" and task.get("target") not in SHED_ACCESS_TILES and sw_admission_enabled:
+        if is_pipeline_enabled():
+            free_cands = {u[0] for u in units if u[0] not in busy}
+            if len(free_cands) >= 3:
+                reserved_seeds = {}
+                for t in assignment.values():
+                    if t.get("op") == "PLANT" and t.get("args"):
+                        c = t["args"][0]
+                        reserved_seeds[c] = reserved_seeds.get(c, 0) + 1
+
+                macro = ctx.get("plan") or ctx.get("macro")
+                p_asg, p_busy, p_removed = evaluate_and_assign_pipelines(
+                    ctx, farm, pos_by_idx, free_cands, regular_tasks, macro, reserved_seeds
+                )
+                for u, t in p_asg.items():
+                    assignment[u] = t
+                    busy.add(u)
+                    if u in _ACTIVE_MISSIONS:
+                        del _ACTIVE_MISSIONS[u]
+
+        # 1c. Re-assign surviving active missions to their sticky workers
+        for u in list(_ACTIVE_MISSIONS.keys()):
+            if u not in busy:
+                m = _ACTIVE_MISSIONS[u]
+                m_task = dict(m["task"])
+                tgt = m_task.get("target")
+                is_sw_field = False
+                if tgt is not None:
+                    tgt_tuple = tuple(tgt)
+                    is_sw_field = (farm.quadrant_of(tgt_tuple) == "SW" and tgt_tuple not in SHED_ACCESS_TILES)
+
                 try:
-                    from execution.sw_task_admission_controller import (
-                        evaluate_sw_task_admission,
-                        get_sw_task_admission_telemetry,
+                    from config import (
+                        get_sw_core_first_task_admission_enabled,
+                        get_sw_urgency_aware_admission_enabled,
                     )
-                    telem = get_sw_task_admission_telemetry()
-                    t_op = task.get("op", "")
-                    t_tgt = tuple(task.get("target") or (0, 0))
-                    t_item = (task.get("args") or [None])[0]
-                    task_id = f"SW_{step}_{t_op}_{t_tgt}_{t_item}"
-                    telem.record_sw_task_lifecycle_start(
-                        task_id, step, day, hour, t_op, t_tgt, t_item, prio
+                    sw_admission_enabled = (
+                        get_sw_core_first_task_admission_enabled() or
+                        get_sw_urgency_aware_admission_enabled()
                     )
-                    admitted_cands = []
-                    last_reason = "REJECTED"
-                    for u in cands:
-                        admit, reason = evaluate_sw_task_admission(
+                except Exception:
+                    sw_admission_enabled = False
+
+                if is_sw_field and sw_admission_enabled:
+                    try:
+                        from execution.sw_task_admission_controller import (
+                            evaluate_active_sw_mission_continuation,
+                            get_sw_task_admission_telemetry,
+                        )
+                        telem = get_sw_task_admission_telemetry()
+                        admit, reason = evaluate_active_sw_mission_continuation(
                             ctx=ctx,
                             worker_idx=u,
                             worker_pos=pos_by_idx[u],
-                            task=task,
+                            mission=m,
                             current_assignments=assignment,
-                            remaining_free_units=[fu for fu in free_units if fu != u],
+                            remaining_free_units=[fu for fu in pos_by_idx if fu not in busy and fu != u],
                             all_tasks=tasks,
                         )
                         telem.record_candidate_evaluation(admit, reason)
-                        if admit:
-                            admitted_cands.append(u)
-                        else:
-                            last_reason = reason
-                    cands = admitted_cands
-                    if not cands:
-                        telem.record_sw_task_disposition(task_id, "REJECTED_BY_GATE", last_reason)
-                        continue
+                        if not admit:
+                            del _ACTIVE_MISSIONS[u]
+                            telem.record_task_deferred(reason)
+                            continue
+                    except Exception:
+                        pass
+
+                m_task["unit_pos"] = pos_by_idx[u]
+                assignment[u] = m_task
+                busy.add(u)
+                if p1_enabled and tracker is not None:
+                    obl_id = compute_task_obligation_id(day, m["op"], m["target"], m.get("kind", ""), m.get("args"))
+                    tracker.claim_or_continue_mission(u, obl_id, m_task, pos_by_idx[u], step)
+                for rt in list(regular_tasks):
+                    if rt.get("op") == m["op"] and tuple(rt.get("target", (-1, -1))) == tuple(m["target"]):
+                        regular_tasks.remove(rt)
+                        break
+
+        # 2. Tier 2: Regular tasks with C2 Zonal Hierarchy + C6 Clustered Dispatch
+        tasks_by_quad = {"NW": 0, "NE": 0, "SW": 0, "SE": 0}
+        for t in regular_tasks:
+            tgt = t.get("target") or tuple(farm.farmer)
+            q = farm.quadrant_of(tgt)
+            tasks_by_quad[q] = tasks_by_quad.get(q, 0) + 1
+        unassigned_home_tasks = dict(tasks_by_quad)
+
+        remaining_tasks = list(regular_tasks)
+
+        while remaining_tasks and len(busy) < len(units):
+            free_units = [u[0] for u in units if u[0] not in busy]
+            if not free_units:
+                break
+
+            max_prio = max(t.get("priority", 0) for t in remaining_tasks)
+            band_tasks = [t for t in remaining_tasks if t.get("priority", 0) >= max_prio - C6_PRIORITY_BAND]
+
+            best_match = None  # (score, d, target, u, task, target_quad)
+
+            for task in band_tasks:
+                eligible = _eligible(task)
+                if eligible is not None and not eligible:
+                    deferred_place.append(task)
+                    continue
+                cands = [u for u in free_units if eligible is None or u in eligible]
+                if not cands:
+                    continue
+                target = task.get("target") or tuple(farm.farmer)
+                target_quad = farm.quadrant_of(target)
+                prio = task.get("priority", 0)
+
+                try:
+                    from config import (
+                        get_sw_core_first_task_admission_enabled,
+                        get_sw_urgency_aware_admission_enabled,
+                    )
+                    sw_admission_enabled = (
+                        get_sw_core_first_task_admission_enabled() or
+                        get_sw_urgency_aware_admission_enabled()
+                    )
                 except Exception:
-                    pass
+                    sw_admission_enabled = False
 
-            if not soft_locality_on:
-                # C2 Zonal Eligibility (Baseline)
-                home_cands = [u for u in cands if home_quads[u] == target_quad]
-                if home_cands:
-                    eval_cands = [(u, False) for u in home_cands]
-                else:
-                    eval_cands = []
-                    for u in cands:
-                        u_home = home_quads[u]
-                        free_in_home = sum(1 for fu in free_units if home_quads[fu] == u_home)
-                        rem_tasks_home = unassigned_home_tasks.get(u_home, 0)
-                        if rem_tasks_home < free_in_home:
-                            if not ((u_home == "SW" and target_quad == "NE") or (u_home == "NE" and target_quad == "SW")):
-                                d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
-                                if d <= C2_MAX_SPILLOVER_DIST and prio >= C2_SPILLOVER_PRIORITY_FLOOR:
-                                    eval_cands.append((u, True))
-
-                for u, is_spillover in eval_cands:
-                    if p1_enabled and tracker is not None:
-                        obl_id = compute_task_obligation_id(day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta"))
-                        if tracker.is_obligation_owned_by_other(obl_id, u):
-                            tracker._telemetry["duplicate_pursuits_blocked"] += 1
+                if target_quad == "SW" and task.get("target") not in SHED_ACCESS_TILES and sw_admission_enabled:
+                    try:
+                        from execution.sw_task_admission_controller import (
+                            evaluate_sw_task_admission,
+                            get_sw_task_admission_telemetry,
+                        )
+                        telem = get_sw_task_admission_telemetry()
+                        t_op = task.get("op", "")
+                        t_tgt = tuple(task.get("target") or (0, 0))
+                        t_item = (task.get("args") or [None])[0]
+                        task_id = f"SW_{step}_{t_op}_{t_tgt}_{t_item}"
+                        telem.record_sw_task_lifecycle_start(
+                            task_id, step, day, hour, t_op, t_tgt, t_item, prio
+                        )
+                        admitted_cands = []
+                        last_reason = "REJECTED"
+                        for u in cands:
+                            admit, reason = evaluate_sw_task_admission(
+                                ctx=ctx,
+                                worker_idx=u,
+                                worker_pos=pos_by_idx[u],
+                                task=task,
+                                current_assignments=assignment,
+                                remaining_free_units=[fu for fu in free_units if fu != u],
+                                all_tasks=tasks,
+                            )
+                            telem.record_candidate_evaluation(admit, reason)
+                            if admit:
+                                admitted_cands.append(u)
+                            else:
+                                last_reason = reason
+                        cands = admitted_cands
+                        if not cands:
+                            telem.record_sw_task_disposition(task_id, "REJECTED_BY_GATE", last_reason)
                             continue
+                    except Exception:
+                        pass
 
-                    d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
-                    cluster_bonus = 0
-                    if d <= C6_CLUSTER_RADIUS:
-                        cluster_bonus += C6_CLUSTER_BONUS
-                    if d == 0:
-                        cluster_bonus += C6_CLUSTER_BONUS
-                    spill_penalty = 10 if is_spillover else 0
-                    effective_score = -prio + spill_penalty + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
-
-                    match_key = (effective_score, d, target, u)
-                    if best_match is None or match_key < best_match[0]:
-                        best_match = (match_key, u, task, target_quad)
-            else:
-                # Soft, Workload-Aware Worker Locality (Phase C0 Treatment)
-                is_urgent = (
-                    prio >= PRIORITY_URGENT_SURVIVAL
-                    or task.get("kind") in ("feed_rescue", "harvest_decay", "feed_prod", "pickup_wheat")
-                    or (task.get("op") == "PLACE" and (task.get("args") or [None])[0] in ANIMALS)
-                )
-
-                free_in_target = sum(1 for fu in free_units if farm.quadrant_of(pos_by_idx[fu]) == target_quad)
-                rem_target_tasks = unassigned_home_tasks.get(target_quad, 0)
-                target_needs_assistance = (rem_target_tasks > free_in_target)
-
-                for u in cands:
-                    if p1_enabled and tracker is not None:
-                        obl_id = compute_task_obligation_id(day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta"))
-                        if tracker.is_obligation_owned_by_other(obl_id, u):
-                            tracker._telemetry["duplicate_pursuits_blocked"] += 1
-                            continue
-
-                    u_pos = pos_by_idx[u]
-                    u_phys_quad = farm.quadrant_of(u_pos)
-
-                    is_local = (u_phys_quad == target_quad) or (target in SHED_ACCESS_TILES)
-                    if is_local:
-                        locality_penalty = 0.0
+                if not soft_locality_on:
+                    # C2 Zonal Eligibility (Baseline)
+                    home_cands = [u for u in cands if home_quads[u] == target_quad]
+                    if home_cands:
+                        eval_cands = [(u, False) for u in home_cands]
                     else:
-                        rem_local_tasks = unassigned_home_tasks.get(u_phys_quad, 0)
-                        if is_urgent or rem_local_tasks <= 0:
+                        eval_cands = []
+                        for u in cands:
+                            u_home = home_quads[u]
+                            free_in_home = sum(1 for fu in free_units if home_quads[fu] == u_home)
+                            rem_tasks_home = unassigned_home_tasks.get(u_home, 0)
+                            if rem_tasks_home < free_in_home:
+                                if not ((u_home == "SW" and target_quad == "NE") or (u_home == "NE" and target_quad == "SW")):
+                                    d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
+                                    if d <= C2_MAX_SPILLOVER_DIST and prio >= C2_SPILLOVER_PRIORITY_FLOOR:
+                                        eval_cands.append((u, True))
+
+                    for u, is_spillover in eval_cands:
+                        if p1_enabled and tracker is not None:
+                            obl_id = compute_task_obligation_id(day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta"))
+                            if tracker.is_obligation_owned_by_other(obl_id, u):
+                                tracker._telemetry["duplicate_pursuits_blocked"] += 1
+                                continue
+
+                        d = abs(pos_by_idx[u][0] - target[0]) + abs(pos_by_idx[u][1] - target[1])
+                        cluster_bonus = 0
+                        if d <= C6_CLUSTER_RADIUS:
+                            cluster_bonus += C6_CLUSTER_BONUS
+                        if d == 0:
+                            cluster_bonus += C6_CLUSTER_BONUS
+                        spill_penalty = 10 if is_spillover else 0
+                        effective_score = -prio + spill_penalty + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
+
+                        match_key = (effective_score, d, target, u)
+                        if best_match is None or match_key < best_match[0]:
+                            best_match = (match_key, u, task, target_quad)
+                else:
+                    # Soft, Workload-Aware Worker Locality (Phase C0 Treatment)
+                    is_urgent = (
+                        prio >= PRIORITY_URGENT_SURVIVAL
+                        or task.get("kind") in ("feed_rescue", "harvest_decay", "feed_prod", "pickup_wheat")
+                        or (task.get("op") == "PLACE" and (task.get("args") or [None])[0] in ANIMALS)
+                    )
+
+                    free_in_target = sum(1 for fu in free_units if farm.quadrant_of(pos_by_idx[fu]) == target_quad)
+                    rem_target_tasks = unassigned_home_tasks.get(target_quad, 0)
+                    target_needs_assistance = (rem_target_tasks > free_in_target)
+
+                    for u in cands:
+                        if p1_enabled and tracker is not None:
+                            obl_id = compute_task_obligation_id(day, task.get("op", "PASS"), target, task.get("kind", ""), task.get("args"), task.get("meta"))
+                            if tracker.is_obligation_owned_by_other(obl_id, u):
+                                tracker._telemetry["duplicate_pursuits_blocked"] += 1
+                                continue
+
+                        u_pos = pos_by_idx[u]
+                        u_phys_quad = farm.quadrant_of(u_pos)
+
+                        is_local = (u_phys_quad == target_quad) or (target in SHED_ACCESS_TILES)
+                        if is_local:
                             locality_penalty = 0.0
-                        elif target_needs_assistance:
-                            locality_penalty = 3.0
                         else:
-                            locality_penalty = 10.0
+                            rem_local_tasks = unassigned_home_tasks.get(u_phys_quad, 0)
+                            if is_urgent or rem_local_tasks <= 0:
+                                locality_penalty = 0.0
+                            elif target_needs_assistance:
+                                locality_penalty = 3.0
+                            else:
+                                locality_penalty = 10.0
 
-                    continuity_bonus = 0.0
-                    if u in _ACTIVE_MISSIONS:
-                        m = _ACTIVE_MISSIONS[u]
-                        if tuple(m.get("target", (-1, -1))) == tuple(target) and m.get("op") == task.get("op"):
-                            continuity_bonus = 6.0
+                        continuity_bonus = 0.0
+                        if u in _ACTIVE_MISSIONS:
+                            m = _ACTIVE_MISSIONS[u]
+                            if tuple(m.get("target", (-1, -1))) == tuple(target) and m.get("op") == task.get("op"):
+                                continuity_bonus = 6.0
 
-                    d = abs(u_pos[0] - target[0]) + abs(u_pos[1] - target[1])
-                    cluster_bonus = 0
-                    if d <= C6_CLUSTER_RADIUS:
-                        cluster_bonus += C6_CLUSTER_BONUS
-                    if d == 0:
-                        cluster_bonus += C6_CLUSTER_BONUS
+                        d = abs(u_pos[0] - target[0]) + abs(u_pos[1] - target[1])
+                        cluster_bonus = 0
+                        if d <= C6_CLUSTER_RADIUS:
+                            cluster_bonus += C6_CLUSTER_BONUS
+                        if d == 0:
+                            cluster_bonus += C6_CLUSTER_BONUS
 
-                    effective_score = -prio + locality_penalty - continuity_bonus + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
+                        effective_score = -prio + locality_penalty - continuity_bonus + C6_TRAVEL_WEIGHT * (d - cluster_bonus)
 
-                    match_key = (effective_score, d, target, u)
-                    if best_match is None or match_key < best_match[0]:
-                        best_match = (match_key, u, task, target_quad)
+                        match_key = (effective_score, d, target, u)
+                        if best_match is None or match_key < best_match[0]:
+                            best_match = (match_key, u, task, target_quad)
 
-        if best_match is None:
-            for t in band_tasks:
-                remaining_tasks.remove(t)
-            continue
+            if best_match is None:
+                for t in band_tasks:
+                    remaining_tasks.remove(t)
+                continue
 
-        _, chosen_u, chosen_task, t_quad = best_match
-        busy.add(chosen_u)
-        remaining_tasks.remove(chosen_task)
-        if t_quad in unassigned_home_tasks:
-            unassigned_home_tasks[t_quad] = max(0, unassigned_home_tasks[t_quad] - 1)
+            _, chosen_u, chosen_task, t_quad = best_match
+            busy.add(chosen_u)
+            remaining_tasks.remove(chosen_task)
+            if t_quad in unassigned_home_tasks:
+                unassigned_home_tasks[t_quad] = max(0, unassigned_home_tasks[t_quad] - 1)
 
-        try:
-            from config import (
-                get_sw_core_first_task_admission_enabled,
-                get_sw_urgency_aware_admission_enabled,
-            )
-            if t_quad == "SW" and chosen_task.get("target") not in SHED_ACCESS_TILES and (
-                get_sw_core_first_task_admission_enabled() or get_sw_urgency_aware_admission_enabled()
-            ):
-                from execution.sw_task_admission_controller import get_sw_task_admission_telemetry
-                telem = get_sw_task_admission_telemetry()
-                c_op = chosen_task.get("op", "")
-                c_tgt = tuple(chosen_task.get("target") or (0, 0))
-                c_item = (chosen_task.get("args") or [None])[0]
-                c_task_id = f"SW_{step}_{c_op}_{c_tgt}_{c_item}"
-                telem.record_sw_task_disposition(c_task_id, "SELECTED_AND_ASSIGNED")
-        except Exception:
-            pass
-
-        # Rule W2: SW squad hands anchor shed PICKUP at PORT_SW
-        if chosen_u in sw_units and chosen_task.get("op") == "PICKUP" and chosen_task.get("target") in SHED_ACCESS_TILES:
-            chosen_task["target"] = PORT_SW
-
-        chosen_task["unit_pos"] = pos_by_idx[chosen_u]
-        assignment[chosen_u] = chosen_task
-
-        # Record sticky mission if task requires multi-turn travel
-        if (chosen_task.get("op") != "PASS" and
-            chosen_task.get("kind") not in ("sw_anchor", "fallback_fert", "fallback_water", "fallback_dig") and
-            pos_by_idx[chosen_u] != tuple(chosen_task.get("target", (-1, -1)))):
-            tgt_pos = chosen_task.get("target") or pos_by_idx[chosen_u]
-            init_d = abs(pos_by_idx[chosen_u][0] - tgt_pos[0]) + abs(pos_by_idx[chosen_u][1] - tgt_pos[1])
-            _ACTIVE_MISSIONS[chosen_u] = {
-                "task": dict(chosen_task),
-                "target": chosen_task.get("target"),
-                "op": chosen_task["op"],
-                "kind": chosen_task.get("kind", ""),
-                "args": chosen_task.get("args", []),
-                "priority": chosen_task.get("priority", 0),
-                "prev_distance": init_d,
-                "consecutive_no_progress": 0,
-                "mission_age": 0,
-                "steps_active": 0,
-            }
-            if p1_enabled and tracker is not None:
-                obl_id = compute_task_obligation_id(
-                    day, chosen_task.get("op", "PASS"), tgt_pos, chosen_task.get("kind", ""), chosen_task.get("args"), chosen_task.get("meta")
+            try:
+                from config import (
+                    get_sw_core_first_task_admission_enabled,
+                    get_sw_urgency_aware_admission_enabled,
                 )
-                tracker.claim_or_continue_mission(chosen_u, obl_id, chosen_task, pos_by_idx[chosen_u], step)
+                if t_quad == "SW" and chosen_task.get("target") not in SHED_ACCESS_TILES and (
+                    get_sw_core_first_task_admission_enabled() or get_sw_urgency_aware_admission_enabled()
+                ):
+                    from execution.sw_task_admission_controller import get_sw_task_admission_telemetry
+                    telem = get_sw_task_admission_telemetry()
+                    c_op = chosen_task.get("op", "")
+                    c_tgt = tuple(chosen_task.get("target") or (0, 0))
+                    c_item = (chosen_task.get("args") or [None])[0]
+                    c_task_id = f"SW_{step}_{c_op}_{c_tgt}_{c_item}"
+                    telem.record_sw_task_disposition(c_task_id, "SELECTED_AND_ASSIGNED")
+            except Exception:
+                pass
+
+            # Rule W2: SW squad hands anchor shed PICKUP at PORT_SW
+            if chosen_u in sw_units and chosen_task.get("op") == "PICKUP" and chosen_task.get("target") in SHED_ACCESS_TILES:
+                chosen_task["target"] = PORT_SW
+
+            chosen_task["unit_pos"] = pos_by_idx[chosen_u]
+            assignment[chosen_u] = chosen_task
+
+            # Record sticky mission if task requires multi-turn travel
+            if (chosen_task.get("op") != "PASS" and
+                chosen_task.get("kind") not in ("sw_anchor", "fallback_fert", "fallback_water", "fallback_dig") and
+                pos_by_idx[chosen_u] != tuple(chosen_task.get("target", (-1, -1)))):
+                tgt_pos = chosen_task.get("target") or pos_by_idx[chosen_u]
+                init_d = abs(pos_by_idx[chosen_u][0] - tgt_pos[0]) + abs(pos_by_idx[chosen_u][1] - tgt_pos[1])
+                _ACTIVE_MISSIONS[chosen_u] = {
+                    "task": dict(chosen_task),
+                    "target": chosen_task.get("target"),
+                    "op": chosen_task["op"],
+                    "kind": chosen_task.get("kind", ""),
+                    "args": chosen_task.get("args", []),
+                    "priority": chosen_task.get("priority", 0),
+                    "prev_distance": init_d,
+                    "consecutive_no_progress": 0,
+                    "mission_age": 0,
+                    "steps_active": 0,
+                }
+                if p1_enabled and tracker is not None:
+                    obl_id = compute_task_obligation_id(
+                        day, chosen_task.get("op", "PASS"), tgt_pos, chosen_task.get("kind", ""), chosen_task.get("args"), chosen_task.get("meta")
+                    )
+                    tracker.claim_or_continue_mission(chosen_u, obl_id, chosen_task, pos_by_idx[chosen_u], step)
 
     try:
         from execution.sw_task_admission_controller import get_sw_task_admission_telemetry

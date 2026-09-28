@@ -456,6 +456,11 @@ def reset_agent_state() -> None:
     except Exception:
         pass
     try:
+        from execution.coordinated_dispatch_controller import reset_coordinated_dispatch_controller
+        reset_coordinated_dispatch_controller()
+    except Exception:
+        pass
+    try:
         from strategy.animal_service_economics import reset_animal_service_telemetry
         reset_animal_service_telemetry()
     except Exception:
