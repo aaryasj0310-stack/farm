@@ -1748,4 +1748,55 @@ def get_sw_urgency_aware_admission_enabled() -> bool:
     return SW_URGENCY_AWARE_ADMISSION
 
 
+# ====================================================================
+# Phase SW-C1: Adaptive, Capacity-Aware Acreage Expansion
+# ====================================================================
+SW_ADAPTIVE_ACREAGE_ENABLED: bool = False
+SW_MAX_ADAPTIVE_ACREAGE: int = 24
+
+
+def set_sw_adaptive_acreage_enabled(enabled: bool) -> None:
+    """Configure Phase SW-C1 Adaptive Acreage Expansion flag."""
+    global SW_ADAPTIVE_ACREAGE_ENABLED
+    SW_ADAPTIVE_ACREAGE_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.strategy.sw_tranche_controller", "strategy.sw_tranche_controller", "sw_tranche_controller",
+        "agent.strategy.adaptive_acreage_planner", "strategy.adaptive_acreage_planner", "adaptive_acreage_planner",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_ADAPTIVE_ACREAGE_ENABLED", SW_ADAPTIVE_ACREAGE_ENABLED)
+            except Exception:
+                pass
+
+
+def get_sw_adaptive_acreage_enabled() -> bool:
+    """Return whether Phase SW-C1 Adaptive Acreage Expansion is enabled."""
+    return SW_ADAPTIVE_ACREAGE_ENABLED
+
+
+def set_sw_max_adaptive_acreage(max_acres: int) -> None:
+    """Configure maximum acreage limit for Phase SW-C1 Adaptive Acreage Expansion (8, 12, 16, 20, 24)."""
+    global SW_MAX_ADAPTIVE_ACREAGE
+    SW_MAX_ADAPTIVE_ACREAGE = int(max_acres)
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.strategy.sw_tranche_controller", "strategy.sw_tranche_controller", "sw_tranche_controller",
+        "agent.strategy.adaptive_acreage_planner", "strategy.adaptive_acreage_planner", "adaptive_acreage_planner",
+        "agent.strategy.macro_planner", "strategy.macro_planner", "macro_planner",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_MAX_ADAPTIVE_ACREAGE", SW_MAX_ADAPTIVE_ACREAGE)
+            except Exception:
+                pass
+
+
+def get_sw_max_adaptive_acreage() -> int:
+    """Return maximum acreage limit for Phase SW-C1 Adaptive Acreage Expansion."""
+    return SW_MAX_ADAPTIVE_ACREAGE
+
+
 

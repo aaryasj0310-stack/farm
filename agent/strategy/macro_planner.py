@@ -2220,6 +2220,12 @@ class MacroPlanner:
                             _treatment_ctrl = None
 
                         if _is_treatment and _treatment_ctrl is not None:
+                            # Phase SW-C1: Evaluate Adaptive Acreage Expansion (if enabled and eligible)
+                            try:
+                                _treatment_ctrl.maybe_evaluate_adaptive_expansion(ctx, farm, plan)
+                            except Exception:
+                                pass
+
                             # Treatment SW Tranche Enforcement:
                             # 1. Exclude ALL SW tiles from subsequent generic planting loops
                             empty_tiles = [p for p in empty_tiles if farm.quadrant_of(p) != "SW"]

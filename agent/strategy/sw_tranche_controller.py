@@ -276,6 +276,12 @@ class SWTrancheState:
     peak_daily_actions: int = 0
     peak_shed_usage: int = 0
 
+    # Phase SW-C1: Adaptive Acreage Expansion Telemetry
+    max_admitted_acreage: int = 8
+    last_expansion_day: int = -1
+    adaptive_expansion_history: List[Dict[str, Any]] = field(default_factory=list)
+    expansion_rejections: List[Dict[str, Any]] = field(default_factory=list)
+
 
 class SWTrancheController:
     """Singleton controller managing SW branch treatment execution."""
@@ -420,6 +426,198 @@ class SWTrancheController:
                     pos_t = (int(pos[0]), int(pos[1]))
                     self.state.admitted_sw_tiles.add(pos_t)
                     self.state.admitted_sw_crop_targets[pos_t] = crop_name
+        self.state.max_admitted_acreage = len(self.state.admitted_sw_tiles)
+
+    def maybe_evaluate_adaptive_expansion(
+        self,
+        ctx: Dict[str, Any],
+        farm: Any,
+        plan: Any,
+    ) -> Optional[Any]:
+        """Evaluate and apply Phase SW-C1 adaptive acreage expansion if eligible.
+
+        Called at macro planning turns. Only executes when:
+        1. Treatment is active
+        2. SW_ADAPTIVE_ACREAGE_ENABLED is True
+        3. SW quadrant is unlocked and purchase confirmed
+        4. Day > sw_purchase_day (initial 8-tile tranche already established)
+        5. Hour == 0 (daily morning planning turn)
+        6. Current acreage < SW_MAX_ADAPTIVE_ACREAGE
+        7. Expansion has not already been evaluated/applied on current_day
+        """
+        if not self.is_treatment_active():
+            return None
+
+        try:
+            from config import get_sw_adaptive_acreage_enabled, get_sw_max_adaptive_acreage
+            adaptive_enabled = get_sw_adaptive_acreage_enabled()
+            max_acreage_cap = get_sw_max_adaptive_acreage()
+        except ImportError:
+            try:
+                from agent.config import get_sw_adaptive_acreage_enabled, get_sw_max_adaptive_acreage
+                adaptive_enabled = get_sw_adaptive_acreage_enabled()
+                max_acreage_cap = get_sw_max_adaptive_acreage()
+            except Exception:
+                adaptive_enabled = False
+                max_acreage_cap = 24
+
+        if not adaptive_enabled:
+            return None
+
+        # SW must be confirmed and unlocked
+        is_unlocked = (farm and hasattr(farm, "unlocked") and "SW" in farm.unlocked) or self.state.sw_purchase_confirmed
+        if not is_unlocked:
+            return None
+
+        day = ctx.get("day", 0)
+        hour = ctx.get("hour", 0)
+
+        # Only evaluate at day start (hour == 0) and strictly after the purchase day
+        if hour != 0:
+            return None
+
+        # Must not expand on the purchase day itself (preserves initial 8-tile tranche)
+        purchase_day = self.state.sw_purchase_day if self.state.sw_purchase_day is not None else 8
+        if day <= purchase_day:
+            return None
+
+        # Must not expand more than once per day
+        if self.state.last_expansion_day == day:
+            return None
+
+        current_acreage = len(self.state.admitted_sw_tiles)
+        if current_acreage >= max_acreage_cap:
+            return None
+
+        # Gather state metrics for capacity certificate evaluation (supporting both FarmView and raw dict)
+        if farm is not None:
+            if isinstance(farm, dict):
+                current_cash = float(farm.get("money", 0.0))
+                hands_list = farm.get("hands", []) or []
+                raw_tiles = farm.get("tiles", []) or []
+            else:
+                current_cash = float(getattr(farm, "money", 0.0))
+                hands_list = getattr(farm, "hands", []) or []
+                raw_tiles = getattr(farm, "tiles_raw", getattr(farm, "tiles", [])) or []
+        else:
+            current_cash = 0.0
+            hands_list = []
+            raw_tiles = []
+
+        try:
+            from config import get_target_hands
+            scheduled_workers = 1 + get_target_hands(day)
+        except Exception:
+            scheduled_workers = 1
+
+        active_workers = max(1 + len(hands_list), scheduled_workers)
+
+        # Count animals and core planted tiles
+        num_animals = 0
+        core_planted = 0
+        if farm is not None and hasattr(farm, "iter_tiles"):
+            for t in farm.iter_tiles():
+                is_sw = (t.x < 5 and t.y >= 5)
+                if getattr(t, "is_animal", False) or getattr(t, "animal", None) is not None:
+                    num_animals += 1
+                elif not is_sw and getattr(t, "is_plant", False):
+                    core_planted += 1
+        elif raw_tiles:
+            for y, row in enumerate(raw_tiles):
+                for x, cell in enumerate(row):
+                    is_sw = (x < 5 and y >= 5)
+                    if isinstance(cell, dict):
+                        is_anim = cell.get("kind") in ("COW", "SHEEP", "CHICKEN", "GOOSE", "PASTURE") or cell.get("animal") is not None
+                        is_pl = cell.get("kind") == "PLANT"
+                        if is_anim:
+                            num_animals += 1
+                        elif not is_sw and is_pl:
+                            core_planted += 1
+
+        private = ctx.get("private")
+        if private is not None:
+            if isinstance(private, dict):
+                shed_inv = private.get("shed", {}) or {}
+            else:
+                shed_inv = getattr(private, "shed", {}) or {}
+        else:
+            shed_inv = {}
+
+        wheat_inventory = int(shed_inv.get("WHEAT", 0))
+        shed_units = sum(int(v) for v in shed_inv.values())
+
+        market_obj = ctx.get("market")
+        market_inv = {}
+        if market_obj is not None:
+            if isinstance(market_obj, dict):
+                market_inv = {str(k): int(v) for k, v in market_obj.get("inventory", {}).items()}
+            elif hasattr(market_obj, "inventory"):
+                market_inv = {str(k): int(v) for k, v in market_obj.inventory.items()}
+
+        try:
+            from strategy.adaptive_acreage_planner import get_adaptive_acreage_planner
+            planner = get_adaptive_acreage_planner()
+            decision = planner.evaluate_expansion(
+                current_day=day,
+                current_hour=hour,
+                current_admitted_tiles=set(self.state.admitted_sw_tiles),
+                current_cash=current_cash,
+                active_workers=active_workers,
+                num_animals=num_animals,
+                wheat_inventory=wheat_inventory,
+                shed_inventory_units=shed_units,
+                core_planted_tiles=core_planted,
+                market_inventories=market_inv,
+                max_acreage_cap=max_acreage_cap,
+            )
+
+            if decision.approved:
+                # Increment admitted tiles and crop targets
+                for tile in decision.new_tiles:
+                    tile_t = (int(tile[0]), int(tile[1]))
+                    self.state.admitted_sw_tiles.add(tile_t)
+                    self.state.admitted_sw_crop_targets[tile_t] = decision.selected_crop
+
+                self.state.max_admitted_acreage = len(self.state.admitted_sw_tiles)
+                self.state.last_expansion_day = day
+
+                event_rec = {
+                    "day": day,
+                    "hour": hour,
+                    "from_acreage": decision.current_acreage,
+                    "to_acreage": decision.target_acreage,
+                    "crop": decision.selected_crop,
+                    "new_tiles": [list(t) for t in decision.new_tiles],
+                    "marginal_delta_fc": decision.marginal_delta_fc,
+                    "seed_cost": decision.seed_cost,
+                    "projected_revenue": decision.projected_revenue,
+                    "cash_at_expansion": current_cash,
+                    "workers": active_workers,
+                }
+                self.state.adaptive_expansion_history.append(event_rec)
+                logger.info(
+                    f"[SWTrancheController] ADAPTIVE EXPANSION APPROVED on Day {day}: "
+                    f"{decision.current_acreage} -> {decision.target_acreage} tiles "
+                    f"with {decision.selected_crop} (ΔFC=+${decision.marginal_delta_fc:.2f})"
+                )
+                return decision
+            else:
+                rej_rec = {
+                    "day": day,
+                    "hour": hour,
+                    "current_acreage": decision.current_acreage,
+                    "target_acreage": decision.target_acreage,
+                    "reason": decision.rejection_reason,
+                    "passed_certificates": decision.passed_certificates,
+                }
+                self.state.expansion_rejections.append(rej_rec)
+                logger.debug(
+                    f"[SWTrancheController] Adaptive expansion deferred on Day {day}: {decision.rejection_reason}"
+                )
+                return decision
+        except Exception as exc:
+            logger.warning(f"[SWTrancheController] maybe_evaluate_adaptive_expansion error: {exc}")
+            return None
 
     def confirm_purchase(self, day: int, hour: int) -> None:
         """Authoritatively confirm SW purchase upon observing unlocked quadrant in engine."""
@@ -867,6 +1065,12 @@ class SWTrancheController:
                 "core_harvest_count": self.state.core_harvest_count,
                 "min_feed_wheat_balance": self.state.min_feed_wheat_balance,
                 "peak_shed_usage": self.state.peak_shed_usage,
+            },
+            "adaptive_acreage": {
+                "max_admitted_acreage": self.state.max_admitted_acreage,
+                "expansion_events_count": len(self.state.adaptive_expansion_history),
+                "expansion_history": list(self.state.adaptive_expansion_history),
+                "expansion_rejections": list(self.state.expansion_rejections),
             },
         }
 
