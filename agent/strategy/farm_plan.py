@@ -80,6 +80,16 @@ class TrancheTarget:
     status: CommitmentStatus = CommitmentStatus.PROPOSED
 
 
+def get_default_expansion_target() -> ExpansionTarget:
+    try:
+        from config import get_sw_r2_dynamic_acquisition_enabled
+        if get_sw_r2_dynamic_acquisition_enabled():
+            return ExpansionTarget(target_day=8, earliest_feasible_day=8, purchase_window=(8, 10))
+        return ExpansionTarget(target_day=9, earliest_feasible_day=9, purchase_window=(9, 12))
+    except Exception:
+        return ExpansionTarget(target_day=9, earliest_feasible_day=9, purchase_window=(9, 12))
+
+
 @dataclass
 class FarmPlan:
     """Persistent strategic plan object surviving across turns within an episode."""

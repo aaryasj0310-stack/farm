@@ -335,3 +335,190 @@ def test_preserved_acreage_ladder_blocks():
 
     assert len(INITIAL_SW_TILES) == 8
     assert (4, 5) not in INITIAL_SW_TILES
+
+
+# ---------------------------------------------------------------------------
+# Deliverable 7: Dynamic Acquisition Preference in WholeFarmPlanner (ARM_F vs ARM_R2)
+# ---------------------------------------------------------------------------
+
+def test_dynamic_acquisition_influences_whole_farm_planner():
+    """WholeFarmPlanner strictly delays Day 8 under ARM_F (D9+) but approves under ARM_R2."""
+    from strategy.whole_farm_planner import WholeFarmPlanner, ShadowSnapshot
+    from strategy.farm_plan import FarmPlan
+
+    snapshot_d8 = ShadowSnapshot(
+        day=8,
+        hour=0,
+        step=192,
+        money=2800.0,
+        unlocked_quadrants=("NW", "NE"),
+        unlocked_shops=(),
+        shed_inventory=(("WHEAT", 40),),
+        carried_inventory_units=0,
+        market_prices=(("STRAWBERRY", 35.0), ("WHEAT", 25.0), ("MELON", 28.0), ("CARROT", 20.0), ("TOMATO", 30.0)),
+        market_inventories=(("STRAWBERRY", 100), ("WHEAT", 100), ("MELON", 100)),
+        baseline_intents=(),
+        active_worker_count=2,
+        tiles_summary=(("STRAWBERRY", 4),),
+        animals_summary=(("COW", 1),),
+    )
+
+    # 1. Under ARM_F (dynamic acquisition disabled): must DELAY Day 8 with before_acquisition_window_day_9
+    from strategy.farm_plan import ExpansionTarget
+    fp_f = FarmPlan(expansion_target=ExpansionTarget(target_day=9, earliest_feasible_day=9))
+    wfp_f = WholeFarmPlanner(farm_plan=fp_f)
+    res_f = wfp_f.evaluate(snapshot_d8)
+    assert res_f.decision.sw_purchase_recommended is False
+    assert res_f.decision.sw_recommendation_status == "DELAY"
+    assert "before_acquisition_window_day_9" in (res_f.decision.sw_reject_reason or "")
+
+    # 2. Under ARM_R2 (dynamic acquisition enabled): window opens on Day 8, approves purchase
+    set_sw_r2_dynamic_acquisition_enabled(True)
+    fp_r2 = FarmPlan()
+    wfp_r2 = WholeFarmPlanner(farm_plan=fp_r2)
+    res_r2 = wfp_r2.evaluate(snapshot_d8)
+    assert res_r2.decision.sw_purchase_recommended is True
+    assert res_r2.decision.sw_recommendation_status == "PURCHASE"
+
+
+# ---------------------------------------------------------------------------
+# Deliverable 8: Genuinely Atomic Obligation Registration with Rollback
+# ---------------------------------------------------------------------------
+
+def test_atomic_obligation_registration_and_rollback():
+    """If registering an obligation fails, all previously registered obligations are rolled back."""
+    res_mgr = get_crop_cycle_reservation_manager()
+    ledger = get_service_obligation_ledger()
+
+    trial = res_mgr.evaluate_complete_crop_cycle(
+        candidate_tiles=[(0, 5), (1, 5), (2, 5), (3, 5)],
+        candidate_crop="STRAWBERRY",
+        plant_day=8,
+        current_cash=3000.0,
+        active_workers=2,
+        num_animals=1,
+        wheat_inventory=40,
+        current_shed_occupancy=10,
+        core_planted_tiles=4,
+    )
+    assert trial.feasible is True
+    assert trial.reservation is not None
+    assert len(trial.reservation.obligations) > 2
+
+    # Inject failure on the 3rd obligation registration
+    real_register = ledger.register_obligation
+    call_count = [0]
+
+    def failing_register(obl):
+        call_count[0] += 1
+        if call_count[0] == 3:
+            raise RuntimeError("Simulated transient ledger failure on obligation 3")
+        return real_register(obl)
+
+    ledger.register_obligation = failing_register
+
+    with pytest.raises(RuntimeError, match="Atomic obligation registration failed"):
+        res_mgr.commit_reservation(trial)
+
+    # Verification:
+    # 1. Reservation marked FAILED
+    assert trial.reservation.state == ReservationState.FAILED
+    for obl in trial.reservation.obligations:
+        assert obl.lifecycle == ObligationLifecycle.FAILED
+
+    # 2. All previously registered obligations rolled back / removed from ledger
+    for obl in trial.reservation.obligations:
+        assert ledger.get_obligation(obl.obligation_id) is None
+
+    # 3. Telemetry records reservation failure
+    telem = res_mgr.get_telemetry()
+    assert telem["reservations_failed"] >= 1
+
+
+# ---------------------------------------------------------------------------
+# Deliverable 9: Real Observed Farm Resources & Mixed Portfolio Admission
+# ---------------------------------------------------------------------------
+
+def test_real_observed_farm_resources_and_mixed_portfolio_admission():
+    """approve_purchase extracts real farm state from ctx and admits mixed portfolio cohorts."""
+    ctrl = SWTrancheController()
+    ctrl.state.treatment_active = True
+
+    # Mock real farm with 2 cows, 12 shed wheat, 4 carried wheat, 16 shed items, 6 core plants
+    class MockTile:
+        def __init__(self, x, y, is_animal=False, animal=None, is_plant=False, crop=None):
+            self.x, self.y = x, y
+            self.is_animal = is_animal
+            self.animal = animal
+            self.is_plant = is_plant
+            self.crop = crop
+
+    tiles = []
+    # 2 cows in core (x=2, y=1 and x=2, y=2)
+    tiles.append(MockTile(2, 1, is_animal=True, animal="COW"))
+    tiles.append(MockTile(2, 2, is_animal=True, animal="COW"))
+    # 6 core wheat plants
+    for i in range(6):
+        tiles.append(MockTile(1, i, is_plant=True, crop="WHEAT"))
+    # SW tiles (empty)
+    for x in range(4):
+        for y in (5, 6):
+            tiles.append(MockTile(x, y))
+
+    class MockShed:
+        inventory = {"WHEAT": 12, "STRAWBERRY": 4}
+        num_items = 16
+
+    class MockFarm:
+        money = 3500.0
+        shed = MockShed()
+        def iter_tiles(self):
+            return iter(tiles)
+
+    class MockPrivate:
+        inventories = [{"WHEAT": 2}, {"WHEAT": 2}]
+
+    ctx = {
+        "farm": MockFarm(),
+        "private": MockPrivate(),
+        "day": 8,
+        "hour": 0,
+    }
+
+    # Mixed portfolio: 4 Strawberry + 4 Melon
+    mixed_portfolio = {
+        "name": "Mixed_Strawberry_Melon_8",
+        "allocations": [
+            ("STRAWBERRY", 4, [(0, 5), (1, 5), (2, 5), (3, 5)]),
+            ("MELON", 4, [(0, 6), (1, 6), (2, 6), (3, 6)]),
+        ],
+    }
+
+    ctrl.approve_purchase(
+        day=8,
+        hour=0,
+        portfolio=mixed_portfolio,
+        delta_fc=1500.0,
+        cash_before=3500.0,
+        worker_count=2,
+        ctx=ctx,
+    )
+
+    assert ctrl.state.sw_purchase_approved is True
+    assert len(ctrl.state.admitted_sw_tiles) == 8
+    assert ctrl.state.admitted_sw_crop_targets[(0, 5)] == "STRAWBERRY"
+    assert ctrl.state.admitted_sw_crop_targets[(0, 6)] == "MELON"
+    # Both cohorts committed
+    assert len(ctrl.state.sw_reservation_ids) == 2
+    assert ctrl.state.sw_reservation_id == ctrl.state.sw_reservation_ids[0]
+
+    # Test notify_land_order_failed cancels all reservations
+    res_mgr = get_crop_cycle_reservation_manager()
+    for res_id in ctrl.state.sw_reservation_ids:
+        assert res_id in res_mgr.active_reservations
+
+    ctrl.notify_land_order_failed("order_dropped_by_market")
+    assert ctrl.state.sw_reservation_ids == []
+    assert ctrl.state.sw_reservation_id is None
+    for res_id in ctrl.state.sw_reservation_ids:
+        assert res_id not in res_mgr.active_reservations

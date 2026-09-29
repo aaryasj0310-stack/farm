@@ -471,14 +471,32 @@ class CropCycleReservationManager:
         for obl in res.obligations:
             obl.lifecycle = ObligationLifecycle.RESERVED
 
-        # Register obligations in shared ServiceObligationLedger
+        # Register obligations in shared ServiceObligationLedger atomically
+        registered_obl_ids = []
         try:
             from execution.service_obligation_ledger import get_service_obligation_ledger
             ledger = get_service_obligation_ledger()
             for obl in res.obligations:
                 ledger.register_obligation(obl)
+                registered_obl_ids.append(obl.obligation_id)
         except Exception as exc:
-            logger.debug(f"[CropCycleReservationManager] Shared ledger registration note: {exc}")
+            # Atomic rollback on failure: unregister all obligations registered in this batch
+            try:
+                from execution.service_obligation_ledger import get_service_obligation_ledger
+                ledger = get_service_obligation_ledger()
+                for obl_id in registered_obl_ids:
+                    if hasattr(ledger, "unregister_obligation"):
+                        ledger.unregister_obligation(obl_id)
+                    else:
+                        ledger.mark_cancelled(obl_id, "rollback_registration_failure")
+            except Exception:
+                pass
+            res.state = ReservationState.FAILED
+            for obl in res.obligations:
+                obl.lifecycle = ObligationLifecycle.FAILED
+            self._telemetry["reservations_failed"] = self._telemetry.get("reservations_failed", 0) + 1
+            logger.error(f"[CropCycleReservationManager] Obligation registration failed, rolled back: {exc}")
+            raise RuntimeError(f"Atomic obligation registration failed: {exc}") from exc
 
         self.active_reservations[res.reservation_id] = res
         self.committed_reservations_history.append(res)

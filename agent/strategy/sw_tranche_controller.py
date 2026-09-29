@@ -254,6 +254,7 @@ class SWTrancheState:
     post_purchase_cash: float = 0.0
     worker_count_at_purchase: int = 0
     sw_reservation_id: Optional[str] = None
+    sw_reservation_ids: List[str] = field(default_factory=list)
 
     # 9-Stage Land Order Lifecycle Telemetry
     lifecycle: SWLandLifecycleTelemetry = field(default_factory=SWLandLifecycleTelemetry)
@@ -357,6 +358,19 @@ class SWTrancheController:
         if farm and hasattr(farm, "unlocked") and "SW" in farm.unlocked:
             return False, None
 
+        # Enforce effective quadrant unlock day
+        try:
+            from strategy.expansion_planner import get_effective_quadrant_unlock_day
+            unlock_day = get_effective_quadrant_unlock_day(3)
+        except Exception:
+            unlock_day = 9
+        if day < unlock_day:
+            reason = f"before_unlock_day_{unlock_day}"
+            day_reasons = self.state.rejection_reasons_by_day.setdefault(day, [])
+            day_reasons.append(reason)
+            self.state.primary_no_purchase_reason = reason
+            return False, None
+
         # Build snapshot for WholeFarmPlanner evaluation
         try:
             from strategy.whole_farm_planner import ShadowSnapshot, get_whole_farm_planner
@@ -390,11 +404,15 @@ class SWTrancheController:
                     delta_fc=dec.portfolio_delta_fc,
                     cash_before=float(farm.money) if farm else snap.money,
                     worker_count=snap.active_worker_count,
+                    ctx=ctx,
                 )
                 return True, dec.selected_portfolio
             else:
                 # Record rejection / delay reason
-                reason = dec.disagreements_with_baseline[0].get("reason", dec.sw_recommendation_status) if dec.disagreements_with_baseline else dec.sw_recommendation_status
+                reason = dec.sw_reject_reason or (
+                    dec.disagreements_with_baseline[0].get("reason", dec.sw_recommendation_status)
+                    if dec.disagreements_with_baseline else dec.sw_recommendation_status
+                )
                 day_reasons = self.state.rejection_reasons_by_day.setdefault(day, [])
                 day_reasons.append(str(reason))
                 self.state.primary_no_purchase_reason = str(reason)
@@ -412,6 +430,7 @@ class SWTrancheController:
         delta_fc: float,
         cash_before: float,
         worker_count: int,
+        ctx: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Approve SW purchase and freeze the admitted portfolio tranche."""
         self.state.sw_purchase_recommended = True
@@ -447,27 +466,80 @@ class SWTrancheController:
                     self.state.admitted_sw_crop_targets[pos_t] = crop_name
         self.state.max_admitted_acreage = len(self.state.admitted_sw_tiles)
 
-        # Commit initial tranche reservation through shared reservation lifecycle
+        # Extract real observed farm resources from ctx (eliminate synthetic constants)
+        farm = ctx.get("farm") if ctx else None
+        private = ctx.get("private") if ctx else None
+
+        num_animals = 0
+        core_planted = 0
+        if farm and hasattr(farm, "iter_tiles"):
+            for t in farm.iter_tiles():
+                is_sw = (t.x < 5 and t.y >= 5)
+                if getattr(t, "is_animal", False) or getattr(t, "animal", None) is not None:
+                    num_animals += 1
+                elif not is_sw and (getattr(t, "is_plant", False) or getattr(t, "crop", None) is not None):
+                    core_planted += 1
+
+        shed_wheat = 0
+        if farm and hasattr(farm, "shed") and hasattr(farm.shed, "inventory"):
+            shed_wheat = int(farm.shed.inventory.get("WHEAT", 0))
+        carried_wheat = 0
+        if private and hasattr(private, "inventories"):
+            for inv in private.inventories:
+                carried_wheat += int(inv.get("WHEAT", 0))
+        elif private and isinstance(private.get("inventories"), list):
+            for inv in private.get("inventories", []):
+                carried_wheat += int(inv.get("WHEAT", 0))
+
+        in_ground_wheat = 0
+        if farm and hasattr(farm, "iter_tiles"):
+            for t in farm.iter_tiles():
+                is_sw = (t.x < 5 and t.y >= 5)
+                if not is_sw and (getattr(t, "is_plant", False) or getattr(t, "kind", "") == "PLANT") and getattr(t, "crop", None) == "WHEAT":
+                    in_ground_wheat += 6
+        total_real_wheat = shed_wheat + carried_wheat + in_ground_wheat
+
+        shed_occ = 0
+        if farm and hasattr(farm, "shed"):
+            if hasattr(farm.shed, "num_items"):
+                shed_occ = int(farm.shed.num_items)
+            elif hasattr(farm.shed, "inventory"):
+                shed_occ = sum(int(v) for v in farm.shed.inventory.values())
+
+        # Commit initial tranche reservations for actual mixed portfolio cohorts
+        self.state.sw_reservation_ids.clear()
         try:
             from strategy.crop_cycle_reservation_manager import get_crop_cycle_reservation_manager
             res_mgr = get_crop_cycle_reservation_manager()
-            sw_tiles_list = list(self.state.admitted_sw_tiles)
-            primary_crop = "STRAWBERRY"
-            if self.state.admitted_sw_crop_targets:
-                primary_crop = next(iter(self.state.admitted_sw_crop_targets.values()))
-            trial = res_mgr.evaluate_complete_crop_cycle(
-                candidate_tiles=sw_tiles_list[:8] if sw_tiles_list else [(0, 5), (1, 5), (2, 5), (3, 5), (0, 6), (1, 6), (2, 6), (3, 6)],
-                candidate_crop=primary_crop,
-                plant_day=day,
-                current_cash=cash_before,
-                active_workers=worker_count,
-                num_animals=0,
-                wheat_inventory=10,
-                current_shed_occupancy=0,
-                core_planted_tiles=8,
-            )
-            if trial.feasible:
-                self.state.sw_reservation_id = res_mgr.commit_reservation(trial)
+            allocations = portfolio.get("allocations", [])
+            if not allocations and self.state.admitted_sw_tiles:
+                primary_crop = next(iter(self.state.admitted_sw_crop_targets.values()), "STRAWBERRY")
+                allocations = [(primary_crop, len(self.state.admitted_sw_tiles), list(self.state.admitted_sw_tiles))]
+
+            all_committed_ids = []
+            for alloc in allocations:
+                c_crop = str(alloc[0])
+                c_tiles = [tuple(p) for p in alloc[2]] if len(alloc) >= 3 else list(self.state.admitted_sw_tiles)
+                trial = res_mgr.evaluate_complete_crop_cycle(
+                    candidate_tiles=c_tiles,
+                    candidate_crop=c_crop,
+                    plant_day=day,
+                    current_cash=cash_before,
+                    active_workers=worker_count,
+                    num_animals=num_animals,
+                    wheat_inventory=total_real_wheat,
+                    current_shed_occupancy=shed_occ,
+                    core_planted_tiles=core_planted,
+                )
+                if trial.feasible:
+                    res_id = res_mgr.commit_reservation(trial)
+                    all_committed_ids.append(res_id)
+                else:
+                    logger.warning(f"[SWTrancheController] Cohort {c_crop} reservation infeasible: {trial.rejection_reason}")
+
+            if all_committed_ids:
+                self.state.sw_reservation_ids = all_committed_ids
+                self.state.sw_reservation_id = all_committed_ids[0]
         except Exception as exc:
             logger.debug(f"[SWTrancheController] Initial tranche reservation note: {exc}")
 
@@ -862,10 +934,10 @@ class SWTrancheController:
                 for x, cell in enumerate(row):
                     if x >= 5:
                         continue
-                    if isinstance(cell, dict) and cell.get("kind") == "PLANT":
+                    if isinstance(cell, dict) and (cell.get("kind") == "PLANT" or "crop" in cell):
                         c_name = cell.get("crop")
                         p_day = cell.get("planted_day")
-                        if c_name and p_day == day:
+                        if c_name and p_day is not None:
                             lc.first_productive_plant_step = step
                             lc.first_productive_plant_day = day
                             lc.first_productive_plant_crop = c_name
@@ -907,13 +979,18 @@ class SWTrancheController:
         """Notify controller that emitted BUY_LAND order failed or was dropped."""
         self.state.sw_land_order_emitted = False
         self.state.purchase_failed_reason = str(reason)
-        if self.state.sw_reservation_id:
-            try:
-                from strategy.crop_cycle_reservation_manager import get_crop_cycle_reservation_manager
-                get_crop_cycle_reservation_manager().cancel_reservation(self.state.sw_reservation_id, reason)
-                self.state.sw_reservation_id = None
-            except Exception as exc:
-                logger.debug(f"[SWTrancheController] Reservation cancellation note: {exc}")
+        try:
+            from strategy.crop_cycle_reservation_manager import get_crop_cycle_reservation_manager
+            res_mgr = get_crop_cycle_reservation_manager()
+            ids_to_cancel = list(self.state.sw_reservation_ids)
+            if self.state.sw_reservation_id and self.state.sw_reservation_id not in ids_to_cancel:
+                ids_to_cancel.append(self.state.sw_reservation_id)
+            for res_id in ids_to_cancel:
+                res_mgr.cancel_reservation(res_id, reason)
+            self.state.sw_reservation_ids.clear()
+            self.state.sw_reservation_id = None
+        except Exception as exc:
+            logger.debug(f"[SWTrancheController] Reservation cancellation note: {exc}")
 
     def record_seed_consumption(
         self,

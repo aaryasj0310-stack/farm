@@ -192,6 +192,7 @@ class ShadowDecision:
     virtual_cash: float = 0.0
     actual_sw_unlocked: bool = False
     selected_candidate_certificate: Optional[Dict[str, Any]] = None
+    sw_reject_reason: Optional[str] = None
 
 
 @dataclass
@@ -949,10 +950,22 @@ class WholeFarmPlanner:
         self.ledger.cash_on_hand = snapshot.money
         plan.day = snapshot.day
         plan.hour = snapshot.hour
+
+        try:
+            from config import get_sw_r2_dynamic_acquisition_enabled
+            is_r2_dynamic = bool(get_sw_r2_dynamic_acquisition_enabled())
+        except Exception:
+            is_r2_dynamic = False
+
+        baseline_intents_dict = dict(snapshot.baseline_intents)
+        baseline_buys_land = bool(baseline_intents_dict.get("buy_land", False))
+
         if plan.state == StrategicState.SW_NOT_COMMITTED and snapshot.day >= 4:
             plan.state = StrategicState.SW_PREPARING
-        if plan.state == StrategicState.SW_PREPARING and (
-            snapshot.day >= plan.expansion_target.earliest_feasible_day or snapshot.money >= 2200
+
+        effective_ready_day = 0 if baseline_buys_land else (8 if is_r2_dynamic else plan.expansion_target.earliest_feasible_day)
+        if plan.state == StrategicState.SW_PREPARING and snapshot.day >= effective_ready_day and (
+            snapshot.money >= 2200 or snapshot.day >= plan.expansion_target.earliest_feasible_day
         ):
             plan.state = StrategicState.SW_READY
 
@@ -1306,14 +1319,20 @@ class WholeFarmPlanner:
         sw_reject_reason = None
         sw_rec_status = "REJECT"
 
+        min_acq_day = 8 if is_r2_dynamic else plan.expansion_target.earliest_feasible_day
         if self.virtual_sw_owned:
             sw_rec_status = "OWNED"
             sw_recommended = False
             sw_reject_reason = "already_purchased_in_virtual_plan"
+        elif not baseline_buys_land and "SW" not in snapshot.unlocked_quadrants and snapshot.day < min_acq_day:
+            sw_rec_status = "DELAY"
+            sw_recommended = False
+            sw_reject_reason = f"before_acquisition_window_day_{min_acq_day}"
         else:
-            if plan.state == StrategicState.SW_READY or (plan.state == StrategicState.SW_PREPARING and virtual_money >= 2200):
-                if virtual_money < 2200:
-                    sw_reject_reason = f"insufficient_cash (${virtual_money:.1f} < $2,200)"
+            cash_threshold = (sw_land_cost + best_seed_cost + 300.0) if is_r2_dynamic else 2200.0
+            if plan.state == StrategicState.SW_READY or (plan.state == StrategicState.SW_PREPARING and virtual_money >= cash_threshold):
+                if virtual_money < cash_threshold:
+                    sw_reject_reason = f"insufficient_cash (${virtual_money:.1f} < ${cash_threshold:.1f})"
                     sw_rec_status = "DELAY"
                 elif not feed_status["is_feed_safe"]:
                     sw_reject_reason = f"feed_deficit_risk ({'; '.join(feed_status.get('unfed_reasons', []))})"
@@ -1338,18 +1357,41 @@ class WholeFarmPlanner:
                     sw_reject_reason = f"lifecycle_infeasible ({best_entry.get('lc_reason') if best_entry else 'overflow'})"
                     sw_rec_status = "REJECT"
                 else:
-                    sw_recommended = True
-                    sw_rec_status = "PURCHASE"
-                    self.virtual_sw_owned = True
-                    self.virtual_sw_purchase_day = snapshot.day
-                    self.virtual_land_cost_paid = 2000.0
-                    if best_portfolio_data:
-                        self.virtual_sw_purchase_tranche = best_portfolio_data[0].get("name")
-                        self.virtual_sw_purchase_tiles = best_portfolio_data[0].get("tiles_used", 0)
+                    # In dynamic R2 window D8-D10, evaluate buy-today vs wait-1-day alternative
+                    is_delayed_by_alternative = False
+                    if is_r2_dynamic and (8 <= snapshot.day <= 9) and best_entry:
+                        wait_day = snapshot.day + 1
+                        wait_gross = 0.0
+                        try:
+                            from strategy.crop_cycle_reservation_manager import get_crop_cycle_schedule
+                            for c_name, _, c_tiles in best_entry["portfolio"].get("allocations", []):
+                                y_pt, _, _ = get_crop_cycle_schedule(c_name, wait_day)
+                                tot_u = len(c_tiles) * y_pt
+                                if tot_u > 0:
+                                    inv_val = market_inv_dict.get(c_name, 0)
+                                    wait_gross += float(total_revenue_estimate(c_name, inv_val, tot_u))
+                        except Exception:
+                            wait_gross = best_sw_gross
+
+                        delay_opportunity_cost = best_sw_gross - wait_gross
+                        if delay_opportunity_cost < 0:
+                            is_delayed_by_alternative = True
+                            sw_reject_reason = f"wait_alternative_superior (today=${best_sw_gross:.1f} < wait=${wait_gross:.1f})"
+                            sw_rec_status = "DELAY"
+
+                    if not is_delayed_by_alternative:
+                        sw_recommended = True
+                        sw_rec_status = "PURCHASE"
+                        self.virtual_sw_owned = True
+                        self.virtual_sw_purchase_day = snapshot.day
+                        self.virtual_land_cost_paid = 2000.0
+                        if best_portfolio_data:
+                            self.virtual_sw_purchase_tranche = best_portfolio_data[0].get("name")
+                            self.virtual_sw_purchase_tiles = best_portfolio_data[0].get("tiles_used", 0)
             else:
                 sw_rec_status = "DELAY" if snapshot.day < 8 else "REJECT"
-                if virtual_money < 2200:
-                    sw_reject_reason = f"insufficient_cash (${virtual_money:.1f} < $2,200)"
+                if virtual_money < cash_threshold:
+                    sw_reject_reason = f"insufficient_cash (${virtual_money:.1f} < ${cash_threshold:.1f})"
                 else:
                     sw_reject_reason = f"expansion_prerequisites_unmet (state={plan.state.value})"
 
@@ -1681,6 +1723,7 @@ class WholeFarmPlanner:
                 snapshot.day,
                 snapshot.hour,
             ) if cert_result is not None else None,
+            sw_reject_reason=sw_reject_reason,
         )
 
         elapsed_ms = (time.perf_counter() - start_t) * 1000.0

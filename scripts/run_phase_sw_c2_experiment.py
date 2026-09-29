@@ -181,6 +181,7 @@ class RepairedMatchEngineAuditor:
         }
 
         self.first_productive_plant_event = None
+        self.land_transactions: List[Dict[str, Any]] = []
         self._current_step_inflows = 0.0
         self._current_step_outflows = 0.0
 
@@ -269,6 +270,13 @@ class RepairedMatchEngineAuditor:
             "op": "BUY_LAND",
             "item": quadrant,
             "price": c,
+        })
+        self.land_transactions.append({
+            "step": self.current_step,
+            "day": self.current_step // 24,
+            "hour": self.current_step % 24,
+            "quadrant": quadrant,
+            "cost": c,
         })
 
     def record_action(self, player_id: int, unit_idx: int, action: Any, pre_pos: Tuple[int, int], post_pos: Tuple[int, int], outcome: Dict[str, Any]):
@@ -863,6 +871,38 @@ def run_single_match(args_tuple: Tuple[int, str, int, str]) -> Dict[str, Any]:
     except Exception:
         pass
 
+    sw_land_tx = [tx for tx in auditor.land_transactions if tx.get("quadrant") == "SW"]
+    ctrl_state = ctrl.state
+    lc = ctrl_state.lifecycle
+
+    sw_harvest_events = [
+        h for h in auditor.harvest_events
+        if (h["pos"][0] < 5 and h["pos"][1] >= 5)
+    ]
+    first_completed_cycle_step = sw_harvest_events[0]["step"] if sw_harvest_events else None
+
+    settlement_step = sw_land_tx[0]["step"] if sw_land_tx else None
+    settlement_day = sw_land_tx[0]["day"] if sw_land_tx else None
+    first_plant_step = lc.first_productive_plant_step or (auditor.first_productive_plant_event["step"] if auditor.first_productive_plant_event else None)
+    first_plant_day = lc.first_productive_plant_day or (auditor.first_productive_plant_event["day"] if auditor.first_productive_plant_event else None)
+
+    sw_timing_distinction = {
+        "recommended_step": lc.sw_recommendation_step,
+        "recommended_day": lc.sw_recommendation_day,
+        "order_emitted_step": lc.sw_order_emitted_step,
+        "order_emitted_day": lc.sw_order_emitted_day,
+        "engine_settlement_step": settlement_step,
+        "engine_settlement_day": settlement_day,
+        "first_plant_step": first_plant_step,
+        "first_plant_day": first_plant_day,
+        "first_completed_cycle_step": first_completed_cycle_step,
+        "purchase_to_first_plant_delay_turns": (
+            (first_plant_step - settlement_step)
+            if (first_plant_step is not None and settlement_step is not None)
+            else None
+        ),
+    }
+
     return {
         "match_id": f"{seed}_{opp_name}_{seat}_{arm}",
         "seed": seed,
@@ -896,6 +936,11 @@ def run_single_match(args_tuple: Tuple[int, str, int, str]) -> Dict[str, Any]:
         "sw_task_admission_telemetry": admission_telemetry,
         "sw_expansion_history": sw_expansion_history,
         "sw_expansion_rejections": sw_expansion_rejections,
+        "sw_land_transactions": sw_land_tx,
+        "sw_timing_distinction": sw_timing_distinction,
+        "sw_rejection_history": dict(ctrl_state.rejection_reasons_by_day),
+        "sw_productive_actions": auditor.action_counts["actions_in_sw"],
+        "sw_controller_telemetry": ctrl_state.lifecycle.to_dict(),
         "animal_survival": animal_tracker.get_summary(),
         "min_cash_seen": min_cash_seen,
         "peak_shed_occupancy": peak_shed_occupancy,

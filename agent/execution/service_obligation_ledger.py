@@ -85,6 +85,14 @@ class ServiceObligationLedger:
         self._telemetry["obligations_created"] += 1
         return obligation.obligation_id
 
+    def unregister_obligation(self, obligation_id: str) -> bool:
+        """Unregister / remove an obligation from the ledger (used for atomic rollback)."""
+        if obligation_id in self._obligations:
+            del self._obligations[obligation_id]
+            self._telemetry["obligations_created"] = max(0, self._telemetry["obligations_created"] - 1)
+            return True
+        return False
+
     def get_obligation(self, obligation_id: str) -> Optional[ServiceObligation]:
         return self._obligations.get(obligation_id)
 
