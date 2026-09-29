@@ -149,6 +149,7 @@ class AdaptiveAcreageDecision:
     approved: bool = False
     current_acreage: int = 8
     target_acreage: int = 8
+    active_workers: int = 0
     new_tiles: List[Tuple[int, int]] = field(default_factory=list)
     selected_crop: Optional[str] = None
     marginal_delta_fc: float = 0.0
@@ -169,6 +170,7 @@ class AdaptiveAcreageDecision:
             "approved": self.approved,
             "current_acreage": self.current_acreage,
             "target_acreage": self.target_acreage,
+            "active_workers": self.active_workers,
             "new_tiles": [list(t) for t in self.new_tiles],
             "selected_crop": self.selected_crop,
             "marginal_delta_fc": self.marginal_delta_fc,
@@ -212,6 +214,7 @@ class AdaptiveAcreagePlanner:
                 approved=False,
                 current_acreage=current_acreage,
                 target_acreage=current_acreage,
+                active_workers=active_workers,
                 rejection_reason=f"Current acreage ({current_acreage}) reaches configured cap ({max_acreage_cap})",
             )
 
@@ -222,6 +225,7 @@ class AdaptiveAcreagePlanner:
                 approved=False,
                 current_acreage=current_acreage,
                 target_acreage=target_acreage,
+                active_workers=active_workers,
                 rejection_reason=f"Target acreage ({target_acreage}) exceeds configured cap ({max_acreage_cap})",
             )
 
@@ -231,6 +235,7 @@ class AdaptiveAcreagePlanner:
                 approved=False,
                 current_acreage=current_acreage,
                 target_acreage=target_acreage,
+                active_workers=active_workers,
                 rejection_reason=f"No expansion block defined for target acreage {target_acreage}",
             )
 
@@ -241,6 +246,7 @@ class AdaptiveAcreagePlanner:
                     approved=False,
                     current_acreage=current_acreage,
                     target_acreage=target_acreage,
+                    active_workers=active_workers,
                     rejection_reason=f"Candidate tile {tile} violates reserved shed-access port invariant",
                 )
             if not (0 <= tile[0] < 5 and 5 <= tile[1] < 10):
@@ -248,6 +254,7 @@ class AdaptiveAcreagePlanner:
                     approved=False,
                     current_acreage=current_acreage,
                     target_acreage=target_acreage,
+                    active_workers=active_workers,
                     rejection_reason=f"Candidate tile {tile} outside SW quadrant bounds",
                 )
             if tile in current_admitted_tiles:
@@ -255,6 +262,7 @@ class AdaptiveAcreagePlanner:
                     approved=False,
                     current_acreage=current_acreage,
                     target_acreage=target_acreage,
+                    active_workers=active_workers,
                     rejection_reason=f"Candidate tile {tile} already admitted",
                 )
 
@@ -294,6 +302,7 @@ class AdaptiveAcreagePlanner:
                 approved=False,
                 current_acreage=current_acreage,
                 target_acreage=target_acreage,
+                active_workers=active_workers,
                 new_tiles=candidate_block,
                 passed_certificates=certs,
                 rejection_reason=f"No economically viable candidate crops on Day {current_day} (biological deadlines passed or nonpositive ΔFC)",
@@ -372,6 +381,7 @@ class AdaptiveAcreagePlanner:
                 approved=False,
                 current_acreage=current_acreage,
                 target_acreage=target_acreage,
+                active_workers=active_workers,
                 new_tiles=candidate_block,
                 passed_certificates=certs,
                 rejection_reason=primary_reason,
@@ -382,6 +392,7 @@ class AdaptiveAcreagePlanner:
             approved=True,
             current_acreage=current_acreage,
             target_acreage=target_acreage,
+            active_workers=active_workers,
             new_tiles=candidate_block,
             selected_crop=best_candidate["crop"],
             marginal_delta_fc=best_candidate["delta_fc"],

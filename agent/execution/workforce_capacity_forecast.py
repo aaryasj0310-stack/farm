@@ -128,10 +128,13 @@ class WorkforceCapacityForecaster:
         prereq_completion_step: Dict[str, int] = {}
 
         for obl in sorted_obls:
-            # Service-chain prerequisite check: cannot start until prerequisites complete
-            earliest_start = step
+            # Service-chain prerequisite check: cannot start until release_step and prerequisites complete
+            earliest_start = max(step, getattr(obl, "release_step", step))
             if obl.prerequisites:
-                earliest_start = max([prereq_completion_step.get(p, step) for p in obl.prerequisites], default=step)
+                earliest_start = max(
+                    earliest_start,
+                    max([prereq_completion_step.get(p, step) for p in obl.prerequisites], default=step),
+                )
 
             # Evaluate each worker under competing availability queues and service-chain requirements
             best_w_idx: Optional[int] = None
@@ -190,8 +193,18 @@ class WorkforceCapacityForecaster:
                     # Update winning worker's queue and location (competing allocation)
                     w_available_step[best_w_idx] = best_completion
                     w_current_pos[best_w_idx] = obl.target_pos
-                    if obl.op == "FEED" and w_inventories[best_w_idx].get("WHEAT", 0) == 0 and shed.get("WHEAT", 0) > 0:
-                        shed["WHEAT"] -= 1
+                    # Decrement simulated resource inventory
+                    if obl.op == "FEED":
+                        if w_inventories[best_w_idx].get("WHEAT", 0) > 0:
+                            w_inventories[best_w_idx]["WHEAT"] -= 1
+                        elif shed.get("WHEAT", 0) > 0:
+                            shed["WHEAT"] -= 1
+                    elif obl.op == "PLANT" and obl.required_item:
+                        item_name = obl.required_item
+                        if w_inventories[best_w_idx].get(item_name, 0) > 0:
+                            w_inventories[best_w_idx][item_name] -= 1
+                        elif shed.get(item_name, 0) > 0:
+                            shed[item_name] -= 1
 
                 prereq_completion_step[obl.obligation_id] = best_completion
 

@@ -66,6 +66,7 @@ ALL_ARMS = [
     "ARM_A", "ARM_B", "ARM_C",
     "ARM_D", "ARM_E", "ARM_F",
     "ARM_G12", "ARM_G16", "ARM_G20", "ARM_G24",
+    "ARM_R2",
 ]
 
 
@@ -426,6 +427,7 @@ def configure_arm(arm: str) -> None:
     config.set_sw_p1_mission_ownership_enabled(False)
     config.set_sw_p2_coordinated_dispatch_enabled(False)
     config.set_sw_p3_transactional_reservations_enabled(False)
+    config.set_sw_r2_dynamic_acquisition_enabled(False)
 
     if arm == "ARM_A":
         # Canonical production reference
@@ -523,6 +525,17 @@ def configure_arm(arm: str) -> None:
         config.set_sw_p1_mission_ownership_enabled(True)
         config.set_sw_p2_coordinated_dispatch_enabled(True)
         config.set_sw_p3_transactional_reservations_enabled(True)
+    elif arm == "ARM_R2":
+        # R2 Early Acquisition + Executable Capacity + Shared Reservations (8 tiles)
+        config.SW_FORWARD_ARCHITECTURE_MODE = "TREATMENT"
+        config.set_sw_core_first_task_admission_enabled(False)
+        config.set_sw_urgency_aware_admission_enabled(True)
+        config.set_sw_adaptive_acreage_enabled(True)
+        config.set_sw_max_adaptive_acreage(8)
+        config.set_sw_p1_mission_ownership_enabled(True)
+        config.set_sw_p2_coordinated_dispatch_enabled(True)
+        config.set_sw_p3_transactional_reservations_enabled(True)
+        config.set_sw_r2_dynamic_acquisition_enabled(True)
     else:
         raise ValueError(f"Unknown arm: {arm}")
 

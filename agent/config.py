@@ -1880,3 +1880,33 @@ def get_sw_p3_transactional_reservations_enabled() -> bool:
     """Return whether Phase SW-C2 P3 Transactional Reservations is enabled."""
     return SW_P3_TRANSACTIONAL_RESERVATIONS_ENABLED
 
+
+# ====================================================================
+# Phase SW-C2-R2: Dynamic D8–D10 SW Acquisition & Shared Reservation Architecture
+# ====================================================================
+SW_R2_DYNAMIC_ACQUISITION_ENABLED: bool = False
+
+
+def set_sw_r2_dynamic_acquisition_enabled(enabled: bool) -> None:
+    """Configure Phase SW-C2-R2 Dynamic Acquisition flag."""
+    global SW_R2_DYNAMIC_ACQUISITION_ENABLED
+    SW_R2_DYNAMIC_ACQUISITION_ENABLED = bool(enabled)
+    for mod_name in (
+        "agent.config", "config", "agent.main", "main",
+        "agent.strategy.sw_tranche_controller", "strategy.sw_tranche_controller", "sw_tranche_controller",
+        "agent.strategy.expansion_planner", "strategy.expansion_planner", "expansion_planner",
+        "agent.strategy.whole_farm_planner", "strategy.whole_farm_planner", "whole_farm_planner",
+        "agent.strategy.crop_cycle_reservation_manager", "strategy.crop_cycle_reservation_manager", "crop_cycle_reservation_manager",
+    ):
+        if mod_name in sys.modules:
+            try:
+                setattr(sys.modules[mod_name], "SW_R2_DYNAMIC_ACQUISITION_ENABLED", SW_R2_DYNAMIC_ACQUISITION_ENABLED)
+            except Exception:
+                pass
+
+
+def get_sw_r2_dynamic_acquisition_enabled() -> bool:
+    """Return whether Phase SW-C2-R2 Dynamic Acquisition is enabled."""
+    return SW_R2_DYNAMIC_ACQUISITION_ENABLED
+
+

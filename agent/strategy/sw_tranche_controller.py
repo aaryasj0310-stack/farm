@@ -77,6 +77,15 @@ class SWLandLifecycleTelemetry:
     sw_confirmed_hour: Optional[int] = None
     sw_confirmed_cash_deduction: float = 0.0
 
+    # Settlement telemetry (SW-C2-R2)
+    exact_purchase_step: Optional[int] = None
+    exact_purchase_day: Optional[int] = None
+    exact_purchase_hour: Optional[int] = None
+    cash_before_purchase: float = 0.0
+    cash_after_purchase: float = 0.0
+    purchase_settled: bool = False
+    purchase_attempt_steps: List[int] = field(default_factory=list)
+
     # Stage 7: Purchase failed or dropped
     purchase_failed_events: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -123,6 +132,15 @@ class SWLandLifecycleTelemetry:
                 "day": self.sw_confirmed_day,
                 "hour": self.sw_confirmed_hour,
                 "cash_deduction": self.sw_confirmed_cash_deduction,
+            },
+            "settlement_telemetry": {
+                "exact_purchase_step": self.exact_purchase_step,
+                "exact_purchase_day": self.exact_purchase_day,
+                "exact_purchase_hour": self.exact_purchase_hour,
+                "cash_before_purchase": self.cash_before_purchase,
+                "cash_after_purchase": self.cash_after_purchase,
+                "purchase_settled": self.purchase_settled,
+                "purchase_attempt_steps": list(self.purchase_attempt_steps),
             },
             "stage_7_purchase_failed_events": list(self.purchase_failed_events),
             "stage_8_retried_purchases": {
@@ -235,6 +253,7 @@ class SWTrancheState:
     pre_purchase_cash: float = 0.0
     post_purchase_cash: float = 0.0
     worker_count_at_purchase: int = 0
+    sw_reservation_id: Optional[str] = None
 
     # 9-Stage Land Order Lifecycle Telemetry
     lifecycle: SWLandLifecycleTelemetry = field(default_factory=SWLandLifecycleTelemetry)
@@ -428,6 +447,30 @@ class SWTrancheController:
                     self.state.admitted_sw_crop_targets[pos_t] = crop_name
         self.state.max_admitted_acreage = len(self.state.admitted_sw_tiles)
 
+        # Commit initial tranche reservation through shared reservation lifecycle
+        try:
+            from strategy.crop_cycle_reservation_manager import get_crop_cycle_reservation_manager
+            res_mgr = get_crop_cycle_reservation_manager()
+            sw_tiles_list = list(self.state.admitted_sw_tiles)
+            primary_crop = "STRAWBERRY"
+            if self.state.admitted_sw_crop_targets:
+                primary_crop = next(iter(self.state.admitted_sw_crop_targets.values()))
+            trial = res_mgr.evaluate_complete_crop_cycle(
+                candidate_tiles=sw_tiles_list[:8] if sw_tiles_list else [(0, 5), (1, 5), (2, 5), (3, 5), (0, 6), (1, 6), (2, 6), (3, 6)],
+                candidate_crop=primary_crop,
+                plant_day=day,
+                current_cash=cash_before,
+                active_workers=worker_count,
+                num_animals=0,
+                wheat_inventory=10,
+                current_shed_occupancy=0,
+                core_planted_tiles=8,
+            )
+            if trial.feasible:
+                self.state.sw_reservation_id = res_mgr.commit_reservation(trial)
+        except Exception as exc:
+            logger.debug(f"[SWTrancheController] Initial tranche reservation note: {exc}")
+
     def maybe_evaluate_adaptive_expansion(
         self,
         ctx: Dict[str, Any],
@@ -504,13 +547,8 @@ class SWTrancheController:
             hands_list = []
             raw_tiles = []
 
-        try:
-            from config import get_target_hands
-            scheduled_workers = 1 + get_target_hands(day)
-        except Exception:
-            scheduled_workers = 1
-
-        active_workers = max(1 + len(hands_list), scheduled_workers)
+        # Use strictly executable workforce: farmer (1) + physically present hired hands
+        active_workers = 1 + len(hands_list)
 
         # Count animals and core planted tiles
         num_animals = 0
@@ -741,6 +779,7 @@ class SWTrancheController:
             # If NE is unlocked and SW is NOT unlocked, this BUY_LAND targets SW!
             if has_ne and not has_sw:
                 lc = self.state.lifecycle
+                lc.purchase_attempt_steps.append(step)
                 if lc.sw_order_emitted_step is None:
                     lc.sw_order_emitted_step = step
                     lc.sw_order_emitted_day = day
@@ -787,7 +826,14 @@ class SWTrancheController:
                 lc.sw_confirmed_step = step
                 lc.sw_confirmed_day = day
                 lc.sw_confirmed_hour = hour
-                lc.sw_confirmed_cash_deduction = 2000.0
+                lc.exact_purchase_step = step
+                lc.exact_purchase_day = day
+                lc.exact_purchase_hour = hour
+                lc.purchase_settled = True
+                lc.cash_before_purchase = self.state.pre_purchase_cash
+                lc.cash_after_purchase = cur_cash
+                deduction = (self.state.pre_purchase_cash - cur_cash) if self.state.pre_purchase_cash > 0 else 2000.0
+                lc.sw_confirmed_cash_deduction = float(deduction)
                 self.confirm_purchase(day, hour)
         else:
             # If an order was retained in the previous step but SW is still not unlocked:
@@ -799,6 +845,13 @@ class SWTrancheController:
                     "reason": "engine_rejected_or_insufficient_funds",
                     "cash": cur_cash,
                 })
+                if lc.sw_confirmed_step is None and self.state.sw_reservation_id and step >= 718:
+                    try:
+                        from strategy.crop_cycle_reservation_manager import get_crop_cycle_reservation_manager
+                        get_crop_cycle_reservation_manager().cancel_reservation(self.state.sw_reservation_id, "engine_rejected")
+                        self.state.sw_reservation_id = None
+                    except Exception:
+                        pass
 
         # Check physical tile planting in SW
         if "SW" in unlocked and lc.first_productive_plant_step is None:
@@ -854,6 +907,13 @@ class SWTrancheController:
         """Notify controller that emitted BUY_LAND order failed or was dropped."""
         self.state.sw_land_order_emitted = False
         self.state.purchase_failed_reason = str(reason)
+        if self.state.sw_reservation_id:
+            try:
+                from strategy.crop_cycle_reservation_manager import get_crop_cycle_reservation_manager
+                get_crop_cycle_reservation_manager().cancel_reservation(self.state.sw_reservation_id, reason)
+                self.state.sw_reservation_id = None
+            except Exception as exc:
+                logger.debug(f"[SWTrancheController] Reservation cancellation note: {exc}")
 
     def record_seed_consumption(
         self,

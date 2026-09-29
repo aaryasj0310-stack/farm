@@ -48,6 +48,7 @@ class ReservationState(str, enum.Enum):
     FULFILLED = "FULFILLED"
     RELEASED = "RELEASED"
     FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
 class ResourceType(str, enum.Enum):

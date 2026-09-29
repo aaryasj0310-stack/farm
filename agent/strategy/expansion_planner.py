@@ -263,8 +263,10 @@ def get_effective_quadrant_unlock_day(next_quadrant: int) -> int:
     unlock_day = QUADRANT_UNLOCK_DAYS[next_quadrant]
     if next_quadrant == 3:
         try:
-            from config import SW_OWNERSHIP_MODE, SW_DELAYED_UNLOCK_DAY
-            if SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic"):
+            from config import SW_OWNERSHIP_MODE, SW_DELAYED_UNLOCK_DAY, get_sw_r2_dynamic_acquisition_enabled
+            if get_sw_r2_dynamic_acquisition_enabled():
+                unlock_day = 8
+            elif SW_OWNERSHIP_MODE in ("early_liquidity", "pure_economic"):
                 unlock_day = 7
             else:
                 unlock_day = 9

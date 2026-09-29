@@ -274,6 +274,17 @@ class ServiceObligationLedger:
         self._last_reconciled_step = current_step
         return reconciled_counts
 
+    def mark_cancelled(self, obligation_id: str, reason: str = "cancelled") -> bool:
+        """Mark an obligation as CANCELLED in the ledger."""
+        if obligation_id in self._obligations:
+            obl = self._obligations[obligation_id]
+            if not obl.is_terminal():
+                obl.lifecycle = ObligationLifecycle.CANCELLED
+                obl.terminal_reason = reason
+                self._telemetry["obligations_cancelled"] += 1
+                return True
+        return False
+
     def handle_midnight_rollover(self, new_day: int) -> None:
         """Clear worker ownership at midnight while keeping legitimate entity obligations."""
         for obl in self._obligations.values():

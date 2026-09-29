@@ -5,9 +5,28 @@ import pytest
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _PKG = os.path.dirname(_HERE)
+_ROOT = os.path.dirname(_PKG)
+
+while _ROOT in sys.path:
+    sys.path.remove(_ROOT)
+while "" in sys.path:
+    sys.path.remove("")
+while "." in sys.path:
+    sys.path.remove(".")
+
+if _PKG in sys.path:
+    sys.path.remove(_PKG)
 sys.path.insert(0, _PKG)
 for _sub in ("state", "strategy", "execution", "market"):
-    sys.path.insert(0, os.path.join(_PKG, _sub))
+    _sub_path = os.path.join(_PKG, _sub)
+    if _sub_path in sys.path:
+        sys.path.remove(_sub_path)
+    sys.path.insert(0, _sub_path)
+
+sys.path.append(_ROOT)
+
+if "main" in sys.modules:
+    del sys.modules["main"]
 
 
 # These assertions remain unchanged and run by default and at production release.

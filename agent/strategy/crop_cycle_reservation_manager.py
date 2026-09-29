@@ -51,9 +51,9 @@ except ImportError:
     )
 
 try:
-    from market.price_math import total_revenue_estimate
+    from market.price_math import total_revenue_estimate, market_price
 except ImportError:
-    from agent.market.price_math import total_revenue_estimate
+    from agent.market.price_math import total_revenue_estimate, market_price
 
 logger = logging.getLogger("CropCycleReservationManager")
 
@@ -217,6 +217,7 @@ class CropCycleReservationManager:
         core_planted_tiles: int,
         current_commitments: Optional[Dict[str, Any]] = None,
         market_inventories: Optional[Dict[str, int]] = None,
+        record_telemetry: bool = True,
     ) -> CropCycleTrialResult:
         """Side-effect-free trial evaluation of the complete executable lifecycle.
         
@@ -226,7 +227,8 @@ class CropCycleReservationManager:
            storage, and market sale before Day 29.
         3. Requires net whole-farm economic delta > SW_RESERVATION_SAFETY_MARGIN.
         """
-        self._telemetry["trials_evaluated"] += 1
+        if record_telemetry:
+            self._telemetry["trials_evaluated"] += 1
         n_tiles = len(candidate_tiles)
         certs = {
             "geometry_valid": False,
@@ -391,7 +393,11 @@ class CropCycleReservationManager:
         # Displaced wheat cost: ~0.12 units of core wheat displaced per worker-hour diverted to SW
         raw_wheat_inv = m_inv.get("WHEAT", MARKET_I0) if isinstance(m_inv, dict) else MARKET_I0
         w_inv_val = float(raw_wheat_inv if isinstance(raw_wheat_inv, (int, float)) else 100.0)
-        wheat_price_est = max(20.0, min(50.0, 100.0 / (1.0 + w_inv_val / 100.0)))
+        try:
+            from market.price_math import market_price
+            wheat_price_est = float(market_price("WHEAT", int(w_inv_val)))
+        except Exception:
+            wheat_price_est = 25.0
         feed_displacement_cost = sw_cycle_hours * 0.12 * wheat_price_est
 
         net_margin = gross_revenue - seed_cost - feed_displacement_cost
@@ -401,7 +407,7 @@ class CropCycleReservationManager:
                 f"Economic whole-farm delta ${net_margin:.1f} (gross ${gross_revenue:.1f} - seed ${seed_cost:.1f} - "
                 f"feed displacement ${feed_displacement_cost:.1f}) below required safety margin ${SW_RESERVATION_SAFETY_MARGIN:.1f}"
             )
-            self._record_rejection(reason)
+            self._record_rejection(reason, record_telemetry=record_telemetry)
             return CropCycleTrialResult(
                 feasible=False,
                 expected_whole_farm_delta=net_margin,
@@ -442,7 +448,8 @@ class CropCycleReservationManager:
             },
         )
 
-        self._telemetry["trials_approved"] += 1
+        if record_telemetry:
+            self._telemetry["trials_approved"] += 1
         return CropCycleTrialResult(
             feasible=True,
             expected_whole_farm_delta=net_margin,
@@ -453,7 +460,8 @@ class CropCycleReservationManager:
     def commit_reservation(self, trial_result: CropCycleTrialResult) -> str:
         """Atomically commit a validated trial reservation.
         
-        Transitions state to COMMITTED, logs the reservation, and returns reservation_id.
+        Transitions state to COMMITTED, registers obligations with the shared
+        ServiceObligationLedger, logs the reservation, and returns reservation_id.
         """
         if not trial_result.feasible or trial_result.reservation is None:
             raise ValueError("Cannot commit an infeasible or null reservation trial")
@@ -462,6 +470,15 @@ class CropCycleReservationManager:
         res.state = ReservationState.COMMITTED
         for obl in res.obligations:
             obl.lifecycle = ObligationLifecycle.RESERVED
+
+        # Register obligations in shared ServiceObligationLedger
+        try:
+            from execution.service_obligation_ledger import get_service_obligation_ledger
+            ledger = get_service_obligation_ledger()
+            for obl in res.obligations:
+                ledger.register_obligation(obl)
+        except Exception as exc:
+            logger.debug(f"[CropCycleReservationManager] Shared ledger registration note: {exc}")
 
         self.active_reservations[res.reservation_id] = res
         self.committed_reservations_history.append(res)
@@ -474,6 +491,29 @@ class CropCycleReservationManager:
             f"(Expected Margin: ${res.expected_net_margin:.1f})"
         )
         return res.reservation_id
+
+    def cancel_reservation(self, reservation_id: str, reason: str = "acquisition_withdrawn") -> bool:
+        """Atomically cancel an active reservation and release all registered obligations."""
+        if reservation_id not in self.active_reservations:
+            return False
+
+        res = self.active_reservations.pop(reservation_id)
+        res.state = ReservationState.CANCELLED
+        for obl in res.obligations:
+            obl.lifecycle = ObligationLifecycle.CANCELLED
+            obl.terminal_reason = reason
+
+        try:
+            from execution.service_obligation_ledger import get_service_obligation_ledger
+            ledger = get_service_obligation_ledger()
+            for obl in res.obligations:
+                ledger.mark_cancelled(obl.obligation_id, reason)
+        except Exception as exc:
+            logger.debug(f"[CropCycleReservationManager] Shared ledger cancellation note: {exc}")
+
+        self._telemetry["reservations_cancelled"] = self._telemetry.get("reservations_cancelled", 0) + 1
+        logger.info(f"[CropCycleReservationManager] CANCELLED {reservation_id}: {reason}")
+        return True
 
     def reconcile_turn(self, ctx: Dict[str, Any], ledger: Optional[Any] = None) -> None:
         """Reconcile active reservations against game observation.
@@ -527,12 +567,13 @@ class CropCycleReservationManager:
                     del self.active_reservations[res_id]
                     logger.warning(f"[CropCycleReservationManager] UNHARVESTED/EXPIRED {res_id}: harvest was not established")
 
-    def _record_rejection(self, reason: str) -> None:
-        self._telemetry["trials_rejected"] += 1
-        self._telemetry["rejections_by_reason"][reason] = (
-            self._telemetry["rejections_by_reason"].get(reason, 0) + 1
-        )
-        self.rejection_log.append({"reason": reason})
+    def _record_rejection(self, reason: str, record_telemetry: bool = False) -> None:
+        if record_telemetry:
+            self._telemetry["trials_rejected"] += 1
+            self._telemetry["rejections_by_reason"][reason] = (
+                self._telemetry["rejections_by_reason"].get(reason, 0) + 1
+            )
+            self.rejection_log.append({"reason": reason})
 
 
 # Singleton instance
