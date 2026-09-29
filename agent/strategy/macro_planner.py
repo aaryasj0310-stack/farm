@@ -1149,6 +1149,9 @@ class MacroPlanner:
                             final_feed_capped_herd_size = min(requested_herd_size, sustainable)
                     except Exception as e:
                         if point2_mode in ("herd_plan", "live"):
+                            # A later housing/diagnostic failure must not leak a
+                            # partially admitted sequence into final intents.
+                            herd_plan = None
                             dynamic_targets = {
                                 "COW": counts.get("COW", 0),
                                 "SHEEP": counts.get("SHEEP", 0),
@@ -1308,7 +1311,11 @@ class MacroPlanner:
         # Purchase affordable animals if empty pasture exists or is being built
         # Prioritize Sheep ($200/wool, $100 fert) and Cow ($160/milk, $100 fert); Zero Geese unless empty coop pre-exists
         # Stage 8B C4: Cap animal purchases and pasture construction on or after C4_LIVESTOCK_CUTOFF_DAY
-        if not is_endgame and allow_livestock:
+        feed_fail_closed = (
+            plan.diagnostics.get("point2_feed_authority", {}).get("feed_authority")
+            == "ledger_error_fail_closed"
+        )
+        if not is_endgame and allow_livestock and not feed_fail_closed:
             if LIVESTOCK_EXPERIMENT_ARM == "ArmC":
                 # Arm C: Fully dynamic shop-conditioned live purchase execution with transactional shadow state
                 shadow_counts = dict(counts)

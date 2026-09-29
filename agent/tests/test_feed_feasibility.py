@@ -1414,7 +1414,8 @@ def test_phase_b_repair_macro_placed_vs_unplaced_semantics():
     assert ledger_worker.unfed_placed_today == 1
 
 
-def test_phase_b_repair_ledger_fail_closed_in_herd_plan_and_live(monkeypatch):
+@pytest.mark.parametrize("spare_housing", [False, True])
+def test_phase_b_repair_ledger_fail_closed_in_herd_plan_and_live(monkeypatch, spare_housing):
     """P1: Never silently fall back to legacy scalar authority in herd_plan / live.
     When build_feed_resource_ledger fails or returns None, or generate_dynamic_herd_plan fails:
     FAIL CLOSED immediately:
@@ -1423,10 +1424,24 @@ def test_phase_b_repair_ledger_fail_closed_in_herd_plan_and_live(monkeypatch):
       final_feed_capped_herd_size = sum(current_owned_herd)
       feed_authority = 'ledger_error_fail_closed'
     """
+    import importlib
     import config
     import strategy.macro_planner as mp_module
 
+    def assert_no_expansion(plan):
+        assert plan.diagnostics["pasture_diagnostics"]["desired_target_herd"] == 1
+        assert plan.diagnostics["pasture_diagnostics"]["pastures_needed_now"] == 0
+        assert not plan.build_queue
+        assert not any(plan.intents["buy_animal"].values())
+        assert not plan.buy_animal_sequence
+
     ctx = make_mock_farm_ctx(day=6, hour=0, money=5000.0, shed_wheat=20, placed_animals=["COW"])
+    if spare_housing:
+        # Make expansion physically affordable: fail-closed must not rely on
+        # absent housing or a feed shortage to suppress a second purchase path.
+        ctx["farm"].money = 50000.0
+        ctx["private"].shed["WHEAT"] = 1000
+        ctx["farm"].tile(1, 0).kind = "PASTURE"
 
     for mode in ("herd_plan", "live"):
         monkeypatch.setattr(config, "POINT2_FEED_MODE", mode)
@@ -1451,6 +1466,7 @@ def test_phase_b_repair_ledger_fail_closed_in_herd_plan_and_live(monkeypatch):
         assert pasture_diag.get("pastures_needed_now") == 0
         assert pasture_diag.get("desired_target_herd") == 1  # 1 cow owned, zero expansion
         assert len(plan.build_queue) == 0
+        assert_no_expansion(plan)
 
         # 2. build_feed_resource_ledger returns None
         def mock_none_build(*args, **kwargs):
@@ -1463,25 +1479,47 @@ def test_phase_b_repair_ledger_fail_closed_in_herd_plan_and_live(monkeypatch):
         authority_diag = plan.diagnostics.get("point2_feed_authority", {})
         assert authority_diag.get("feed_authority") == "ledger_error_fail_closed"
         assert authority_diag.get("error_type") == "RuntimeError"
+        assert_no_expansion(plan)
 
         # 3. generate_dynamic_herd_plan raises error
         monkeypatch.setattr(mp_module, "build_feed_resource_ledger", build_feed_resource_ledger)
 
+        calls = []
+
         def mock_failing_herd_plan(*args, **kwargs):
+            calls.append(kwargs)
             raise ValueError("Simulated herd planner failure")
 
-        import strategy.herd_planner as hp_module
+        # Match MacroPlanner's `from strategy.herd_planner import ...` lookup.
+        # Mixed agent.* imports can replace the parent's submodule attribute
+        # without replacing this exact sys.modules entry.
+        hp_module = importlib.import_module("strategy.herd_planner")
         monkeypatch.setattr(hp_module, "generate_dynamic_herd_plan", mock_failing_herd_plan)
-        import sys
-        if "agent.strategy.herd_planner" in sys.modules:
-            monkeypatch.setattr(sys.modules["agent.strategy.herd_planner"], "generate_dynamic_herd_plan", mock_failing_herd_plan)
 
         planner = MacroPlanner(DummyFC())
         plan = planner.build(ctx)
+        assert len(calls) == 1, "Fault must reach the exact function used by MacroPlanner"
         authority_diag = plan.diagnostics.get("point2_feed_authority", {})
         assert authority_diag.get("feed_authority") == "ledger_error_fail_closed"
         assert authority_diag.get("error_type") == "ValueError"
         assert plan.diagnostics["pasture_diagnostics"]["desired_target_herd"] == 1
+        assert_no_expansion(plan)
+
+        # A failure after a herd plan was returned must discard its provisional
+        # purchase sequence as well as suppressing the independent buy loop.
+        monkeypatch.setattr(hp_module, "generate_dynamic_herd_plan", generate_dynamic_herd_plan)
+        housing_calls = []
+
+        def mock_failing_housing(herd_plan, *args, **kwargs):
+            housing_calls.append(herd_plan)
+            raise ValueError("Simulated housing failure after herd admission")
+
+        with monkeypatch.context() as housing_patch:
+            housing_patch.setattr(hp_module, "get_forward_housing_demand", mock_failing_housing)
+            plan = planner.build(ctx)
+        assert len(housing_calls) == 1
+        assert plan.diagnostics["point2_feed_authority"]["feed_authority"] == "ledger_error_fail_closed"
+        assert_no_expansion(plan)
 
 
 def test_phase_b_repair_wheat_buy_price_buffer_config(monkeypatch):
